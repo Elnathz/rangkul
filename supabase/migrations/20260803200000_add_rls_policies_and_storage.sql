@@ -37,10 +37,34 @@ CREATE POLICY "Users can update own profile" ON public.users
     FOR UPDATE USING (auth.uid() = id)
     WITH CHECK (auth.uid() = id);
 
+-- Cegah eskalasi privilege: tolak tulis kolom sensitif dari role authenticated
+REVOKE UPDATE (role, account_status, email, created_at, id, updated_at) ON public.users FROM authenticated;
+
+-- Guard ekstra: tolak perubahan nilai kolom sensitif
+CREATE OR REPLACE FUNCTION public.prevent_sensitive_user_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role
+     OR NEW.account_status IS DISTINCT FROM OLD.account_status
+     OR NEW.email IS DISTINCT FROM OLD.email
+     OR NEW.id IS DISTINCT FROM OLD.id THEN
+    RAISE EXCEPTION 'Perubahan kolom sensitif tidak diizinkan';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_prevent_sensitive_user_update ON public.users;
+CREATE TRIGGER trg_prevent_sensitive_user_update
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.prevent_sensitive_user_update();
+
 -- ---------- HELPER PROFILES ----------
--- Helper membuat profil sendiri
+-- Helper membuat profil sendiri (hanya state unverified)
+DROP POLICY IF EXISTS "Helper can insert own profile" ON public.helper_profiles;
 CREATE POLICY "Helper can insert own profile" ON public.helper_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+    FOR INSERT WITH CHECK (auth.uid() = user_id AND status = 'pending_verification');
 
 -- Helper mengupdate profil sendiri
 CREATE POLICY "Helper can update own profile" ON public.helper_profiles
@@ -54,8 +78,9 @@ CREATE POLICY "Koordinator and admin can read helper profiles" ON public.helper_
 CREATE POLICY "Koordinator can read own profile" ON public.koordinator_profiles
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Koordinator can insert own profile" ON public.koordinator_profiles;
 CREATE POLICY "Koordinator can insert own profile" ON public.koordinator_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+    FOR INSERT WITH CHECK (auth.uid() = user_id AND status = 'pending_verification');
 
 CREATE POLICY "Koordinator can update own profile" ON public.koordinator_profiles
     FOR UPDATE USING (auth.uid() = user_id);
