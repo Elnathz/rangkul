@@ -18,7 +18,7 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Rangkul — Merangkul Jarak, Menjaga yang Tersayang",
+  title: "Rangkul",
   description:
     "Rangkul menghubungkan lansia dengan pendamping lokal terverifikasi komunitas RT/RW. Booking kunjungan, pantau kondisi, dan jaga orang tersayangmu dari mana saja.",
   keywords: ["pendamping lansia", "jasa kunjungan lansia", "care elderly Indonesia", "RT RW"],
