@@ -10,14 +10,25 @@ Creates or updates a helper profile. Requires `helper` role.
 
 ```json
 {
-  "bio": "string (max 500 characters, optional)",
-  "wilayah_domisili": "string (min 3 characters)",
+  "bio": "string (max 500 characters)",
+  "wilayah_domisili": "string",
   "domisili_lat": "number",
   "domisili_lng": "number",
-  "radius_layanan_km": "number (min 1, max 25, default 5)",
-  "ktp_url": "string (valid URL)"
+  "radius_layanan_km": "number (min 1, max 25)",
+  "ktp_url": "string"
 }
 ```
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `bio` | - Maksimal 500 karakter (optional) |
+| `wilayah_domisili` | - Minimal 3 karakter |
+| `domisili_lat` | - Required number |
+| `domisili_lng` | - Required number |
+| `radius_layanan_km` | - Minimal 1 km<br>- Maksimal 25 km<br>- Default: 5 km |
+| `ktp_url` | - Required valid URL |
 
 ### Response
 
