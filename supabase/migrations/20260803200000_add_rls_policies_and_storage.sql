@@ -38,7 +38,7 @@ CREATE POLICY "Users can update own profile" ON public.users
     WITH CHECK (auth.uid() = id);
 
 -- Cegah eskalasi privilege: tolak tulis kolom sensitif dari role authenticated
-REVOKE UPDATE (role, account_status, email, created_at, id, updated_at) ON public.users FROM authenticated;
+REVOKE UPDATE (role, account_status, email, id) ON public.users FROM authenticated;
 
 -- Guard ekstra: tolak perubahan nilai kolom sensitif
 CREATE OR REPLACE FUNCTION public.prevent_sensitive_user_update()
