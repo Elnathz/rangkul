@@ -89,6 +89,11 @@ export async function PUT(request: Request) {
       .single();
 
     if (updateError) {
+      interface DbError { code?: string; message?: string; details?: string; }
+      const err = updateError as unknown as DbError;
+      if (err.code === '23505') {
+        return createApiError('username_taken', 'Username sudah dipakai', 409);
+      }
       return createApiError('server_error', updateError.message, 500);
     }
 
