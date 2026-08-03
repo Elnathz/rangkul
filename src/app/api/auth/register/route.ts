@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       },
       201
     );
-  } catch (error: any) {
-    return createApiError('server_error', error.message || 'Terjadi kesalahan server', 500);
+  } catch (error: unknown) {
+    return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
 }

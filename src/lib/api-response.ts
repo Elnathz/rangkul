@@ -18,6 +18,6 @@ export function createApiError(errorCode: string, message: string, status: numbe
 /**
  * Standardized task status response
  */
-export function taskStatusResponse(status: TaskStatus, additionalData: Record<string, any> = {}) {
+export function taskStatusResponse(status: TaskStatus, additionalData: Record<string, unknown> = {}) {
   return apiResponse({ status, ...additionalData });
 }

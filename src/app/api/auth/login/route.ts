@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validations/auth';
-import { apiSuccess, apiError } from '@/lib/constants/api-response';
+import { apiResponse, createApiError } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
@@ -9,11 +8,13 @@ export async function POST(request: Request) {
     const validation = loginSchema.safeParse(body);
 
     if (!validation.success) {
-      return apiError(
-        'INVALID_INPUT',
-        'Data input tidak valid',
-        400,
-        validation.error.flatten().fieldErrors
+      return apiResponse(
+        {
+          error: 'validation_error',
+          message: 'Data input tidak valid',
+          fieldErrors: validation.error.flatten().fieldErrors,
+        },
+        400
       );
     }
 
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
         .single();
 
       if (userError || !user) {
-        return apiError('UNAUTHORIZED', 'Username atau password salah', 401);
+        return createApiError('invalid_credentials', 'Username atau password salah', 401);
       }
       loginEmail = user.email;
     }
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
     });
 
     if (authError) {
-      return apiError('UNAUTHORIZED', 'Username atau password salah', 401);
+      return createApiError('invalid_credentials', 'Username atau password salah', 401);
     }
 
     // Fetch user profile
@@ -54,20 +55,29 @@ export async function POST(request: Request) {
       .single();
 
     if (profileError || !userProfile) {
-      return apiError('NOT_FOUND', 'Profil pengguna tidak ditemukan', 404);
+      return createApiError('user_not_found', 'Profil pengguna tidak ditemukan', 404);
     }
 
-    return apiSuccess(
+    // Check account status
+    if (userProfile.account_status === 'suspended') {
+      return createApiError('account_suspended', 'Akun sedang ditangguhkan', 403);
+    }
+
+    return apiResponse(
       {
-        user: userProfile,
-        session: {
-          access_token: authData.session.access_token,
-          expires_at: authData.session.expires_at,
+        message: 'Login berhasil',
+        user: {
+          id: userProfile.id,
+          email: userProfile.email,
+          full_name: userProfile.full_name,
+          role: userProfile.role,
+          username: userProfile.username,
         },
+        session: authData.session,
       },
-      'Login berhasil'
+      200
     );
-  } catch (error: any) {
-    return apiError('INTERNAL_ERROR', error.message || 'Terjadi kesalahan server', 500);
+  } catch (error: unknown) {
+    return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
 }
