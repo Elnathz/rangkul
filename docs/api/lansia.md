@@ -10,15 +10,27 @@ Creates or updates a lansia profile. Requires `keluarga` role.
 
 ```json
 {
-  "nama": "string (min 2 characters)",
-  "alamat": "string (min 5 characters)",
-  "lat": "number (optional)",
-  "lng": "number (optional)",
-  "catatan_kondisi": "string (optional)",
-  "dokumen_identitas_lansia_url": "string (valid URL, optional)",
-  "dokumen_hubungan_keluarga_url": "string (valid URL, optional)"
+  "nama": "string",
+  "alamat": "string",
+  "lat": "number",
+  "lng": "number",
+  "catatan_kondisi": "string",
+  "dokumen_identitas_lansia_url": "string (valid URL)",
+  "dokumen_hubungan_keluarga_url": "string (valid URL)"
 }
 ```
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `nama` | - Minimal 2 karakter |
+| `alamat` | - Minimal 5 karakter |
+| `lat` | - Optional number |
+| `lng` | - Optional number |
+| `catatan_kondisi` | - Optional string |
+| `dokumen_identitas_lansia_url` | - Optional valid URL |
+| `dokumen_hubungan_keluarga_url` | - Optional valid URL |
 
 ### Response
 

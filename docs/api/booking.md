@@ -13,9 +13,18 @@ Creates a new task/booking. Requires `keluarga` role.
   "lansia_id": "uuid",
   "service_category_id": "uuid",
   "jadwal_waktu": "ISO 8601 datetime string",
-  "catatan": "string (max 1000 characters, optional)"
+  "catatan": "string"
 }
 ```
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `lansia_id` | - Harus UUID valid |
+| `service_category_id` | - Harus UUID valid |
+| `jadwal_waktu` | - Format ISO 8601 datetime valid |
+| `catatan` | - Maksimal 1000 karakter (optional) |
 
 ### Response
 

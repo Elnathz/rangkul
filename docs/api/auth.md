@@ -10,13 +10,24 @@ Registers a new user account.
 
 ```json
 {
-  "email": "string",
-  "password": "string",
-  "full_name": "string",
+  "username": "string (min 6, max 20, alphanumeric with ._-)",
+  "email": "string (valid email)",
+  "password": "string (min 8, max 128, must contain symbol)",
+  "full_name": "string (min 2 characters)",
   "phone": "string (optional)",
   "role": "enum ['keluarga', 'helper', 'koordinator']"
 }
 ```
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `username` | - Minimal 6 karakter<br>- Maksimal 20 karakter<br>- Hanya boleh mengandung huruf, angka, titik, underscore, dan dash (`^[a-zA-Z0-9._-]+$`) |
+| `email` | - Format email valid |
+| `password` | - Minimal 8 karakter<br>- Maksimal 128 karakter<br>- Harus mengandung minimal 1 simbol |
+| `full_name` | - Minimal 2 karakter |
+| `role` | - Harus salah satu dari: `keluarga`, `helper`, `koordinator` |
 
 ### Response
 
@@ -29,7 +40,8 @@ Registers a new user account.
     "id": "uuid",
     "email": "string",
     "full_name": "string",
-    "role": "enum ['keluarga', 'helper', 'koordinator']"
+    "role": "enum ['keluarga', 'helper', 'koordinator']",
+    "username": "string"
   }
 }
 ```
@@ -41,8 +53,8 @@ Registers a new user account.
   "error": "validation_error",
   "message": "Data input tidak valid",
   "fieldErrors": {
-    "email": ["Invalid email"],
-    "password": ["Password too short"]
+    "username": ["Username minimal 6 karakter"],
+    "password": ["Password harus mengandung minimal 1 simbol"]
   }
 }
 ```
@@ -77,10 +89,17 @@ Authenticates a user and returns session data.
 
 ```json
 {
-  "email": "string",
-  "password": "string"
+  "identifier": "string (min 1 character)",
+  "password": "string (min 1 character)"
 }
 ```
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `identifier` | - Minimal 1 karakter (bisa username atau email) |
+| `password` | - Minimal 1 karakter |
 
 ### Response
 
@@ -112,7 +131,7 @@ Authenticates a user and returns session data.
   "error": "validation_error",
   "message": "Data input tidak valid",
   "fieldErrors": {
-    "email": ["Email wajib diisi"],
+    "identifier": ["Username atau email wajib diisi"],
     "password": ["Password wajib diisi"]
   }
 }
