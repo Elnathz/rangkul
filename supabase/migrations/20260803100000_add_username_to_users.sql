@@ -2,6 +2,11 @@
 ALTER TABLE public.users 
 ADD COLUMN username TEXT;
 
+-- Populate existing users with default username based on email
+UPDATE public.users 
+SET username = 'user_' || SUBSTR(email, 1, POSITION('@' IN email) - 1)
+WHERE username IS NULL;
+
 -- Create unique index for username (case-insensitive)
 CREATE UNIQUE INDEX idx_users_username_lower ON public.users (LOWER(username));
 
