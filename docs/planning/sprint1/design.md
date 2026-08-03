@@ -108,6 +108,15 @@ Catatan: Kolom `ktp_url` hanya bisa dibaca oleh helper sendiri + admin/koordinat
 
 Catatan: Kolom `dokumen_url` hanya bisa dibaca oleh koordinator sendiri + admin.
 
+### 2.4 Storage Bucket
+
+Migration harus membuat bucket **private** `dokumen` (belum ada di database):
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('dokumen', 'dokumen', false);
+```
+Bucket private berarti file tidak bisa diakses publik, hanya lewat signed URL.
+
 ## 3. Struktur File
 
 ```
@@ -120,7 +129,7 @@ src/
     storage/upload/route.ts      → BARU
 supabase/
   migrations/
-    XXX_add_rls_policies.sql     → BARU (RLS policies)
+    XXX_add_rls_policies.sql     → BARU (RLS policies + bucket dokumen)
 ```
 
 ## 4. Keamanan
