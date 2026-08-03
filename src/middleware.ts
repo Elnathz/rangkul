@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
   // Define role-based route protection
   const protectedRoutes = [
     '/api/users/me',
+    '/api/storage/upload',
     // Add more protected routes here as they're created
   ];
   
