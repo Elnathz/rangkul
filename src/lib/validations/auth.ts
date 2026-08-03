@@ -22,5 +22,16 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password wajib diisi'),
 });
 
+export const updateProfileSchema = z.object({
+  full_name: z.string().min(2, 'Nama lengkap minimal 2 karakter').optional(),
+  phone: z.string().optional(),
+  username: z.string()
+    .min(6, 'Username minimal 6 karakter')
+    .max(20, 'Username maksimal 20 karakter')
+    .regex(/^[a-zA-Z0-9._-]+$/, 'Username hanya boleh mengandung huruf, angka, titik, underscore, dan dash')
+    .optional(),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
