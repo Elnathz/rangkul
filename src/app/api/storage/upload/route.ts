@@ -35,6 +35,17 @@ export async function POST(request: Request) {
       return createApiError('file_too_large', 'File maksimal 5MB', 413);
     }
 
+    const buffer = await file.arrayBuffer();
+    const magicBytes = new Uint8Array(buffer.slice(0, 8));
+    const isValidMagicBytes =
+      (magicBytes[0] === 0x25 && magicBytes[1] === 0x50 && magicBytes[2] === 0x44 && magicBytes[3] === 0x46) ||
+      (magicBytes[0] === 0xff && magicBytes[1] === 0xd8 && magicBytes[2] === 0xff) ||
+      (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4e && magicBytes[3] === 0x47);
+
+    if (!isValidMagicBytes) {
+      return createApiError('invalid_file_type', 'Hanya PDF, JPG, atau PNG yang diperbolehkan', 400);
+    }
+
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const filePath = `${authUser.id}/${docType}/${Date.now()}-${sanitizedFileName}`;
 
