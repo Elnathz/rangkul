@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="opt2PrimaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D47A1" />
+      <stop offset="60%" stop-color="#1976D2" />
+      <stop offset="100%" stop-color="#90CAF9" />
+    </linearGradient>
+
+    <linearGradient id="opt2RoofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#90CAF9" />
+      <stop offset="100%" stop-color="#ffffff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Container -->
+  <rect width="512" height="512" rx="128" fill="url(#opt2PrimaryGrad)" />
+
+  <!-- Protective Home Arch / Haven -->
+  <path d="M 256 96 L 396 216 C 408 226, 400 246, 384 246 L 360 246 L 360 360 C 360 380, 344 396, 324 396 L 188 396 C 168 396, 152 380, 152 360 L 152 246 L 128 246 C 112 246, 104 226, 116 216 Z" 
+        fill="#0D47A1" opacity="0.4" />
+
+  <!-- Outer Roof / Embracing Bridge Arch -->
+  <path d="M 256 120 L 380 228 L 350 228 L 350 360 C 350 370, 342 378, 332 378 L 180 378 C 170 378, 162 370, 162 360 L 162 228 L 132 228 Z" 
+        stroke="url(#opt2RoofGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+  <!-- Two Interlocking Figures / Hands (Lansia & Helper) -->
+  <!-- Helper Figure (Left) -->
+  <circle cx="216" cy="236" r="28" fill="#90CAF9" />
+  <path d="M 176 330 C 176 286, 256 286, 256 330" fill="none" stroke="#90CAF9" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Elder / Loved One Figure (Right - Golden Warm Embrace) -->
+  <circle cx="296" cy="246" r="22" fill="#ffffff" />
+  <path d="M 256 330 C 256 294, 336 294, 336 330" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" />
+
+  <!-- Interlocking Heart Bridge below figures -->
+  <path d="M 256 320 C 240 300, 215 300, 205 320 C 195 340, 220 360, 256 380 C 292 360, 317 340, 307 320 C 297 300, 272 300, 256 320 Z" 
+        fill="#90CAF9" opacity="0.9" />
+</svg>

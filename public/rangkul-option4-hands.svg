@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="opt4Bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D47A1" />
+      <stop offset="60%" stop-color="#1565C0" />
+      <stop offset="100%" stop-color="#90CAF9" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#opt4Bg)" />
+  <circle cx="256" cy="256" r="180" fill="#0D47A1" opacity="0.35" />
+  <!-- Holding Hands Path -->
+  <path d="M 140 330 Q 200 240 256 280 T 370 190" stroke="#ffffff" stroke-width="24" stroke-linecap="round" fill="none" />
+  <path d="M 140 190 Q 200 280 256 240 T 370 330" stroke="#90CAF9" stroke-width="24" stroke-linecap="round" fill="none" />
+  <!-- Center Heart of Trust -->
+  <path d="M 256 230 C 245 210, 220 210, 212 230 C 204 250, 225 270, 256 290 C 287 270, 308 250, 300 230 C 292 210, 267 210, 256 230 Z" fill="#ffffff" />
+  <!-- Top Star -->
+  <path d="M 256 120 L 262 136 L 278 136 L 265 146 L 270 162 L 256 152 L 242 162 L 247 146 L 234 136 L 250 136 Z" fill="#E3F2FD" />
+</svg>

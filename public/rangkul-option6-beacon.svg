@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="opt6Bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D47A1" />
+      <stop offset="60%" stop-color="#1565C0" />
+      <stop offset="100%" stop-color="#90CAF9" />
+    </linearGradient>
+    <filter id="beaconGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#opt6Bg)" />
+  <!-- Beacon Lighthouse Outline -->
+  <path d="M 256 100 L 296 220 L 326 380 L 186 380 L 216 220 Z" fill="#0D47A1" opacity="0.5" stroke="#ffffff" stroke-width="12" />
+  <!-- Light Rays / Embracing Rays -->
+  <path d="M 256 130 L 100 240 M 256 130 L 412 240 M 256 130 L 140 340 M 256 130 L 372 340" stroke="#90CAF9" stroke-width="6" stroke-linecap="round" opacity="0.7" />
+  <!-- Beacon Top Glow Heart -->
+  <circle cx="256" cy="130" r="40" fill="#ffffff" filter="url(#beaconGlow)" />
+  <path d="M 256 122 C 250 114, 238 114, 234 122 C 230 130, 240 140, 256 152 C 272 140, 282 130, 278 122 C 274 114, 262 114, 256 122 Z" fill="#0D47A1" />
+</svg>

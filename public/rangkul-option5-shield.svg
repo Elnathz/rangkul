@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="opt5Bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D47A1" />
+      <stop offset="50%" stop-color="#1976D2" />
+      <stop offset="100%" stop-color="#90CAF9" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#opt5Bg)" />
+  <!-- Shield Outline -->
+  <path d="M 256 100 L 376 150 C 376 270, 316 370, 256 410 C 196 370, 136 270, 136 150 Z" stroke="#ffffff" stroke-width="16" stroke-linejoin="round" fill="#0D47A1" opacity="0.4" />
+  <!-- Inner Heart Emblem -->
+  <path d="M 256 170 L 346 205 C 346 290, 301 360, 256 390 C 211 360, 166 290, 166 205 Z" fill="#90CAF9" opacity="0.6" />
+  <!-- Central Hand/Heart -->
+  <path d="M 256 210 C 240 190, 205 190, 195 210 C 185 235, 210 265, 256 300 C 302 265, 327 235, 317 210 C 307 190, 272 190, 256 210 Z" fill="#ffffff" />
+  <!-- Checkmark / Verifikasi RT/RW -->
+  <path d="M 220 255 L 245 280 L 295 230" stroke="#0D47A1" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
