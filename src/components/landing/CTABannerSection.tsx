@@ -25,24 +25,34 @@ export default function CTABannerSection() {
           terjaga — dari mana pun kamu berada.
         </p>
 
-        <div className="flex flex-wrap gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
           <Button
             asChild
             size="lg"
-            className="bg-white text-[#0D47A1] hover:bg-[#90CAF9]/20 font-display font-bold px-8 gap-2 shadow-lg hover:shadow-xl transition-all"
+            className="w-full sm:w-auto bg-white text-[#0D47A1] hover:bg-[#90CAF9] font-display font-bold px-8 gap-2 shadow-[0_4px_14px_0_rgba(255,255,255,0.39)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.23)] hover:-translate-y-1 transition-all duration-300"
           >
             <Link href="/register?role=keluarga">
-              Daftar sebagai Keluarga <ArrowRight size={16} />
+              Keluarga
             </Link>
           </Button>
           <Button
             asChild
             size="lg"
             variant="outline"
-            className="border-white/40 text-white hover:bg-white/10 font-semibold px-8"
+            className="w-full sm:w-auto border-white/60 text-[#0D47A1] hover:bg-[#90CAF9] hover:text-[#0D47A1] font-semibold px-8 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
           >
             <Link href="/register?role=helper">
-              Bergabung sebagai Helper
+              Helper
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="w-full sm:w-auto border-white/60 text-[#0D47A1] hover:bg-[#90CAF9] hover:text-[#0D47A1] hover:border-[#90CAF9] font-semibold px-8 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+          >
+            <Link href="/register?role=koordinator">
+              Koordinator RT/RW
             </Link>
           </Button>
         </div>

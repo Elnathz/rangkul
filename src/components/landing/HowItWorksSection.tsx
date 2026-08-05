@@ -21,21 +21,15 @@ const steps = [
     num: "03",
     title: "Terima Laporan & Pantau",
     desc: "Setelah kunjungan, terima laporan foto + catatan kondisi + skor kesehatan. Semuanya terkumpul jadi Riwayat Rangkul.",
-    tag: "Riwayat Rangkul ⭐",
+    tag: "Riwayat Rangkul",
   },
 ];
 
 export default function HowItWorksSection() {
   return (
-    <section id="cara-kerja" className="py-20 bg-[#F5F8FC]">
+    <section id="cara-kerja" className="py-20 bg-[#F5F8FC] min-h-[100dvh] flex flex-col justify-center">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
-          <Badge
-            variant="secondary"
-            className="mb-4 text-xs font-semibold bg-[#0D47A1]/08 text-[#0D47A1] border border-[#0D47A1]/20 py-1.5 px-3"
-          >
-            Cara Kerja
-          </Badge>
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mb-4">
             Mudah Dipakai, Aman Dipercaya
           </h2>
