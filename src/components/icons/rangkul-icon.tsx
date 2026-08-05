@@ -1,0 +1,64 @@
+import React from "react";
+
+interface RangkulIconProps extends React.SVGProps<SVGSVGElement> {
+  size?: number;
+}
+
+export const RangkulIcon: React.FC<RangkulIconProps> = ({
+  size = 40,
+  className = "",
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      width={size}
+      height={size}
+      fill="none"
+      className={className}
+      {...props}
+    >
+      <defs>
+        <linearGradient id="reactRangkulPrimaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0D47A1" />
+          <stop offset="50%" stopColor="#1565C0" />
+          <stop offset="100%" stopColor="#90CAF9" />
+        </linearGradient>
+
+        <linearGradient id="reactRangkulAccentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#90CAF9" />
+          <stop offset="100%" stopColor="#E3F2FD" />
+        </linearGradient>
+
+        <filter id="reactRangkulGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="12" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      {/* Container background */}
+      <rect width="512" height="512" rx="128" fill="url(#reactRangkulPrimaryGrad)" />
+
+      {/* Outer embracing curve */}
+      <path
+        d="M 160 350 C 100 290, 110 180, 200 130 C 260 96, 330 110, 360 160 C 375 185, 370 215, 345 225 C 320 235, 295 220, 285 200 C 265 165, 215 155, 175 180 C 125 210, 120 280, 165 320 C 185 338, 185 365, 160 350 Z"
+        fill="#ffffff"
+        opacity="0.95"
+      />
+
+      {/* Inner interlocking curve */}
+      <path
+        d="M 352 162 C 412 222, 402 332, 312 382 C 252 416, 182 402, 152 352 C 137 327, 142 297, 167 287 C 192 277, 217 292, 227 312 C 247 347, 297 357, 337 332 C 387 302, 392 232, 347 192 C 327 174, 327 147, 352 162 Z"
+        fill="url(#reactRangkulAccentGrad)"
+      />
+
+      {/* Center Heart */}
+      <path
+        d="M 256 220 C 240 195, 205 195, 195 220 C 185 245, 210 275, 256 310 C 302 275, 327 245, 317 220 C 307 195, 272 195, 256 220 Z"
+        fill="#ffffff"
+        filter="url(#reactRangkulGlow)"
+      />
+    </svg>
+  );
+};
