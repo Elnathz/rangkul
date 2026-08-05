@@ -51,6 +51,22 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const role = user?.user_metadata?.role;
+  const username =
+    user?.user_metadata?.username ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    "Profil";
+
+  const profileHref =
+    role === "admin"
+      ? "/admin/dashboard"
+      : role === "helper"
+      ? "/helper/dashboard"
+      : role === "koordinator"
+      ? "/koordinator/dashboard"
+      : "/beranda";
+
   return (
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
@@ -88,12 +104,12 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <Button variant="ghost" size="sm" asChild className="font-semibold gap-2">
-              <Link href="/dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <Link href={profileHref}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-primary">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
-                Profil
+                <span>@{username}</span>
               </Link>
             </Button>
           ) : (
@@ -137,13 +153,13 @@ export default function Navbar() {
           ))}
           <div className="flex flex-col gap-2 pt-2 border-t border-border">
             {user ? (
-              <Button variant="outline" asChild className="w-full gap-2">
-                <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <Button variant="outline" asChild className="w-full gap-2 justify-start">
+                <Link href={profileHref} onClick={() => setMenuOpen(false)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-primary">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
-                  Profil
+                  <span>@{username}</span>
                 </Link>
               </Button>
             ) : (
