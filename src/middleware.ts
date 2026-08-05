@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith('/api/admin');
   const isKoordinatorRoute = request.nextUrl.pathname.startsWith('/api/koordinator');
   const isHelperRoute = request.nextUrl.pathname.startsWith('/api/helper');
-  const isKeluargaRoute = request.nextUrl.pathname.startsWith('/api/lansia'); // Keluarga manages lansia profiles
+  const isKeluargaRoute = request.nextUrl.pathname.startsWith('/api/lansia');
+  const isBookingRoute = request.nextUrl.pathname.startsWith('/api/booking');
   
   // Check if route requires authentication
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -91,6 +92,13 @@ export async function middleware(request: NextRequest) {
     if (isKeluargaRoute && userRole !== 'keluarga' && userRole !== 'admin') {
       return NextResponse.json(
         { error: 'forbidden', message: 'Hanya keluarga dan admin yang dapat mengakses resource ini' },
+        { status: 403 }
+      );
+    }
+    
+    if (isBookingRoute && userRole !== 'keluarga' && userRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'Hanya keluarga dan admin yang dapat membuat pemesanan' },
         { status: 403 }
       );
     }
