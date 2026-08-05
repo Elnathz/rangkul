@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,8 +126,7 @@ const roles = [
 
 type Role = (typeof roles)[number]["value"];
 
-// ---- Main ----
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams();
   const [role, setRole] = useState<Role>("keluarga");
   const [showPassword, setShowPassword] = useState(false);
@@ -160,7 +159,6 @@ export default function RegisterPage() {
     const errs = validateRegister(fields);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    // TODO: call /api/auth/register
   };
 
   const pwChecks = getPasswordChecks(fields.password);
@@ -374,5 +372,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F5F8FC] flex items-center justify-center p-8 text-center text-muted-foreground">Memuat...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
