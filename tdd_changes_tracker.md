@@ -50,3 +50,4 @@ Dokumen ini mencatat pelacakan kepatuhan dan perubahan terhadap dokumen **Techni
 |---|---|---|---|---|
 | 03/08/2026 | Icon & Logo Branding | Penambahan 13 opsi asset SVG resmi & komponen React `RangkulIconOptionsShowcase` | Mengikuti token warna TDD §13.1 (`#0D47A1` & `#90CAF9`) dan eksplorasi latar belakang | Approved |
 | 05/08/2026 | Logo SVG Vectorization | Vektoriasi asset `public/logo.png` menjadi `public/logo.svg` (high-precision bezier curves & responsive viewBox) | Memenuhi kebutuhan asset SVG scalable tanpa mengubah bentuk visual logo asli | Approved |
+| 06/08/2026 | Asset Cleanup | Pembersihan 15 file SVG opsi eksperimental (`public/rangkul-option*.svg`, `rangkul-icon.svg`, `rangkul-logo.svg`) & `rangkul-icon-showcase.tsx` | Menghapus asset draf/opsi branding sementara yang tidak dipakai dalam aplikasi utama agar bundle publik tetap bersih | Approved |

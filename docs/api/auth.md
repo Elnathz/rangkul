@@ -14,20 +14,21 @@ Registers a new user account.
   "email": "string (valid email)",
   "password": "string (min 8, max 128, must contain symbol)",
   "full_name": "string (min 2 characters)",
-  "phone": "string (optional)",
+  "phone": "number",
   "role": "enum ['keluarga', 'helper', 'koordinator']"
 }
 ```
 
 ### Validation Rules
 
-| Field | Rules |
-|-------|-------|
-| `username` | - Minimal 6 karakter<br>- Maksimal 20 karakter<br>- Hanya boleh mengandung huruf, angka, titik, underscore, dan dash (`^[a-zA-Z0-9._-]+$`) |
-| `email` | - Format email valid |
-| `password` | - Minimal 8 karakter<br>- Maksimal 128 karakter<br>- Harus mengandung minimal 1 simbol |
-| `full_name` | - Minimal 2 karakter |
-| `role` | - Harus salah satu dari: `keluarga`, `helper`, `koordinator` |
+| Field         | Rules                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `username`  | - Minimal 6 karakter- Maksimal 20 karakter- Hanya boleh mengandung huruf, angka, titik, underscore, dan dash (`^[a-zA-Z0-9._-]+$`) |
+| `email`     | - Format email valid                                                                                                                 |
+| `password`  | - Minimal 8 karakter- Maksimal 128 karakter- Harus mengandung minimal 1 simbol                                                       |
+| `full_name` | - Minimal 2 karakter<br />- Maksimal 60 Huruf/karakter termasuk spasi                                                                |
+| `role`      | - Harus salah satu dari:`keluarga`, `helper`, `koordinator`                                                                    |
+| `number`    | -  number,  minimal 10,  maksimal 13, depan wajib 08                                                                                 |
 
 ### Response
 
@@ -96,10 +97,10 @@ Authenticates a user and returns session data.
 
 ### Validation Rules
 
-| Field | Rules |
-|-------|-------|
+| Field          | Rules                                           |
+| -------------- | ----------------------------------------------- |
 | `identifier` | - Minimal 1 karakter (bisa username atau email) |
-| `password` | - Minimal 1 karakter |
+| `password`   | - Minimal 1 karakter                            |
 
 ### Response
 
