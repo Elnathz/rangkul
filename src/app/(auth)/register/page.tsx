@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -127,9 +127,12 @@ const roles = [
 type Role = (typeof roles)[number]["value"];
 
 function RegisterForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [role, setRole] = useState<Role>("keluarga");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const [fields, setFields] = useState({
     username: "",
     full_name: "",
@@ -156,9 +159,48 @@ function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    setApiError("");
+
     const errs = validateRegister(fields);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: fields.username.trim(),
+          full_name: fields.full_name.trim(),
+          email: fields.email.trim(),
+          phone: fields.phone ? `08${fields.phone}` : undefined,
+          password: fields.password,
+          role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.fieldErrors) {
+          const flat: FieldErrors = {};
+          Object.keys(data.fieldErrors).forEach((key) => {
+            flat[key] = data.fieldErrors[key][0];
+          });
+          setErrors(flat);
+        }
+        setApiError(data.message || "Gagal melakukan registrasi.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/login?registered=true");
+    } catch {
+      setApiError("Terjadi kesalahan jaringan.");
+      setLoading(false);
+    }
   };
 
   const pwChecks = getPasswordChecks(fields.password);
@@ -191,6 +233,15 @@ function RegisterForm() {
               Pilih peranmu untuk memulai
             </p>
           </div>
+
+          {apiError && (
+            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0 text-red-500">
+                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1-9a1 1 0 0 0-1 1v4a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1Z" />
+              </svg>
+              {apiError}
+            </div>
+          )}
 
           {/* Role picker */}
           <div className="flex flex-col gap-3 mb-6">
@@ -351,9 +402,10 @@ function RegisterForm() {
 
             <Button
               type="submit"
+              disabled={loading}
               className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1"
             >
-              Buat Akun
+              {loading ? "Memproses Registrasi..." : "Buat Akun"}
             </Button>
           </form>
 
