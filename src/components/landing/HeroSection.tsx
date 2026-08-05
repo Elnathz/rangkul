@@ -139,8 +139,8 @@ export default function HeroSection() {
 
               <div className="bg-[#F5F8FC] rounded-xl p-3">
                 <p className="text-xs text-muted-foreground italic">
-                  "Hari ini Ibu cerita soal masa kecilnya di Solo. Tampak
-                  sangat ceria dan bersemangat."
+                  &quot;Hari ini Ibu cerita soal masa kecilnya di Solo. Tampak
+                  sangat ceria dan bersemangat.&quot;
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
                   24 Jul 2026 — Helper Andi

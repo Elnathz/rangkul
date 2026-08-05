@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +129,13 @@ type Role = (typeof roles)[number]["value"];
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [role, setRole] = useState<Role>("keluarga");
+  const roleParam = searchParams.get("role");
+  const initialRole: Role =
+    roleParam === "helper" || roleParam === "koordinator" || roleParam === "keluarga"
+      ? roleParam
+      : "keluarga";
+
+  const [role, setRole] = useState<Role>(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -142,11 +148,6 @@ function RegisterForm() {
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    const r = searchParams.get("role");
-    if (r === "helper" || r === "koordinator" || r === "keluarga") setRole(r);
-  }, [searchParams]);
 
   const set =
     (key: keyof typeof fields) =>
