@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, full_name, phone, role } = validation.data;
+    const { email, password, full_name, phone, role, username } = validation.data;
     const supabaseAdmin = await createAdminClient();
 
     // Create User via Supabase Auth Admin API
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       email_confirm: true,
       user_metadata: {
         full_name,
+        username,
         role,
       },
     });
@@ -36,11 +37,14 @@ export async function POST(request: Request) {
       return createApiError('registration_failed', authError.message, 400);
     }
 
-    // Update phone if provided
-    if (phone && authData.user) {
+    // Update username and phone in users table
+    if (authData.user) {
       await supabaseAdmin
         .from('users')
-        .update({ phone })
+        .update({
+          username: username.toLowerCase(),
+          ...(phone ? { phone } : {}),
+        })
         .eq('id', authData.user.id);
     }
 
@@ -51,6 +55,7 @@ export async function POST(request: Request) {
           id: authData.user.id,
           email: authData.user.email,
           full_name,
+          username,
           role,
         },
       },
