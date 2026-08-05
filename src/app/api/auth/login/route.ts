@@ -20,18 +20,17 @@ export async function POST(request: Request) {
 
     const { identifier, password } = validation.data;
     const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
     let loginEmail = identifier;
 
     // Check if identifier is username (not email)
     if (!identifier.includes('@')) {
-      // Use Admin Client (service role) to lookup email by username before authentication
-      const adminClient = await createAdminClient();
       const { data: user, error: userError } = await adminClient
         .from('users')
         .select('email')
         .ilike('username', identifier.trim())
-        .single();
+        .maybeSingle();
 
       if (userError || !user) {
         return createApiError('invalid_credentials', 'Username atau password salah', 401);
@@ -39,24 +38,59 @@ export async function POST(request: Request) {
       loginEmail = user.email;
     }
 
+    // Authenticate with Supabase Auth GoTrue
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password,
     });
 
-    if (authError) {
+    if (authError || !authData.user) {
       return createApiError('invalid_credentials', 'Username atau password salah', 401);
     }
 
-    // Fetch user profile
-    const { data: userProfile, error: profileError } = await supabase
+    // Failsafe 1: Fetch user profile by ID
+    let { data: userProfile } = await adminClient
       .from('users')
       .select('*')
       .eq('id', authData.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !userProfile) {
-      return createApiError('user_not_found', 'Profil pengguna tidak ditemukan', 404);
+    // Failsafe 2: Match by email if ID differed in public.users
+    if (!userProfile && authData.user.email) {
+      const { data: profileByEmail } = await adminClient
+        .from('users')
+        .select('*')
+        .eq('email', authData.user.email.toLowerCase())
+        .maybeSingle();
+
+      if (profileByEmail) {
+        userProfile = profileByEmail;
+      }
+    }
+
+    // Failsafe 3: Auto-create profile if missing in public.users
+    if (!userProfile && authData.user.email) {
+      const meta = authData.user.user_metadata || {};
+      const fallbackUsername = meta.username || `user_${authData.user.id.substring(0, 8)}`;
+      
+      const { data: newProfile } = await adminClient
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email.toLowerCase(),
+          username: fallbackUsername.toLowerCase(),
+          full_name: meta.full_name || 'Pengguna Rangkul',
+          role: meta.role || 'keluarga',
+          account_status: 'active',
+        })
+        .select()
+        .maybeSingle();
+
+      userProfile = newProfile;
+    }
+
+    if (!userProfile) {
+      return createApiError('user_not_found', 'Profil pengguna gagal dimuat', 404);
     }
 
     // Check account status
