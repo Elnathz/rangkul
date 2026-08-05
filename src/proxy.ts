@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { Database } from '@/types/database';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Update session first
   const supabaseResponse = await updateSession(request);
   
@@ -119,3 +119,6 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+
+export default proxy;
+
