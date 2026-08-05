@@ -2,9 +2,52 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 
+const serviceIcons: Record<string, React.ReactNode> = {
+  "Antar Obat": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+      <path d="M8.5 8.5 16 16" />
+    </svg>
+  ),
+  "Pengingat Obat": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
+  "Belanja Kebutuhan": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  ),
+  "Menemani Mengobrol": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  "Bersih Rumah Ringan": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  "Bantuan Teknologi": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12.01" y2="18" />
+    </svg>
+  ),
+  "Kontrol Kesehatan": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+};
+
 const services = [
   {
-    emoji: "💊",
     name: "Antar Obat",
     duration: "30 mnt",
     price: "Rp35.000",
@@ -12,7 +55,6 @@ const services = [
     highRisk: false,
   },
   {
-    emoji: "⏰",
     name: "Pengingat Obat",
     duration: "30 mnt",
     price: "Rp25.000",
@@ -20,15 +62,13 @@ const services = [
     highRisk: false,
   },
   {
-    emoji: "🛒",
     name: "Belanja Kebutuhan",
     duration: "60 mnt",
     price: "Rp40.000",
-    desc: "Belanja bahan makanan & kebutuhan sehari-hari untuk lansia.",
+    desc: "Belanja bahan makanan dan kebutuhan sehari-hari untuk lansia.",
     highRisk: false,
   },
   {
-    emoji: "💬",
     name: "Menemani Mengobrol",
     duration: "60 mnt",
     price: "Rp50.000",
@@ -36,7 +76,6 @@ const services = [
     highRisk: false,
   },
   {
-    emoji: "🧹",
     name: "Bersih Rumah Ringan",
     duration: "90 mnt",
     price: "Rp70.000",
@@ -44,15 +83,13 @@ const services = [
     highRisk: false,
   },
   {
-    emoji: "📱",
     name: "Bantuan Teknologi",
     duration: "45 mnt",
     price: "Rp30.000",
-    desc: "Video call dengan keluarga, setup hp, atau bantuan digital lainnya.",
+    desc: "Video call dengan keluarga, setup HP, atau bantuan digital lainnya.",
     highRisk: false,
   },
   {
-    emoji: "🏥",
     name: "Kontrol Kesehatan",
     duration: "90 mnt",
     price: "Rp120.000",
@@ -63,21 +100,15 @@ const services = [
 
 export default function ServicesSection() {
   return (
-    <section id="layanan" className="py-20 bg-white">
+    <section id="layanan" className="py-20 bg-white min-h-[100dvh] flex flex-col justify-center">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-12">
-          <Badge
-            variant="secondary"
-            className="mb-4 text-xs font-semibold bg-[#0D47A1]/08 text-[#0D47A1] border border-[#0D47A1]/20 py-1.5 px-3"
-          >
-            7 Kategori Jasa
-          </Badge>
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mb-4">
             Layanan Apa Saja yang Tersedia?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Semua dengan <strong>fix price</strong> yang transparan — tidak ada biaya kejutan. Helper terverifikasi siap
+            Semua dengan <strong>harga fix</strong> yang transparan. Helper terverifikasi siap
             membantu sesuai kebutuhan lansia.
           </p>
         </div>
@@ -95,7 +126,7 @@ export default function ServicesSection() {
                   Perlu Koordinator
                 </span>
               )}
-              <div className="text-3xl mb-3">{svc.emoji}</div>
+              <div className="text-[#0D47A1] mb-3">{serviceIcons[svc.name]}</div>
               <h3 className="font-display font-bold text-sm text-foreground mb-1">
                 {svc.name}
               </h3>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ const categories = [
 
 const stats = [
   { icon: ShieldCheck, label: "Terverifikasi RT/RW", value: "100%" },
-  { icon: Star, label: "Rating rata-rata", value: "4.8 ⭐" },
+  { icon: Star, label: "Rating rata-rata", value: "4.8" },
   { icon: Clock, label: "Respon booking", value: "< 1 jam" },
 ];
 
@@ -25,7 +26,7 @@ export default function HeroSection() {
   const [query, setQuery] = useState("");
 
   return (
-    <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+    <section className="relative min-h-[100dvh] flex items-center pt-24 pb-20 overflow-hidden">
       {/* Background blobs */}
       <div className="absolute inset-0 bg-hero-blob pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-[#90CAF9]/10 blur-[100px] pointer-events-none -translate-y-1/3 translate-x-1/3" />
@@ -35,13 +36,6 @@ export default function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-14 items-center">
           {/* Left — Copy */}
           <div>
-            <Badge
-              variant="secondary"
-              className="mb-5 text-xs font-semibold bg-[#0D47A1]/08 text-[#0D47A1] border border-[#0D47A1]/20 py-1.5 px-3"
-            >
-              🏘️ Diverifikasi Komunitas RT/RW
-            </Badge>
-
             <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight mb-5">
               Merangkul Jarak,{" "}
               <span className="text-[#0D47A1]">Menjaga</span>{" "}
@@ -50,11 +44,7 @@ export default function HeroSection() {
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-lg">
               Hubungkan lansia dengan pendamping lokal terverifikasi komunitas.
-              Setiap kunjungan jadi{" "}
-              <span className="font-semibold text-foreground">
-                Riwayat Rangkul
-              </span>{" "}
-              — jurnal kondisi yang bisa kamu pantau dari mana saja.
+              Setiap kunjungan menjadi catatan kondisi yang bisa kamu pantau dari mana saja.
             </p>
 
             {/* Search bar */}
@@ -94,17 +84,9 @@ export default function HeroSection() {
               <Button
                 asChild
                 size="lg"
-                className="bg-brand-gradient text-white font-semibold px-7 hover:opacity-90 shadow-md shadow-[#0D47A1]/20"
+                className="bg-brand-gradient text-white font-display font-bold px-8 shadow-xl shadow-[#0D47A1]/20 w-full sm:w-auto h-12 text-base rounded-xl"
               >
                 <Link href="/register?role=keluarga">Daftar sebagai Keluarga</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-[#0D47A1] text-[#0D47A1] font-semibold px-7 hover:bg-[#0D47A1]/5"
-              >
-                <Link href="/register?role=helper">Jadi Helper</Link>
               </Button>
             </div>
           </div>
@@ -114,10 +96,19 @@ export default function HeroSection() {
             {/* Main card */}
             <div className="glass-card rounded-3xl border border-border shadow-[0_12px_48px_rgba(13,71,161,0.12)] p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#90CAF9] to-[#0D47A1]" />
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-border bg-[#F5F8FC] shrink-0">
+                  <Image
+                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=AndiP&backgroundColor=b6e3f4"
+                    alt="Andi P"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                </div>
                 <div>
                   <p className="font-display font-bold text-sm">Andi P.</p>
-                  <p className="text-xs text-muted-foreground">RT 03 • ⭐ 4.8</p>
+                  <p className="text-xs text-muted-foreground">RT 03 · Rating 4.8</p>
                 </div>
                 <Badge className="ml-auto bg-green-50 text-green-700 border-green-200 text-[10px]">
                   Terpercaya
@@ -126,7 +117,7 @@ export default function HeroSection() {
 
               <div className="space-y-3 mb-5">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Riwayat Rangkul — Ibu Siti
+                  Catatan Kunjungan — Ibu Siti
                 </p>
                 {["Energi", "Mood", "Mobilitas"].map((label, i) => (
                   <div key={label} className="flex items-center gap-3">
