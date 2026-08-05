@@ -24,30 +24,25 @@ export default function Footer() {
   return (
     <footer className="bg-[#0D47A1] text-white mt-auto">
       <div className="max-w-7xl mx-auto px-6 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-x-8 gap-y-12">
           {/* Brand */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <Image 
-  src="/logo.png" 
-  alt="Logo Rangkul" 
-  width={40} 
-  height={40} 
-  className="w-auto h-auto object-contain" 
-/>
-              <span className="font-display font-bold text-xl">Rangkul</span>
-            </div>
+          <div className="col-span-2">
+            <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+              <Image
+                src="/logo.png"
+                alt="Logo Rangkul"
+                width={36}
+                height={36}
+                unoptimized
+              />
+              <span className="font-display font-bold text-xl text-white">
+                Rangkul
+              </span>
+            </Link>
             <p className="text-white/70 text-sm leading-relaxed mb-5">
               Merangkul Jarak,<br />Menjaga yang Tersayang.
             </p>
-            <div className="flex gap-2 flex-wrap">
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/15 border border-white/25">
-                🌆 SDG 11
-              </span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/15 border border-white/25">
-                💼 SDG 8
-              </span>
-            </div>
+            
           </div>
 
           {/* Link columns */}
@@ -76,7 +71,7 @@ export default function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
           <p>© 2026 Rangkul. ITechno Cup 2026 — Web Development.</p>
-          <p>Dibuat dengan ❤️ untuk lansia Indonesia.</p>
+          <p>Dibuat untuk lansia Indonesia.</p>
         </div>
       </div>
     </footer>
