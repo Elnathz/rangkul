@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validations/auth';
 import { apiResponse, createApiError } from '@/lib/api-response';
 
@@ -25,11 +25,12 @@ export async function POST(request: Request) {
 
     // Check if identifier is username (not email)
     if (!identifier.includes('@')) {
-      // Find user by username
-      const { data: user, error: userError } = await supabase
+      // Use Admin Client (service role) to lookup email by username before authentication
+      const adminClient = await createAdminClient();
+      const { data: user, error: userError } = await adminClient
         .from('users')
         .select('email')
-        .eq('username', identifier.toLowerCase())
+        .ilike('username', identifier.trim())
         .single();
 
       if (userError || !user) {
