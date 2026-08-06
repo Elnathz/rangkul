@@ -7,29 +7,29 @@ export async function GET() {
 
     const demoUsers = [
       {
-        email: 'keluarga.demo@rangkul.id',
-        username: 'keluarga_demo',
+        email: 'demo_keluarga@rangkul.id',
+        username: 'demo_keluarga',
         full_name: 'Keluarga Demo',
         role: 'keluarga' as const,
         phone: '081234567890',
       },
       {
-        email: 'helper.demo@rangkul.id',
-        username: 'helper_demo',
+        email: 'demo_helper@rangkul.id',
+        username: 'demo_helper',
         full_name: 'Helper Demo',
         role: 'helper' as const,
         phone: '082345678901',
       },
       {
-        email: 'koordinator.rt01@rangkul.id',
-        username: 'koordinator_rt01',
-        full_name: 'Koordinator RT 01',
+        email: 'demo_koordinator@rangkul.id',
+        username: 'demo_koordinator',
+        full_name: 'Koordinator Demo',
         role: 'koordinator' as const,
         phone: '083456789012',
       },
       {
-        email: 'admin.demo@rangkul.id',
-        username: 'admin_demo',
+        email: 'demo_admin@rangkul.id',
+        username: 'demo_admin',
         full_name: 'Admin Demo Rangkul',
         role: 'admin' as const,
         phone: '084567890123',
@@ -39,7 +39,7 @@ export async function GET() {
     const password = 'RangkulDemo2026!';
     const results = [];
 
-    // List users using admin API
+    // Fetch existing auth users list
     const { data: authUsersData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const existingList = authUsersData?.users || [];
 
@@ -47,6 +47,7 @@ export async function GET() {
       let targetUser = existingList.find(u => u.email?.toLowerCase() === demo.email.toLowerCase());
 
       if (targetUser) {
+        // Update existing auth user password and email confirmation
         const { data: updated, error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
           targetUser.id,
           {
@@ -79,12 +80,16 @@ export async function GET() {
         });
 
         if (createErr) {
-          // If already exists error, try listUsers again to find it
           if (createErr.message.includes('already been registered')) {
-            const { data: retryList } = await supabaseAdmin.auth.admin.listUsers();
-            const found = retryList?.users?.find(u => u.email?.toLowerCase() === demo.email.toLowerCase());
-            if (found) {
-              const { data: updated } = await supabaseAdmin.auth.admin.updateUserById(found.id, {
+            // Find existing user ID from public.users
+            const { data: existingProfile } = await supabaseAdmin
+              .from('users')
+              .select('id')
+              .eq('email', demo.email.toLowerCase())
+              .maybeSingle();
+
+            if (existingProfile?.id) {
+              const { data: updated } = await supabaseAdmin.auth.admin.updateUserById(existingProfile.id, {
                 password,
                 email_confirm: true,
                 user_metadata: {
@@ -95,8 +100,12 @@ export async function GET() {
               });
               if (updated?.user) {
                 targetUser = updated.user;
-                results.push({ email: demo.email, action: 'update_after_conflict', success: true, id: updated.user.id });
+                results.push({ email: demo.email, action: 'update_existing', success: true, id: targetUser.id });
+              } else {
+                results.push({ email: demo.email, action: 'exists', success: true, id: existingProfile.id });
               }
+            } else {
+              results.push({ email: demo.email, action: 'create', success: false, error: createErr.message });
             }
           } else {
             results.push({ email: demo.email, action: 'create', success: false, error: createErr.message });
@@ -107,7 +116,7 @@ export async function GET() {
         }
       }
 
-      // Upsert into public.users
+      // Upsert into public.users table
       if (targetUser) {
         await supabaseAdmin.from('users').upsert({
           id: targetUser.id,
@@ -124,8 +133,9 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Demo accounts seeded successfully',
+      message: 'Demo accounts seeded successfully via Supabase Auth Admin API',
       password,
+      accounts: demoUsers.map((u) => ({ username: u.username, email: u.email, role: u.role })),
       results,
     });
   } catch (error: unknown) {
