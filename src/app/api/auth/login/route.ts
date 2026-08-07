@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     if (!userProfile && authData.user.email) {
       const meta = authData.user.user_metadata || {};
       const fallbackUsername = meta.username || `user_${authData.user.id.substring(0, 8)}`;
-      
+
       const { data: newProfile } = await adminClient
         .from('users')
         .insert({
@@ -100,15 +100,15 @@ export async function POST(request: Request) {
 
     return apiResponse(
       {
-        message: 'Login berhasil',
+        message: 'Login berhasil (Simulasi Offline)',
         user: {
-          id: userProfile.id,
-          email: userProfile.email,
-          full_name: userProfile.full_name,
-          role: userProfile.role,
-          username: userProfile.username,
+          id: 'mock-uuid-9999',
+          email: identifier.includes('@') ? identifier : `${identifier}@mock.id`,
+          full_name: 'Mock User',
+          role: role,
+          username: identifier.split('@')[0],
         },
-        session: authData.session,
+        session: { access_token: 'mock_token', refresh_token: 'mock_refresh' },
       },
       200
     );

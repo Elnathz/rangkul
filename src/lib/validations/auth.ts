@@ -12,9 +12,10 @@ export const registerSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Password harus mengandung minimal 1 simbol'),
   full_name: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
   phone: z.string()
-    .regex(/^08[0-9]{8,11}$/, 'Nomor telepon harus berawalan 08 dan berjumlah 10-13 digit')
-    .optional()
-    .or(z.literal('')),
+    .min(10, 'Nomor HP minimal 10 digit')
+    .max(13, 'Nomor HP maksimal 13 digit')
+    .regex(/^08[0-9]+$/, 'Nomor HP harus diawali dengan 08')
+    .optional(),
   role: z.enum(['keluarga', 'helper', 'koordinator'], {
     error: 'Peran tidak valid',
   }),

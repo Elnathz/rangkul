@@ -28,13 +28,14 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 
 -- Admin User
-INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, role, aud, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000000',
     'admin.demo@rangkul.id',
     '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
     NOW(),
+    '{"provider": "email", "providers": ["email"]}',
     '{"full_name": "Admin Rangkul Platform", "role": "admin", "username": "admin_rangkul"}',
     'authenticated',
     'authenticated',
@@ -43,13 +44,14 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Keluarga Demo
-INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, role, aud, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
 VALUES (
     'b0000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000000',
     'keluarga.demo@rangkul.id',
     '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
     NOW(),
+    '{"provider": "email", "providers": ["email"]}',
     '{"full_name": "Budi Santoso (Keluarga)", "role": "keluarga", "username": "keluarga_demo"}',
     'authenticated',
     'authenticated',
@@ -58,13 +60,14 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Koordinator Demo (RT 05 / RW 02)
-INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, role, aud, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
 VALUES (
     'c0000000-0000-0000-0000-000000000002',
     '00000000-0000-0000-0000-000000000000',
     'koordinator.demo@rangkul.id',
     '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
     NOW(),
+    '{"provider": "email", "providers": ["email"]}',
     '{"full_name": "Pak Pakusadewo (Ketua RT 05)", "role": "koordinator", "username": "koordinator_rt01"}',
     'authenticated',
     'authenticated',
@@ -73,13 +76,14 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Helper Demo (Andi)
-INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, role, aud, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
 VALUES (
     'd0000000-0000-0000-0000-000000000003',
     '00000000-0000-0000-0000-000000000000',
     'helper.demo@rangkul.id',
     '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
     NOW(),
+    '{"provider": "email", "providers": ["email"]}',
     '{"full_name": "Andi Pratama (Helper)", "role": "helper", "username": "helper_demo"}',
     'authenticated',
     'authenticated',
@@ -88,8 +92,17 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
--- 3. SEED PROFILES (Koordinator, Helper, Lansia, Demo Wallet)
+-- 3. SEED PROFILES (Users, Koordinator, Helper, Lansia, Demo Wallet)
 -- ============================================================================
+
+-- Master Users Data
+INSERT INTO public.users (id, username, full_name, email, phone, role)
+VALUES 
+    ('a0000000-0000-0000-0000-000000000001', 'admin_rangkul', 'Admin Rangkul Platform', 'admin.demo@rangkul.id', '081200000001', 'admin'),
+    ('b0000000-0000-0000-0000-000000000001', 'keluarga_demo', 'Budi Santoso (Keluarga)', 'keluarga.demo@rangkul.id', '081200000002', 'keluarga'),
+    ('c0000000-0000-0000-0000-000000000002', 'koordinator_rt01', 'Pak Pakusadewo (Ketua RT 05)', 'koordinator.demo@rangkul.id', '081200000003', 'koordinator'),
+    ('d0000000-0000-0000-0000-000000000003', 'helper_demo', 'Andi Pratama (Helper)', 'helper.demo@rangkul.id', '081200000004', 'helper')
+ON CONFLICT (id) DO NOTHING;
 
 -- Koordinator Profile
 INSERT INTO public.koordinator_profiles (id, user_id, wilayah, tingkat, status, saldo_komisi)

@@ -22,7 +22,11 @@ const roles = [
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    color: "from-[#0D47A1] to-[#1565C0]",
+    // Teal/hijau — mewakili keluarga & kehangatan
+    iconBg: "from-[#00897B] to-[#26A69A]",
+    checkColor: "text-[#00897B]",
+    btnClass: "bg-[#00897B] hover:bg-[#00796B] text-white",
+    badgeClass: "bg-[#00897B]/10 text-[#00796B] border-[#00897B]/20",
     highlight: false,
   },
   {
@@ -30,12 +34,12 @@ const roles = [
     title: "Helper",
     subtitle: "Untuk pendamping lokal",
     description:
-      "Jadilah helper terverifikasi di lingkungan RT/RW kamu. Terima tugas dari keluarga sekitar dan tingkatkan ekonomi komunitasmu dengan waktu kerja sesukamu.",
+      "Jadilah helper terverifikasi di lingkungan RT/RW kamu. Terima tugas dari keluarga sekitar dan tingkatkan pendapatanmu dengan jadwal kerja fleksibel.",
     features: [
-      "Estimasi penghasilan Rp 500rb - 1.5jt per bulan",
+      "Estimasi penghasilan Rp 500rb - 3jt per bulan",
       "Harga fix per kategori, tanpa tawar-menawar",
-      "Diverifikasi oleh Koordinator RT/RW domisili",
-      "Jadwal kerja fleksibel sesuai ketersediaanmu",
+      "Diverifikasi Koordinator RT/RW domisili",
+      "Bisa terima tugas lintas RT dalam radius layanan",
     ],
     cta: { label: "Daftar sebagai Helper", href: "/register?role=helper" },
     icon: (
@@ -44,7 +48,11 @@ const roles = [
         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
       </svg>
     ),
-    color: "from-[#1565C0] to-[#1976D2]",
+    // Amber/oranye — semangat & kerja keras
+    iconBg: "from-[#F57C00] to-[#FF9800]",
+    checkColor: "text-[#F57C00]",
+    btnClass: "bg-[#F57C00] hover:bg-[#E65100] text-white",
+    badgeClass: "bg-[#F57C00]/10 text-[#E65100] border-[#F57C00]/20",
     highlight: false,
     badgeText: "Bantu Sesama",
   },
@@ -53,9 +61,9 @@ const roles = [
     title: "Koordinator RT/RW",
     subtitle: "Untuk pengurus komunitas",
     description:
-      "Sebagai Ketua RT atau RW, kamu memiliki peran kunci. Jadikan lingkunganmu lebih aman dengan memverifikasi helper dan memantau pelayanan di wilayahmu.",
+      "Sebagai Ketua RT atau RW, kamu memiliki peran kunci. Verifikasi helper, pantau pelayanan di wilayahmu, dan dapatkan komisi 3% dari setiap layanan yang selesai.",
     features: [
-      "100% Gratis untuk memajukan komunitas",
+      "Komisi 3% dari setiap tugas helper yang selesai",
       "Verifikasi helper di wilayah RT/RW dengan mudah",
       "Pantau seluruh aktivitas kunjungan secara real-time",
       "Laporan transaksi operasional untuk arsip bulanan",
@@ -69,7 +77,11 @@ const roles = [
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
-    color: "from-[#0D47A1] to-[#283593]",
+    // Indigo/biru tua — wibawa & kepercayaan
+    iconBg: "from-[#5C6BC0] to-[#3949AB]",
+    checkColor: "text-[#5C6BC0]",
+    btnClass: "bg-[#3949AB] hover:bg-[#283593] text-white",
+    badgeClass: "bg-[#5C6BC0]/10 text-[#3949AB] border-[#5C6BC0]/20",
     highlight: false,
   },
 ];
@@ -92,21 +104,17 @@ export default function RolesSection() {
           {roles.map((role) => (
             <div
               key={role.id}
-              className={`rounded-2xl border p-7 transition-all duration-300 flex flex-col gap-5 ${
-                role.highlight
-                  ? "border-[#0D47A1]/30 bg-gradient-to-b from-[#0D47A1]/05 to-white shadow-[0_8px_32px_rgba(13,71,161,0.12)] ring-1 ring-[#0D47A1]/15 hover:shadow-xl hover:-translate-y-1"
-                  : "border-border bg-[#F5F8FC] hover:bg-white hover:shadow-[0_8px_32px_rgba(13,71,161,0.09)] hover:-translate-y-1"
-              }`}
+              className="rounded-2xl border border-border bg-[#F5F8FC] hover:bg-white hover:shadow-[0_8px_32px_rgba(0,0,0,0.09)] hover:-translate-y-1 transition-all duration-300 flex flex-col gap-5 p-7"
             >
               <div className="flex items-start justify-between gap-3">
                 <div
-                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center shadow-sm shrink-0`}
+                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.iconBg} flex items-center justify-center shadow-sm shrink-0`}
                 >
                   {role.icon}
                 </div>
-                {role.highlight && (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#0D47A1] text-white shrink-0">
-                    {role.badgeText || "Untuk RT/RW"}
+                {role.id === "helper" && (
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${role.badgeClass}`}>
+                    {role.badgeText}
                   </span>
                 )}
               </div>
@@ -126,7 +134,7 @@ export default function RolesSection() {
               <ul className="flex flex-col gap-2">
                 {role.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#0D47A1] mt-0.5 shrink-0">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className={`w-4 h-4 mt-0.5 shrink-0 ${role.checkColor}`}>
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
                     </svg>
                     {f}
@@ -138,11 +146,7 @@ export default function RolesSection() {
                 <Button
                   asChild
                   size="sm"
-                  className={`w-full font-semibold ${
-                    role.highlight
-                      ? "bg-brand-gradient text-white hover:opacity-90 shadow-sm"
-                      : "bg-brand-gradient text-white hover:opacity-90"
-                  }`}
+                  className={`w-full font-semibold ${role.btnClass}`}
                 >
                   <Link href={role.cta.href}>{role.cta.label}</Link>
                 </Button>

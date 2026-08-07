@@ -126,7 +126,7 @@ export default function HeroSection() {
 
               <div className="space-y-3 mb-5">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Catatan Kunjungan — Ibu Siti
+                  Catatan Kunjungan Terakhir
                 </p>
                 {["Energi", "Mood", "Mobilitas"].map((label, i) => (
                   <div key={label} className="flex items-center gap-3">
@@ -152,7 +152,7 @@ export default function HeroSection() {
                   sangat ceria dan bersemangat.&quot;
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
-                  24 Jul 2026 — Helper Andi
+                   24 Jul 2026 · Helper Andi
                 </p>
               </div>
             </div>
