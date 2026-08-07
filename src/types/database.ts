@@ -975,6 +975,13 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string
+          alamat_detail: string | null
+          rt: number | null
+          rw: number | null
+          kelurahan: string | null
+          kecamatan: string | null
+          kabupaten_kota: string | null
+          provinsi: string | null
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
@@ -986,6 +993,13 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username: string
+          alamat_detail?: string | null
+          rt?: number | null
+          rw?: number | null
+          kelurahan?: string | null
+          kecamatan?: string | null
+          kabupaten_kota?: string | null
+          provinsi?: string | null
         }
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
@@ -997,6 +1011,13 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string
+          alamat_detail?: string | null
+          rt?: number | null
+          rw?: number | null
+          kelurahan?: string | null
+          kecamatan?: string | null
+          kabupaten_kota?: string | null
+          provinsi?: string | null
         }
         Relationships: []
       }
