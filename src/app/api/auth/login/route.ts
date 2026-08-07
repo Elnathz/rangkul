@@ -100,15 +100,9 @@ export async function POST(request: Request) {
 
     return apiResponse(
       {
-        message: 'Login berhasil (Simulasi Offline)',
-        user: {
-          id: 'mock-uuid-9999',
-          email: identifier.includes('@') ? identifier : `${identifier}@mock.id`,
-          full_name: 'Mock User',
-          role: role,
-          username: identifier.split('@')[0],
-        },
-        session: { access_token: 'mock_token', refresh_token: 'mock_refresh' },
+        message: 'Login berhasil',
+        user: userProfile,
+        session: authData.session,
       },
       200
     );
