@@ -1,4 +1,4 @@
-﻿export default function Page() {
+export default function Page() {
   return (
     <div className="flex items-center justify-center min-h-screen p-8 text-center">
       <h1 className="text-xl font-semibold text-gray-500">
