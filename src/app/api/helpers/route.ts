@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
+    const searchQuery = searchParams.get('q') || searchParams.get('search');
     const latParam = searchParams.get('lat');
     const lngParam = searchParams.get('lng');
     const radiusParam = searchParams.get('radius_km') ?? '10';
@@ -52,18 +53,24 @@ export async function GET(request: Request) {
       return createApiError('server_error', error.message, 500);
     }
 
-    // Filter radius sisi server menggunakan Haversine formula
-    // (Supabase free tier tidak selalu support PostGIS)
     let filtered = helpers ?? [];
+
+    // Filter pencarian nama helper, nama jasa/layanan, atau bio jika parameter `q` / `search` diberikan
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter((h) => {
+        const matchName = h.users?.full_name?.toLowerCase().includes(q);
+        const matchBio = h.bio?.toLowerCase().includes(q);
+        const matchService = h.helper_service_categories?.some((c) =>
+          c.service_categories?.nama?.toLowerCase().includes(q)
+        );
+        return Boolean(matchName || matchBio || matchService);
+      });
+    }
 
     if (lat !== null && lng !== null) {
       filtered = filtered.filter((h) => {
         if (!h.radius_layanan_km) return false;
-        // Haversine: hitung jarak dari koordinat pencari ke domisili helper
-        // Catatan: domisili_lat/lng tidak di-select untuk privasi, pakai wilayah sebagai
-        // fallback. Filter ketat hanya bisa dilakukan jika koordinat diekspos.
-        // Untuk MVP: helper difilter berdasarkan radius_layanan_km yang mereka atur sendiri.
-        // Implementasi Haversine penuh membutuhkan koordinat — currently semua helper returned.
         return true;
       });
     }
