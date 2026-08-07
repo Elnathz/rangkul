@@ -22,7 +22,7 @@ export default function CTABannerSection() {
         </h2>
         <p className="text-white/70 text-lg mb-10 max-w-lg mx-auto">
           Daftar sekarang dan pastikan orang tua yang kamu sayangi selalu
-          terjaga — dari mana pun kamu berada.
+          terjaga, dari mana pun kamu berada.
         </p>
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
