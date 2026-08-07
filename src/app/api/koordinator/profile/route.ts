@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 
-// GET /api/helper/profile — Helper melihat status profilnya sendiri
+// GET /api/koordinator/profile — Koordinator melihat status profilnya sendiri
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -11,16 +11,21 @@ export async function GET() {
       return createApiError('unauthorized', 'Anda harus login', 401);
     }
 
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (!userProfile || userProfile.role !== 'koordinator') {
+      return createApiError('forbidden', 'Hanya koordinator yang dapat mengakses endpoint ini', 403);
+    }
+
     const { data: profile, error } = await supabase
-      .from('helper_profiles')
+      .from('koordinator_profiles')
       .select(`
-        id, status, tingkat_kepercayaan, bio, wilayah_domisili,
-        domisili_lat, domisili_lng, radius_layanan_km, is_available,
-        rating_avg, total_tugas_selesai, suspend_reason,
-        koordinator_id, created_at, updated_at,
-        helper_service_categories (
-          service_categories ( id, nama )
-        )
+        id, wilayah, tingkat, status, saldo_komisi,
+        diverifikasi_at, created_at, updated_at
       `)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -30,7 +35,11 @@ export async function GET() {
     }
 
     if (!profile) {
-      return createApiError('not_found', 'Profil helper belum ada. Silakan daftar dulu via POST /api/helper/apply', 404);
+      return createApiError(
+        'not_found',
+        'Profil koordinator belum ada. Daftar dulu via POST /api/koordinator/apply',
+        404
+      );
     }
 
     return apiResponse({ profile }, 200);

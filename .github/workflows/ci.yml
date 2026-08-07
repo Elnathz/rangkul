@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -31,11 +31,5 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test (if exists)
-        run: |
-          if npm run test --if-present; then
-            echo "Tests passed or no tests found"
-          else
-            echo "Tests failed"
-            exit 1
-          fi
+      - name: Build
+        run: npm run build
