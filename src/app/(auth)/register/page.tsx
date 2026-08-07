@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,19 +131,19 @@ const roles = [
 
 type Role = (typeof roles)[number]["value"];
 
-// ---- Main ----
-export default function RegisterPage() {
-  const searchParams = useSearchParams();
+function RegisterForm() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>(() => {
-    const r = searchParams.get("role");
-    if (r === "helper" || r === "koordinator" || r === "keluarga") return r;
-    return "keluarga";
-  });
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role");
+  const initialRole: Role =
+    roleParam === "helper" || roleParam === "koordinator" || roleParam === "keluarga"
+      ? roleParam
+      : "keluarga";
+
+  const [role, setRole] = useState<Role>(initialRole);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
-  // phone hanya menyimpan digit setelah "08"
   const [fields, setFields] = useState({
     username: "",
     full_name: "",
@@ -166,35 +166,46 @@ export default function RegisterPage() {
     e.preventDefault();
     setSubmitted(true);
     setApiError("");
+
     const errs = validateRegister(fields);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        ...fields,
-        role,
-      };
+    setLoading(true);
 
+    try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          username: fields.username.trim(),
+          full_name: fields.full_name.trim(),
+          email: fields.email.trim(),
+          phone: fields.phone ? `08${fields.phone}` : undefined,
+          password: fields.password,
+          role,
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        setApiError(data.message || "Gagal membuat akun.");
+        if (data.fieldErrors) {
+          const flat: FieldErrors = {};
+          Object.keys(data.fieldErrors).forEach((key) => {
+            flat[key] = data.fieldErrors[key][0];
+          });
+          setErrors(flat);
+        }
+        setApiError(data.message || "Gagal melakukan registrasi.");
+        setLoading(false);
         return;
       }
-      
-      // Ke halaman login
-      router.push("/login?registered=1");
-    } catch (err) {
+
+      router.push("/login?registered=true");
+    } catch {
       setApiError("Terjadi kesalahan jaringan.");
-    } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -228,6 +239,15 @@ export default function RegisterPage() {
               Pilih peranmu untuk memulai
             </p>
           </div>
+
+          {apiError && (
+            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0 text-red-500">
+                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1-9a1 1 0 0 0-1 1v4a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1Z" />
+              </svg>
+              {apiError}
+            </div>
+          )}
 
           {/* Role picker */}
           <div className="flex flex-col gap-3 mb-6">
@@ -384,20 +404,10 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1"
             >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Memproses...
-                </span>
-              ) : (
-                "Buat Akun"
-              )}
+              {loading ? "Memproses Registrasi..." : "Buat Akun"}
             </Button>
           </form>
 
@@ -416,5 +426,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F5F8FC] flex items-center justify-center p-8 text-center text-muted-foreground">Memuat...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -1,139 +1,155 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function HelperVerifikasiPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [form, setForm] = useState({
+    bio: "",
+    wilayah_domisili: "",
+    domisili_lat: -6.9175,
+    domisili_lng: 107.6191,
+    radius_layanan_km: 5,
+    ktp_url: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mocking API delay
-    setTimeout(() => {
+    setErrorMsg("");
+    setFieldErrors({});
+
+    try {
+      const res = await fetch("/api/helper/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.fieldErrors) setFieldErrors(data.fieldErrors);
+        setErrorMsg(data.message || "Gagal menyimpan profil helper.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/helper/dashboard");
+    } catch {
+      setErrorMsg("Terjadi kesalahan koneksi jaringan.");
       setLoading(false);
-      setSubmitted(true);
-    }, 1500);
+    }
   };
 
-  if (submitted) {
-    return (
-      <div className="max-w-2xl mx-auto p-6 mt-12 bg-white border border-green-200 rounded-2xl shadow-sm text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Berkas Berhasil Diajukan!</h2>
-        <p className="text-slate-500 mb-6">
-          Koordinator RT/RW Anda akan segera memverifikasi data ini. Pengawasan langsung ini dilakukan untuk mencegah adanya calo dan memastikan identitas Helper valid.
-        </p>
-        <Button onClick={() => window.location.href = "/helper/dashboard"}>
-          Kembali ke Dashboard
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-3xl mx-auto p-6 md:p-10 mb-20 bg-white rounded-2xl border border-slate-200 shadow-sm mt-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold block bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
-          Verifikasi Data Helper
-        </h1>
-        <p className="text-slate-500 mt-2">
-          Lengkapi data alamat dan dokumen pendukung sesuai e-KTP. Nantinya 1 Helper terverifikasi di RT domisilinya dapat mengambil tugas lintas wilayah!
-        </p>
+    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild className="rounded-full">
+            <Link href="/helper/dashboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Kembali
+            </Link>
+          </Button>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Verifikasi & Profil Helper</h1>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
+          {errorMsg && (
+            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-medium">
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="wilayah" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Wilayah Domisili *
+              </Label>
+              <Input
+                id="wilayah"
+                required
+                placeholder="Contoh: Kecamatan Lengkong, Bandung"
+                value={form.wilayah_domisili}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, wilayah_domisili: e.target.value })}
+                className="h-11 rounded-xl"
+              />
+              {fieldErrors.wilayah_domisili && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.wilayah_domisili[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Bio Singkat & Pengalaman
+              </Label>
+              <Textarea
+                id="bio"
+                rows={3}
+                placeholder="Ceritakan pengalaman Anda dalam mendampingi lansia..."
+                value={form.bio}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, bio: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="radius" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Radius Maksimal Jangkauan Layanan (KM)
+              </Label>
+              <Input
+                id="radius"
+                type="number"
+                min={1}
+                max={25}
+                required
+                value={form.radius_layanan_km}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, radius_layanan_km: Number(e.target.value) })}
+                className="h-11 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="ktp_url" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                URL Foto KTP / Dokumen Identitas *
+              </Label>
+              <Input
+                id="ktp_url"
+                type="url"
+                required
+                placeholder="https://..."
+                value={form.ktp_url}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, ktp_url: e.target.value })}
+                className="h-11 rounded-xl"
+              />
+              {fieldErrors.ktp_url && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.ktp_url[0]}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-95 shadow-sm mt-2"
+            >
+              {loading ? "Menyimpan Profil..." : "Kirim Verifikasi Profil"}
+            </Button>
+          </form>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Section 1: Alamat Lengkap */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Informasi Alamat Lengkap</h2>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Kecamatan / Kelurahan</Label>
-              <Input required placeholder="Contoh: Kec. Antapani, Kel. Antapani Wetan" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>RT</Label>
-                <Input required placeholder="001" maxLength={3} />
-              </div>
-              <div className="space-y-2">
-                <Label>RW</Label>
-                <Input required placeholder="005" maxLength={3} />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Alamat Lengkap</Label>
-            <Textarea required placeholder="Nama Jalan, Nomor Rumah, Patokan (Contoh: Dekat Masjid Kuning)" className="min-h-[80px]" />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Radius Pelayanan (km)</Label>
-            <Input required type="number" min={1} max={15} defaultValue={5} className="md:max-w-[200px]" />
-            <p className="text-xs text-slate-500">Maksimal jarak antar tugas yang bersedia Anda layani.</p>
-          </div>
-        </section>
-
-        {/* Section 2: Layanan & Bio */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Kapasitas & Layanan</h2>
-          
-          <div className="space-y-2">
-            <Label>Kategori Layanan Utama</Label>
-            <select required className="flex h-10 w-full md:max-w-md items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-              <option value="">-- Pilih Layanan Utama Anda --</option>
-              <option value="kunjungan">Layanan Kunjungan & Teman Ngobrol</option>
-              <option value="kesehatan">Kontrol Kesehatan Ringan</option>
-              <option value="darurat">Bantuan Kedaruratan</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Biografi Singkat (Bio)</Label>
-            <Textarea required placeholder="Ceritakan pengalaman Anda merawat lansia atau alasan ingin menjadi Helper." className="min-h-[100px]" />
-          </div>
-        </section>
-
-        {/* Section 3: Upload Dokumen */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Dokumen Validasi</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="border border-dashed border-slate-300 rounded-xl p-6 text-center space-y-3 bg-slate-50 hover:bg-blue-50 transition-colors cursor-pointer">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700">Upload KTP</p>
-                <p className="text-xs text-slate-500">Maks. 2MB (JPG, PNG)</p>
-              </div>
-            </div>
-            
-            <div className="border border-dashed border-slate-300 rounded-xl p-6 text-center space-y-3 bg-slate-50 hover:bg-blue-50 transition-colors cursor-pointer">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-                 <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700">Surat Pengantar RT (Opsional)</p>
-                <p className="text-xs text-slate-500">Jika domisili beda dengan KTP</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <Button type="submit" disabled={loading} className="w-full my-4 h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-md rounded-xl">
-          {loading ? "Menyimpan Data..." : "Kirim Pengajuan Verifikasi"}
-        </Button>
-      </form>
     </div>
   );
 }

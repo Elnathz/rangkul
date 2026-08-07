@@ -19,20 +19,84 @@ export async function POST(request: Request) {
     }
 
     const { identifier, password } = validation.data;
+    const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
-    // MOCK MODE: Bypass Supabase karena server saat ini tidak valid
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    let loginEmail = identifier;
 
-    // Validasi mock (jika "salah" -> tester menggunakan kata sandi khusus "error")
-    if (password === 'error') {
-      return createApiError('invalid_credentials', 'Username atau password salah (Simulasi Error)', 401);
+    // Check if identifier is username (not email)
+    if (!identifier.includes('@')) {
+      const { data: user, error: userError } = await adminClient
+        .from('users')
+        .select('email')
+        .ilike('username', identifier.trim())
+        .maybeSingle();
+
+      if (userError || !user) {
+        return createApiError('invalid_credentials', 'Username atau password salah', 401);
+      }
+      loginEmail = user.email;
     }
 
-    // Berikan peran acak atau baca dari identifier jika berisi indikator peran
-    let role = 'keluarga';
-    if (identifier.includes('helper')) role = 'helper';
-    if (identifier.includes('koordinator')) role = 'koordinator';
+    // Authenticate with Supabase Auth GoTrue
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password,
+    });
+
+    if (authError || !authData.user) {
+      return createApiError('invalid_credentials', 'Username atau password salah', 401);
+    }
+
+    // Failsafe 1: Fetch user profile by ID
+    let { data: userProfile } = await adminClient
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+
+    // Failsafe 2: Match by email if ID differed in public.users
+    if (!userProfile && authData.user.email) {
+      const { data: profileByEmail } = await adminClient
+        .from('users')
+        .select('*')
+        .eq('email', authData.user.email.toLowerCase())
+        .maybeSingle();
+
+      if (profileByEmail) {
+        userProfile = profileByEmail;
+      }
+    }
+
+    // Failsafe 3: Auto-create profile if missing in public.users
+    if (!userProfile && authData.user.email) {
+      const meta = authData.user.user_metadata || {};
+      const fallbackUsername = meta.username || `user_${authData.user.id.substring(0, 8)}`;
+
+      const { data: newProfile } = await adminClient
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email.toLowerCase(),
+          username: fallbackUsername.toLowerCase(),
+          full_name: meta.full_name || 'Pengguna Rangkul',
+          role: meta.role || 'keluarga',
+          account_status: 'active',
+        })
+        .select()
+        .maybeSingle();
+
+      userProfile = newProfile;
+    }
+
+    if (!userProfile) {
+      return createApiError('user_not_found', 'Profil pengguna gagal dimuat', 404);
+    }
+
+    // Check account status
+    if (userProfile.account_status === 'suspended') {
+      return createApiError('account_suspended', 'Akun sedang ditangguhkan', 403);
+    }
 
     return apiResponse(
       {

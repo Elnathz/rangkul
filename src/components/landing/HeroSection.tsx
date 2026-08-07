@@ -48,7 +48,16 @@ export default function HeroSection() {
             </p>
 
             {/* Search bar */}
-            <div className="flex gap-2 p-1.5 bg-white rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.10)] border border-border mb-4 max-w-xl">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const targetUrl = query.trim()
+                  ? `/cari-helper?q=${encodeURIComponent(query.trim())}`
+                  : "/cari-helper";
+                window.location.href = targetUrl;
+              }}
+              className="flex gap-2 p-1.5 bg-white rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.10)] border border-border mb-4 max-w-xl"
+            >
               <div className="flex items-center gap-2 flex-1 pl-3">
                 <Search size={16} className="text-muted-foreground shrink-0" />
                 <Input
@@ -59,12 +68,12 @@ export default function HeroSection() {
                 />
               </div>
               <Button
-                asChild
+                type="submit"
                 className="bg-brand-gradient text-white text-sm font-semibold px-5 rounded-xl hover:opacity-90 h-10"
               >
-                <Link href="/cari-helper">Cari Helper</Link>
+                Cari Helper
               </Button>
-            </div>
+            </form>
 
             {/* Quick category chips */}
             <div className="flex flex-wrap gap-2 mb-10">
@@ -139,8 +148,8 @@ export default function HeroSection() {
 
               <div className="bg-[#F5F8FC] rounded-xl p-3">
                 <p className="text-xs text-muted-foreground italic">
-                  "Hari ini Ibu cerita soal masa kecilnya di Solo. Tampak
-                  sangat ceria dan bersemangat."
+                  &quot;Hari ini Ibu cerita soal masa kecilnya di Solo. Tampak
+                  sangat ceria dan bersemangat.&quot;
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
                    24 Jul 2026 · Helper Andi

@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,108 +9,144 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function TambahLansiaPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [form, setForm] = useState({
+    nama: "",
+    alamat: "",
+    catatan_kondisi: "",
+    dokumen_identitas_lansia_url: "",
+    dokumen_hubungan_keluarga_url: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mocking API delay
-    setTimeout(() => {
+    setErrorMsg("");
+    setFieldErrors({});
+
+    try {
+      const res = await fetch("/api/lansia/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.fieldErrors) setFieldErrors(data.fieldErrors);
+        setErrorMsg(data.message || "Gagal menyimpan data lansia.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/beranda");
+    } catch {
+      setErrorMsg("Terjadi kesalahan koneksi jaringan.");
       setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+    }
   };
 
-  if (submitted) {
-    return (
-      <div className="max-w-2xl mx-auto p-6 mt-12 bg-white border border-teal-200 rounded-2xl shadow-sm text-center">
-        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Profil Lansia Berhasil Ditambahkan!</h2>
-        <p className="text-slate-500 mb-6">
-          Kini Anda dapat langsung mencari Helper dan menjadwalkan kunjungan pertama untuk anggota keluarga Anda.
-        </p>
-        <Button asChild className="bg-teal-600 hover:bg-teal-700">
-          <Link href="/beranda">
-            Kembali ke Beranda
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="ml-3 border-teal-200 text-teal-700 hover:bg-teal-50">
-          <Link href="/cari-helper">
-            Cari Helper Sekarang
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-3xl mx-auto p-6 md:p-10 mb-20 bg-white rounded-2xl border border-slate-200 shadow-sm mt-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold block bg-gradient-to-r from-teal-700 to-teal-500 bg-clip-text text-transparent">
-          Tambah Profil Lansia
-        </h1>
-        <p className="text-slate-500 mt-2">
-          Daftarkan anggota keluarga Anda agar Helper dapat memahami kondisi serta kebutuhan prioritas mereka sebelumnya.
-        </p>
+    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild className="rounded-full">
+            <Link href="/beranda">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Kembali
+            </Link>
+          </Button>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Tambah Profil Lansia</h1>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
+          {errorMsg && (
+            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-medium">
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="nama" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Nama Lengkap Lansia *
+              </Label>
+              <Input
+                id="nama"
+                required
+                placeholder="Contoh: Opa Haryono"
+                value={form.nama}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, nama: e.target.value })}
+                className="h-11 rounded-xl"
+              />
+              {fieldErrors.nama && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.nama[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Alamat Lengkap Tempat Tinggal *
+              </Label>
+              <Textarea
+                id="alamat"
+                required
+                rows={3}
+                placeholder="Jl. Merdeka No. 12, RT 02 / RW 05, Bandung"
+                value={form.alamat}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, alamat: e.target.value })}
+                className="rounded-xl"
+              />
+              {fieldErrors.alamat && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.alamat[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="catatan_kondisi" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Catatan Kondisi Kesehatan / Khusus
+              </Label>
+              <Textarea
+                id="catatan_kondisi"
+                rows={2}
+                placeholder="Contoh: Butuh bantuan berjalan, riwayat hipertensi ringan."
+                value={form.catatan_kondisi}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, catatan_kondisi: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="dokumen_identitas" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                URL Dokumen Identitas Lansia (Opsional)
+              </Label>
+              <Input
+                id="dokumen_identitas"
+                type="url"
+                placeholder="https://..."
+                value={form.dokumen_identitas_lansia_url}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, dokumen_identitas_lansia_url: e.target.value })}
+                className="h-11 rounded-xl"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-95 shadow-sm mt-2"
+            >
+              {loading ? "Menyimpan..." : "Simpan Profil Lansia"}
+            </Button>
+          </form>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Section 1: Data Diri */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Informasi Dasar</h2>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Nama Lengkap Lansia</Label>
-              <Input required placeholder="Masukkan nama..." />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Umur (Tahun)</Label>
-                <Input required type="number" placeholder="Contoh: 75" />
-              </div>
-              <div className="space-y-2">
-                <Label>Jenis Kelamin</Label>
-                <select required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-                  <option value="">Pilih</option>
-                  <option value="L">Laki-laki</option>
-                  <option value="P">Perempuan</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Hubungan Keluarga</Label>
-            <Input required placeholder="Contoh: Ayah Kandung, Ibu Mertua" />
-          </div>
-        </section>
-
-        {/* Section 2: Kondisi Medis & Catatan */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Kondisi Medis & Catatan Perawatan</h2>
-          
-          <div className="space-y-2">
-            <Label>Riwayat Penyakit (Opsional)</Label>
-            <Textarea placeholder="Contoh: Hipertensi, Diabetes, mudah lelah..." className="min-h-[80px]" />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Catatan Khusus untuk Helper</Label>
-            <Textarea required placeholder="Deskripsikan pantangan makanan, kepribadian, atau instruksi khusus saat merawat..." className="min-h-[100px]" />
-          </div>
-        </section>
-
-        <Button type="submit" disabled={loading} className="w-full my-4 h-12 bg-teal-600 hover:bg-teal-700 text-white font-bold text-md rounded-xl">
-          {loading ? "Menyimpan Profil..." : "Simpan Profil Lansia"}
-        </Button>
-      </form>
     </div>
   );
 }

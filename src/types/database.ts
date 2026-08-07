@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -147,6 +147,36 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      helper_service_categories: {
+        Row: {
+          helper_id: string
+          service_category_id: string
+        }
+        Insert: {
+          helper_id: string
+          service_category_id: string
+        }
+        Update: {
+          helper_id?: string
+          service_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helper_service_categories_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_service_categories_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -945,6 +975,13 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string
+          alamat_detail: string | null
+          rt: number | null
+          rw: number | null
+          kelurahan: string | null
+          kecamatan: string | null
+          kabupaten_kota: string | null
+          provinsi: string | null
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
@@ -956,6 +993,13 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username: string
+          alamat_detail?: string | null
+          rt?: number | null
+          rw?: number | null
+          kelurahan?: string | null
+          kecamatan?: string | null
+          kabupaten_kota?: string | null
+          provinsi?: string | null
         }
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
@@ -967,6 +1011,13 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string
+          alamat_detail?: string | null
+          rt?: number | null
+          rw?: number | null
+          kelurahan?: string | null
+          kecamatan?: string | null
+          kabupaten_kota?: string | null
+          provinsi?: string | null
         }
         Relationships: []
       }

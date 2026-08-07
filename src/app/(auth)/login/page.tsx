@@ -79,8 +79,15 @@ export default function LoginPage() {
         return;
       }
       
-      // Success, redirect to dashboard
-      window.location.href = "/dashboard";
+      // Success, redirect based on user role
+      const roleRoutes: Record<string, string> = {
+        keluarga: '/beranda',
+        helper: '/helper/dashboard',
+        koordinator: '/koordinator/dashboard',
+        admin: '/admin/dashboard',
+      };
+      const targetRoute = roleRoutes[data.user?.role] || '/beranda';
+      window.location.href = targetRoute;
     } catch (error) {
       setApiError("Terjadi kesalahan jaringan.");
     }

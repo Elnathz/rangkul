@@ -34,13 +34,22 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     '/api/users/me',
     '/api/storage/upload',
-    // Add more protected routes here as they're created
+    '/api/lansia',
+    '/api/helper',
+    '/api/helpers',
+    '/api/koordinator',
+    '/api/booking',
   ];
   
   const isAdminRoute = request.nextUrl.pathname.startsWith('/api/admin');
   const isKoordinatorRoute = request.nextUrl.pathname.startsWith('/api/koordinator');
-  const isHelperRoute = request.nextUrl.pathname.startsWith('/api/helper');
-  const isKeluargaRoute = request.nextUrl.pathname.startsWith('/api/lansia'); // Keluarga manages lansia profiles
+  const isHelperRoute =
+    request.nextUrl.pathname.startsWith('/api/helper/apply') ||
+    request.nextUrl.pathname.startsWith('/api/helper/profile') ||
+    request.nextUrl.pathname.startsWith('/api/helper/queue') ||
+    /^\/api\/helper\/[^/]+\/(approve|reject)$/.test(request.nextUrl.pathname);
+  const isKeluargaRoute = request.nextUrl.pathname.startsWith('/api/lansia');
+  const isBookingRoute = request.nextUrl.pathname.startsWith('/api/booking');
   
   // Check if route requires authentication
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -94,6 +103,13 @@ export async function middleware(request: NextRequest) {
         { status: 403 }
       );
     }
+    
+    if (isBookingRoute && userRole !== 'keluarga' && userRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'Hanya keluarga dan admin yang dapat membuat pemesanan' },
+        { status: 403 }
+      );
+    }
   }
   
   return supabaseResponse;
@@ -111,3 +127,6 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+
+export default middleware;
+
