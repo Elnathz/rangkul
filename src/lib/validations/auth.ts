@@ -18,6 +18,13 @@ export const registerSchema = z.object({
   role: z.enum(['keluarga', 'helper', 'koordinator'], {
     error: 'Peran tidak valid',
   }),
+  alamat_detail: z.string().optional(),
+  rt: z.coerce.number().int().optional(),
+  rw: z.coerce.number().int().optional(),
+  kelurahan: z.string().optional(),
+  kecamatan: z.string().optional(),
+  kabupaten_kota: z.string().optional(),
+  provinsi: z.string().optional(),
 });
 
 export const loginSchema = z.object({
@@ -33,6 +40,13 @@ export const updateProfileSchema = z.object({
     .max(20, 'Username maksimal 20 karakter')
     .regex(/^[a-zA-Z0-9._-]+$/, 'Username hanya boleh mengandung huruf, angka, titik, underscore, dan dash')
     .optional(),
+  alamat_detail: z.string().optional(),
+  rt: z.coerce.number().int().optional(),
+  rw: z.coerce.number().int().optional(),
+  kelurahan: z.string().optional(),
+  kecamatan: z.string().optional(),
+  kabupaten_kota: z.string().optional(),
+  provinsi: z.string().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

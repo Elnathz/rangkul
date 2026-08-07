@@ -18,7 +18,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, full_name, phone, role, username } = validation.data;
+    const {
+      email,
+      password,
+      full_name,
+      phone,
+      role,
+      username,
+      alamat_detail,
+      rt,
+      rw,
+      kelurahan,
+      kecamatan,
+      kabupaten_kota,
+      provinsi,
+    } = validation.data;
     const supabaseAdmin = await createAdminClient();
 
     // Check if username is already taken (case-insensitive)
@@ -61,13 +75,20 @@ export async function POST(request: Request) {
       return createApiError('registration_failed', authError.message, 400);
     }
 
-    // Update username and phone in public.users table
+    // Update username, phone and address details in public.users table
     if (authData.user) {
       await supabaseAdmin
         .from('users')
         .update({
           username: username.toLowerCase().trim(),
           ...(formattedPhone ? { phone: formattedPhone } : {}),
+          alamat_detail: alamat_detail || null,
+          rt: rt ?? null,
+          rw: rw ?? null,
+          kelurahan: kelurahan || null,
+          kecamatan: kecamatan || null,
+          kabupaten_kota: kabupaten_kota || null,
+          provinsi: provinsi || null,
         })
         .eq('id', authData.user.id);
     }
