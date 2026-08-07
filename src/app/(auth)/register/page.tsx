@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,8 @@ function getPasswordChecks(password: string) {
 }
 
 // ---- Validation ----
+// Nomor HP Indonesia: total 10–13 digit, dimulai 08
+// Disimpan ke DB lengkap dengan 08 di awal
 function validateRegister(data: {
   username: string;
   full_name: string;
@@ -42,10 +44,13 @@ function validateRegister(data: {
   if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     errors.email = "Format email tidak valid";
   }
-  if (data.phone && data.phone.length > 0) {
+  // Phone wajib, format: user ketik setelah "08" prefix, total DB = "08" + input (8–11 digit)
+  if (!data.phone || data.phone.trim() === "") {
+    errors.phone = "Nomor HP wajib diisi";
+  } else {
     const full = "08" + data.phone;
-    if (!/^08[0-9]{7,12}$/.test(full)) {
-      errors.phone = "Nomor HP tidak valid (format: 08xxxxxxxxxx, 9-14 digit)";
+    if (!/^08[0-9]{8,11}$/.test(full)) {
+      errors.phone = "Nomor tidak valid (8–11 digit setelah 08, total 10–13 digit)";
     }
   }
   if (data.password.length < 8) {
@@ -129,22 +134,25 @@ type Role = (typeof roles)[number]["value"];
 // ---- Main ----
 export default function RegisterPage() {
   const searchParams = useSearchParams();
-  const [role, setRole] = useState<Role>("keluarga");
+  const router = useRouter();
+  const [role, setRole] = useState<Role>(() => {
+    const r = searchParams.get("role");
+    if (r === "helper" || r === "koordinator" || r === "keluarga") return r;
+    return "keluarga";
+  });
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
+  // phone hanya menyimpan digit setelah "08"
   const [fields, setFields] = useState({
     username: "",
     full_name: "",
     email: "",
-    phone: "",
+    phone: "", 
     password: "",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    const r = searchParams.get("role");
-    if (r === "helper" || r === "koordinator" || r === "keluarga") setRole(r);
-  }, [searchParams]);
 
   const set =
     (key: keyof typeof fields) =>
@@ -157,10 +165,37 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    setApiError("");
     const errs = validateRegister(fields);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    // TODO: call /api/auth/register
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...fields,
+        role,
+      };
+
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(data.message || "Gagal membuat akun.");
+        return;
+      }
+      
+      // Ke halaman login
+      router.push("/login?registered=1");
+    } catch (err) {
+      setApiError("Terjadi kesalahan jaringan.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const pwChecks = getPasswordChecks(fields.password);
@@ -174,7 +209,7 @@ export default function RegisterPage() {
 
       <div className="w-full max-w-[480px] relative">
         <div className="bg-white rounded-3xl border border-border shadow-[0_12px_48px_rgba(13,71,161,0.10)] p-8">
-          {/* Logo */}
+          {/* Logo — sama seperti login */}
           <div className="flex flex-col items-center mb-7">
             <Link href="/" className="mb-3">
               <Image
@@ -201,9 +236,9 @@ export default function RegisterPage() {
                 key={r.value}
                 type="button"
                 onClick={() => setRole(r.value)}
-                className={`flex items-start sm:items-center gap-3.5 w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-300 transform active:scale-95 ${
+                className={`flex items-start sm:items-center gap-3.5 w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-300 transform active:scale-95 relative ${
                   role === r.value
-                    ? "border-[#0D47A1] bg-[#0D47A1]/08 text-[#0D47A1] shadow-md scale-[1.03] z-10 relative ring-1 ring-[#0D47A1]/20"
+                    ? "border-[#0D47A1] bg-[#0D47A1]/08 text-[#0D47A1] shadow-md scale-[1.03] z-10 ring-1 ring-[#0D47A1]/20"
                     : "border-border bg-[#F5F8FC] text-foreground hover:border-[#0D47A1]/40 hover:bg-white hover:shadow hover:scale-[1.02] z-0"
                 }`}
               >
@@ -214,7 +249,7 @@ export default function RegisterPage() {
                   <span className={`font-semibold text-sm block mb-0.5 ${role === r.value ? "text-[#0D47A1]" : "text-foreground"}`}>
                     {r.label}
                   </span>
-                  <span className={`text-xs block leading-snug overflow-hidden text-ellipsis ${role === r.value ? "text-[#0D47A1]/80" : "text-muted-foreground"}`}>
+                  <span className={`text-xs block leading-snug ${role === r.value ? "text-[#0D47A1]/80" : "text-muted-foreground"}`}>
                     {r.desc}
                   </span>
                 </div>
@@ -228,6 +263,12 @@ export default function RegisterPage() {
               </button>
             ))}
           </div>
+
+          {apiError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {apiError}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             {/* Username */}
@@ -276,31 +317,22 @@ export default function RegisterPage() {
               <FieldError message={errors.email} />
             </div>
 
-            {/* Phone — prefix 08 shown */}
+            {/* Phone */}
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                No. HP <span className="font-normal normal-case">(opsional)</span>
+                No. HP <span className="text-red-500">*</span>
               </Label>
-              <div className="flex h-11 rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-[#0D47A1]/20 focus-within:border-[#0D47A1] transition-colors border-border">
-                <span className="flex items-center px-3 text-sm font-semibold text-muted-foreground bg-[#F5F8FC] border-r border-border select-none">
-                  08
-                </span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  value={fields.phone}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    const next = { ...fields, phone: val };
-                    setFields(next);
-                    if (submitted) setErrors(validateRegister(next));
-                  }}
-                  placeholder="xxxxxxxxxx"
-                  maxLength={12}
-                  className="flex-1 bg-white text-sm px-3 focus:outline-none"
-                  autoComplete="tel"
-                />
-              </div>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={fields.phone}
+                onChange={set("phone")}
+                placeholder="Contoh: 08123456789"
+                maxLength={13}
+                autoComplete="tel"
+                className={`h-11 rounded-xl ${errors.phone ? "border-red-400 focus-visible:ring-red-300" : "border-border focus-visible:border-[#0D47A1]"}`}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Gunakan format 08 (minimal 10 dan maksimal 13 digit).</p>
               <FieldError message={errors.phone} />
             </div>
 
@@ -328,7 +360,6 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Real-time password strength */}
               {showPwChecks && (
                 <div className="mt-2 flex flex-col gap-1">
                   {pwChecks.map((c) => (
@@ -353,9 +384,20 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1"
+              disabled={isSubmitting}
+              className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Buat Akun
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </span>
+              ) : (
+                "Buat Akun"
+              )}
             </Button>
           </form>
 

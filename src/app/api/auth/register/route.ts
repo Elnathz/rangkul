@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, full_name, phone, role } = validation.data;
+    const { email, password, full_name, phone, role, username } = validation.data;
     const supabaseAdmin = await createAdminClient();
 
     // Create User via Supabase Auth Admin API
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       user_metadata: {
         full_name,
         role,
+        username,
       },
     });
 
