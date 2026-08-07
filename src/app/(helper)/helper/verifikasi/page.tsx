@@ -123,18 +123,22 @@ export default function HelperVerifikasiPage() {
             </div>
 
             <div>
-              <Label htmlFor="ktp_url" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                 URL Foto KTP / Dokumen Identitas *
               </Label>
-              <Input
-                id="ktp_url"
-                type="url"
-                required
-                placeholder="https://..."
-                value={form.ktp_url}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, ktp_url: e.target.value })}
-                className="h-11 rounded-xl"
-              />
+              <div 
+                className="relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 h-32 sm:h-40 group"
+              >
+                <div className="text-center p-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-5 h-5 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-[#0D47A1]">Ketuk untuk unggah foto KTP</p>
+                  <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (JPG/PNG)</p>
+                </div>
+              </div>
               {fieldErrors.ktp_url && (
                 <p className="text-xs text-red-500 mt-1">{fieldErrors.ktp_url[0]}</p>
               )}

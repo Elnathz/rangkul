@@ -1,5 +1,10 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 const navItems = [
   {
     href: "/admin/dashboard",
@@ -97,6 +102,17 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    localStorage.removeItem("sb-mock-session");
+    router.push("/login");
+    router.refresh();
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F5F8FC]">
       {/* Sidebar */}
@@ -152,14 +168,32 @@ export default function AdminLayout({
           <h1 className="font-display font-semibold text-base text-foreground">
             Panel Admin
           </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">Admin Rangkul</span>
-            <div className="w-8 h-8 rounded-full bg-brand-gradient flex items-center justify-center">
+          <div className="flex items-center gap-3 relative">
+            <span className="text-xs text-muted-foreground mr-1">Admin Rangkul</span>
+            <button 
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-8 h-8 rounded-full bg-brand-gradient flex items-center justify-center hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-gradient"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} className="w-4 h-4">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-            </div>
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-2 border-b border-gray-50 mb-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">Admin System</p>
+                  <p className="text-xs text-gray-500 truncate">Platform Administrator</p>
+                </div>
+                <button 
+                  onClick={handleLogout} 
+                  className="flex items-center w-full gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 text-left transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Keluar
+                </button>
+              </div>
+            )}
           </div>
         </header>
         <main className="flex-1 p-8 overflow-y-auto">{children}</main>
