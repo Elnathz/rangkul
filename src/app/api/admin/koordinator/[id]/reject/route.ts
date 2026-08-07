@@ -73,7 +73,7 @@ export async function PUT(
       action: 'koordinator_rejected',
       entity_type: 'koordinator_profiles',
       entity_id: koordinatorId,
-      metadata: { alasan: validation.data.alasan },
+      metadata: { alasan: validation.data.alasan } as import('@/types/database').Json,
     });
 
     return apiResponse({ message: 'Koordinator berhasil ditolak. Dapat mengajukan ulang.' }, 200);

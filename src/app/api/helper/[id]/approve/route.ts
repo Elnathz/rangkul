@@ -113,7 +113,7 @@ export async function PUT(
       metadata: {
         catatan: validation.data.catatan ?? null,
         is_admin_fallback: isAdminFallback,
-      },
+      } as import('@/types/database').Json,
     });
 
     return apiResponse(

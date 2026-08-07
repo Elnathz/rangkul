@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { Json } from '@/types/database';
 
 type AuditAction =
   | 'helper_approved'
@@ -18,7 +19,7 @@ export async function writeAuditLog({
   action: AuditAction;
   entity_type: string;
   entity_id: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
 }) {
   const supabase = await createClient();
   // Fire and forget — audit log gagal tidak boleh block response utama
@@ -30,3 +31,4 @@ export async function writeAuditLog({
     metadata: metadata ?? null,
   });
 }
+

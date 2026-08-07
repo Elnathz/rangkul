@@ -100,7 +100,7 @@ export async function PUT(
       action: 'helper_rejected',
       entity_type: 'helper_profiles',
       entity_id: helperId,
-      metadata: { alasan: validation.data.alasan },
+      metadata: { alasan: validation.data.alasan } as import('@/types/database').Json,
     });
 
     return apiResponse({ message: 'Helper berhasil ditolak.' }, 200);

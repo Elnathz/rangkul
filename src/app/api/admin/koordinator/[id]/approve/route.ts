@@ -67,7 +67,7 @@ export async function PUT(
       action: 'koordinator_approved',
       entity_type: 'koordinator_profiles',
       entity_id: koordinatorId,
-      metadata: { catatan: validation.data.catatan ?? null },
+      metadata: { catatan: validation.data.catatan ?? null } as import('@/types/database').Json,
     });
 
     return apiResponse({ message: 'Koordinator berhasil disetujui.' }, 200);
