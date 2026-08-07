@@ -18,9 +18,6 @@ export async function POST(request: Request) {
       );
     }
 
-<<<<<<< HEAD
-    const { email, password, full_name, phone, role, username } = validation.data;
-=======
     const {
       email,
       password,
@@ -36,7 +33,6 @@ export async function POST(request: Request) {
       kabupaten_kota,
       provinsi,
     } = validation.data;
->>>>>>> fdbaa74f2bde09e2fe58d1013b1eb131aa5bdc28
     const supabaseAdmin = await createAdminClient();
 
     // Check if username is already taken (case-insensitive)
@@ -72,7 +68,6 @@ export async function POST(request: Request) {
         full_name,
         username: username.toLowerCase().trim(),
         role,
-        username,
       },
     });
 
