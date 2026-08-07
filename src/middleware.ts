@@ -34,12 +34,20 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     '/api/users/me',
     '/api/storage/upload',
-    // Add more protected routes here as they're created
+    '/api/lansia',
+    '/api/helper',
+    '/api/helpers',
+    '/api/koordinator',
+    '/api/booking',
   ];
   
   const isAdminRoute = request.nextUrl.pathname.startsWith('/api/admin');
   const isKoordinatorRoute = request.nextUrl.pathname.startsWith('/api/koordinator');
-  const isHelperRoute = request.nextUrl.pathname.startsWith('/api/helper');
+  const isHelperRoute =
+    request.nextUrl.pathname.startsWith('/api/helper/apply') ||
+    request.nextUrl.pathname.startsWith('/api/helper/profile') ||
+    request.nextUrl.pathname.startsWith('/api/helper/queue') ||
+    /^\/api\/helper\/[^/]+\/(approve|reject)$/.test(request.nextUrl.pathname);
   const isKeluargaRoute = request.nextUrl.pathname.startsWith('/api/lansia');
   const isBookingRoute = request.nextUrl.pathname.startsWith('/api/booking');
   
