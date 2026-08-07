@@ -20,17 +20,18 @@ export async function POST(request: Request) {
 
     const { identifier, password } = validation.data;
     const supabase = await createClient();
-    const adminClient = await createAdminClient();
+    const supabaseAdmin = await createAdminClient();
 
     let loginEmail = identifier;
 
     // Check if identifier is username (not email)
     if (!identifier.includes('@')) {
-      const { data: user, error: userError } = await adminClient
+      // Find user by username using Admin Client to bypass RLS for public.users
+      const { data: user, error: userError } = await supabaseAdmin
         .from('users')
         .select('email')
-        .ilike('username', identifier.trim())
-        .maybeSingle();
+        .eq('username', identifier.toLowerCase())
+        .single();
 
       if (userError || !user) {
         return createApiError('invalid_credentials', 'Username atau password salah', 401);
@@ -38,13 +39,12 @@ export async function POST(request: Request) {
       loginEmail = user.email;
     }
 
-    // Authenticate with Supabase Auth GoTrue
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password,
     });
 
-    if (authError || !authData.user) {
+    if (authError) {
       return createApiError('invalid_credentials', 'Username atau password salah', 401);
     }
 

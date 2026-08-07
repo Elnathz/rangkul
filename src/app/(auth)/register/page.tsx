@@ -181,7 +181,7 @@ function RegisterForm() {
           username: fields.username.trim(),
           full_name: fields.full_name.trim(),
           email: fields.email.trim(),
-          phone: fields.phone ? `08${fields.phone}` : undefined,
+          phone: fields.phone,
           password: fields.password,
           role,
         }),
