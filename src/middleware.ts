@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { Database } from '@/types/database';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Update session first
   const supabaseResponse = await updateSession(request);
   
@@ -120,5 +120,5 @@ export const config = {
   ],
 };
 
-export default proxy;
+export default middleware;
 
