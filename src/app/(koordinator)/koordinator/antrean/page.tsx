@@ -118,8 +118,10 @@ export default async function AntreanHelperPage() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })
+        )}
+        </div>
         </div>
       </div>
     </div>
