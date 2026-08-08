@@ -19,3 +19,18 @@ export const koordinatorRejectSchema = z.object({
 });
 
 export type KoordinatorRejectInput = z.infer<typeof koordinatorRejectSchema>;
+
+export const promoteHelperSchema = z.object({
+  identitas_valid: z.literal(true, {
+    errorMap: () => ({ message: 'Identitas harus divalidasi' }),
+  }),
+  dikenal_warga: z.literal(true, {
+    errorMap: () => ({ message: 'Harus dikenal warga sekitar' }),
+  }),
+  wawancara_dilakukan: z.literal(true, {
+    errorMap: () => ({ message: 'Wawancara wajib dilakukan' }),
+  }),
+  catatan_koordinator: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),
+});
+
+export type PromoteHelperInput = z.infer<typeof promoteHelperSchema>;

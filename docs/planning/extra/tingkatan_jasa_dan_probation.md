@@ -360,13 +360,13 @@ Setelah planning ini disetujui, perlu update bagian berikut di `docs/TDD_Rangkul
 
 ## 9. Checklist Implementasi (Urutan Pengerjaan)
 
-- [ ] Migration: ALTER `service_categories` (tambah `tingkat`, `parent_id`, `jarak_min_km`, `jarak_max_km`)
-- [ ] Migration: ALTER `helper_profiles` (tambah `promoted_at`, `promoted_by`)
-- [ ] Migration: CREATE `promotion_checklist`
-- [ ] Migration: Seed data baru (13 sub-kategori)
-- [ ] Backend: Update validasi booking — enforce aturan probation + tingkatan
-- [ ] Backend: Endpoint `POST /api/koordinator/helpers/:id/promote`
-- [ ] Backend: CRUD Admin service-categories
+- [x] Migration: ALTER `service_categories` (tambah `tingkat`, `parent_id`, `jarak_min_km`, `jarak_max_km`)
+- [x] Migration: ALTER `helper_profiles` (tambah `promoted_at`, `promoted_by`)
+- [x] Migration: CREATE `promotion_checklist`
+- [x] Migration: Seed data baru (13 sub-kategori)
+- [x] Backend: Update validasi booking — enforce aturan probation + tingkatan
+- [x] Backend: Endpoint `POST /api/koordinator/helpers/:id/promote`
+- [x] Backend: CRUD Admin service-categories
 - [ ] Frontend: UI booking dengan tab/accordion per tingkatan
 - [ ] Frontend: Job board Helper — filter berdasarkan tingkatan
 - [ ] Frontend: Dashboard Koordinator — modal promosi dengan checklist
