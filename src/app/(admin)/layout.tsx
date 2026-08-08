@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 const navItems = [
@@ -103,6 +104,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -119,15 +121,13 @@ export default function AdminLayout({
       <aside className="w-60 shrink-0 bg-white border-r border-border flex flex-col">
         <div className="h-16 flex items-center px-5 border-b border-border">
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-brand-gradient flex items-center justify-center">
-              <svg viewBox="0 0 32 32" fill="none" className="w-5 h-5 text-white">
-                <path
-                  d="M16 3C9.373 3 4 8.373 4 15c0 4.07 1.94 7.68 4.95 9.97L16 29l7.05-4.03C26.06 22.68 28 19.07 28 15 28 8.373 22.627 3 16 3Z"
-                  fill="white"
-                  fillOpacity={0.9}
-                />
-              </svg>
-            </div>
+            <Image 
+              src="/logo.svg" 
+              alt="Rangkul Admin" 
+              width={32} 
+              height={32} 
+              className="w-8 h-8 transition-transform group-hover:scale-105" 
+            />
             <span className="font-display font-bold text-sm text-foreground">
               Rangkul Admin
             </span>
@@ -135,18 +135,25 @@ export default function AdminLayout({
         </div>
 
         <nav className="flex-1 py-4 px-3 flex flex-col gap-1 overflow-y-auto">
-          {navItems.map(({ href, label, icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[#F5F8FC] transition-colors group"
-            >
-              <span className="group-hover:text-[#0D47A1] transition-colors shrink-0">
-                {icon}
-              </span>
-              {label}
-            </Link>
-          ))}
+          {navItems.map(({ href, label, icon }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group ${
+                  isActive 
+                    ? "bg-blue-50 text-[#0D47A1]" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-[#F5F8FC]"
+                }`}
+              >
+                <span className={`shrink-0 transition-colors ${isActive ? "text-[#0D47A1]" : "group-hover:text-[#0D47A1]"}`}>
+                  {icon}
+                </span>
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-3 border-t border-border">

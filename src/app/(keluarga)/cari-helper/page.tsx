@@ -15,7 +15,7 @@ const MOCK_HELPERS = [
     category: "Layanan Kunjungan",
     distance: "1.2 km",
     verified: true,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
+    avatar: "/images/helpers/helper-andi.jpg",
     bio: "Pengalaman 2 tahun merawat lansia di sekitar Antapani. Sabar dan ramah.",
   },
   {
@@ -26,7 +26,7 @@ const MOCK_HELPERS = [
     category: "Teman Ngobrol",
     distance: "2.5 km",
     verified: true,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
+    avatar: "/images/helpers/helper-ayu.jpg",
     bio: "Senang diajak bercerita dan berjalan pagi berkeliling taman.",
   },
   {
@@ -37,7 +37,7 @@ const MOCK_HELPERS = [
     category: "Bantuan Kedaruratan",
     distance: "0.8 km",
     verified: true,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad",
+    avatar: "/images/helpers/helper-andi.jpg",
     bio: "Memiliki sertifikat P3K dasar. Bersedia dipanggil di malam hari.",
   },
   {
@@ -48,7 +48,7 @@ const MOCK_HELPERS = [
     category: "Layanan Kunjungan",
     distance: "3.0 km",
     verified: true,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dewi",
+    avatar: "/images/helpers/helper-sarah.jpg",
     bio: "Sangat sabar dan telaten dalam mengurus kebersihan rumah dan merawat lansia.",
   },
 ];
@@ -71,23 +71,27 @@ export default function CariHelperPage() {
   return (
     <div className="min-h-[100dvh] bg-[#F8FAFC]">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white pt-10 pb-16 px-6 relative">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-display font-extrabold mb-2">Cari Helper Terbaik di Sekitarmu</h1>
-          <p className="text-blue-100 max-w-lg mb-6">
+      <div className="bg-brand-gradient text-white pt-12 pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+        <div className="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-6 md:px-8 relative z-10 pl-6 md:pl-10">
+          <h1 className="text-3xl sm:text-4xl font-display font-extrabold mb-3 tracking-tight">Cari Helper Terbaik di Sekitarmu</h1>
+          <p className="text-blue-100 max-w-lg mb-8 leading-relaxed text-sm sm:text-base">
             Pilih pendamping tersertifikasi oleh pengurus komunitas. Semua Helper di bawah terhubung dalam layanan jangkauan terdekat Anda.
           </p>
           
-          <div className="bg-blue-800/30 border border-blue-400/30 rounded-lg p-3 flex gap-3 text-sm items-center max-w-2xl">
-            <Info size={20} className="text-blue-200 shrink-0" />
-            <p className="text-blue-100/90 leading-snug">
-              <strong>Info Verifikasi:</strong> Helper yang telah diverifikasi di 1 RT dapat mengambil dan mengerjakan tugas dari RT atau wilayah kelurahan lain selama masih dalam jangkauan radius pelayanannya!
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl p-4 flex gap-4 text-sm items-start max-w-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-[#90CAF9]"></div>
+            <Info size={24} className="text-[#90CAF9] shrink-0 mt-0.5" />
+            <p className="text-blue-50 leading-relaxed font-medium">
+              <strong className="text-white">Info Verifikasi:</strong> Helper yang telah diverifikasi di 1 RT dapat mengambil dan mengerjakan tugas dari RT atau wilayah kelurahan lain selama masih dalam jangkauan radius pelayanannya!
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-8 relative z-10 grid lg:grid-cols-[280px_1fr] gap-8 pb-20">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 -mt-8 relative z-10 grid lg:grid-cols-[280px_1fr] gap-8 pb-20">
         {/* Sidebar Filters */}
         <aside className="bg-white border text-slate-800 border-slate-200 rounded-2xl p-6 shadow-sm h-fit sticky top-10">
           <div className="flex items-center gap-2 mb-6">
@@ -157,16 +161,21 @@ export default function CariHelperPage() {
           {/* Grid Cards */}
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {filteredHelpers.map((h) => (
-              <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1">
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-16 h-16 bg-slate-100 rounded-full border border-slate-200 shadow-inner overflow-hidden">
-                      <img src={h.avatar} alt={h.name} width={64} height={64} />
-                    </div>
-                    <button className="text-slate-300 hover:text-red-500 transition-colors">
-                      <Heart size={22} />
-                    </button>
-                  </div>
+              <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
+                <div className="relative w-full aspect-[5/4] bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] overflow-hidden shrink-0">
+                  <img
+                    src={h.avatar}
+                    alt={`Foto ${h.name}`}
+                    className="w-full h-full object-cover object-top"
+                  />
+                  <button className="absolute top-3 right-3 text-white hover:text-red-500 drop-shadow-md transition-colors w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm">
+                    <Heart size={18} />
+                  </button>
+                  <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/90 text-green-700 border border-green-200 backdrop-blur-sm">
+                   Tersertifikasi
+                  </span>
+                </div>
+                <div className="p-4 flex-1 flex flex-col">
                   
                   <div className="mb-2">
                     <h3 className="font-display font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -196,7 +205,7 @@ export default function CariHelperPage() {
                     {h.bio}
                   </p>
 
-                  <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full mb-1">
+                  <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-full mt-auto w-fit">
                     {h.category}
                   </span>
                 </div>

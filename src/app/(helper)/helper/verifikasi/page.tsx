@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import LocationPicker from "@/components/ui/LocationPicker";
+import RegionSelect from "@/components/ui/RegionSelect";
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
@@ -16,9 +18,10 @@ export default function HelperVerifikasiPage() {
 
   const [form, setForm] = useState({
     bio: "",
-    wilayah_domisili: "",
-    domisili_lat: -6.9175,
-    domisili_lng: 107.6191,
+    alamat: "",
+    region: { provinsi: "", kota: "", kecamatan: "", kelurahan: "" },
+    domisili_lat: null as number | null,
+    domisili_lng: null as number | null,
     radius_layanan_km: 5,
     ktp_url: "",
   });
@@ -28,6 +31,19 @@ export default function HelperVerifikasiPage() {
     setLoading(true);
     setErrorMsg("");
     setFieldErrors({});
+    const payload = { ...form };
+
+    if (payload.domisili_lat === null || payload.domisili_lng === null) {
+      setErrorMsg("Harap tentukan titik koordinat domisili pada peta interaktif.");
+      setLoading(false);
+      return;
+    }
+
+    if (!payload.region.provinsi || !payload.region.kota || !payload.region.kecamatan || !payload.region.kelurahan) {
+      setErrorMsg("Harap melengkapi kolom wilayah administrasi.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/helper/profile", {
@@ -76,24 +92,55 @@ export default function HelperVerifikasiPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="wilayah" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                Wilayah Domisili *
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+                Wilayah Administrasi Domisili <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="wilayah"
-                required
-                placeholder="Contoh: Kecamatan Lengkong, Bandung"
-                value={form.wilayah_domisili}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, wilayah_domisili: e.target.value })}
-                className="h-11 rounded-xl"
+              <RegionSelect 
+                onRegionChange={(region, coords) => {
+                  setForm(f => ({
+                    ...f,
+                    region,
+                    ...(coords ? { 
+                      domisili_lat: coords.lat, 
+                      domisili_lng: coords.lng,
+                      ...(coords.address ? { alamat: coords.address } : {})
+                    } : {})
+                  }));
+                }}
               />
-              {fieldErrors.wilayah_domisili && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.wilayah_domisili[0]}</p>
-              )}
+
+              <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-4">
+                Alamat Spesifik Tempat Tinggal / Detail Patokan <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="alamat"
+                required
+                rows={3}
+                placeholder="Jl. Sudirman No. 12, Kel. Sukamaju, RT 02 / RW 05"
+                value={form.alamat}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, alamat: e.target.value })}
+                className="rounded-xl mt-2 mb-4"
+              />
+              
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2 mt-4 flex items-center justify-between">
+                <span>Titik Koordinat Pusat Domisili <span className="text-red-500">*</span></span>
+                {form.domisili_lat && form.domisili_lng && (
+                  <span className="text-[10px] text-green-600 font-mono bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                    {form.domisili_lat.toFixed(5)}, {form.domisili_lng.toFixed(5)}
+                  </span>
+                )}
+              </Label>
+              <p className="text-xs text-slate-500 mb-3">Ketuk map di bawah untuk mengatur titik pusat domisili Anda. Ini digunakan untuk kalkulasi jarak radius pelayanan (maksimal {form.radius_layanan_km || 5} km) bagi keluarga terdekat.</p>
+              <LocationPicker 
+                position={form.domisili_lat && form.domisili_lng ? { lat: form.domisili_lat, lng: form.domisili_lng } : null}
+                onPositionChange={(pos, targetAddress) => {
+                   setForm(f => ({ ...f, domisili_lat: pos.lat, domisili_lng: pos.lng, ...(targetAddress ? { alamat: targetAddress } : {}) }));
+                }}
+              />
             </div>
 
             <div>
-              <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+              <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
                 Bio Singkat & Pengalaman
               </Label>
               <Textarea
@@ -108,18 +155,21 @@ export default function HelperVerifikasiPage() {
 
             <div>
               <Label htmlFor="radius" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                Radius Maksimal Jangkauan Layanan (KM)
+                Radius Maksimal Jangkauan Layanan
               </Label>
-              <Input
-                id="radius"
-                type="number"
-                min={1}
-                max={25}
-                required
-                value={form.radius_layanan_km}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, radius_layanan_km: Number(e.target.value) })}
-                className="h-11 rounded-xl"
-              />
+              <div className="relative">
+                <Input
+                  id="radius"
+                  type="number"
+                  min={1}
+                  max={25}
+                  required
+                  value={form.radius_layanan_km}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, radius_layanan_km: Number(e.target.value) })}
+                  className="h-11 rounded-xl pr-12"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">KM</span>
+              </div>
             </div>
 
             <div>

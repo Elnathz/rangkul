@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Image as ImageIcon, UploadCloud } from "lucide-react";
+import LocationPicker from "@/components/ui/LocationPicker";
+import RegionSelect from "@/components/ui/RegionSelect";
 
 export default function TambahLansiaPage() {
   const router = useRouter();
@@ -27,6 +29,9 @@ export default function TambahLansiaPage() {
     hubungan_keluarga: "", // Main dropdown selection
     hubungan_keluarga_lainnya: "", // Custom typed text if "Lainnya" chosen
     dokumen_identitas_lansia_url: "",
+    region: { provinsi: "", kota: "", kecamatan: "", kelurahan: "" },
+    lat: null as number | null,
+    lng: null as number | null,
   });
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,8 +55,26 @@ export default function TambahLansiaPage() {
       ? form.hubungan_keluarga_lainnya 
       : form.hubungan_keluarga;
 
+    if (!photoPreview) {
+      setErrorMsg("Harap unggah foto lansia terlebih dahulu.");
+      setLoading(false);
+      return;
+    }
+
     if (!finalHubungan) {
       setFieldErrors({ hubungan_keluarga: ["Harap pilih atau isi hubungan keluarga."] });
+      setLoading(false);
+      return;
+    }
+
+    if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan) {
+      setErrorMsg("Harap melengkapi pilihan wilayah administrasi Provinsi hingga Kelurahan.");
+      setLoading(false);
+      return;
+    }
+
+    if (form.lat === null || form.lng === null) {
+      setErrorMsg("Harap tentukan titik koordinat domisili di peta.");
       setLoading(false);
       return;
     }
@@ -63,6 +86,8 @@ export default function TambahLansiaPage() {
         alamat: form.alamat,
         catatan_kondisi: form.catatan_kondisi,
         dokumen_identitas_lansia_url: form.dokumen_identitas_lansia_url,
+        lat: form.lat,
+        lng: form.lng,
         // Mock Photo implementation (not yet in API types, but requested for UI)
         // foto_url: photoPreview ? "mock-url" : null,
       };
@@ -115,7 +140,7 @@ export default function TambahLansiaPage() {
             {/* Field: Foto Lansia (Photo Upload Feature) */}
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
-                Foto Lansia (Opsional)
+                Foto Lansia <span className="text-red-500">*</span>
               </Label>
               <div 
                 onClick={() => fileInputRef.current?.click()}
@@ -212,11 +237,25 @@ export default function TambahLansiaPage() {
                 />
               </div>
             )}
-
-            {/* Field: Alamat */}
             <div>
-              <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                Alamat Lengkap Tempat Tinggal <span className="text-red-500">*</span>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+                Wilayah Administrasi Domisili <span className="text-red-500">*</span>
+              </Label>
+              <RegionSelect 
+                onRegionChange={(region, coords) => {
+                  setForm(f => ({
+                    ...f,
+                    region,
+                    ...(coords ? { 
+                      lat: coords.lat, 
+                      lng: coords.lng,
+                      ...(coords.address ? { alamat: coords.address } : {})
+                    } : {})
+                  }));
+                }}
+              />
+              <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
+                Alamat Spesifik Tempat Tinggal / Detail Patokan <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 id="alamat"
@@ -230,6 +269,25 @@ export default function TambahLansiaPage() {
               {fieldErrors.alamat && (
                 <p className="text-xs text-red-500 mt-1">{fieldErrors.alamat[0]}</p>
               )}
+            </div>
+
+            {/* Field: Peta Koordinat (Leaflet) */}
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 flex items-center justify-between">
+                <span>Titik Koordinat Domisili <span className="text-red-500">*</span></span>
+                {form.lat && form.lng && (
+                  <span className="text-[10px] text-green-600 font-mono bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                    {form.lat.toFixed(5)}, {form.lng.toFixed(5)}
+                  </span>
+                )}
+              </Label>
+              <p className="text-xs text-slate-500 mb-3">Ketuk area peta untuk menjatuhkan pin lokasi radius lansia. Navigasi peta digunakan untuk algoritma jarak pencarian Helper.</p>
+              <LocationPicker 
+                position={form.lat && form.lng ? { lat: form.lat, lng: form.lng } : null}
+                onPositionChange={(pos, targetAddress) => {
+                   setForm(f => ({ ...f, lat: pos.lat, lng: pos.lng, ...(targetAddress ? { alamat: targetAddress } : {}) }));
+                }}
+              />
             </div>
 
             {/* Field: Catatan Kondisi */}

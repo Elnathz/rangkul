@@ -26,18 +26,21 @@ export default function BerandaKeluargaPage() {
       <div className="space-y-6">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Halo, Keluarga Demo</h1>
-            <p className="text-gray-500 mt-1">Kelola profil lansia dan jadwalkan pendampingan dengan mudah.</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-gradient text-white p-8 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Halo, Keluarga Demo</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base max-w-sm">Kelola profil orang tersayang dan jadwalkan pendampingan dengan tenang.</p>
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <Button asChild variant="outline" className="flex-1 sm:flex-none h-11 border-border font-semibold text-gray-700">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto relative z-10 mt-4 sm:mt-0">
+            <Button asChild variant="outline" className="w-full sm:w-auto h-11 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white backdrop-blur-md">
               <Link href="/lansia/tambah">
                 <PlusCircle className="mr-2 w-4 h-4" /> Tambah Lansia
               </Link>
             </Button>
-            <Button asChild className="flex-1 sm:flex-none h-11 bg-brand-gradient text-white font-semibold">
+            <Button asChild className="w-full sm:w-auto h-11 bg-white text-[#0D47A1] hover:bg-gray-50 font-bold shadow-md">
               <Link href="/cari-helper">
                 <Search className="mr-2 w-4 h-4" /> Cari Helper
               </Link>
@@ -67,9 +70,11 @@ export default function BerandaKeluargaPage() {
                     <h3 className="text-lg font-bold text-gray-900 mb-1">{lansia.name}</h3>
                     <p className="text-sm font-medium text-gray-500 line-clamp-2">{lansia.condition}</p>
                   </div>
-                  <div className="mt-5 border-t border-gray-50 pt-4 flex gap-2 relative z-10">
-                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold rounded-lg h-8">Lihat Profil</Button>
-                    <Button asChild size="sm" className="w-full text-xs font-semibold rounded-lg h-8 bg-brand-gradient hover:opacity-90 text-white">
+                  <div className="mt-5 border-t border-gray-50 pt-4 flex gap-2 relative z-10 w-full overflow-hidden">
+                    <Button asChild variant="outline" size="sm" className="flex-1 text-xs font-semibold rounded-lg h-8">
+                      <Link href="/lansia/tambah">Lihat Profil</Link>
+                    </Button>
+                    <Button asChild size="sm" className="flex-1 text-xs font-semibold rounded-lg h-8 bg-brand-gradient hover:opacity-90 text-white">
                       <Link href={`/booking/new?lansia=${lansia.id}`}>Buat Pesanan</Link>
                     </Button>
                   </div>
@@ -93,12 +98,27 @@ export default function BerandaKeluargaPage() {
                 <h3 className="font-bold text-gray-900">Jadwal Terdekat</h3>
                 <CalendarCheck className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="flex flex-col items-center justify-center text-center p-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                <CalendarCheck className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500 font-medium">Belum ada kunjungan yang dijadwalkan.</p>
-                <Button asChild variant="link" className="text-[#0D47A1] h-auto p-0 mt-2 font-semibold">
-                  <Link href="/cari-helper">Cari Helper Sekarang</Link>
-                </Button>
+              <div className="flex flex-col gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                <div className="flex justify-between items-start">
+                  <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-[10px] font-bold rounded uppercase tracking-wider">DIAJUKAN</span>
+                  <span className="text-xs font-mono text-gray-400">BKG-1029</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">Pendampingan Opa Haryono</h4>
+                  <p className="text-xs text-gray-600 mt-1">Sistem sedang mencari Helper terverifikasi dalam radius 5 KM (Kecamatan Beji).</p>
+                </div>
+                <div className="mt-2 pt-3 border-t border-yellow-200 flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-xs font-semibold text-yellow-800">
+                     <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-full border border-yellow-200/50">
+                       Sedang mencari Helper
+                       <svg className="animate-spin w-3 h-3 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                     </span>
+                   </div>
+                   <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:text-red-700">Batalkan</Button>
+                </div>
               </div>
             </div>
           </div>

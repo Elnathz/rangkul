@@ -1,5 +1,6 @@
 import HeroSection from "@/components/landing/HeroSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import StepsSection from "@/components/landing/StepsSection";
 import ServicesSection from "@/components/landing/ServicesSection";
 import RolesSection from "@/components/landing/RolesSection";
 import JoinHelperSection from "@/components/landing/JoinHelperSection";
@@ -13,10 +14,12 @@ export default function LandingPage() {
     <>
       <HeroSection />
       <HowItWorksSection />
+      <RolesSection />
+      <StepsSection />
       <ServicesSection />
       <JoinHelperSection />
+      <TopHelpersSection />
       <JoinKoordinatorSection />
-      <RolesSection />
       <TestimonialsSection />
       <CTABannerSection />
     </>

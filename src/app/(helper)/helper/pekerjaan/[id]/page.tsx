@@ -1,15 +1,30 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, MapPin, Clock, FileCheck, ShieldAlert } from 'lucide-react';
+import { ChevronLeft, MapPin, Clock, ShieldAlert } from 'lucide-react';
 
 export default function DetailPekerjaanPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleTerimaPekerjaan = () => {
+    setLoading(true);
+    // Simulate API request to accept the job
+    setTimeout(() => {
+      setLoading(false);
+      router.push("/helper/dashboard");
+    }, 800);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-3xl mx-auto space-y-6">
       <Button variant="ghost" size="sm" asChild className="rounded-full hover:bg-gray-100">
-        <Link href="/helper/cari-pekerjaan">
+        <Link href="/helper/dashboard">
           <ChevronLeft className="w-5 h-5 mr-1" />
-          Kembali ke Daftar Pekerjaan
+          Kembali ke Dashboard
         </Link>
       </Button>
 
@@ -57,8 +72,12 @@ export default function DetailPekerjaanPage() {
            </div>
         </div>
 
-        <Button className="w-full h-12 bg-brand-gradient hover:opacity-90 font-bold text-white rounded-xl shadow-md">
-          Terima & Konfirmasi Pekerjaan
+        <Button 
+          onClick={handleTerimaPekerjaan} 
+          disabled={loading}
+          className="w-full h-12 bg-brand-gradient hover:opacity-90 font-bold text-white rounded-xl shadow-md"
+        >
+          {loading ? "Memproses Transaksi..." : "Terima & Konfirmasi Pekerjaan"}
         </Button>
       </div>
     </div>

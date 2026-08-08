@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -24,7 +24,8 @@ function HamburgerIcon({ open }: { open: boolean }) {
   );
 }
 
-const navLinks = [
+// Static fallback links for unauthenticated users
+const defaultNavLinks = [
   { href: "/#layanan", label: "Layanan" },
   { href: "/#cara-kerja", label: "Cara Kerja" },
   { href: "/#peran", label: "Bergabung" },
@@ -33,6 +34,7 @@ const navLinks = [
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -90,15 +92,36 @@ export default function Navbar() {
       ? "/koordinator/dashboard"
       : "/beranda";
 
+  let currentNavLinks = defaultNavLinks;
+  if (role === 'keluarga') {
+    currentNavLinks = [
+      { href: "/beranda", label: "Dashboard" },
+      { href: "/cari-helper", label: "Cari Helper" },
+      { href: "/lansia/tambah", label: "Profil Keluarga" },
+    ];
+  } else if (role === 'helper') {
+    currentNavLinks = [
+      { href: "/helper/dashboard", label: "Dashboard" },
+      { href: "/helper/tugas/baru", label: "Cari Tugas" },
+      { href: "/helper/verifikasi", label: "Verifikasi Profil" },
+    ];
+  } else if (role === 'koordinator') {
+    currentNavLinks = [
+      { href: "/koordinator/dashboard", label: "Dashboard" },
+      { href: "/koordinator/antrean", label: "Antrean Helper" },
+      { href: "/koordinator/pengajuan", label: "Data RT/RW" },
+    ];
+  }
+
   return (
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
         scrolled
           ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-border"
-          : "bg-transparent"
+          : "bg-transparent border-b border-transparent"
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <nav className="w-full max-w-7xl mx-auto px-4 lg:px-5 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center group shrink-0">
           <Image
@@ -114,13 +137,16 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          {navLinks.map(({ href, label }) => (
-            <li key={href}>
-              <Link href={href} className="hover:text-primary transition-colors">
-                {label}
-              </Link>
-            </li>
-          ))}
+          {currentNavLinks.map(({ href, label }) => {
+            const isActive = pathname === href;
+            return (
+              <li key={href}>
+                <Link href={href} className={isActive ? "text-[#0D47A1] font-bold" : "hover:text-[#0D47A1] transition-colors"}>
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Desktop CTA */}
@@ -191,11 +217,11 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-border px-6 py-4 flex flex-col gap-4 shadow-lg">
-          {navLinks.map(({ href, label }) => (
+          {currentNavLinks.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
-              className="text-sm font-medium text-foreground hover:text-primary py-1"
+              className="text-sm font-medium text-foreground hover:text-[#0D47A1] py-1"
               onClick={() => setMenuOpen(false)}
             >
               {label}
