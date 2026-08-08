@@ -6,6 +6,7 @@ export const koordinatorApplySchema = z.object({
     error: 'Tingkat harus rt atau rw',
   }),
   dokumen_url: z.string().url('URL dokumen jabatan tidak valid'),
+  ktp_url: z.string().url('URL KTP tidak valid').optional(),
 });
 
 export type KoordinatorApplyInput = z.infer<typeof koordinatorApplySchema>;

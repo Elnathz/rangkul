@@ -46,22 +46,41 @@ export default function KoordinatorPengajuanPage() {
     setLoading(true);
     
     try {
-      // 1. Upload file
-      const formData = new FormData();
-      formData.append('file', skFile);
-      formData.append('docType', 'dokumen_koordinator');
+      // 1. Upload files
+      let uploadedSkUrl = "";
+      let uploadedKtpUrl = null;
+
+      const skFormData = new FormData();
+      skFormData.append('file', skFile);
+      skFormData.append('docType', 'dokumen_koordinator');
       
-      const uploadRes = await fetch('/api/storage/upload', {
+      const uploadSkRes = await fetch('/api/storage/upload', {
         method: 'POST',
-        body: formData,
+        body: skFormData,
       });
       
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) {
-        throw new Error(uploadData.message || 'Gagal mengunggah dokumen.');
+      const uploadSkData = await uploadSkRes.json();
+      if (!uploadSkRes.ok) {
+        throw new Error(uploadSkData.message || 'Gagal mengunggah SK Jabatan.');
       }
-      
-      const uploadedUrl = uploadData.data?.url || uploadData.url;
+      uploadedSkUrl = uploadSkData.data?.url || uploadSkData.url;
+
+      if (ktpFile) {
+        const ktpFormData = new FormData();
+        ktpFormData.append('file', ktpFile);
+        ktpFormData.append('docType', 'ktp');
+        
+        const uploadKtpRes = await fetch('/api/storage/upload', {
+          method: 'POST',
+          body: ktpFormData,
+        });
+        
+        const uploadKtpData = await uploadKtpRes.json();
+        if (!uploadKtpRes.ok) {
+          throw new Error(uploadKtpData.message || 'Gagal mengunggah KTP.');
+        }
+        uploadedKtpUrl = uploadKtpData.data?.url || uploadKtpData.url;
+      }
 
       // 2. Compose "wilayah" from inputs
       const wilayahString = `${region.kelurahan}, ${region.kecamatan}, ${region.kota}, ${region.provinsi} | RT ${rt}/RW ${rw} | ${alamat}`;
@@ -73,7 +92,8 @@ export default function KoordinatorPengajuanPage() {
         body: JSON.stringify({
           wilayah: wilayahString,
           tingkat: tingkat,
-          dokumen_url: uploadedUrl
+          dokumen_url: uploadedSkUrl,
+          ...(uploadedKtpUrl ? { ktp_url: uploadedKtpUrl } : {})
         })
       });
       

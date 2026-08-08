@@ -14,6 +14,10 @@ import RegionSelect from "@/components/ui/RegionSelect";
 export default function TambahLansiaPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const identitasInputRef = useRef<HTMLInputElement>(null);
+  const hubunganInputRef = useRef<HTMLInputElement>(null);
+  const [identitasFileName, setIdentitasFileName] = useState<string | null>(null);
+  const [hubunganFileName, setHubunganFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -28,7 +32,6 @@ export default function TambahLansiaPage() {
     catatan_kondisi: "",
     hubungan_keluarga: "", // Main dropdown selection
     hubungan_keluarga_lainnya: "", // Custom typed text if "Lainnya" chosen
-    dokumen_identitas_lansia_url: "",
     region: { provinsi: "", kota: "", kecamatan: "", kelurahan: "" },
     lat: null as number | null,
     lng: null as number | null,
@@ -43,6 +46,16 @@ export default function TambahLansiaPage() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleIdentitasUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setIdentitasFileName(file.name);
+  };
+
+  const handleHubunganUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setHubunganFileName(file.name);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,6 +94,9 @@ export default function TambahLansiaPage() {
 
     try {
       let fotoUrl = null;
+      let identitasUrl = null;
+      let hubunganUrl = null;
+      
       const file = fileInputRef.current?.files?.[0];
       if (file) {
         const formData = new FormData();
@@ -93,26 +109,65 @@ export default function TambahLansiaPage() {
         });
         
         const uploadData = await uploadRes.json();
-        
         if (!uploadRes.ok) {
           setErrorMsg(uploadData.message || "Gagal mengunggah foto lansia.");
           setLoading(false);
           return;
         }
-        
-        fotoUrl = uploadData.url;
+        fotoUrl = uploadData.data?.url || uploadData.url;
       }
 
-      // Data to send to TDD API
+      const identitasFile = identitasInputRef.current?.files?.[0];
+      if (identitasFile) {
+        const formData = new FormData();
+        formData.append("file", identitasFile);
+        formData.append("docType", "identitas_lansia");
+        
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          setErrorMsg(uploadData.message || "Gagal mengunggah dokumen identitas lansia.");
+          setLoading(false);
+          return;
+        }
+        identitasUrl = uploadData.data?.url || uploadData.url;
+      }
+
+      const hubunganFile = hubunganInputRef.current?.files?.[0];
+      if (hubunganFile) {
+        const formData = new FormData();
+        formData.append("file", hubunganFile);
+        formData.append("docType", "hubungan_keluarga");
+        
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          setErrorMsg(uploadData.message || "Gagal mengunggah dokumen hubungan keluarga.");
+          setLoading(false);
+          return;
+        }
+        hubunganUrl = uploadData.data?.url || uploadData.url;
+      }
+
+      // Data to send to API
       const payload = {
         nama: form.nama,
         alamat: form.alamat,
         catatan_kondisi: form.catatan_kondisi,
-        dokumen_identitas_lansia_url: form.dokumen_identitas_lansia_url,
         lat: form.lat,
         lng: form.lng,
         foto_url: fotoUrl,
         hubungan_keluarga: finalHubungan,
+        ...(identitasUrl ? { dokumen_identitas_lansia_url: identitasUrl } : {}),
+        ...(hubunganUrl ? { dokumen_hubungan_keluarga_url: hubunganUrl } : {}),
       };
 
       const res = await fetch("/api/lansia/profile", {
@@ -328,7 +383,52 @@ export default function TambahLansiaPage() {
               />
             </div>
 
-            {/* Field: Dokumen (Optional mock) */}
+            {/* Field: Dokumen Validasi */}
+            <div className="space-y-3">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                Dokumen Validasi (Opsional / Jika Diminta Koordinator)
+              </Label>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div 
+                  onClick={() => identitasInputRef.current?.click()}
+                  className="border border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:bg-[#F5F8FC] transition-colors"
+                >
+                  <input 
+                    type="file" 
+                    accept="image/jpeg,image/png,application/pdf"
+                    ref={identitasInputRef} 
+                    className="hidden" 
+                    onChange={handleIdentitasUpload}
+                  />
+                  <div className="mx-auto w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
+                    <svg className={`w-4 h-4 ${identitasFileName ? 'text-green-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 truncate px-2">{identitasFileName || "KTP/Identitas Lansia"}</p>
+                </div>
+                
+                <div 
+                  onClick={() => hubunganInputRef.current?.click()}
+                  className="border border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:bg-[#F5F8FC] transition-colors"
+                >
+                  <input 
+                    type="file" 
+                    accept="image/jpeg,image/png,application/pdf"
+                    ref={hubunganInputRef} 
+                    className="hidden" 
+                    onChange={handleHubunganUpload}
+                  />
+                  <div className="mx-auto w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
+                    <svg className={`w-4 h-4 ${hubunganFileName ? 'text-green-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 truncate px-2">{hubunganFileName || "Bukti Hubungan Keluarga"}</p>
+                </div>
+              </div>
+            </div>
+
             <div className="pt-2">
               <Button
                 type="submit"

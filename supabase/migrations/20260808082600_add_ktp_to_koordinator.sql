@@ -1,0 +1,1 @@
+ALTER TABLE public.koordinator_profiles ADD COLUMN ktp_url TEXT;
