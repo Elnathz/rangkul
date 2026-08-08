@@ -372,3 +372,40 @@ Setelah planning ini disetujui, perlu update bagian berikut di `docs/TDD_Rangkul
 - [ ] Frontend: Dashboard Koordinator — modal promosi dengan checklist
 - [ ] Frontend: Panel Admin — kelola kategori
 - [ ] Update `docs/TDD_Rangkul.md`
+
+---
+
+## 10. Pembagian Jobdesk Frontend & Backend (Sesuai TDD)
+
+### Backend (Fokus Utama: API, Database, Validasi, Security)
+
+- **Database Migration & Seeding:**
+  - Membuat script migrasi untuk tabel `service_categories`, `helper_profiles`, dan membuat tabel baru `promotion_checklist`.
+  - Memperbarui seed data untuk menyertakan 13 sub-kategori baru beserta relasi parent-child dan field tambahannya.
+- **API `GET /api/service-categories`:**
+  - Mengupdate endpoint untuk mengembalikan struktur hierarki/tree data atau flat data yang sudah difilter/di-join dengan parent-nya, beserta field jarak.
+- **Validasi `POST /api/booking`:**
+  - Mengimplementasikan validasi aturan probation (helper probation hanya bisa menerima tugas 'ringan').
+- **API Koordinator (Promosi):**
+  - Membuat endpoint `POST /api/koordinator/helpers/:id/promote`.
+  - Mengimplementasikan RLS (Row Level Security) agar hanya koordinator dari wilayah helper yang dapat mengakses endpoint ini.
+  - Memastikan insert ke `promotion_checklist` dan update ke `helper_profiles` berjalan dalam satu transaksi yang aman.
+- **API Admin (CRUD Service Categories):**
+  - Membuat endpoint CRUD lengkap (`GET`, `POST`, `PUT`, `DELETE`/soft-delete) untuk kelola kategori layanan.
+  - Mengimplementasikan RLS agar hanya Admin yang dapat mengubah data kategori.
+
+### Frontend (Fokus Utama: UI/UX, State Management, Fetching, Flow Interaksi)
+
+- **UI Halaman Booking (Keluarga - `/booking` atau setara):**
+  - Merombak tampilan pilihan kategori menjadi sistem tab atau accordion (Ringan / Sedang / Berat).
+  - Mengimplementasikan logika pemilihan "Antar Obat": menampilkan peta/list apotek (MVP dengan Nominatim/OSM API), menghitung jarak menggunakan fungsi Haversine (bisa di FE atau via endpoint BE pembantu), dan secara otomatis memilihkan sub-kategori yang sesuai (Ringan/Sedang/Berat).
+- **UI Job Board (Helper - `/helper/tugas`):**
+  - Menambahkan filter atau tab untuk tingkatan tugas.
+  - Menyembunyikan tugas Sedang dan Berat jika status helper yang login adalah `probation`.
+- **UI Dashboard Koordinator (`/koordinator/helper`):**
+  - Menambahkan tombol "Promosikan" pada detail helper yang berstatus `probation`.
+  - Membuat modal form checklist promosi (identitas valid, dikenal warga, wawancara, catatan) yang menembak endpoint `POST /promote`.
+- **UI Panel Admin (`/admin/kategori`):**
+  - Membuat halaman manajemen kategori layanan dengan form CRUD (termasuk field untuk parent, tingkatan, harga, jarak min/max).
+- **Integrasi Peta (Leaflet):**
+  - Mengimplementasikan Leaflet/React-Leaflet untuk pencarian apotek dan visualisasi jarak dari alamat lansia.
