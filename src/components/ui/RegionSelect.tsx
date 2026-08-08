@@ -45,6 +45,43 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
     }, coords);
   };
 
+  const updateGeocodeAndTrigger = async (
+    prov: Region | null, 
+    city: Region | null, 
+    dist: Region | null, 
+    vill: Region | null
+  ) => {
+    let parts = [];
+    if (vill) parts.push(vill.name);
+    if (dist) parts.push(dist.name);
+    if (city) parts.push(city.name);
+    if (prov) parts.push(prov.name);
+    
+    let geocoded = null;
+    while (parts.length > 0) {
+      try {
+        const query = [...parts, "Indonesia"].join(", ");
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          geocoded = data[0];
+          break;
+        }
+      } catch (err) {
+        console.error("Geocoding fetch error:", err);
+        break; 
+      }
+      parts.shift(); 
+    }
+
+    triggerChange(prov, city, dist, vill, geocoded ? {
+      lat: parseFloat(geocoded.lat),
+      lng: parseFloat(geocoded.lon),
+      address: geocoded.display_name
+    } : undefined);
+  };
+
   const handleProvChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const prov = provinces.find((p) => p.id === e.target.value) || null;
     setSelectedProv(prov);
@@ -54,7 +91,9 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
     setCities([]);
     setDistricts([]);
     setVillages([]);
-    triggerChange(prov, null, null, null);
+    
+    // Fire background geocode
+    updateGeocodeAndTrigger(prov, null, null, null);
     
     if (prov) {
       try {
@@ -74,7 +113,8 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
     setSelectedVill(null);
     setDistricts([]);
     setVillages([]);
-    triggerChange(selectedProv, city, null, null);
+    
+    updateGeocodeAndTrigger(selectedProv, city, null, null);
 
     if (city) {
       try {
@@ -92,7 +132,8 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
     setSelectedDist(dist);
     setSelectedVill(null);
     setVillages([]);
-    triggerChange(selectedProv, selectedCity, dist, null);
+    
+    updateGeocodeAndTrigger(selectedProv, selectedCity, dist, null);
 
     if (dist) {
       try {
@@ -108,25 +149,7 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
   const handleVillChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const vill = villages.find((v) => v.id === e.target.value) || null;
     setSelectedVill(vill);
-    triggerChange(selectedProv, selectedCity, selectedDist, vill);
-
-    if (vill && selectedProv && selectedCity && selectedDist) {
-      try {
-        const query = `${vill.name}, ${selectedDist.name}, ${selectedCity.name}, ${selectedProv.name}, Indonesia`;
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        
-        if (data && data.length > 0) {
-          triggerChange(selectedProv, selectedCity, selectedDist, vill, {
-            lat: parseFloat(data[0].lat),
-            lng: parseFloat(data[0].lon),
-            address: data[0].display_name
-          });
-        }
-      } catch (err) {
-        console.error("Geocoding failed", err);
-      }
-    }
+    updateGeocodeAndTrigger(selectedProv, selectedCity, selectedDist, vill);
   };
 
   return (
