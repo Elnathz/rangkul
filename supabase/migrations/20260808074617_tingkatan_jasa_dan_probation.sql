@@ -64,33 +64,33 @@ DELETE FROM public.service_categories;
 -- Insert parent categories (is_active = false, tidak bisa dibooking langsung)
 INSERT INTO public.service_categories (id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, is_high_risk, is_active, tingkat)
 VALUES
-    ('p0000001-0000-0000-0000-000000000001', 'Antar Obat', 'Mengambil dan mengantarkan obat ke rumah lansia', 30, 35000, FALSE, FALSE, 'sedang'),
-    ('p0000002-0000-0000-0000-000000000002', 'Bersih-bersih', 'Membantu membersihkan rumah lansia', 60, 50000, FALSE, FALSE, 'sedang'),
-    ('p0000003-0000-0000-0000-000000000003', 'Menemani Mengobrol', 'Mendampingi lansia mengobrol dan beraktivitas ringan', 45, 40000, FALSE, FALSE, 'ringan'),
-    ('p0000004-0000-0000-0000-000000000004', 'Bantuan Teknologi', 'Membantu lansia mengoperasikan perangkat digital', 45, 30000, FALSE, FALSE, 'ringan'),
-    ('p0000005-0000-0000-0000-000000000005', 'Belanja Kebutuhan', 'Membantu membelikan kebutuhan harian lansia', 60, 40000, FALSE, FALSE, 'sedang');
+    ('a0000001-0000-0000-0000-000000000001', 'Antar Obat', 'Mengambil dan mengantarkan obat ke rumah lansia', 30, 35000, FALSE, FALSE, 'sedang'),
+    ('a0000002-0000-0000-0000-000000000002', 'Bersih-bersih', 'Membantu membersihkan rumah lansia', 60, 50000, FALSE, FALSE, 'sedang'),
+    ('a0000003-0000-0000-0000-000000000003', 'Menemani Mengobrol', 'Mendampingi lansia mengobrol dan beraktivitas ringan', 45, 40000, FALSE, FALSE, 'ringan'),
+    ('a0000004-0000-0000-0000-000000000004', 'Bantuan Teknologi', 'Membantu lansia mengoperasikan perangkat digital', 45, 30000, FALSE, FALSE, 'ringan'),
+    ('a0000005-0000-0000-0000-000000000005', 'Belanja Kebutuhan', 'Membantu membelikan kebutuhan harian lansia', 60, 40000, FALSE, FALSE, 'sedang');
 
 -- Insert leaf categories RINGAN
 INSERT INTO public.service_categories (id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, is_high_risk, is_active, tingkat, parent_id, jarak_min_km, jarak_max_km)
 VALUES
-    ('c0000001-0000-0000-0000-000000000001', 'Pengingat Obat', 'Kunjungan singkat untuk memandu dan memastikan lansia meminum obat tepat dosis & waktu.', 30, 25000, FALSE, TRUE, 'ringan', NULL, NULL, NULL),
-    ('c0000002-0000-0000-0000-000000000002', 'Menemani Mengobrol (singkat)', 'Kunjungan singkat, ngobrol, cek keadaan umum lansia.', 30, 30000, FALSE, TRUE, 'ringan', 'p0000003-0000-0000-0000-000000000003', NULL, NULL),
-    ('c0000003-0000-0000-0000-000000000003', 'Bantuan Teknologi (singkat)', 'Bantu video call keluarga, operasikan HP sederhana.', 30, 25000, FALSE, TRUE, 'ringan', 'p0000004-0000-0000-0000-000000000004', NULL, NULL),
-    ('c0000004-0000-0000-0000-000000000004', 'Bersih-bersih Ringan', 'Sapu-pel 1 ruangan, cuci piring, rapikan meja.', 30, 30000, FALSE, TRUE, 'ringan', 'p0000002-0000-0000-0000-000000000002', NULL, NULL),
-    ('c0000005-0000-0000-0000-000000000005', 'Antar Obat (dekat, <=1 km)', 'Ambil obat di apotek/warung dekat, jalan kaki.', 20, 25000, FALSE, TRUE, 'ringan', 'p0000001-0000-0000-0000-000000000001', NULL, 1);
+    ('b0000001-0000-0000-0000-000000000001', 'Pengingat Obat', 'Kunjungan singkat untuk memandu dan memastikan lansia meminum obat tepat dosis & waktu.', 30, 25000, FALSE, TRUE, 'ringan', NULL, NULL, NULL),
+    ('b0000002-0000-0000-0000-000000000002', 'Menemani Mengobrol (singkat)', 'Kunjungan singkat, ngobrol, cek keadaan umum lansia.', 30, 30000, FALSE, TRUE, 'ringan', 'a0000003-0000-0000-0000-000000000003', NULL, NULL),
+    ('b0000003-0000-0000-0000-000000000003', 'Bantuan Teknologi (singkat)', 'Bantu video call keluarga, operasikan HP sederhana.', 30, 25000, FALSE, TRUE, 'ringan', 'a0000004-0000-0000-0000-000000000004', NULL, NULL),
+    ('b0000004-0000-0000-0000-000000000004', 'Bersih-bersih Ringan', 'Sapu-pel 1 ruangan, cuci piring, rapikan meja.', 30, 30000, FALSE, TRUE, 'ringan', 'a0000002-0000-0000-0000-000000000002', NULL, NULL),
+    ('b0000005-0000-0000-0000-000000000005', 'Antar Obat (dekat, <=1 km)', 'Ambil obat di apotek/warung dekat, jalan kaki.', 20, 25000, FALSE, TRUE, 'ringan', 'a0000001-0000-0000-0000-000000000001', NULL, 1);
 
 -- Insert leaf categories SEDANG
 INSERT INTO public.service_categories (id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, is_high_risk, is_active, tingkat, parent_id, jarak_min_km, jarak_max_km)
 VALUES
-    ('c0000006-0000-0000-0000-000000000006', 'Menemani Mengobrol (lama)', 'Menemani lebih lama, jalan-jalan di sekitar rumah.', 60, 50000, FALSE, TRUE, 'sedang', 'p0000003-0000-0000-0000-000000000003', NULL, NULL),
-    ('c0000007-0000-0000-0000-000000000007', 'Bantuan Teknologi (lama)', 'Setup perangkat, ajarkan aplikasi, troubleshoot.', 45, 40000, FALSE, TRUE, 'sedang', 'p0000004-0000-0000-0000-000000000004', NULL, NULL),
-    ('c0000008-0000-0000-0000-000000000008', 'Antar Obat (sedang, 1-3 km)', 'Perlu motor/sepeda, apotek agak jauh.', 45, 35000, FALSE, TRUE, 'sedang', 'p0000001-0000-0000-0000-000000000001', 1, 3),
-    ('c0000009-0000-0000-0000-000000000009', 'Belanja Kebutuhan (standar)', 'Belanja harian ke warung/minimarket, pegang uang keluarga.', 60, 40000, FALSE, TRUE, 'sedang', 'p0000005-0000-0000-0000-000000000005', NULL, NULL);
+    ('b0000006-0000-0000-0000-000000000006', 'Menemani Mengobrol (lama)', 'Menemani lebih lama, jalan-jalan di sekitar rumah.', 60, 50000, FALSE, TRUE, 'sedang', 'a0000003-0000-0000-0000-000000000003', NULL, NULL),
+    ('b0000007-0000-0000-0000-000000000007', 'Bantuan Teknologi (lama)', 'Setup perangkat, ajarkan aplikasi, troubleshoot.', 45, 40000, FALSE, TRUE, 'sedang', 'a0000004-0000-0000-0000-000000000004', NULL, NULL),
+    ('b0000008-0000-0000-0000-000000000008', 'Antar Obat (sedang, 1-3 km)', 'Perlu motor/sepeda, apotek agak jauh.', 45, 35000, FALSE, TRUE, 'sedang', 'a0000001-0000-0000-0000-000000000001', 1, 3),
+    ('b0000009-0000-0000-0000-000000000009', 'Belanja Kebutuhan (standar)', 'Belanja harian ke warung/minimarket, pegang uang keluarga.', 60, 40000, FALSE, TRUE, 'sedang', 'a0000005-0000-0000-0000-000000000005', NULL, NULL);
 
 -- Insert leaf categories BERAT
 INSERT INTO public.service_categories (id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, is_high_risk, is_active, tingkat, parent_id, jarak_min_km, jarak_max_km)
 VALUES
-    ('c0000010-0000-0000-0000-000000000010', 'Antar Obat (jauh, >3 km)', 'Ke faskes/apotek jauh, perlu transportasi.', 90, 55000, FALSE, TRUE, 'berat', 'p0000001-0000-0000-0000-000000000001', 3, NULL),
-    ('c0000011-0000-0000-0000-000000000011', 'Bersih-bersih Menyeluruh', 'Bersih beberapa ruangan, kamar mandi, dapur.', 90, 70000, FALSE, TRUE, 'berat', 'p0000002-0000-0000-0000-000000000002', NULL, NULL),
-    ('c0000012-0000-0000-0000-000000000012', 'Kontrol Kesehatan (antar ke faskes)', 'Mendampingi lansia perjalanan pergi & pulang ke klinik/RS.', 120, 120000, TRUE, TRUE, 'berat', NULL, NULL, NULL),
-    ('c0000013-0000-0000-0000-000000000013', 'Belanja Kebutuhan (besar/jauh)', 'Belanja banyak item, ke pasar/supermarket jauh.', 90, 65000, FALSE, TRUE, 'berat', 'p0000005-0000-0000-0000-000000000005', NULL, NULL);
+    ('b0000010-0000-0000-0000-000000000010', 'Antar Obat (jauh, >3 km)', 'Ke faskes/apotek jauh, perlu transportasi.', 90, 55000, FALSE, TRUE, 'berat', 'a0000001-0000-0000-0000-000000000001', 3, NULL),
+    ('b0000011-0000-0000-0000-000000000011', 'Bersih-bersih Menyeluruh', 'Bersih beberapa ruangan, kamar mandi, dapur.', 90, 70000, FALSE, TRUE, 'berat', 'a0000002-0000-0000-0000-000000000002', NULL, NULL),
+    ('b0000012-0000-0000-0000-000000000012', 'Kontrol Kesehatan (antar ke faskes)', 'Mendampingi lansia perjalanan pergi & pulang ke klinik/RS.', 120, 120000, TRUE, TRUE, 'berat', NULL, NULL, NULL),
+    ('b0000013-0000-0000-0000-000000000013', 'Belanja Kebutuhan (besar/jauh)', 'Belanja banyak item, ke pasar/supermarket jauh.', 90, 65000, FALSE, TRUE, 'berat', 'a0000005-0000-0000-0000-000000000005', NULL, NULL);

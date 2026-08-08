@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { 
   Briefcase, 
   Clock, 
@@ -10,34 +11,79 @@ import {
   Wallet 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/server';
 
-export default function HelperDashboardPage() {
-  // Mock data for the dashboard
+export default async function HelperDashboardPage() {
+  const supabase = await createClient();
+
+  // 1. Get logged-in user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    redirect('/login');
+  }
+
+  // 2. Fetch Helper Profile & User data
+  const { data: helperData, error: helperError } = await supabase
+    .from('helper_profiles')
+    .select(`
+      id, 
+      status, 
+      tingkat_kepercayaan,
+      total_tugas_selesai,
+      saldo_tersedia,
+      users ( full_name )
+    `)
+    .eq('user_id', user.id)
+    .single();
+
+  if (helperError || !helperData) {
+    // If not found, maybe they haven't completed registration
+    redirect('/helper/verifikasi');
+  }
+
+  const fullName = (helperData.users as any)?.full_name || 'Helper';
+  const helperId = helperData.id;
+
+  // 3. Fetch Tasks related to this Helper
+  // Note: For active tasks we count 'dikonfirmasi', 'dikerjakan'
+  // For pending tasks we count 'diajukan', 'menunggu_persetujuan_koordinator' (if they bid, etc.) - assuming they are assigned.
+  
+  const { data: allTasks } = await supabase
+    .from('tasks')
+    .select(`
+      id,
+      status,
+      jadwal_waktu,
+      harga_final,
+      lansia_profiles ( nama, alamat ),
+      service_categories ( nama )
+    `)
+    .eq('helper_id', helperId)
+    .order('jadwal_waktu', { ascending: true });
+
+  const tasks = allTasks || [];
+
+  const activeTasks = tasks.filter(t => ['dikonfirmasi', 'dikerjakan'].includes(t.status));
+  const pendingTasks = tasks.filter(t => ['diajukan', 'menunggu_persetujuan_keluarga', 'menunggu_persetujuan_koordinator'].includes(t.status));
+  
   const stats = [
-    { label: 'Tugas Aktif', value: '2', icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Menunggu Verifikasi', value: '1', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Tugas Selesai', value: '14', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
-    { label: 'Estimasi Fee', value: 'Rp 650.000', icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
+    { label: 'Tugas Aktif', value: activeTasks.length.toString(), icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
+    { label: 'Menunggu Verifikasi', value: pendingTasks.length.toString(), icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
+    { label: 'Tugas Selesai', value: helperData.total_tugas_selesai.toString(), icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
+    { label: 'Estimasi Fee', value: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(helperData.saldo_tersedia), icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
   ];
 
-  const recentTasks = [
-    {
-      id: 'TASK-001',
-      title: 'Pendampingan Cek Rutin',
-      lansiaName: 'Opa Budi',
-      date: 'Besok, 09:00 WIB',
-      location: 'RS Hermina Depok',
-      status: 'active',
-    },
-    {
-      id: 'TASK-002',
-      title: 'Jalan Pagi & Mengobrol',
-      lansiaName: 'Oma Siti',
-      date: 'Sabtu, 12 Ags - 07:00 WIB',
-      location: 'Taman Merdeka, Pancoran Mas',
-      status: 'pending',
-    }
-  ];
+  const recentTasks = activeTasks.concat(pendingTasks).slice(0, 3).map(t => ({
+    id: t.id.substring(0, 8).toUpperCase(),
+    realId: t.id,
+    title: (t.service_categories as any)?.nama || 'Tugas',
+    lansiaName: (t.lansia_profiles as any)?.nama || 'Klien',
+    date: new Date(t.jadwal_waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+    location: (t.lansia_profiles as any)?.alamat || '-',
+    status: ['dikonfirmasi', 'dikerjakan'].includes(t.status) ? 'active' : 'pending',
+  }));
+
+  const isVerified = helperData.status === 'verified';
 
   return (
     <div className="min-h-screen bg-[#F5F8FC] p-4 sm:p-6 lg:p-8 font-sans pb-24">
@@ -49,8 +95,12 @@ export default function HelperDashboardPage() {
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, Helper Demo</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white ml-2 border border-white/30 uppercase tracking-wider backdrop-blur-md">Terverifikasi</span></p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {fullName}</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: 
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white ml-2 border border-white/30 uppercase tracking-wider backdrop-blur-md ${isVerified ? '' : 'bg-orange-500/20'}`}>
+                {helperData.status.replace('_', ' ')}
+              </span>
+            </p>
           </div>
           <Button asChild className="bg-white text-[#0D47A1] rounded-xl shadow-md hover:bg-gray-50 font-bold transition-all relative z-10 mt-2 sm:mt-0">
             <Link href="/helper/tugas/baru">
@@ -92,7 +142,9 @@ export default function HelperDashboardPage() {
             </div>
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {recentTasks.map((task) => (
+              {recentTasks.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">Belum ada tugas jadwal terdekat.</div>
+              ) : recentTasks.map((task) => (
                 <div key={task.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                   <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex-1">
@@ -102,7 +154,7 @@ export default function HelperDashboardPage() {
                         }`}>
                           {task.status === 'active' ? 'AKTIF' : 'MENUNGGU VERIFIKASI'}
                         </span>
-                        <span className="text-sm font-semibold text-gray-400">{task.id}</span>
+                        <span className="text-sm font-semibold text-gray-400">#{task.id}</span>
                       </div>
                       <h3 className="text-base font-bold text-gray-900 mb-1">{task.title}</h3>
                       <p className="text-sm font-medium text-gray-600 mb-3">Klien: {task.lansiaName}</p>
@@ -121,7 +173,7 @@ export default function HelperDashboardPage() {
                     
                     <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
                       <Button asChild variant="outline" size="sm" className="rounded-lg font-semibold w-full sm:w-auto h-9">
-                        <Link href={`/helper/pekerjaan/${task.id}`}>Lihat Detail</Link>
+                        <Link href={`/helper/pekerjaan/${task.realId}`}>Lihat Detail</Link>
                       </Button>
                     </div>
                   </div>
@@ -133,21 +185,23 @@ export default function HelperDashboardPage() {
           {/* Sidebar Area */}
           <div className="space-y-6">
             {/* Action Required Banner */}
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                <AlertCircle className="w-24 h-24 text-orange-600" />
+            {!isVerified && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <AlertCircle className="w-24 h-24 text-orange-600" />
+                </div>
+                <h3 className="font-bold text-orange-900 mb-2 flex items-center relative z-10">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  Profil Belum Terverifikasi
+                </h3>
+                <p className="text-sm text-orange-800 mb-4 leading-relaxed relative z-10">
+                  Mohon lengkapi dokumen Anda atau tunggu konfirmasi dari Koordinator agar dapat menerima tugas baru.
+                </p>
+                <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg w-full font-semibold relative z-10">
+                  <Link href="/helper/verifikasi">Perbarui Sekarang</Link>
+                </Button>
               </div>
-              <h3 className="font-bold text-orange-900 mb-2 flex items-center relative z-10">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                Lengkapi Profil
-              </h3>
-              <p className="text-sm text-orange-800 mb-4 leading-relaxed relative z-10">
-                Anda memiliki beberapa dokumen yang perlu diperbarui agar dapat menerima tugas baru.
-              </p>
-              <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg w-full font-semibold relative z-10">
-                <Link href="/helper/verifikasi">Perbarui Sekarang</Link>
-              </Button>
-            </div>
+            )}
 
             {/* Quick Links / Resources */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
