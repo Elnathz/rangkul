@@ -80,6 +80,29 @@ export default function TambahLansiaPage() {
     }
 
     try {
+      let fotoUrl = null;
+      const file = fileInputRef.current?.files?.[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("docType", "foto_lansia");
+        
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          setErrorMsg(uploadData.message || "Gagal mengunggah foto lansia.");
+          setLoading(false);
+          return;
+        }
+        
+        fotoUrl = uploadData.url;
+      }
+
       // Data to send to TDD API
       const payload = {
         nama: form.nama,
@@ -88,8 +111,8 @@ export default function TambahLansiaPage() {
         dokumen_identitas_lansia_url: form.dokumen_identitas_lansia_url,
         lat: form.lat,
         lng: form.lng,
-        // Mock Photo implementation (not yet in API types, but requested for UI)
-        // foto_url: photoPreview ? "mock-url" : null,
+        foto_url: fotoUrl,
+        hubungan_keluarga: finalHubungan,
       };
 
       const res = await fetch("/api/lansia/profile", {
