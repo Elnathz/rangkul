@@ -1,0 +1,53 @@
+# Rangkul Developer Skills & Master Rules
+
+Dokumen ini adalah sumber kebenaran total (Source of Truth) untuk agen developer. Patuhi seluruh aturan ini tanpa kecuali.
+
+## 0. Aturan Gaya Penulisan & Kode (Style & Tone)
+* DILARANG menggunakan gaya bahasa generik/berlebihan (slop). Gunakan bahasa yang langsung, ringkas, dan jelas.
+* DILARANG menggunakan karakter em-dash. Gunakan tanda hubung biasa (-) untuk pemisah kalimat atau poin.
+* DILARANG menggunakan emoji dalam bentuk apapun (baik di UI, komentar kode, maupun commit message). Gunakan SVG, angka, atau label teks sebagai pengganti ikon.
+* Hindari penggunaan istilah sistem cerdas yang berlebihan pada UI atau dokumentasi. Produk ini berbasis aturan bisnis (rule-based).
+
+## 1. rangkul-state-machine
+* Siklus Status: DIAJUKAN -> DIKONFIRMASI -> DIKERJAKAN -> SELESAI (atau DIBATALKAN).
+* Batas Waktu: Tugas DIAJUKAN maksimal berumur 1 jam. Jika tidak diterima Helper, otomatis berubah menjadi DIBATALKAN (Kedaluwarsa) via Scheduled Edge Function.
+* Race Condition: Penerimaan tugas WAJIB menggunakan conditional update di database (misal: UPDATE tasks SET status='DIKONFIRMASI', helper_id=X WHERE id=Y AND status='DIAJUKAN'). Dilarang menggunakan pola baca-lalu-tulis.
+* Approval Sementara: Jika tugas butuh persetujuan Koordinator, status menjadi menunggu_persetujuan_koordinator sebelum DIKONFIRMASI.
+
+## 2. rangkul-approval-model
+* Model Kepercayaan: Verifikasi orang, bukan verifikasi pekerjaan.
+* Radius Layanan: Helper diverifikasi di RT/RW domisilinya, namun dapat mengambil tugas di luar domisili selama masih masuk dalam radius_layanan_km.
+* Persetujuan Eksplisit: Transaksi berjalan otomatis tanpa gerbang Koordinator, KECUALI untuk: (1) Booking pertama Helper baru, (2) Helper status probation, (3) Helper vakum >60 hari, (4) Helper pernah kena sanksi, (5) Kategori jasa berisiko tinggi (Kontrol Kesehatan).
+* Notifikasi Pasif: Untuk transaksi otomatis, Koordinator hanya menerima notifikasi pasif tanpa perlu melakukan aksi.
+* Fallback Wilayah: RW menjadi verifikator jika RT kosong. Admin Platform menjadi verifikator sementara jika RW juga kosong (verified_by_admin_fallback = true).
+
+## 3. rangkul-payment-rules
+* Fix Price: Harga layanan bersifat tetap berdasarkan kategori. Dilarang membuat fitur negosiasi harga.
+* Layanan Tambahan: Biaya tambahan di lapangan wajib diajukan ke Keluarga (status menunggu_persetujuan_keluarga) dan dihentikan sampai Keluarga setuju.
+* Pembagian Dana (Split): Pencairan dana escrow menjadi 90% Helper, 7% Platform, 3% Koordinator wilayah.
+* Kompensasi Batal: Jika Keluarga membatalkan tugas DIKONFIRMASI (dana sudah ditahan), split menjadi 50% kompensasi Helper dan 50% refund Keluarga.
+* Restriksi Batal: Akumulasi pembatalan >2 kali otomatis membuat akun Keluarga restricted.
+
+## 4. rangkul-trust-safety
+* Verifikasi Lansia: Pendaftaran lansia wajib melampirkan file KTP dan bukti hubungan keluarga (private bucket).
+* Sistem Laporan Otomatis: 2 laporan formal (bukan rating) memicu status under_review pada Helper via trigger PostgreSQL.
+* Status under_review: Helper diblokir dari menerima tugas baru sampai diinvestigasi.
+* Rating: Hanya sinyal kualitas, tidak memicu suspend otomatis.
+
+## 5. rangkul-riwayat-rangkul
+* Komponen Laporan: Laporan SELESAI wajib menyertakan foto, catatan kondisi, Health Snapshot, dan Cerita Hari Ini.
+* Health Snapshot: 5 indikator (Energi, Mobilitas, Mood, Nafsu Makan, Kualitas Tidur) skala 1-5. Gunakan UI angka atau ikon SVG murni.
+* Badge Peringatan: Munculkan badge "Perlu Perhatian" jika rata-rata skor turun 3 kunjungan berturut-turut. Logika murni rule-based (IF/ELSE).
+
+## 6. rangkul-offline-behavior
+* Offline Draft: Input draf laporan Helper wajib disimpan ke IndexedDB saat offline (status Pending Sync).
+* Auto-Sync: Event listener online memicu proses sinkronisasi otomatis ke server. Jangan gunakan localStorage karena batas kapasitas.
+
+## 7. rangkul-rls-policy
+* Akses Personal: Keluarga hanya mengakses data lansia, transaksi, dan Riwayat Rangkul miliknya.
+* Dokumen Privasi: URL dokumen identitas wajib menggunakan signed URL.
+* Visibilitas Koordinator: Koordinator hanya mengakses data Helper dan transaksi di wilayah cakupannya. RW memiliki filter pengawasan lintas-RT.
+
+## 8. rangkul-api-conventions
+* Validasi Lapis 4: Zod client -> React Hook Form -> route handler -> constraint Supabase.
+* Role Check: Endpoint sensitif wajib memvalidasi klaim role dari JWT (keluarga, helper, koordinator, admin) di layer aplikasi sebelum kueri Supabase.
