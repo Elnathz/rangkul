@@ -1,9 +1,25 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CalendarClock, User, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, User, CheckCircle2 } from 'lucide-react';
 
 export default function BookingNewPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Simulate booking API call
+    setTimeout(() => {
+      setLoading(false);
+      router.push('/beranda');
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -18,7 +34,7 @@ export default function BookingNewPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             
             {/* Step 1: Lansia Selection */}
             <div className="space-y-3">
@@ -43,11 +59,11 @@ export default function BookingNewPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase">Pilih Tanggal</label>
-                  <input type="date" className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
+                  <input type="date" required className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase">Jam Kedatangan</label>
-                  <input type="time" className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
+                  <input type="time" required className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
                 </div>
               </div>
             </div>
@@ -60,8 +76,8 @@ export default function BookingNewPage() {
               </p>
             </div>
 
-            <Button type="button" className="w-full h-12 bg-brand-gradient text-white rounded-xl font-bold shadow-md hover:opacity-90">
-              Buat Permintaan
+            <Button type="submit" disabled={loading} className="w-full h-12 bg-brand-gradient text-white rounded-xl font-bold shadow-md hover:opacity-90">
+              {loading ? "Memproses Pemesanan..." : "Buat Permintaan"}
             </Button>
           </form>
         </div>

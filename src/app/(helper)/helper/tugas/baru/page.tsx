@@ -62,7 +62,7 @@ export default function CariPekerjaanPage() {
               </div>
             </div>
 
-            <div className="flex items-end justify-end md:w-48 shrink-0">
+            <div className="flex items-end justify-end w-full md:w-48 shrink-0 mt-4 md:mt-0">
               <Button asChild className="w-full bg-[#0D47A1] text-white hover:bg-blue-800">
                 <Link href={`/helper/pekerjaan/${job.id}`}>
                   Lihat Detail <ChevronRight className="w-4 h-4 ml-1" />

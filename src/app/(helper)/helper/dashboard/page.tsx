@@ -14,10 +14,10 @@ import { Button } from '@/components/ui/button';
 export default function HelperDashboardPage() {
   // Mock data for the dashboard
   const stats = [
-    { label: 'Tugas Aktif', value: '2', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Menunggu Verifikasi', value: '1', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { label: 'Tugas Selesai', value: '14', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Estimasi Fee', value: 'Rp 650.000', icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Tugas Aktif', value: '2', icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
+    { label: 'Menunggu Verifikasi', value: '1', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
+    { label: 'Tugas Selesai', value: '14', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
+    { label: 'Estimasi Fee', value: 'Rp 650.000', icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
   ];
 
   const recentTasks = [
@@ -44,12 +44,15 @@ export default function HelperDashboardPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Selamat datang, Helper Demo</h1>
-            <p className="text-gray-500 mt-1">Status Anda saat ini: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-1">Terverifikasi</span></p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-gradient text-white p-8 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, Helper Demo</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white ml-2 border border-white/30 uppercase tracking-wider backdrop-blur-md">Terverifikasi</span></p>
           </div>
-          <Button asChild className="bg-brand-gradient text-white rounded-xl shadow-md hover:shadow-lg transition-all">
+          <Button asChild className="bg-white text-[#0D47A1] rounded-xl shadow-md hover:bg-gray-50 font-bold transition-all relative z-10 mt-2 sm:mt-0">
             <Link href="/helper/tugas/baru">
               Cari Pekerjaan
             </Link>
@@ -59,15 +62,20 @@ export default function HelperDashboardPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
+            <div key={idx} className={`${stat.cardBg} p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md relative overflow-hidden group`}>
+               {idx === 0 && (
+                 <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none transform group-hover:scale-110 transition-transform">
+                   <Briefcase className="w-20 h-20 text-white" />
+                 </div>
+               )}
+              <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className={`p-2.5 rounded-xl ${stat.bg}`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
               </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              <div className="relative z-10">
+                <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${idx === 0 ? 'text-blue-100' : 'text-gray-500'}`}>{stat.label}</p>
+                <p className={`text-2xl font-bold ${idx === 0 ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
               </div>
             </div>
           ))}

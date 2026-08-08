@@ -44,14 +44,11 @@ function validateRegister(data: {
   if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     errors.email = "Format email tidak valid";
   }
-  // Phone wajib, format: user ketik setelah "08" prefix, total DB = "08" + input (8–11 digit)
-  if (!data.phone || data.phone.trim() === "") {
+  // Phone wajib, format: dimulai dengan 08, panjang 10-13 digit
+  if (!data.phone || data.phone.trim() === "" || data.phone === "08") {
     errors.phone = "Nomor HP wajib diisi";
-  } else {
-    const full = "08" + data.phone;
-    if (!/^08[0-9]{8,11}$/.test(full)) {
-      errors.phone = "Nomor tidak valid (8–11 digit setelah 08, total 10–13 digit)";
-    }
+  } else if (!/^08[0-9]{8,11}$/.test(data.phone)) {
+    errors.phone = "Nomor tidak valid (harus dimulai 08, total 10–13 digit)";
   }
   if (data.password.length < 8) {
     errors.password = "Password minimal 8 karakter";
@@ -148,7 +145,7 @@ function RegisterForm() {
     username: "",
     full_name: "",
     email: "",
-    phone: "", 
+    phone: "08", 
     password: "",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -157,7 +154,17 @@ function RegisterForm() {
   const set =
     (key: keyof typeof fields) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = { ...fields, [key]: e.target.value };
+      let value = e.target.value;
+
+      // Make 08 prefix undeletable for phone input
+      if (key === 'phone') {
+        value = value.replace(/[^0-9]/g, ''); // Ensure only numbers
+        if (!value.startsWith('08')) {
+          value = '08';
+        }
+      }
+
+      const next = { ...fields, [key]: value };
       setFields(next);
       if (submitted) setErrors(validateRegister(next));
     };
