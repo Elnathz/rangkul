@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
+  const ktpInputRef = useRef<HTMLInputElement>(null);
+  
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  const [categories, setCategories] = useState<{id: string, nama: string}[]>([]);
+  const [kategoriIds, setKategoriIds] = useState<string[]>([]);
+  const [ktpFileName, setKtpFileName] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     bio: "",
@@ -23,33 +30,102 @@ export default function HelperVerifikasiPage() {
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
     radius_layanan_km: 5,
-    ktp_url: "",
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('service_categories')
+        .select('id, nama')
+        .eq('is_active', true);
+      if (data) setCategories(data);
+    };
+    fetchCategories();
+  }, []);
+
+  const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setKtpFileName(file.name);
+    }
+  };
+
+  const toggleKategori = (id: string) => {
+    setKategoriIds(prev => 
+      prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
     setFieldErrors({});
-    const payload = { ...form };
 
-    if (payload.domisili_lat === null || payload.domisili_lng === null) {
+    if (form.domisili_lat === null || form.domisili_lng === null) {
       setErrorMsg("Harap tentukan titik koordinat domisili pada peta interaktif.");
       setLoading(false);
       return;
     }
 
-    if (!payload.region.provinsi || !payload.region.kota || !payload.region.kecamatan || !payload.region.kelurahan) {
+    if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan) {
       setErrorMsg("Harap melengkapi kolom wilayah administrasi.");
       setLoading(false);
       return;
     }
 
+    if (kategoriIds.length === 0) {
+      setFieldErrors({ kategori_ids: ["Harap pilih minimal 1 kategori layanan."] });
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/helper/profile", {
+      let ktpUrl = null;
+      const file = ktpInputRef.current?.files?.[0];
+      
+      if (!file) {
+        setErrorMsg("Harap unggah foto KTP/Dokumen Identitas.");
+        setLoading(false);
+        return;
+      }
+
+      // 1. Upload KTP
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("docType", "ktp");
+      
+      const uploadRes = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadRes.ok) {
+        setErrorMsg(uploadData.message || "Gagal mengunggah KTP.");
+        setLoading(false);
+        return;
+      }
+      
+      ktpUrl = uploadData.url;
+
+      // 2. Submit Profile
+      const payload = {
+        bio: form.bio,
+        wilayah_domisili: form.alamat,
+        domisili_lat: form.domisili_lat,
+        domisili_lng: form.domisili_lng,
+        radius_layanan_km: form.radius_layanan_km,
+        ktp_url: ktpUrl,
+        kategori_ids: kategoriIds
+      };
+
+      const res = await fetch("/api/helper/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -174,19 +250,55 @@ export default function HelperVerifikasiPage() {
 
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                {categories.map(cat => (
+                  <label key={cat.id} className="flex items-center space-x-2 border p-3 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <input 
+                      type="checkbox"
+                      checked={kategoriIds.includes(cat.id)}
+                      onChange={() => toggleKategori(cat.id)}
+                      className="rounded text-[#0D47A1] focus:ring-[#0D47A1]"
+                    />
+                    <span className="text-sm font-medium">{cat.nama}</span>
+                  </label>
+                ))}
+              </div>
+              {fieldErrors.kategori_ids && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.kategori_ids[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-4">
                 URL Foto KTP / Dokumen Identitas *
               </Label>
               <div 
+                onClick={() => ktpInputRef.current?.click()}
                 className="relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 h-32 sm:h-40 group"
               >
+                <input 
+                  type="file" 
+                  accept="image/jpeg,image/png,image/jpg"
+                  ref={ktpInputRef} 
+                  className="hidden" 
+                  onChange={handleKtpUpload}
+                />
                 <div className="text-center p-4">
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-2">
                     <svg className="w-5 h-5 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-[#0D47A1]">Ketuk untuk unggah foto KTP</p>
-                  <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (JPG/PNG)</p>
+                  {ktpFileName ? (
+                    <p className="text-sm font-semibold text-[#0D47A1]">{ktpFileName}</p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-[#0D47A1]">Ketuk untuk unggah foto KTP</p>
+                      <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (JPG/PNG)</p>
+                    </>
+                  )}
                 </div>
               </div>
               {fieldErrors.ktp_url && (
@@ -197,7 +309,7 @@ export default function HelperVerifikasiPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-95 shadow-sm mt-2"
+              className="w-full h-11 bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-95 shadow-sm mt-4"
             >
               {loading ? "Menyimpan Profil..." : "Kirim Verifikasi Profil"}
             </Button>
