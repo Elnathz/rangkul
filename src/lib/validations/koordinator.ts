@@ -6,6 +6,7 @@ export const koordinatorApplySchema = z.object({
     error: 'Tingkat harus rt atau rw',
   }),
   dokumen_url: z.string().url('URL dokumen jabatan tidak valid'),
+  ktp_url: z.string().url('URL KTP tidak valid').optional(),
 });
 
 export type KoordinatorApplyInput = z.infer<typeof koordinatorApplySchema>;
@@ -19,3 +20,18 @@ export const koordinatorRejectSchema = z.object({
 });
 
 export type KoordinatorRejectInput = z.infer<typeof koordinatorRejectSchema>;
+
+export const promoteHelperSchema = z.object({
+  identitas_valid: z.literal(true, {
+    message: 'Identitas harus divalidasi'
+  }),
+  dikenal_warga: z.literal(true, {
+    message: 'Harus dikenal warga sekitar'
+  }),
+  wawancara_dilakukan: z.literal(true, {
+    message: 'Wawancara wajib dilakukan'
+  }),
+  catatan_koordinator: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),
+});
+
+export type PromoteHelperInput = z.infer<typeof promoteHelperSchema>;

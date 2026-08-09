@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,26 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
+  const ktpInputRef = useRef<HTMLInputElement>(null);
+  
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState('tier1');
   const [modalOpenTier, setModalOpenTier] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-
-  useEffect(() => {
-    if (modalOpenTier) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [modalOpenTier]);
+  const [categories, setCategories] = useState<{id: string, nama: string}[]>([]);
+  const [kategoriIds, setKategoriIds] = useState<string[]>([]);
+  const [ktpFileName, setKtpFileName] = useState<string | null>(null);
 
   const tiers = [
     {
@@ -58,19 +53,31 @@ export default function HelperVerifikasiPage() {
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
     radius_layanan_km: 5,
+    selected_categories: [] as string[],
     ktp_url: "",
-    selected_categories: [] as string[]
   });
 
   const toggleCategory = (cat: string) => {
     setForm(prev => {
-      const current = prev.selected_categories;
+      const current = prev.selected_categories || [];
       if (current.includes(cat)) {
         return { ...prev, selected_categories: current.filter(c => c !== cat) };
       }
       return { ...prev, selected_categories: [...current, cat] };
     });
   };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('service_categories')
+        .select('id, nama')
+        .eq('is_active', true);
+      if (data) setCategories(data);
+    };
+    fetchCategories();
+  }, []);
 
   const selectAllInActiveTab = () => {
     const activeCategories = tiers.find(t => t.id === activeTab)?.categories || [];
@@ -88,30 +95,99 @@ export default function HelperVerifikasiPage() {
       selected_categories: prev.selected_categories.filter(c => !activeCategories.includes(c))
     }));
   };
+  const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setKtpFileName(file.name);
+    }
+  };
+
+  const toggleKategori = (id: string) => {
+    setKategoriIds(prev => 
+      prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
     setFieldErrors({});
-    const payload = { ...form };
 
-    if (payload.domisili_lat === null || payload.domisili_lng === null) {
+    if (form.domisili_lat === null || form.domisili_lng === null) {
       setErrorMsg("Harap tentukan titik koordinat domisili pada peta interaktif.");
       setLoading(false);
       return;
     }
 
-    if (!payload.region.provinsi || !payload.region.kota || !payload.region.kecamatan || !payload.region.kelurahan) {
+    if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan) {
       setErrorMsg("Harap melengkapi kolom wilayah administrasi.");
       setLoading(false);
       return;
     }
 
+    if (kategoriIds.length === 0) {
+      setFieldErrors({ kategori_ids: ["Harap pilih minimal 1 kategori layanan."] });
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Simulate API call since the endpoint is not yet connected to Supabase
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      sessionStorage.setItem("mock_helper_status", "under_review");
+      let ktpUrl = null;
+      const file = ktpInputRef.current?.files?.[0];
+      
+      if (!file) {
+        setErrorMsg("Harap unggah foto KTP/Dokumen Identitas.");
+        setLoading(false);
+        return;
+      }
+
+      // 1. Upload KTP
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("docType", "ktp");
+      
+      const uploadRes = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadRes.ok) {
+        setErrorMsg(uploadData.message || "Gagal mengunggah KTP.");
+        setLoading(false);
+        return;
+      }
+      
+      ktpUrl = uploadData.url;
+
+      // 2. Submit Profile
+      const payload = {
+        bio: form.bio,
+        wilayah_domisili: form.alamat,
+        domisili_lat: form.domisili_lat,
+        domisili_lng: form.domisili_lng,
+        radius_layanan_km: form.radius_layanan_km,
+        ktp_url: ktpUrl,
+        kategori_ids: kategoriIds
+      };
+
+      const res = await fetch("/api/helper/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.fieldErrors) setFieldErrors(data.fieldErrors);
+        setErrorMsg(data.message || "Gagal menyimpan profil helper.");
+        setLoading(false);
+        return;
+      }
+
       router.push("/helper/dashboard");
     } catch {
       setErrorMsg("Terjadi kesalahan koneksi jaringan.");
@@ -327,6 +403,29 @@ export default function HelperVerifikasiPage() {
               <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 3: Unggah Identitas</h2>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                 URL Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
+                Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                {categories.map(cat => (
+                  <label key={cat.id} className="flex items-center space-x-2 border p-3 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <input 
+                      type="checkbox"
+                      checked={kategoriIds.includes(cat.id)}
+                      onChange={() => toggleKategori(cat.id)}
+                      className="rounded text-[#0D47A1] focus:ring-[#0D47A1]"
+                    />
+                    <span className="text-sm font-medium">{cat.nama}</span>
+                  </label>
+                ))}
+              </div>
+              {fieldErrors.kategori_ids && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.kategori_ids[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-4">
+                URL Foto KTP / Dokumen Identitas *
               </Label>
               <p className="text-xs text-slate-500 mb-3">Mohon perhatikan tulisan KTP harus jelas dan tidak terpotong silau cahaya.</p>
               <Label 

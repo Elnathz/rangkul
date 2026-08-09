@@ -38,16 +38,45 @@ export async function POST(request: Request) {
       );
     }
 
-    const { lansia_id, service_category_id, jadwal_waktu, catatan } = validation.data;
+    const { lansia_id, service_category_id, helper_id, jadwal_waktu, catatan } = validation.data;
 
-    // Fetch price from service_categories
-    const { data: category } = await supabase
+    // Fetch category and its tingkat
+    const { data: category, error: catError } = await supabase
       .from('service_categories')
-      .select('harga_dasar')
+      .select('harga_dasar, is_high_risk, is_active')
       .eq('id', service_category_id)
       .single();
 
-    const harga_dasar = category?.harga_dasar ?? 50000;
+    if (catError || !category) {
+      return createApiError('not_found', 'Kategori layanan tidak ditemukan', 404);
+    }
+    
+    if (!category.is_active) {
+      return createApiError('validation_error', 'Kategori layanan tidak aktif atau merupakan parent category', 400);
+    }
+
+    // Enforce probation rule if helper_id is provided (Direct Booking)
+    if (helper_id) {
+      const { data: helperData, error: helperError } = await supabase
+        .from('helper_profiles')
+        .select('tingkat_kepercayaan, status')
+        .eq('id', helper_id)
+        .single();
+        
+      if (helperError || !helperData) {
+        return createApiError('not_found', 'Helper tidak ditemukan', 404);
+      }
+      
+      if (helperData.status !== 'verified') {
+         return createApiError('forbidden', 'Helper belum diverifikasi atau sedang di-suspend', 403);
+      }
+
+      if (helperData.tingkat_kepercayaan === 'probation' && category.is_high_risk) {
+        return createApiError('forbidden', 'Helper probation tidak boleh mengambil tugas berisiko tinggi', 403);
+      }
+    }
+
+    const harga_dasar = category.harga_dasar;
     const harga_final = harga_dasar;
 
     // Insert task into Supabase tasks table
@@ -56,6 +85,7 @@ export async function POST(request: Request) {
       .insert({
         keluarga_id: user.id,
         lansia_id,
+        helper_id: helper_id || null,
         service_category_id,
         jadwal_waktu,
         catatan: catatan || null,
