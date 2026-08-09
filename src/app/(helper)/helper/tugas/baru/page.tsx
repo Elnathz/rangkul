@@ -11,7 +11,8 @@ export default function CariPekerjaanPage() {
       location: 'Kec. Beji, Kota Depok',
       date: 'Besok, 08:00 - 12:00',
       distance: '1.2 km',
-      tags: ['Mobilitas Terbatas', 'Butuh Bantuan Kursi Roda']
+      tags: ['Mobilitas Terbatas', 'Butuh Bantuan Kursi Roda'],
+      photoUrl: 'https://i.pravatar.cc/150?img=11'
     },
     {
       id: 'BKG-1030',
@@ -19,7 +20,8 @@ export default function CariPekerjaanPage() {
       location: 'Kec. Pancoran Mas, Kota Depok',
       date: 'Jumat, 15:00 - 18:00',
       distance: '3.5 km',
-      tags: ['Teman Mengobrol', 'Demensia Ringan']
+      tags: ['Teman Mengobrol', 'Demensia Ringan'],
+      photoUrl: 'https://i.pravatar.cc/150?img=43'
     }
   ];
 
@@ -37,15 +39,19 @@ export default function CariPekerjaanPage() {
           <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-6 hover:border-blue-200 transition-colors">
             <div className="flex-1 space-y-3">
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{job.lansiaName}</h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {job.tags.map(tag => (
-                      <span key={tag} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded">{tag}</span>
-                    ))}
+                <div className="flex gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={job.photoUrl} alt="Lansia" className="w-20 h-20 rounded-2xl object-cover border border-gray-200 mt-1 shadow-sm" />
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">{job.lansiaName}</h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {job.tags.map(tag => (
+                        <span key={tag} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded">{tag}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <span className="font-bold text-[#0D47A1] bg-blue-50 px-3 py-1 rounded-full text-sm">{job.distance}</span>
                 </div>
               </div>

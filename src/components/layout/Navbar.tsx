@@ -65,11 +65,24 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const [isVerified, setIsVerified] = useState(false);
+
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
+      if (data.user) {
+        const role = data.user.user_metadata?.role;
+        if (role === 'helper') {
+          const { data: prof } = await supabase.from('helper_profiles').select('id').eq('user_id', data.user.id).single();
+          if (prof) setIsVerified(true);
+        } else if (role === 'koordinator') {
+          const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', data.user.id).single();
+          if (prof) setIsVerified(true);
+        }
+      }
     });
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -92,6 +105,10 @@ export default function Navbar() {
       ? "/koordinator/dashboard"
       : "/beranda";
 
+  const editProfileHref = 
+    role === "helper" ? "/helper/verifikasi" :
+    role === "koordinator" ? "/koordinator/pengajuan" : "#";
+
   let currentNavLinks = defaultNavLinks;
   if (role === 'keluarga') {
     currentNavLinks = [
@@ -103,13 +120,13 @@ export default function Navbar() {
     currentNavLinks = [
       { href: "/helper/dashboard", label: "Dashboard" },
       { href: "/helper/tugas/baru", label: "Cari Tugas" },
-      { href: "/helper/verifikasi", label: "Verifikasi Profil" },
+      ...(isVerified ? [] : [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }]),
     ];
   } else if (role === 'koordinator') {
     currentNavLinks = [
       { href: "/koordinator/dashboard", label: "Dashboard" },
       { href: "/koordinator/antrean", label: "Antrean Helper" },
-      { href: "/koordinator/pengajuan", label: "Data RT/RW" },
+      ...(isVerified ? [] : [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }]),
     ];
   }
 
@@ -179,6 +196,16 @@ export default function Navbar() {
                   >
                     Dashboard Anda
                   </Link>
+                  {role !== "keluarga" && role !== "admin" && (
+                    <Link 
+                      href={editProfileHref} 
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      Edit Profil
+                    </Link>
+                  )}
                   <button 
                     onClick={handleLogout} 
                     className="flex items-center w-full gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 text-left transition-colors"
@@ -247,6 +274,14 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                 </Button>
+                {role !== "keluarga" && role !== "admin" && (
+                  <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm gap-2">
+                    <Link href={editProfileHref} onClick={() => setMenuOpen(false)}>
+                      <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      Edit Profil
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleLogout} className="w-full justify-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-100 shadow-sm gap-2">
                   <LogOut className="w-4 h-4" />
                   Keluar
