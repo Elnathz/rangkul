@@ -14,7 +14,7 @@ export default async function CariPekerjaanPage() {
   // Get helper profile to calculate distance if needed (and to ensure they are verified)
   const { data: profile } = await supabase
     .from('helper_profiles')
-    .select('id, status, domisili_lat, domisili_lng')
+    .select('id, status, domisili_lat, domisili_lng, radius_layanan_km')
     .eq('user_id', user.id)
     .single();
 
