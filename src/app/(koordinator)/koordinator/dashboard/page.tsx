@@ -32,44 +32,49 @@ export default async function KoordinatorDashboardPage() {
     .eq('id', user.id)
     .single();
 
-  if (!koordinator) {
-    return <div className="p-8 text-center">Profil Koordinator tidak ditemukan.</div>;
+  // Default values
+  let totalHelper = 0, pendingHelperCount = 0, activeHelper = 0;
+  let pendingHelpers: any[] = [];
+
+  if (koordinator?.wilayah) {
+    // Fetch counts
+    const { count: c1 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah);
+    totalHelper = c1 || 0;
+
+    const { count: c2 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'pending_verification');
+    pendingHelperCount = c2 || 0;
+
+    const { count: c3 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'verified');
+    activeHelper = c3 || 0;
+
+    // Fetch pending helpers list
+    const { data: pendingData } = await supabase
+      .from('helper_profiles')
+      .select(`
+        id,
+        created_at,
+        wilayah_domisili,
+        status,
+        users ( full_name )
+      `)
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'pending_verification')
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    pendingHelpers = pendingData || [];
   }
-
-  // Fetch counts
-  const { count: totalHelper } = await supabase
-    .from('helper_profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('wilayah_domisili', koordinator.wilayah);
-
-  const { count: pendingHelperCount } = await supabase
-    .from('helper_profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('wilayah_domisili', koordinator.wilayah)
-    .eq('status', 'pending_verification');
-
-  const { count: activeHelper } = await supabase
-    .from('helper_profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('wilayah_domisili', koordinator.wilayah)
-    .eq('status', 'verified');
-
-  // Fetch pending helpers list
-  const { data: pendingData } = await supabase
-    .from('helper_profiles')
-    .select(`
-      id,
-      created_at,
-      wilayah_domisili,
-      status,
-      users ( full_name )
-    `)
-    .eq('wilayah_domisili', koordinator.wilayah)
-    .eq('status', 'pending_verification')
-    .order('created_at', { ascending: false })
-    .limit(3);
-
-  const pendingHelpers = pendingData || [];
 
   const formatTaskDate = (isoString: string) => {
     const date = new Date(isoString);
@@ -100,7 +105,7 @@ export default async function KoordinatorDashboardPage() {
           
           <div className="relative z-10">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Koordinator'}</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">{koordinator.wilayah}</span></p>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">{koordinator?.wilayah || 'Belum Diatur'}</span></p>
           </div>
         </div>
 
