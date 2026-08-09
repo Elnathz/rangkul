@@ -4,7 +4,6 @@ import {
   Wallet,
   Clock,
   Star,
-  UserCheck,
   ArrowRight,
   MapPin,
 } from "lucide-react";

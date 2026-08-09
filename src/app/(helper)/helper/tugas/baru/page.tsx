@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { MapPin, Search, Clock, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, ChevronRight } from 'lucide-react';
 
 export default function CariPekerjaanPage() {
   const jobs = [
