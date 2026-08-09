@@ -30,19 +30,19 @@ export default function HelperVerifikasiPage() {
       id: "tier1",
       title: "Ringan",
       desc: "Aktivitas harian ringan & non-medis.",
-      categories: ["Menemani Mengobrol", "Jalan Pagi / Olahraga Ringan", "Membantu Belanja", "Membacakan Buku / Menemani Hobbi", "Menyiram Tanaman Dasar"]
+      categories: ["Menemani Mengobrol", "Belanja Kebutuhan", "Membersihkan Rumah Ringan", "Bantuan Teknologi"]
     },
     {
       id: "tier2",
       title: "Sedang",
       desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
-      categories: ["Menyiapkan Makanan & Menyuapi", "Mengingatkan Jadwal Obat", "Membantu Mandi & Berpakaian", "Bantuan Toilet Dasar", "Membersihkan Area Tidur", "Menemani Kunjungan Dokter Khusus"]
+      categories: ["Antar Obat", "Pengingat Obat"]
     },
     {
       id: "tier3",
       title: "Berat",
       desc: "Perawatan khusus dan penanganan medis dasar.",
-      categories: ["Penanganan Pasca Operasi", "Perawatan Luka Dasar", "Terapi Fisik Ringan", "Pendampingan Pasien Alzheimer/Demensia", "Pemberian Obat Kompleks / Injeksi Dasar", "Pemasangan / Cek Alat Medis Ringan"]
+      categories: ["Kontrol Kesehatan (antar ke faskes)"]
     }
   ];
 
@@ -131,7 +131,7 @@ export default function HelperVerifikasiPage() {
       .filter(Boolean) as string[];
 
     if (selectedCategoryIds.length === 0) {
-      setFieldErrors({ kategori_ids: ["Harap pilih minimal 1 kategori layanan."] });
+      setErrorMsg("Harap pilih minimal 1 kategori layanan yang tersedia.");
       setLoading(false);
       return;
     }
