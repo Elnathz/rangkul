@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { 
   Users, 
   FileCheck, 
@@ -8,30 +9,84 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/server';
 
-export default function KoordinatorDashboardPage() {
-  // Mock data for the dashboard
+export default async function KoordinatorDashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  // Get Koordinator Profile and User Name
+  const { data: koordinator } = await supabase
+    .from('koordinator_profiles')
+    .select('id, wilayah')
+    .eq('user_id', user.id)
+    .single();
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('full_name')
+    .eq('id', user.id)
+    .single();
+
+  if (!koordinator) {
+    return <div className="p-8 text-center">Profil Koordinator tidak ditemukan.</div>;
+  }
+
+  // Fetch counts
+  const { count: totalHelper } = await supabase
+    .from('helper_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('wilayah_domisili', koordinator.wilayah);
+
+  const { count: pendingHelperCount } = await supabase
+    .from('helper_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('wilayah_domisili', koordinator.wilayah)
+    .eq('status', 'pending_verification');
+
+  const { count: activeHelper } = await supabase
+    .from('helper_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('wilayah_domisili', koordinator.wilayah)
+    .eq('status', 'verified');
+
+  // Fetch pending helpers list
+  const { data: pendingData } = await supabase
+    .from('helper_profiles')
+    .select(`
+      id,
+      created_at,
+      wilayah_domisili,
+      status,
+      users ( full_name )
+    `)
+    .eq('wilayah_domisili', koordinator.wilayah)
+    .eq('status', 'pending_verification')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  const pendingHelpers = pendingData || [];
+
+  const formatTaskDate = (isoString: string) => {
+    const date = new Date(isoString);
+    return new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(date);
+  };
+
   const stats = [
-    { label: 'Total Helper Wilayah', value: '45', icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Antrean Verifikasi', value: '3', icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Helper Aktif', value: '38', icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
-  ];
-
-  const pendingHelpers = [
-    {
-      id: 'HLP-1002',
-      name: 'Rina Sulastri',
-      date: 'Hari ini, 09:12 WIB',
-      location: 'Kec. Beji, Depok',
-      status: 'under_review',
-    },
-    {
-      id: 'HLP-1003',
-      name: 'Budi Santoso',
-      date: 'Kemarin, 14:30 WIB',
-      location: 'Kec. Pancoran Mas, Depok',
-      status: 'pending',
-    }
+    { label: 'Total Helper Wilayah', value: (totalHelper || 0).toString(), icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
+    { label: 'Antrean Verifikasi', value: (pendingHelperCount || 0).toString(), icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
+    { label: 'Helper Aktif', value: (activeHelper || 0).toString(), icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
   ];
 
   return (
@@ -44,8 +99,8 @@ export default function KoordinatorDashboardPage() {
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, Koordinator Demo</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">Kota Depok</span></p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Koordinator'}</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">{koordinator.wilayah}</span></p>
           </div>
         </div>
 
@@ -82,13 +137,13 @@ export default function KoordinatorDashboardPage() {
             </div>
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {pendingHelpers.length > 0 ? pendingHelpers.map((helper) => (
+              {pendingHelpers.length > 0 ? pendingHelpers.map((helper: any) => (
                 <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                   <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
                     <div className="flex-1 w-full relative">
-                      <h3 className="text-base font-bold text-gray-900 mb-1">{helper.name}</h3>
-                      <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.location}</p>
-                      <p className="text-xs text-gray-400">Diajukan: {helper.date}</p>
+                      <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
+                      <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.wilayah_domisili}</p>
+                      <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
                     </div>
                     
                     <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
