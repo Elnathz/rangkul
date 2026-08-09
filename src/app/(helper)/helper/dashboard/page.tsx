@@ -35,7 +35,7 @@ export default async function HelperDashboardPage() {
     .eq('user_id', user.id)
     .maybeSingle();
 
-  const helperStatus = profile?.status || 'rejected';
+  const helperStatus = profile?.status || 'unregistered';
   
   // Get active tasks count
   let activeTasksCount = 0;
@@ -115,9 +115,12 @@ export default async function HelperDashboardPage() {
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ml-2 uppercase tracking-wider backdrop-blur-md ${
                 helperStatus === 'verified' ? 'bg-green-500/20 text-white border-green-300/30' :
                 (helperStatus === 'suspended' || helperStatus === 'rejected') ? 'bg-red-500/20 text-white border-red-300/30' :
+                helperStatus === 'unregistered' ? 'bg-gray-500/20 text-white border-gray-300/30' :
                 'bg-orange-500/20 text-white border-orange-300/30'
               }`}>
-                {helperStatus === 'pending_verification' ? 'Sedang Ditinjau' : helperStatus}
+                {helperStatus === 'pending_verification' ? 'Sedang Ditinjau' : 
+                 helperStatus === 'unregistered' ? 'Belum Mendaftar' : 
+                 helperStatus}
               </span>
             </p>
           </div>
@@ -215,6 +218,24 @@ export default async function HelperDashboardPage() {
           {/* Sidebar Area */}
           <div className="space-y-6">
             {/* Action Required Banner */}
+            {helperStatus === 'unregistered' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <AlertCircle className="w-24 h-24 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-blue-900 mb-2 flex items-center relative z-10">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  Profil Belum Lengkap
+                </h3>
+                <p className="text-sm text-blue-800 mb-4 leading-relaxed relative z-10">
+                  Anda belum mengisi formulir pendaftaran Helper. Silakan lengkapi profil Anda untuk memulai!
+                </p>
+                <Button asChild size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg w-full font-semibold relative z-10">
+                  <Link href="/helper/verifikasi">Lengkapi Profil Sekarang</Link>
+                </Button>
+              </div>
+            )}
+            
             {helperStatus === 'rejected' && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">

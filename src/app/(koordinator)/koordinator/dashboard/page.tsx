@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
+import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
 
 export default async function KoordinatorDashboardPage() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function KoordinatorDashboardPage() {
   // Get Koordinator Profile and User Name
   const { data: koordinator } = await supabase
     .from('koordinator_profiles')
-    .select('id, wilayah')
+    .select('id, wilayah, status')
     .eq('user_id', user.id)
     .single();
 
@@ -97,7 +98,8 @@ export default async function KoordinatorDashboardPage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-6xl mx-auto">
+    <KoordinatorStatusGuard koordinator={koordinator}>
+      <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-6xl mx-auto">
       <div className="space-y-6">
         
         {/* Header Section */}
@@ -202,5 +204,6 @@ export default async function KoordinatorDashboardPage() {
         </div>
       </div>
     </div>
+    </KoordinatorStatusGuard>
   );
 }

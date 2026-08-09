@@ -15,7 +15,7 @@ export default async function Page() {
     .from('koordinator_profiles')
     .select(`
       id, wilayah, tingkat, dokumen_url, ktp_url, status, created_at,
-      users!inner ( id, full_name, email, phone )
+      users!koordinator_profiles_user_id_fkey!inner ( id, full_name, email, phone )
     `)
     .eq('status', 'pending_verification')
     .order('created_at', { ascending: true });

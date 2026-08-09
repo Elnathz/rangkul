@@ -28,6 +28,9 @@ export default function HelperVerifikasiPage() {
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [koordinators, setKoordinators] = useState<any[]>([]);
+  const [koordModalOpen, setKoordModalOpen] = useState(false);
+  const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
+  const [showKoordDropdown, setShowKoordDropdown] = useState(false);
 
   const tiers = [
     {
@@ -100,7 +103,9 @@ export default function HelperVerifikasiPage() {
           .select(`
             id, 
             wilayah, 
-            users!inner(full_name, provinsi, kabupaten_kota, kecamatan, kelurahan)
+            tingkat,
+            ktp_url,
+            users!koordinator_profiles_user_id_fkey!inner(full_name, phone, provinsi, kabupaten_kota, kecamatan, kelurahan)
           `)
           .eq('status', 'verified')
           .eq('users.provinsi', form.region.provinsi)
@@ -224,14 +229,6 @@ export default function HelperVerifikasiPage() {
     <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
       <div className="max-w-xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild className="rounded-full">
-            <Link href="/helper/dashboard">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              Kembali
-            </Link>
-          </Button>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Verifikasi & Profil Helper</h1>
         </div>
 
@@ -298,25 +295,105 @@ export default function HelperVerifikasiPage() {
                      </p>
                   )}
                   
-                  <select 
-                    className={`w-full text-sm border-gray-300 rounded-xl p-2.5 shadow-sm focus:ring-[#0D47A1] focus:border-[#0D47A1] ${koordinators.length === 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
-                    value={form.koordinator_id}
-                    disabled={koordinators.length === 0}
-                    onChange={(e) => setForm({ ...form, koordinator_id: e.target.value })}
-                  >
-                    {koordinators.length === 0 ? (
-                       <option value="">-- Tidak ada Koordinator Tersedia --</option>
-                    ) : (
-                       <>
-                         <option value="">-- Saya tidak mengetahui Koordinator saya --</option>
-                         {koordinators.map(k => (
-                           <option key={k.id} value={k.id}>
-                             {k.users?.full_name} ({k.wilayah.split('|')[1]?.trim() || 'Data wilayah'})
-                           </option>
-                         ))}
-                       </>
+                  <div className="relative mt-2">
+                    <button 
+                      type="button"
+                      className={`w-full text-left border-gray-300 rounded-xl p-3 shadow-sm focus:ring-[#0D47A1] focus:border-[#0D47A1] border ${koordinators.length === 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-50 flex justify-between items-center'}`}
+                      disabled={koordinators.length === 0}
+                      onClick={() => setShowKoordDropdown(!showKoordDropdown)}
+                    >
+                       {koordinators.length === 0 ? (
+                         <span>-- Tidak ada Koordinator Tersedia --</span>
+                       ) : (
+                         <span className="font-medium text-gray-900">
+                           {form.koordinator_id 
+                             ? koordinators.find(k => k.id === form.koordinator_id)?.users?.full_name || 'Koordinator Terpilih'
+                             : '-- Pilih Koordinator --'}
+                         </span>
+                       )}
+                       <svg className={`w-5 h-5 text-gray-400 transition-transform ${showKoordDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    
+                    {showKoordDropdown && koordinators.length > 0 && (
+                      <div className="absolute z-20 w-full mt-2 bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-200 overflow-hidden">
+                        <div className="flex border-b border-gray-100">
+                          <button
+                            type="button"
+                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'kelurahan' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
+                            onClick={() => setKoordTab('kelurahan')}
+                          >
+                            Semua (Kel. {form.region.kelurahan})
+                          </button>
+                          <button
+                            type="button"
+                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'rtrw' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
+                            onClick={() => setKoordTab('rtrw')}
+                          >
+                            RT {form.rt || '-'}/RW {form.rw || '-'} Anda
+                          </button>
+                        </div>
+                        
+                        <div className="max-h-64 overflow-y-auto">
+                           <button 
+                             type="button"
+                             className={`w-full text-left p-3 text-sm hover:bg-blue-50 border-b border-gray-50 ${!form.koordinator_id ? 'bg-blue-50/50 font-semibold text-[#0D47A1]' : 'text-gray-700'}`}
+                             onClick={() => { setForm({...form, koordinator_id: ''}); setShowKoordDropdown(false); }}
+                           >
+                             -- Saya tidak mengetahui Koordinator saya --
+                           </button>
+                           
+                           {(() => {
+                             const filtered = koordinators.filter(k => {
+                               if (koordTab === 'kelurahan') return true;
+                               return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
+                             });
+                             
+                             if (filtered.length === 0) {
+                               return <div className="p-4 text-center text-sm text-gray-500">Tidak ada koordinator ditemukan di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : 'kelurahan ini'}.</div>
+                             }
+                             
+                             return (
+                               <>
+                                 {filtered.slice(0, 5).map(k => (
+                                   <button 
+                                     key={k.id}
+                                     type="button"
+                                     className={`w-full text-left p-3 hover:bg-blue-50 border-b border-gray-50 flex items-start gap-3 transition-colors ${form.koordinator_id === k.id ? 'bg-blue-50/50 border-l-2 border-l-[#0D47A1]' : ''}`}
+                                     onClick={() => { setForm({...form, koordinator_id: k.id}); setShowKoordDropdown(false); }}
+                                   >
+                                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100">
+                                       {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                                     </div>
+                                     <div>
+                                       <div className="font-bold text-gray-900 text-sm flex items-center gap-1">
+                                         {k.users?.full_name} 
+                                         {form.koordinator_id === k.id && <svg className="w-4 h-4 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                       </div>
+                                       <div className="text-[10px] uppercase font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded w-max mt-0.5 mb-1">{k.tingkat?.replace('_', ' ') || 'Koordinator'}</div>
+                                       <div className="text-xs text-gray-500 line-clamp-1">{k.wilayah.split('|')[1]?.trim()}</div>
+                                       <div className="text-xs text-gray-400 mt-0.5">{k.users?.phone || '-'}</div>
+                                     </div>
+                                   </button>
+                                 ))}
+                                 
+                                 {filtered.length > 5 && (
+                                   <div className="p-2 border-t border-gray-50 bg-white sticky bottom-0">
+                                     <button 
+                                       type="button" 
+                                       className="w-full py-2 bg-gray-50 hover:bg-blue-50 text-[#0D47A1] text-xs font-bold rounded-lg transition-colors border border-gray-100"
+                                       onClick={() => { setKoordModalOpen(true); setShowKoordDropdown(false); }}
+                                     >
+                                       Lihat Semua Koordinator ({filtered.length})
+                                     </button>
+                                   </div>
+                                 )}
+                               </>
+                             );
+                           })()}
+                        </div>
+                      </div>
                     )}
-                  </select>
+                  </div>
                 </div>
               )}
 
@@ -685,6 +762,68 @@ export default function HelperVerifikasiPage() {
                <Button onClick={() => setModalOpen(false)} className="w-full h-12 bg-[#0D47A1] hover:bg-blue-800 text-white text-[15px] font-bold rounded-xl shadow-md">
                  Selesai Memilih Kategori
                </Button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Koordinator Modal */}
+      {koordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 hide-scrollbar">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl min-h-[50vh] max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+             
+             {/* Modal Header */}
+             <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+               <div>
+                  <h3 className="font-bold text-xl text-gray-900">Pilih Koordinator Rangkul</h3>
+                  <p className="text-xs text-gray-500 mt-1">Daftar lengkap koordinator di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : `Kel. ${form.region.kelurahan}`}.</p>
+               </div>
+               <button onClick={() => setKoordModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+               </button>
+             </div>
+             
+             {/* Modal Content - List */}
+             <div className="p-4 overflow-y-auto bg-slate-50/30 flex-1">
+                <div className="flex flex-col gap-3">
+                  {(() => {
+                    const filtered = koordinators.filter(k => {
+                      if (koordTab === 'kelurahan') return true;
+                      return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
+                    });
+                    
+                    return filtered.map(k => (
+                       <button 
+                         key={k.id}
+                         type="button"
+                         className={`w-full text-left p-4 rounded-2xl border-2 flex items-start gap-4 transition-all hover:shadow-sm ${form.koordinator_id === k.id ? 'bg-blue-50/50 border-[#0D47A1] shadow-sm' : 'bg-white border-gray-100 hover:border-blue-200'}`}
+                         onClick={() => { setForm({...form, koordinator_id: k.id}); setKoordModalOpen(false); }}
+                       >
+                         <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border-4 border-white shadow-sm">
+                           {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                         </div>
+                         <div className="flex-1">
+                           <div className="flex justify-between items-start">
+                             <div>
+                               <div className="font-bold text-gray-900 text-lg">{k.users?.full_name}</div>
+                               <div className="text-xs uppercase font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded w-max my-1">{k.tingkat?.replace('_', ' ') || 'Koordinator'}</div>
+                             </div>
+                             {form.koordinator_id === k.id && (
+                               <div className="bg-[#0D47A1] text-white p-1 rounded-full shrink-0">
+                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                               </div>
+                             )}
+                           </div>
+                           <div className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded-lg">{k.wilayah.split('|')[1]?.trim()}</div>
+                           <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                             {k.users?.phone || 'Nomor tidak tersedia'}
+                           </div>
+                         </div>
+                       </button>
+                    ));
+                  })()}
+                </div>
              </div>
           </div>
         </div>
