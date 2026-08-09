@@ -20,27 +20,30 @@ export default async function AntreanHelperPage() {
     .eq('user_id', user.id)
     .single();
 
-  if (!koordinator) {
-    redirect('/koordinator/pengajuan');
+  // Check if profile is incomplete
+  const isProfileIncomplete = !koordinator?.wilayah;
+  let pendingHelpers: any[] = [];
+
+  if (!isProfileIncomplete) {
+    // Fetch pending helpers without koordinator in the SAME wilayah
+    const { data: helpers } = await supabase
+      .from('helper_profiles')
+      .select(`
+        id,
+        wilayah_domisili,
+        status,
+        created_at,
+        users (
+          full_name
+        )
+      `)
+      .eq('status', 'pending_verification')
+      .is('koordinator_id', null)
+      .eq('wilayah_domisili', koordinator.wilayah) // BUG FIX: Harus filter berdasarkan wilayah!
+      .order('created_at', { ascending: false });
+
+    pendingHelpers = helpers || [];
   }
-
-  // Fetch pending helpers without koordinator
-  const { data: helpers } = await supabase
-    .from('helper_profiles')
-    .select(`
-      id,
-      wilayah_domisili,
-      status,
-      created_at,
-      users (
-        full_name
-      )
-    `)
-    .eq('status', 'pending_verification')
-    .is('koordinator_id', null)
-    .order('created_at', { ascending: false });
-
-  const pendingHelpers = helpers || [];
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -83,7 +86,20 @@ export default async function AntreanHelperPage() {
           </div>
 
           <div className="space-y-4">
-            {pendingHelpers.length === 0 ? (
+            {isProfileIncomplete ? (
+              <div className="bg-white rounded-2xl border border-orange-200 overflow-hidden p-12 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                  <FileCheck className="w-10 h-10 text-orange-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Lengkapi Pengajuan Profil</h3>
+                <p className="text-gray-500 mb-8 max-w-lg leading-relaxed">
+                  Anda harus melengkapi dokumen pengajuan kepengurusan dan menetapkan wilayah operasional terlebih dahulu sebelum bisa memverifikasi kandidat Helper.
+                </p>
+                <Button asChild size="lg" className="bg-[#0D47A1] text-white hover:bg-blue-800 px-8">
+                  <Link href="/koordinator/pengajuan">Isi Formulir Pengajuan Sekarang</Link>
+                </Button>
+              </div>
+            ) : pendingHelpers.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-gray-200 rounded-2xl bg-gray-50">
                 <div className="bg-white p-4 rounded-full shadow-sm mb-4">
                   <UserCheck className="w-8 h-8 text-[#0D47A1]" />
