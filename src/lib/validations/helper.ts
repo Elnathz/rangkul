@@ -16,6 +16,7 @@ export const helperProfileSchema = z.object({
   kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
   rt: z.number().int().min(1, 'RT wajib diisi'),
   rw: z.number().int().min(1, 'RW wajib diisi'),
+  koordinator_id: z.string().uuid('ID Koordinator tidak valid').nullable().optional(),
 });
 
 export type HelperProfileInput = z.infer<typeof helperProfileSchema>;

@@ -287,7 +287,7 @@ export default function HelperVerifikasiPage() {
               {form.region.kelurahan && (
                 <div className="mt-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
                   <Label className="text-xs font-bold uppercase tracking-wider text-[#0D47A1] block mb-2">
-                    Koordinator RT/RW (Opsional)
+                    Koordinator RT/RW
                   </Label>
                   
                   {koordinators.length > 0 ? (
