@@ -21,7 +21,7 @@ async function checkAdminAuth(supabase: any) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -32,10 +32,12 @@ export async function GET(
       if (e.message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
     }
 
+    const { id } = await params;
+
     const { data, error } = await supabase
       .from('service_categories')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -50,7 +52,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -78,10 +80,13 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
+    const { tingkat, parent_id, jarak_min_km, jarak_max_km, ...updateData } = validation.data;
+
     const { data, error } = await supabase
       .from('service_categories')
-      .update(validation.data)
-      .eq('id', params.id)
+      .update(updateData)
+      .eq('id', id)
       .select()
       .single();
 
@@ -97,7 +102,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -108,11 +113,13 @@ export async function DELETE(
       if (e.message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
     }
 
+    const { id } = await params;
+
     // Soft delete
     const { data, error } = await supabase
       .from('service_categories')
       .update({ is_active: false })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 

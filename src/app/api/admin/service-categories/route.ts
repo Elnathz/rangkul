@@ -73,10 +73,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const { tingkat, parent_id, jarak_min_km, jarak_max_km, ...insertData } = validation.data;
+    
     // Insert new category
     const { data, error } = await supabase
       .from('service_categories')
-      .insert(validation.data)
+      .insert(insertData)
       .select()
       .single();
 
