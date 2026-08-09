@@ -63,6 +63,7 @@ export async function POST(request: Request) {
           wilayah,
           tingkat,
           dokumen_url,
+          ktp_url: ktp_url || null,
           status: 'pending_verification',
           updated_at: new Date().toISOString(),
         })
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
           wilayah,
           tingkat,
           dokumen_url,
+          ktp_url: ktp_url || null,
           status: 'pending_verification',
         })
         .select('id')

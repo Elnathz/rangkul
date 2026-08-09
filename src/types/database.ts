@@ -377,6 +377,7 @@ export type Database = {
           diverifikasi_at: string | null
           diverifikasi_oleh: string | null
           dokumen_url: string | null
+          ktp_url: string | null
           id: string
           saldo_komisi: number
           status: Database["public"]["Enums"]["koordinator_status"]
@@ -390,6 +391,7 @@ export type Database = {
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
           dokumen_url?: string | null
+          ktp_url?: string | null
           id?: string
           saldo_komisi?: number
           status?: Database["public"]["Enums"]["koordinator_status"]
@@ -403,6 +405,7 @@ export type Database = {
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
           dokumen_url?: string | null
+          ktp_url?: string | null
           id?: string
           saldo_komisi?: number
           status?: Database["public"]["Enums"]["koordinator_status"]
