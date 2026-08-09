@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Fetch category and its tingkat
     const { data: category, error: catError } = await supabase
       .from('service_categories')
-      .select('harga_dasar, tingkat, is_active')
+      .select('harga_dasar, is_high_risk, is_active')
       .eq('id', service_category_id)
       .single();
 
@@ -71,8 +71,8 @@ export async function POST(request: Request) {
          return createApiError('forbidden', 'Helper belum diverifikasi atau sedang di-suspend', 403);
       }
 
-      if (helperData.tingkat_kepercayaan === 'probation' && category.tingkat !== 'ringan') {
-        return createApiError('forbidden', 'Helper probation hanya boleh mengambil tugas ringan', 403);
+      if (helperData.tingkat_kepercayaan === 'probation' && category.is_high_risk) {
+        return createApiError('forbidden', 'Helper probation tidak boleh mengambil tugas berisiko tinggi', 403);
       }
     }
 

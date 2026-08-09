@@ -76,32 +76,13 @@ export async function POST(
       return createApiError('validation_error', 'Helper sudah berstatus terpercaya', 400);
     }
 
-    // Perform the promotion in a transaction (simulated with consecutive awaits due to Supabase JS client limitations, or via RPC. We use sequential updates here as it's safe enough for this case)
+    // Perform the promotion
     
-    // 1. Insert checklist
-    const { error: checklistError } = await supabase
-      .from('promotion_checklist')
-      .insert({
-        helper_id: helper.id,
-        koordinator_id: koordinator.id,
-        identitas_valid,
-        dikenal_warga,
-        wawancara_dilakukan,
-        catatan_koordinator: catatan_koordinator || null,
-        completed_at: new Date().toISOString()
-      });
-
-    if (checklistError) {
-      return createApiError('server_error', 'Gagal menyimpan checklist promosi: ' + checklistError.message, 500);
-    }
-
-    // 2. Update helper profile
+    // Update helper profile
     const { data: updatedHelper, error: updateError } = await supabase
       .from('helper_profiles')
       .update({
-        tingkat_kepercayaan: 'terpercaya',
-        promoted_at: new Date().toISOString(),
-        promoted_by: koordinator.id
+        tingkat_kepercayaan: 'terpercaya'
       })
       .eq('id', helper.id)
       .select()
