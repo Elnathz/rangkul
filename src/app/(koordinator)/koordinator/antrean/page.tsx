@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, FileCheck, UserCheck, CheckCircle2 } from 'lucide-react';
+import { FileCheck, UserCheck, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -65,12 +65,6 @@ export default async function AntreanHelperPage() {
     <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild className="rounded-full">
-            <Link href="/koordinator/dashboard">
-              <ChevronLeft className="w-5 h-5" />
-              Kembali
-            </Link>
-          </Button>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Antrean Verifikasi Helper</h1>
         </div>
 
