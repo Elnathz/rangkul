@@ -76,6 +76,8 @@ export default async function KoordinatorDashboardPage() {
     pendingHelpers = pendingData || [];
   }
 
+  const isProfileIncomplete = !koordinator?.wilayah;
+
   const formatTaskDate = (isoString: string) => {
     const date = new Date(isoString);
     return new Intl.DateTimeFormat('id-ID', {
@@ -136,34 +138,51 @@ export default async function KoordinatorDashboardPage() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">Menunggu Verifikasi Anda</h2>
-              <Link href="/koordinator/antrean" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
-                Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {pendingHelpers.length > 0 ? pendingHelpers.map((helper: any) => (
-                <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-                    <div className="flex-1 w-full relative">
-                      <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
-                      <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.wilayah_domisili}</p>
-                      <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
-                    </div>
-                    
-                    <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
-                      <Button asChild size="sm" className="bg-[#0D47A1] text-white hover:bg-blue-800 w-full sm:w-auto">
-                        <Link href={`/koordinator/helper/${helper.id}`}>Review Berkas</Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )) : (
-                 <div className="p-8 text-center text-gray-500 text-sm">
-                   Tidak ada Helper yang menunggu verifikasi.
-                 </div>
+              {!isProfileIncomplete && (
+                <Link href="/koordinator/antrean" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
+                  Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
               )}
             </div>
+            
+            {isProfileIncomplete ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-orange-200 overflow-hidden p-8 text-center flex flex-col items-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <FileCheck className="w-8 h-8 text-orange-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Lengkapi Pengajuan Profil</h3>
+                <p className="text-gray-500 mb-6 max-w-md">
+                  Anda harus melengkapi dokumen pengajuan dan mengatur wilayah operasional sebelum bisa melihat dan memverifikasi calon Helper.
+                </p>
+                <Button asChild className="bg-[#0D47A1] text-white hover:bg-blue-800">
+                  <Link href="/koordinator/pengajuan">Isi Formulir Pengajuan Sekarang</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                {pendingHelpers.length > 0 ? pendingHelpers.map((helper: any) => (
+                  <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
+                      <div className="flex-1 w-full relative">
+                        <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
+                        <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.wilayah_domisili}</p>
+                        <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
+                      </div>
+                      
+                      <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
+                        <Button asChild size="sm" className="bg-[#0D47A1] text-white hover:bg-blue-800 w-full sm:w-auto">
+                          <Link href={`/koordinator/helper/${helper.id}`}>Review Berkas</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                   <div className="p-8 text-center text-gray-500 text-sm">
+                     Tidak ada Helper yang menunggu verifikasi.
+                   </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar Area */}
