@@ -271,23 +271,38 @@ export default function HelperVerifikasiPage() {
                 </div>
               </div>
 
-              {form.region.kelurahan && koordinators.length > 0 && (
+              {form.region.kelurahan && (
                 <div className="mt-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
                   <Label className="text-xs font-bold uppercase tracking-wider text-[#0D47A1] block mb-2">
-                    Pilih Koordinator RT/RW (Opsional)
+                    Koordinator RT/RW (Opsional)
                   </Label>
-                  <p className="text-xs text-blue-700/80 mb-3">Terdapat {koordinators.length} Koordinator Rangkul yang aktif di kelurahan {form.region.kelurahan}. Memilih koordinator akan mempercepat verifikasi akun Anda.</p>
+                  
+                  {koordinators.length > 0 ? (
+                     <p className="text-xs text-blue-700/80 mb-3">Terdapat {koordinators.length} Koordinator Rangkul yang aktif di kelurahan {form.region.kelurahan}. Memilih koordinator akan mempercepat verifikasi akun Anda.</p>
+                  ) : (
+                     <p className="text-xs text-blue-800/70 mb-3">
+                       Belum ada Koordinator Rangkul terverifikasi di Kelurahan {form.region.kelurahan}. Profil Anda akan langsung diverifikasi oleh Admin.
+                     </p>
+                  )}
+                  
                   <select 
-                    className="w-full text-sm border-gray-300 rounded-xl p-2.5 bg-white shadow-sm focus:ring-[#0D47A1] focus:border-[#0D47A1]"
+                    className={`w-full text-sm border-gray-300 rounded-xl p-2.5 shadow-sm focus:ring-[#0D47A1] focus:border-[#0D47A1] ${koordinators.length === 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
                     value={form.koordinator_id}
+                    disabled={koordinators.length === 0}
                     onChange={(e) => setForm({ ...form, koordinator_id: e.target.value })}
                   >
-                    <option value="">-- Saya tidak mengetahui Koordinator saya --</option>
-                    {koordinators.map(k => (
-                      <option key={k.id} value={k.id}>
-                        {k.users?.full_name} ({k.wilayah.split('|')[1]?.trim() || 'Data wilayah'})
-                      </option>
-                    ))}
+                    {koordinators.length === 0 ? (
+                       <option value="">-- Tidak ada Koordinator Tersedia --</option>
+                    ) : (
+                       <>
+                         <option value="">-- Saya tidak mengetahui Koordinator saya --</option>
+                         {koordinators.map(k => (
+                           <option key={k.id} value={k.id}>
+                             {k.users?.full_name} ({k.wilayah.split('|')[1]?.trim() || 'Data wilayah'})
+                           </option>
+                         ))}
+                       </>
+                    )}
                   </select>
                 </div>
               )}
