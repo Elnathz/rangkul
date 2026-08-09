@@ -71,6 +71,12 @@ export async function POST(request: Request) {
       catatan_kondisi,
       dokumen_identitas_lansia_url,
       dokumen_hubungan_keluarga_url,
+      provinsi,
+      kabupaten_kota,
+      kecamatan,
+      kelurahan,
+      rt,
+      rw,
     } = validation.data;
 
     const { data: profile, error: insertError } = await supabase
@@ -84,6 +90,12 @@ export async function POST(request: Request) {
         catatan_kondisi: catatan_kondisi || null,
         dokumen_identitas_lansia_url: dokumen_identitas_lansia_url || null,
         dokumen_hubungan_keluarga_url: dokumen_hubungan_keluarga_url || null,
+        provinsi,
+        kabupaten_kota,
+        kecamatan,
+        kelurahan,
+        rt,
+        rw,
       })
       .select('*')
       .single();

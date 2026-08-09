@@ -48,6 +48,12 @@ export async function POST(request: Request) {
       dokumen_hubungan_keluarga_url,
       foto_url,
       hubungan_keluarga,
+      provinsi,
+      kabupaten_kota,
+      kecamatan,
+      kelurahan,
+      rt,
+      rw,
     } = validation.data;
 
     // Create Lansia Profile record in Supabase
@@ -64,6 +70,12 @@ export async function POST(request: Request) {
         dokumen_hubungan_keluarga_url: dokumen_hubungan_keluarga_url || null,
         foto_url: foto_url || null,
         hubungan_keluarga,
+        provinsi,
+        kabupaten_kota,
+        kecamatan,
+        kelurahan,
+        rt,
+        rw,
       })
       .select('*')
       .single();

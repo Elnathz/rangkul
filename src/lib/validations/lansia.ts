@@ -10,6 +10,12 @@ export const lansiaProfileSchema = z.object({
   dokumen_hubungan_keluarga_url: z.string().url('URL dokumen hubungan keluarga tidak valid').optional().or(z.literal('')),
   foto_url: z.string().url('URL foto tidak valid').optional().or(z.literal('')),
   hubungan_keluarga: z.string().min(1, 'Hubungan keluarga wajib diisi'),
+  provinsi: z.string().min(1, 'Provinsi wajib diisi'),
+  kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
+  kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
+  kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
+  rt: z.number().int().min(1, 'RT wajib diisi'),
+  rw: z.number().int().min(1, 'RW wajib diisi'),
 });
 
 export type LansiaProfileInput = z.infer<typeof lansiaProfileSchema>;

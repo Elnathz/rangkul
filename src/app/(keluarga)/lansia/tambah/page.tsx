@@ -33,6 +33,8 @@ export default function TambahLansiaPage() {
     hubungan_keluarga: "", // Main dropdown selection
     hubungan_keluarga_lainnya: "", // Custom typed text if "Lainnya" chosen
     region: { provinsi: "", kota: "", kecamatan: "", kelurahan: "" },
+    rt: "",
+    rw: "",
     lat: null as number | null,
     lng: null as number | null,
   });
@@ -80,8 +82,8 @@ export default function TambahLansiaPage() {
       return;
     }
 
-    if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan) {
-      setErrorMsg("Harap melengkapi pilihan wilayah administrasi Provinsi hingga Kelurahan.");
+    if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan || !form.rt || !form.rw) {
+      setErrorMsg("Harap melengkapi pilihan wilayah administrasi (termasuk RT/RW).");
       setLoading(false);
       return;
     }
@@ -166,6 +168,12 @@ export default function TambahLansiaPage() {
         lng: form.lng,
         foto_url: fotoUrl,
         hubungan_keluarga: finalHubungan,
+        provinsi: form.region.provinsi,
+        kabupaten_kota: form.region.kota,
+        kecamatan: form.region.kecamatan,
+        kelurahan: form.region.kelurahan,
+        rt: parseInt(form.rt, 10),
+        rw: parseInt(form.rw, 10),
         ...(identitasUrl ? { dokumen_identitas_lansia_url: identitasUrl } : {}),
         ...(hubunganUrl ? { dokumen_hubungan_keluarga_url: hubunganUrl } : {}),
       };
@@ -332,6 +340,20 @@ export default function TambahLansiaPage() {
                   }));
                 }}
               />
+              <div className="grid grid-cols-2 gap-4 mt-4 mb-2">
+                <div>
+                  <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                    RT <span className="text-red-500">*</span>
+                  </Label>
+                  <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                </div>
+                <div>
+                   <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                    RW <span className="text-red-500">*</span>
+                  </Label>
+                  <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                </div>
+              </div>
               <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
                 Alamat Spesifik Tempat Tinggal / Detail Patokan <span className="text-red-500">*</span>
               </Label>
