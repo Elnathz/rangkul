@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { 
   Briefcase, 
   Clock, 
@@ -13,79 +12,44 @@ import {
   Wallet 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
 
-export default async function HelperDashboardPage() {
-  const supabase = await createClient();
+export default function HelperDashboardPage() {
+  const [helperStatus, setHelperStatus] = useState<'pending' | 'under_review' | 'verified' | 'rejected'>('rejected');
 
-  // 1. Get logged-in user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    redirect('/login');
-  }
+  useEffect(() => {
+    const savedStatus = sessionStorage.getItem("mock_helper_status");
+    if (savedStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHelperStatus(savedStatus as 'pending' | 'under_review' | 'verified' | 'rejected');
+    }
+  }, []);
 
-  // 2. Fetch Helper Profile & User data
-  const { data: helperData, error: helperError } = await supabase
-    .from('helper_profiles')
-    .select(`
-      id, 
-      status, 
-      tingkat_kepercayaan,
-      total_tugas_selesai,
-      saldo_tersedia,
-      users ( full_name )
-    `)
-    .eq('user_id', user.id)
-    .single();
-
-  if (helperError || !helperData) {
-    // If not found, maybe they haven't completed registration
-    redirect('/helper/verifikasi');
-  }
-
-  const fullName = (helperData.users as any)?.full_name || 'Helper';
-  const helperId = helperData.id;
-
-  // 3. Fetch Tasks related to this Helper
-  // Note: For active tasks we count 'dikonfirmasi', 'dikerjakan'
-  // For pending tasks we count 'diajukan', 'menunggu_persetujuan_koordinator' (if they bid, etc.) - assuming they are assigned.
-  
-  const { data: allTasks } = await supabase
-    .from('tasks')
-    .select(`
-      id,
-      status,
-      jadwal_waktu,
-      harga_final,
-      lansia_profiles ( nama, alamat ),
-      service_categories ( nama )
-    `)
-    .eq('helper_id', helperId)
-    .order('jadwal_waktu', { ascending: true });
-
-  const tasks = allTasks || [];
-
-  const activeTasks = tasks.filter(t => ['dikonfirmasi', 'dikerjakan'].includes(t.status));
-  const pendingTasks = tasks.filter(t => ['diajukan', 'menunggu_persetujuan_keluarga', 'menunggu_persetujuan_koordinator'].includes(t.status));
-  
+  // Mock data for the dashboard
   const stats = [
-    { label: 'Tugas Aktif', value: activeTasks.length.toString(), icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Menunggu Verifikasi', value: pendingTasks.length.toString(), icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Tugas Selesai', value: helperData.total_tugas_selesai.toString(), icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
-    { label: 'Estimasi Fee', value: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(helperData.saldo_tersedia), icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
+    { label: 'Tugas Aktif', value: '2', icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
+    { label: 'Menunggu Verifikasi', value: '1', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
+    { label: 'Tugas Selesai', value: '14', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
+    { label: 'Estimasi Fee', value: 'Rp 650.000', icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
   ];
 
-  const recentTasks = activeTasks.concat(pendingTasks).slice(0, 3).map(t => ({
-    id: t.id.substring(0, 8).toUpperCase(),
-    realId: t.id,
-    title: (t.service_categories as any)?.nama || 'Tugas',
-    lansiaName: (t.lansia_profiles as any)?.nama || 'Klien',
-    date: new Date(t.jadwal_waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
-    location: (t.lansia_profiles as any)?.alamat || '-',
-    status: ['dikonfirmasi', 'dikerjakan'].includes(t.status) ? 'active' : 'pending',
-  }));
-
-  const isVerified = helperData.status === 'verified';
+  const recentTasks = [
+    {
+      id: 'TASK-001',
+      title: 'Pendampingan Cek Rutin',
+      lansiaName: 'Opa Budi',
+      date: 'Besok, 09:00 WIB',
+      location: 'RS Hermina Depok',
+      status: 'active',
+    },
+    {
+      id: 'TASK-002',
+      title: 'Jalan Pagi & Mengobrol',
+      lansiaName: 'Oma Siti',
+      date: 'Sabtu, 12 Ags - 07:00 WIB',
+      location: 'Taman Merdeka, Pancoran Mas',
+      status: 'pending',
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#F5F8FC] p-4 sm:p-6 lg:p-8 font-sans pb-24">
@@ -97,7 +61,7 @@ export default async function HelperDashboardPage() {
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {fullName}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, Helper Demo</h1>
             <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: 
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ml-2 uppercase tracking-wider backdrop-blur-md ${
                 helperStatus === 'verified' ? 'bg-green-500/20 text-white border-green-300/30' :
@@ -150,9 +114,7 @@ export default async function HelperDashboardPage() {
             </div>
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {recentTasks.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">Belum ada tugas jadwal terdekat.</div>
-              ) : recentTasks.map((task) => (
+              {recentTasks.map((task) => (
                 <div key={task.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                   <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex-1">
@@ -162,7 +124,7 @@ export default async function HelperDashboardPage() {
                         }`}>
                           {task.status === 'active' ? 'AKTIF' : 'MENUNGGU VERIFIKASI'}
                         </span>
-                        <span className="text-sm font-semibold text-gray-400">#{task.id}</span>
+                        <span className="text-sm font-semibold text-gray-400">{task.id}</span>
                       </div>
                       <h3 className="text-base font-bold text-gray-900 mb-1">{task.title}</h3>
                       <p className="text-sm font-medium text-gray-600 mb-3">Klien: {task.lansiaName}</p>
@@ -181,7 +143,7 @@ export default async function HelperDashboardPage() {
                     
                     <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
                       <Button asChild variant="outline" size="sm" className="rounded-lg font-semibold w-full sm:w-auto h-9">
-                        <Link href={`/helper/pekerjaan/${task.realId}`}>Lihat Detail</Link>
+                        <Link href={`/helper/pekerjaan/${task.id}`}>Lihat Detail</Link>
                       </Button>
                     </div>
                   </div>

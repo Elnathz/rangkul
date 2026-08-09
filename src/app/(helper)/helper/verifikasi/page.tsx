@@ -25,6 +25,27 @@ export default function HelperVerifikasiPage() {
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
 
+  const tiers = [
+    {
+      id: "tier1",
+      title: "Ringan",
+      desc: "Aktivitas harian ringan & non-medis.",
+      categories: ["Menemani Mengobrol", "Jalan Pagi / Olahraga Ringan", "Membantu Belanja", "Membacakan Buku / Menemani Hobbi", "Menyiram Tanaman Dasar"]
+    },
+    {
+      id: "tier2",
+      title: "Sedang",
+      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
+      categories: ["Menyiapkan Makanan & Menyuapi", "Mengingatkan Jadwal Obat", "Membantu Mandi & Berpakaian", "Bantuan Toilet Dasar", "Membersihkan Area Tidur", "Menemani Kunjungan Dokter Khusus"]
+    },
+    {
+      id: "tier3",
+      title: "Berat",
+      desc: "Perawatan khusus dan penanganan medis dasar.",
+      categories: ["Penanganan Pasca Operasi", "Perawatan Luka Dasar", "Terapi Fisik Ringan", "Pendampingan Pasien Alzheimer/Demensia", "Pemberian Obat Kompleks / Injeksi Dasar", "Pemasangan / Cek Alat Medis Ringan"]
+    }
+  ];
+
   const [form, setForm] = useState({
     bio: "",
     alamat: "",
@@ -32,7 +53,19 @@ export default function HelperVerifikasiPage() {
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
     radius_layanan_km: 5,
+    selected_categories: [] as string[],
+    ktp_url: "",
   });
+
+  const toggleCategory = (cat: string) => {
+    setForm(prev => {
+      const current = prev.selected_categories || [];
+      if (current.includes(cat)) {
+        return { ...prev, selected_categories: current.filter(c => c !== cat) };
+      }
+      return { ...prev, selected_categories: [...current, cat] };
+    });
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
