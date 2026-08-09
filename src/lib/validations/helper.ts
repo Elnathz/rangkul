@@ -8,8 +8,15 @@ export const helperProfileSchema = z.object({
   radius_layanan_km: z.number().min(1, 'Radius minimal 1 km').max(25, 'Radius maksimal 25 km').default(5),
   ktp_url: z.string().url('URL KTP tidak valid'),
   kategori_ids: z
-    .array(z.string().uuid('ID kategori tidak valid'))
+    .array(z.string({ message: 'ID kategori tidak valid' }))
     .min(1, 'Pilih minimal 1 kategori layanan'),
+  provinsi: z.string().min(1, 'Provinsi wajib diisi'),
+  kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
+  kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
+  kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
+  rt: z.number().int().min(1, 'RT wajib diisi'),
+  rw: z.number().int().min(1, 'RW wajib diisi'),
+  koordinator_id: z.string().uuid('ID Koordinator tidak valid').nullable().optional(),
 });
 
 export type HelperProfileInput = z.infer<typeof helperProfileSchema>;

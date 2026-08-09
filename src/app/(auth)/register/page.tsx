@@ -140,6 +140,7 @@ function RegisterForm() {
   const [role, setRole] = useState<Role>(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
   const [fields, setFields] = useState({
     username: "",
@@ -209,6 +210,8 @@ function RegisterForm() {
         return;
       }
 
+      // Success state UI feedback
+      setSuccess(true);
       router.push("/login?registered=true");
     } catch {
       setApiError("Terjadi kesalahan jaringan.");
@@ -411,10 +414,27 @@ function RegisterForm() {
 
             <Button
               type="submit"
-              disabled={loading}
-              className="h-11 w-full bg-brand-gradient text-white font-semibold rounded-xl hover:opacity-90 shadow-sm mt-1"
+              disabled={loading || success}
+              className={`h-11 w-full text-white font-semibold rounded-xl shadow-sm mt-1 flex items-center justify-center transition-all ${
+                success ? 'bg-green-600 hover:bg-green-700' : 'bg-brand-gradient hover:opacity-90'
+              }`}
             >
-              {loading ? "Memproses Registrasi..." : "Buat Akun"}
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses Registrasi...
+                </>
+              ) : success ? (
+                <>
+                  <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  Registrasi Berhasil!
+                </>
+              ) : (
+                "Buat Akun"
+              )}
             </Button>
           </form>
 
