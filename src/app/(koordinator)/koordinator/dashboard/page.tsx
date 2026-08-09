@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { 
   Users, 
   FileCheck, 
@@ -8,30 +9,91 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/server';
 
-export default function KoordinatorDashboardPage() {
-  // Mock data for the dashboard
+export default async function KoordinatorDashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  // Get Koordinator Profile and User Name
+  const { data: koordinator } = await supabase
+    .from('koordinator_profiles')
+    .select('id, wilayah')
+    .eq('user_id', user.id)
+    .single();
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('full_name')
+    .eq('id', user.id)
+    .single();
+
+  // Default values
+  let totalHelper = 0, pendingHelperCount = 0, activeHelper = 0;
+  let pendingHelpers: any[] = [];
+
+  if (koordinator?.wilayah) {
+    // Fetch counts
+    const { count: c1 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah);
+    totalHelper = c1 || 0;
+
+    const { count: c2 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'pending_verification');
+    pendingHelperCount = c2 || 0;
+
+    const { count: c3 } = await supabase
+      .from('helper_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'verified');
+    activeHelper = c3 || 0;
+
+    // Fetch pending helpers list
+    const { data: pendingData } = await supabase
+      .from('helper_profiles')
+      .select(`
+        id,
+        created_at,
+        wilayah_domisili,
+        status,
+        users ( full_name )
+      `)
+      .eq('wilayah_domisili', koordinator.wilayah)
+      .eq('status', 'pending_verification')
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    pendingHelpers = pendingData || [];
+  }
+
+  const isProfileIncomplete = !koordinator?.wilayah;
+
+  const formatTaskDate = (isoString: string) => {
+    const date = new Date(isoString);
+    return new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(date);
+  };
+
   const stats = [
-    { label: 'Total Helper Wilayah', value: '45', icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Antrean Verifikasi', value: '3', icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Helper Aktif', value: '38', icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
-  ];
-
-  const pendingHelpers = [
-    {
-      id: 'HLP-1002',
-      name: 'Rina Sulastri',
-      date: 'Hari ini, 09:12 WIB',
-      location: 'Kec. Beji, Depok',
-      status: 'under_review',
-    },
-    {
-      id: 'HLP-1003',
-      name: 'Budi Santoso',
-      date: 'Kemarin, 14:30 WIB',
-      location: 'Kec. Pancoran Mas, Depok',
-      status: 'pending',
-    }
+    { label: 'Total Helper Wilayah', value: (totalHelper || 0).toString(), icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
+    { label: 'Antrean Verifikasi', value: (pendingHelperCount || 0).toString(), icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
+    { label: 'Helper Aktif', value: (activeHelper || 0).toString(), icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
   ];
 
   return (
@@ -44,8 +106,8 @@ export default function KoordinatorDashboardPage() {
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, Koordinator Demo</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">Kota Depok</span></p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Koordinator'}</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">{koordinator?.wilayah || 'Belum Diatur'}</span></p>
           </div>
         </div>
 
@@ -76,34 +138,51 @@ export default function KoordinatorDashboardPage() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">Menunggu Verifikasi Anda</h2>
-              <Link href="/koordinator/antrean" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
-                Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {pendingHelpers.length > 0 ? pendingHelpers.map((helper) => (
-                <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-                    <div className="flex-1 w-full relative">
-                      <h3 className="text-base font-bold text-gray-900 mb-1">{helper.name}</h3>
-                      <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.location}</p>
-                      <p className="text-xs text-gray-400">Diajukan: {helper.date}</p>
-                    </div>
-                    
-                    <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
-                      <Button asChild size="sm" className="bg-[#0D47A1] text-white hover:bg-blue-800 w-full sm:w-auto">
-                        <Link href={`/koordinator/helper/${helper.id}`}>Review Berkas</Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )) : (
-                 <div className="p-8 text-center text-gray-500 text-sm">
-                   Tidak ada Helper yang menunggu verifikasi.
-                 </div>
+              {!isProfileIncomplete && (
+                <Link href="/koordinator/antrean" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
+                  Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
               )}
             </div>
+            
+            {isProfileIncomplete ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-orange-200 overflow-hidden p-8 text-center flex flex-col items-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <FileCheck className="w-8 h-8 text-orange-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Lengkapi Pengajuan Profil</h3>
+                <p className="text-gray-500 mb-6 max-w-md">
+                  Anda harus melengkapi dokumen pengajuan dan mengatur wilayah operasional sebelum bisa melihat dan memverifikasi calon Helper.
+                </p>
+                <Button asChild className="bg-[#0D47A1] text-white hover:bg-blue-800">
+                  <Link href="/koordinator/pengajuan">Isi Formulir Pengajuan Sekarang</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                {pendingHelpers.length > 0 ? pendingHelpers.map((helper: any) => (
+                  <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
+                      <div className="flex-1 w-full relative">
+                        <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
+                        <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.wilayah_domisili}</p>
+                        <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
+                      </div>
+                      
+                      <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
+                        <Button asChild size="sm" className="bg-[#0D47A1] text-white hover:bg-blue-800 w-full sm:w-auto">
+                          <Link href={`/koordinator/helper/${helper.id}`}>Review Berkas</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                   <div className="p-8 text-center text-gray-500 text-sm">
+                     Tidak ada Helper yang menunggu verifikasi.
+                   </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar Area */}
