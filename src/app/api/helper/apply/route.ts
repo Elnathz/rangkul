@@ -51,8 +51,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const { bio, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, kategori_ids } =
+    const { bio, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, kategori_ids, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw } =
       validation.data;
+
+    // Update tabel users untuk mengisi lokasi granular
+    const { error: userUpdateError } = await supabase
+      .from('users')
+      .update({
+        provinsi,
+        kabupaten_kota,
+        kecamatan,
+        kelurahan,
+        rt,
+        rw,
+      })
+      .eq('id', user.id);
+
+    if (userUpdateError) {
+      return createApiError('server_error', 'Gagal menyimpan detail lokasi wilayah', 500);
+    }
 
     // Verifikasi semua kategori_ids valid di database
     const { data: validCategories, error: catError } = await supabase

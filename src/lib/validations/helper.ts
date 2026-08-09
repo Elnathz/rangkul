@@ -10,6 +10,12 @@ export const helperProfileSchema = z.object({
   kategori_ids: z
     .array(z.string({ message: 'ID kategori tidak valid' }))
     .min(1, 'Pilih minimal 1 kategori layanan'),
+  provinsi: z.string().min(1, 'Provinsi wajib diisi'),
+  kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
+  kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
+  kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
+  rt: z.number().int().min(1, 'RT wajib diisi'),
+  rw: z.number().int().min(1, 'RW wajib diisi'),
 });
 
 export type HelperProfileInput = z.infer<typeof helperProfileSchema>;

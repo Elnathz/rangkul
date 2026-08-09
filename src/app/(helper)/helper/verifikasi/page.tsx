@@ -97,9 +97,16 @@ export default function HelperVerifikasiPage() {
         const supabase = createClient();
         const { data } = await supabase
           .from('koordinator_profiles')
-          .select('id, wilayah, users!koordinator_profiles_user_id_fkey(full_name)')
-          .ilike('wilayah', `%${form.region.kelurahan}%`)
-          .eq('status', 'verified');
+          .select(`
+            id, 
+            wilayah, 
+            users!inner(full_name, provinsi, kabupaten_kota, kecamatan, kelurahan)
+          `)
+          .eq('status', 'verified')
+          .eq('users.provinsi', form.region.provinsi)
+          .eq('users.kabupaten_kota', form.region.kota)
+          .eq('users.kecamatan', form.region.kecamatan)
+          .eq('users.kelurahan', form.region.kelurahan);
           
         if (data) setKoordinators(data);
       };
@@ -182,7 +189,13 @@ export default function HelperVerifikasiPage() {
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
         kategori_ids: kategoriIds,
-        koordinator_id: form.koordinator_id || null
+        koordinator_id: form.koordinator_id || null,
+        provinsi: form.region.provinsi,
+        kabupaten_kota: form.region.kota,
+        kecamatan: form.region.kecamatan,
+        kelurahan: form.region.kelurahan,
+        rt: parseInt(form.rt, 10),
+        rw: parseInt(form.rw, 10),
       };
 
       const res = await fetch("/api/helper/apply", {
