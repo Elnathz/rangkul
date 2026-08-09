@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 
 const serviceIcons: Record<string, React.ReactNode> = {

@@ -241,31 +241,34 @@ export default function KoordinatorPengajuanPage() {
         <section className="space-y-4">
           <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Dokumen Validasi SK</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <label className="border border-dashed border-slate-300 rounded-xl p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer block relative">
+            <Label 
+              htmlFor="ktp_upload"
+              className="border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group"
+            >
               <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => e.target.files && setKtpFile(e.target.files[0])} />
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-                <svg className={`w-5 h-5 ${ktpFile ? 'text-green-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {ktpFile ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />}
-                </svg>
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors">
+                <svg className="w-5 h-5 text-slate-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-700">{ktpFile ? ktpFile.name : 'Upload KTP (Opsional)'}</p>
                 <p className="text-xs text-slate-500">Maks. 2MB (JPG, PNG)</p>
               </div>
-            </label>
+            </Label>
             
-            <label className="border border-dashed border-slate-300 rounded-xl p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer block relative">
+            <Label 
+              htmlFor="sk_upload"
+              className="border border-dashed border-slate-300 rounded-xl flex flex-col justify-center p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group"
+            >
               <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => e.target.files && setSkFile(e.target.files[0])} />
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors">
                  <svg className={`w-5 h-5 ${skFile ? 'text-green-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {skFile ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />}
-                 </svg>
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-700">{skFile ? skFile.name : 'SK Jabatan / Bukti Kepengurusan'} <span className="text-red-500">*</span></p>
                 <p className="text-xs text-slate-500">Foto SK Kelurahan atau Sertifikat Resmi</p>
               </div>
-            </label>
+            </Label>
           </div>
         </section>
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const helpers = [
@@ -65,11 +64,6 @@ const helpers = [
     isAktif: false,
   },
 ];
-
-const trustColor: Record<string, string> = {
-  Terpercaya: "bg-green-50 text-green-700 border-green-200",
-  Probation: "bg-amber-50 text-amber-700 border-amber-200",
-};
 
 // Estimasi penghasilan berdasarkan jumlah tugas selesai
 function estimasiPenghasilan(tasks: number): string {

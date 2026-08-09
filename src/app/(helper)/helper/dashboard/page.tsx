@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { 
@@ -97,16 +99,22 @@ export default async function HelperDashboardPage() {
           <div className="relative z-10">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {fullName}</h1>
             <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: 
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white ml-2 border border-white/30 uppercase tracking-wider backdrop-blur-md ${isVerified ? '' : 'bg-orange-500/20'}`}>
-                {helperData.status.replace('_', ' ')}
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ml-2 uppercase tracking-wider backdrop-blur-md ${
+                helperStatus === 'verified' ? 'bg-green-500/20 text-white border-green-300/30' :
+                helperStatus === 'rejected' ? 'bg-red-500/20 text-white border-red-300/30' :
+                'bg-orange-500/20 text-white border-orange-300/30'
+              }`}>
+                {helperStatus === 'under_review' ? 'Sedang Ditinjau' : helperStatus}
               </span>
             </p>
           </div>
-          <Button asChild className="bg-white text-[#0D47A1] rounded-xl shadow-md hover:bg-gray-50 font-bold transition-all relative z-10 mt-2 sm:mt-0">
-            <Link href="/helper/tugas/baru">
-              Cari Pekerjaan
-            </Link>
-          </Button>
+          {helperStatus === 'verified' && (
+            <Button asChild className="bg-white text-[#0D47A1] rounded-xl shadow-md hover:bg-gray-50 font-bold transition-all relative z-10 mt-2 sm:mt-0">
+              <Link href="/helper/tugas/baru">
+                Cari Pekerjaan
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -185,21 +193,36 @@ export default async function HelperDashboardPage() {
           {/* Sidebar Area */}
           <div className="space-y-6">
             {/* Action Required Banner */}
-            {!isVerified && (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 relative overflow-hidden">
+            {helperStatus === 'rejected' && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <AlertCircle className="w-24 h-24 text-orange-600" />
+                  <AlertCircle className="w-24 h-24 text-red-600" />
                 </div>
-                <h3 className="font-bold text-orange-900 mb-2 flex items-center relative z-10">
+                <h3 className="font-bold text-red-900 mb-2 flex items-center relative z-10">
                   <AlertCircle className="w-5 h-5 mr-2" />
-                  Profil Belum Terverifikasi
+                  Berkas Ditolak Koordinator
                 </h3>
-                <p className="text-sm text-orange-800 mb-4 leading-relaxed relative z-10">
-                  Mohon lengkapi dokumen Anda atau tunggu konfirmasi dari Koordinator agar dapat menerima tugas baru.
+                <p className="text-sm text-red-800 mb-4 leading-relaxed relative z-10">
+                  Mohon perbaiki dan perbarui profil Anda berdasarkan revisi Koordinator wilayah Anda untuk dapat mulai mengambil pekerjaan!
                 </p>
-                <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg w-full font-semibold relative z-10">
+                <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white rounded-lg w-full font-semibold relative z-10">
                   <Link href="/helper/verifikasi">Perbarui Sekarang</Link>
                 </Button>
+              </div>
+            )}
+            
+            {(helperStatus === 'pending' || helperStatus === 'under_review') && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <Clock className="w-24 h-24 text-orange-600" />
+                </div>
+                <h3 className="font-bold text-orange-900 mb-2 flex items-center relative z-10">
+                   <Clock className="w-5 h-5 mr-2" />
+                   Sedang Diproses
+                </h3>
+                <p className="text-sm text-orange-800 leading-relaxed relative z-10">
+                  Silakan tunggu hingga Koordinator setempat selesai memvalidasi dan mewawancarai Anda. Anda belum dapat mengambil orderan pesanan Lansia.
+                </p>
               </div>
             )}
 

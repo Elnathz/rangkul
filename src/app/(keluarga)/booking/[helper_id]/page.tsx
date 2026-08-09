@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ interface ServiceCategory {
 
 export default function BookingPage() {
   const router = useRouter();
-  const params = useParams();
+
 
   const [lansiaList, setLansiaList] = useState<Lansia[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);

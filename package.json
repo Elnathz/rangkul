@@ -40,6 +40,7 @@
     "bcryptjs": "^3.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "supabase": "^2.111.0",
     "tailwindcss": "^4",
     "typescript": "^5"
