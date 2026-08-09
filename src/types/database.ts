@@ -439,6 +439,8 @@ export type Database = {
           deleted_at: string | null
           dokumen_hubungan_keluarga_url: string | null
           dokumen_identitas_lansia_url: string | null
+          foto_url: string | null
+          hubungan_keluarga: string | null
           id: string
           keluarga_id: string
           lat: number | null
@@ -453,6 +455,8 @@ export type Database = {
           deleted_at?: string | null
           dokumen_hubungan_keluarga_url?: string | null
           dokumen_identitas_lansia_url?: string | null
+          foto_url?: string | null
+          hubungan_keluarga?: string | null
           id?: string
           keluarga_id: string
           lat?: number | null
@@ -467,6 +471,8 @@ export type Database = {
           deleted_at?: string | null
           dokumen_hubungan_keluarga_url?: string | null
           dokumen_identitas_lansia_url?: string | null
+          foto_url?: string | null
+          hubungan_keluarga?: string | null
           id?: string
           keluarga_id?: string
           lat?: number | null
