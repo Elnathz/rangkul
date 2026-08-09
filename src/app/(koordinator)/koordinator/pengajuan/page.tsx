@@ -11,6 +11,7 @@ import RegionSelect from "@/components/ui/RegionSelect";
 export default function KoordinatorPengajuanPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
   
   const [tingkat, setTingkat] = useState("rt");
   const [rt, setRt] = useState("");
@@ -22,7 +23,9 @@ export default function KoordinatorPengajuanPage() {
   const [lng, setLng] = useState<number | null>(null);
   
   const [ktpFile, setKtpFile] = useState<File | null>(null);
+  const [ktpPreview, setKtpPreview] = useState<string | null>(null);
   const [skFile, setSkFile] = useState<File | null>(null);
+  const [skPreview, setSkPreview] = useState<string | null>(null);
   
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -153,10 +156,18 @@ export default function KoordinatorPengajuanPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* Progress Bar */}
+        <div className="flex gap-2 mb-2">
+          {[1, 2].map((s) => (
+            <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${step >= s ? 'bg-[#0D47A1]' : 'bg-gray-100'}`} />
+          ))}
+        </div>
+
         {/* Section 1: Jabatan & Wilayah */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Informasi Kepengurusan & Wilayah</h2>
+        <div className={step === 1 ? "block animate-in fade-in" : "hidden"}>
+          <h2 className="text-lg font-bold text-slate-800 border-b pb-2 mb-4">Langkah 1: Informasi Kepengurusan & Wilayah</h2>
           
           <div className="space-y-2 mb-4">
             <Label>Jabatan Kepengurusan</Label>
@@ -241,47 +252,126 @@ export default function KoordinatorPengajuanPage() {
               }}
             />
           </div>
-        </section>
+        </div>
 
         {/* Section 2: Upload Dokumen */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800 border-b pb-2">Dokumen Validasi SK</h2>
+        <div className={step === 2 ? "block animate-in fade-in" : "hidden"}>
+          <h2 className="text-lg font-bold text-slate-800 border-b pb-2 mb-4">Langkah 2: Dokumen Validasi SK</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <Label 
               htmlFor="ktp_upload"
-              className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden"
+              className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
             >
-              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => e.target.files && setKtpFile(e.target.files[0])} />
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors relative z-10">
-                <svg className="w-5 h-5 text-slate-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-              </div>
-              <div className="relative z-10">
-                <p className="text-sm font-semibold text-slate-700">{ktpFile ? ktpFile.name : 'Upload KTP (Opsional)'}</p>
-                <p className="text-xs text-slate-500">Maks. 2MB (JPG, PNG)</p>
-              </div>
+              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setKtpFile(file);
+                    if (file.type.startsWith('image/')) setKtpPreview(URL.createObjectURL(file));
+                    else setKtpPreview(null);
+                  }
+              }} />
+              {ktpPreview ? (
+                <>
+                  <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                     <img src={ktpPreview} alt="Preview KTP" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto shadow-sm relative z-10 ring-4 ring-white">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div className="relative z-10 text-sm font-bold text-slate-800 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm self-center">
+                    {ktpFile?.name}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors relative z-10">
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-sm font-semibold text-slate-700">Upload KTP (Opsional)</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 2MB (JPG, PNG)</p>
+                  </div>
+                </>
+              )}
             </Label>
             
             <Label 
               htmlFor="sk_upload"
-              className="relative border border-dashed border-slate-300 rounded-xl flex flex-col justify-center p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden"
+              className="relative border border-dashed border-slate-300 rounded-xl flex flex-col justify-center p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
             >
-              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => e.target.files && setSkFile(e.target.files[0])} />
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors relative z-10">
-                 <svg className={`w-5 h-5 ${skFile ? 'text-green-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {skFile ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />}
-                 </svg>
-              </div>
-              <div className="relative z-10">
-                <p className="text-sm font-semibold text-slate-700">{skFile ? skFile.name : 'SK Jabatan / Bukti Kepengurusan'} <span className="text-red-500">*</span></p>
-                <p className="text-xs text-slate-500">Foto SK Kelurahan atau Sertifikat Resmi</p>
-              </div>
+              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setSkFile(file);
+                    if (file.type.startsWith('image/')) setSkPreview(URL.createObjectURL(file));
+                    else setSkPreview(null);
+                  }
+              }} />
+              {skPreview ? (
+                <>
+                  <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                     <img src={skPreview} alt="Preview SK" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto shadow-sm relative z-10 ring-4 ring-white">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div className="relative z-10 text-sm font-bold text-slate-800 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm self-center">
+                    {skFile?.name}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors relative z-10">
+                     <svg className={`w-5 h-5 ${skFile ? 'text-green-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      {skFile ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />}
+                     </svg>
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-sm font-semibold text-slate-700">{skFile ? skFile.name : 'SK Jabatan / Bukti Kepengurusan'} <span className="text-red-500">*</span></p>
+                    <p className="text-xs text-slate-500 mt-1">Foto SK Kelurahan atau Sertifikat Resmi</p>
+                  </div>
+                </>
+              )}
             </Label>
           </div>
-        </section>
+        </div>
 
-        <Button type="submit" disabled={loading} className="w-full my-4 h-12 bg-brand-gradient shadow-md text-white font-bold text-md rounded-xl hover:opacity-90">
-          {loading ? "Menyimpan Data Pengurus..." : "Kirim Pengajuan SK Koordinator"}
-        </Button>
+        <div className="flex gap-3 pt-6 border-t border-gray-100 mt-8">
+          {step > 1 && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                 setErrorMsg("");
+                 setStep(1);
+              }} 
+              className="font-semibold rounded-xl flex-1 border-gray-200 h-11"
+            >
+              Sebelumnya
+            </Button>
+          )}
+          
+          {step === 1 ? (
+            <Button
+              type="button"
+              onClick={() => {
+                setErrorMsg("");
+                if (!region.kelurahan || !alamat || !rt || !rw || lat === null) {
+                   setErrorMsg("Harap lengkapi wilayah binaan, jabatan, alamat sekretariat, dan titik koordinat.");
+                   return;
+                }
+                setStep(2);
+              }}
+              className="flex-[2] h-11 bg-[#0D47A1] hover:bg-blue-800 text-white font-semibold rounded-xl"
+            >
+              Selanjutnya
+            </Button>
+          ) : (
+            <Button type="submit" disabled={loading} className="flex-[2] h-11 bg-brand-gradient shadow-md text-white font-bold text-md rounded-xl hover:opacity-90">
+              {loading ? "Mengerjakan..." : "Kirim Pengajuan SK"}
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   );

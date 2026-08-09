@@ -585,13 +585,17 @@ export default function HelperVerifikasiPage() {
                 />
                 
                 {form.ktp_url ? (
-                  <div className="text-center p-4">
-                    <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md">
-                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  <>
+                    <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                       <img src={form.ktp_url} alt="Preview KTP" className="w-full h-full object-cover" />
                     </div>
-                    <p className="text-sm font-bold text-green-700">{ktpFileName || 'Foto KTP Disimpan'}</p>
-                    <p className="text-xs text-green-600/80 mt-1">Ketuk lagi untuk mengganti foto dokumen</p>
-                  </div>
+                    <div className="relative z-10 text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{ktpFileName || 'Foto KTP Disimpan'}</p>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center p-4">
                     <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">

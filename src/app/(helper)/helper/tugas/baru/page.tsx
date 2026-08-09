@@ -37,7 +37,61 @@ export default async function CariPekerjaanPage() {
     .is('helper_id', null)
     .order('created_at', { ascending: false });
 
-  const jobs = tasks || [];
+  const mockJobs = [
+    {
+      id: 'mock-1',
+      jadwal_waktu: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+      harga_dasar: 50000,
+      lansia_profiles: {
+        nama: 'Opa Budi Hartanto',
+        alamat: 'Jl. Bahari No 10, RT 02/RW 04, Ujung, Singkil, Aceh',
+        lat: 2.286500,
+        lng: 97.785500,
+        catatan_kondisi: 'Mobilitas terbatas, butuh kursi roda',
+        foto_url: 'https://i.pravatar.cc/150?u=budi'
+      },
+      service_categories: {
+        nama: 'Aktivitas Fisik',
+        tingkat: 'sedang'
+      }
+    },
+    {
+      id: 'mock-2',
+      jadwal_waktu: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
+      harga_dasar: 35000,
+      lansia_profiles: {
+        nama: 'Oma Rina Sari',
+        alamat: 'Kawasan Pelabuhan, RT 01/RW 07, Ujung, Singkil, Aceh',
+        lat: 2.288200,
+        lng: 97.783000,
+        catatan_kondisi: 'Pengurangan daya ingat, butuh kesabaran ekstra',
+        foto_url: 'https://i.pravatar.cc/150?u=rina'
+      },
+      service_categories: {
+        nama: 'Teman Mengobrol',
+        tingkat: 'ringan'
+      }
+    },
+    {
+      id: 'mock-3',
+      jadwal_waktu: new Date(Date.now() + 7200000).toISOString(), // In 2 hours
+      harga_dasar: 85000,
+      lansia_profiles: {
+        nama: 'Opa Antonius',
+        alamat: 'Pusat Kota, RT 05/RW 11, Singkil, Aceh Singkil, Aceh',
+        lat: 2.279000,
+        lng: 97.785000,
+        catatan_kondisi: 'Pasca stroke, pengawasan ketat saat makan',
+        foto_url: 'https://i.pravatar.cc/150?u=anton'
+      },
+      service_categories: {
+        nama: 'Aktivitas Dasar (Mandi, Makan)',
+        tingkat: 'berat'
+      }
+    }
+  ];
+
+  const jobs = [...mockJobs, ...(tasks || [])];
 
   // Haversine distance function (simplified)
   function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -84,7 +138,9 @@ export default async function CariPekerjaanPage() {
   return (
     <CariPekerjaanClient 
       initialJobs={formattedJobs} 
-      radius={Number(profile?.radius_layanan_km) || 5} 
+      radius={Number(profile?.radius_layanan_km) || 1} 
+      isVerified={profile?.status === 'verified'}
+      helperStatus={profile?.status}
     />
   );
 }
