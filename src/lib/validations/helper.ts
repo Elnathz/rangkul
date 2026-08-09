@@ -8,7 +8,7 @@ export const helperProfileSchema = z.object({
   radius_layanan_km: z.number().min(1, 'Radius minimal 1 km').max(25, 'Radius maksimal 25 km').default(5),
   ktp_url: z.string().url('URL KTP tidak valid'),
   kategori_ids: z
-    .array(z.string().uuid('ID kategori tidak valid'))
+    .array(z.string({ message: 'ID kategori tidak valid' }))
     .min(1, 'Pilih minimal 1 kategori layanan'),
 });
 
