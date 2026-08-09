@@ -24,7 +24,7 @@ export async function GET() {
     const { data: koordinators, error } = await supabase
       .from('koordinator_profiles')
       .select(`
-        id, wilayah, tingkat, dokumen_url, status, created_at,
+        id, wilayah, tingkat, dokumen_url, ktp_url, status, created_at,
         users!inner ( id, full_name, email, phone )
       `)
       .eq('status', 'pending_verification')
