@@ -19,7 +19,8 @@ export default function HelperDashboardPage() {
   useEffect(() => {
     const savedStatus = sessionStorage.getItem("mock_helper_status");
     if (savedStatus) {
-      setHelperStatus(savedStatus as any);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHelperStatus(savedStatus as 'pending' | 'under_review' | 'verified' | 'rejected');
     }
   }, []);
 

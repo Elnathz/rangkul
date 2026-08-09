@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, MapPin, Star, Filter, Heart, ArrowUpDown, Info } from "lucide-react";
 
@@ -163,6 +162,7 @@ export default function CariHelperPage() {
             {filteredHelpers.map((h) => (
               <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
                 <div className="relative w-full aspect-[5/4] bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={h.avatar}
                     alt={`Foto ${h.name}`}

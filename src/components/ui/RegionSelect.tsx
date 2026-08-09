@@ -51,7 +51,7 @@ export default function RegionSelect({ onRegionChange, required = true }: Region
     dist: Region | null, 
     vill: Region | null
   ) => {
-    let parts = [];
+    const parts = [];
     if (vill) parts.push(vill.name);
     if (dist) parts.push(dist.name);
     if (city) parts.push(city.name);

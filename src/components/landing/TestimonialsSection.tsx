@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Star, Quote } from "lucide-react";
 
 const testimonials = [
@@ -66,6 +65,7 @@ export default function TestimonialsSection() {
               {/* Author */}
               <div className="flex items-center gap-3 pt-4 border-t border-border">
                 <div className="w-11 h-11 rounded-full overflow-hidden border border-border shadow-sm shrink-0 bg-[#F5F8FC]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${t.avatarSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
                     alt={t.name}

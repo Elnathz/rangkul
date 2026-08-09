@@ -88,7 +88,7 @@ export default function LoginPage() {
       };
       const targetRoute = roleRoutes[data.user?.role] || '/beranda';
       window.location.href = targetRoute;
-    } catch (error) {
+    } catch {
       setApiError("Terjadi kesalahan jaringan.");
     }
   };

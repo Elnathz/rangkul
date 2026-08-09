@@ -1,5 +1,4 @@
-import { Badge } from "@/components/ui/badge";
-import { UserCheck, CalendarCheck, FileHeart, MapPin, ClipboardList, ShieldCheck } from "lucide-react";
+import { MapPin, ClipboardList, ShieldCheck } from "lucide-react";
 
 // Langkah-langkah dipindahkan ke StepsSection.tsx
 

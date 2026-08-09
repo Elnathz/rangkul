@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Info, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, XCircle } from 'lucide-react';
 
 export default function KoordinatorDetailHelperPage() {
   return (

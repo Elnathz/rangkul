@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 
 export default function CTABannerSection() {
   return (
