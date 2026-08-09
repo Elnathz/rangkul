@@ -126,7 +126,11 @@ export default function HelperVerifikasiPage() {
       return;
     }
 
-    if (kategoriIds.length === 0) {
+    const selectedCategoryIds = form.selected_categories
+      .map(catName => categories.find(c => c.nama === catName)?.id)
+      .filter(Boolean) as string[];
+
+    if (selectedCategoryIds.length === 0) {
       setFieldErrors({ kategori_ids: ["Harap pilih minimal 1 kategori layanan."] });
       setLoading(false);
       return;
@@ -170,7 +174,7 @@ export default function HelperVerifikasiPage() {
         domisili_lng: form.domisili_lng,
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
-        kategori_ids: kategoriIds
+        kategori_ids: selectedCategoryIds
       };
 
       const res = await fetch("/api/helper/apply", {
@@ -400,30 +404,6 @@ export default function HelperVerifikasiPage() {
             </div>
 
             <div className={step === 3 ? "block" : "hidden"}>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 3: Unggah Identitas</h2>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                URL Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
-                Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
-              </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                {categories.map(cat => (
-                  <label key={cat.id} className="flex items-center space-x-2 border p-3 rounded-xl cursor-pointer hover:bg-gray-50">
-                    <input 
-                      type="checkbox"
-                      checked={kategoriIds.includes(cat.id)}
-                      onChange={() => toggleKategori(cat.id)}
-                      className="rounded text-[#0D47A1] focus:ring-[#0D47A1]"
-                    />
-                    <span className="text-sm font-medium">{cat.nama}</span>
-                  </label>
-                ))}
-              </div>
-              {fieldErrors.kategori_ids && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.kategori_ids[0]}</p>
-              )}
-            </div>
-
-            <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-4">
                 URL Foto KTP / Dokumen Identitas *
               </Label>
@@ -437,6 +417,7 @@ export default function HelperVerifikasiPage() {
                 <input 
                   type="file" 
                   id="ktp_upload" 
+                  ref={ktpInputRef}
                   className="hidden" 
                   accept="image/jpeg, image/png"
                   onChange={(e) => {
