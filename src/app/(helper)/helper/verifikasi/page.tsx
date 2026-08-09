@@ -30,19 +30,19 @@ export default function HelperVerifikasiPage() {
       id: "tier1",
       title: "Ringan",
       desc: "Aktivitas harian ringan & non-medis.",
-      categories: ["Menemani Mengobrol", "Belanja Kebutuhan", "Membersihkan Rumah Ringan", "Bantuan Teknologi"]
+      categories: ["Pengingat Obat", "Menemani Mengobrol (singkat)", "Bantuan Teknologi (singkat)", "Bersih-bersih Ringan", "Antar Obat (dekat, <=1 km)"]
     },
     {
       id: "tier2",
       title: "Sedang",
       desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
-      categories: ["Antar Obat", "Pengingat Obat"]
+      categories: ["Menemani Mengobrol (lama)", "Bantuan Teknologi (lama)", "Antar Obat (sedang, 1-3 km)", "Belanja Kebutuhan (standar)"]
     },
     {
       id: "tier3",
       title: "Berat",
       desc: "Perawatan khusus dan penanganan medis dasar.",
-      categories: ["Kontrol Kesehatan (antar ke faskes)"]
+      categories: ["Antar Obat (jauh, >3 km)", "Bersih-bersih Menyeluruh", "Kontrol Kesehatan (antar ke faskes)", "Belanja Kebutuhan (besar/jauh)"]
     }
   ];
 
