@@ -93,6 +93,12 @@ export default function KoordinatorPengajuanPage() {
           wilayah: wilayahString,
           tingkat: tingkat,
           dokumen_url: uploadedSkUrl,
+          provinsi: region.provinsi,
+          kabupaten_kota: region.kota,
+          kecamatan: region.kecamatan,
+          kelurahan: region.kelurahan,
+          rt: parseInt(rt, 10),
+          rw: parseInt(rw, 10),
           ...(uploadedKtpUrl ? { ktp_url: uploadedKtpUrl } : {})
         })
       });

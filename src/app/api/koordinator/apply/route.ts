@@ -51,7 +51,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const { wilayah, tingkat, dokumen_url, ktp_url } = validation.data;
+    const { wilayah, tingkat, dokumen_url, ktp_url, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw } = validation.data;
+
+    // Update tabel users untuk mengisi lokasi granular
+    const { error: userUpdateError } = await supabase
+      .from('users')
+      .update({
+        provinsi,
+        kabupaten_kota,
+        kecamatan,
+        kelurahan,
+        rt,
+        rw,
+      })
+      .eq('id', user.id);
+
+    if (userUpdateError) {
+      return createApiError('server_error', 'Gagal menyimpan detail lokasi wilayah', 500);
+    }
 
     // Jika ada profil rejected sebelumnya, update — kalau belum ada, insert
     let profileId: string;

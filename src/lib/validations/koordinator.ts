@@ -7,6 +7,12 @@ export const koordinatorApplySchema = z.object({
   }),
   dokumen_url: z.string().url('URL dokumen jabatan tidak valid'),
   ktp_url: z.string().url('URL KTP tidak valid').optional(),
+  provinsi: z.string().min(1, 'Provinsi wajib diisi'),
+  kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
+  kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
+  kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
+  rt: z.number().int().min(1, 'RT wajib diisi'),
+  rw: z.number().int().min(1, 'RW wajib diisi'),
 });
 
 export type KoordinatorApplyInput = z.infer<typeof koordinatorApplySchema>;
