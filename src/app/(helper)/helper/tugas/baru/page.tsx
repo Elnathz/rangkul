@@ -1,9 +1,7 @@
 import React from 'react';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { MapPin, Clock, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import CariPekerjaanClient from './CariPekerjaanClient';
 
 export default async function CariPekerjaanPage() {
   const supabase = await createClient();
@@ -56,90 +54,37 @@ export default async function CariPekerjaanPage() {
     return d.toFixed(1);
   }
 
-  const formatTaskDate = (isoString: string) => {
-    const date = new Date(isoString);
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZoneName: 'short'
-    }).format(date);
-  };
+  // Map to JobData format for Client Component
+  const formattedJobs = jobs.map((job: any) => {
+    const lansia = job.lansia_profiles;
+    const category = job.service_categories;
+    
+    let distanceKm: number | null = null;
+    let distanceStr = '? km';
+    
+    if (profile?.domisili_lat && profile?.domisili_lng && lansia?.lat && lansia?.lng) {
+      distanceKm = parseFloat(getDistance(profile.domisili_lat, profile.domisili_lng, lansia.lat, lansia.lng) || '0');
+      if (distanceKm !== null) distanceStr = `${distanceKm} km`;
+    }
+
+    return {
+      id: job.id,
+      jadwal_waktu: job.jadwal_waktu,
+      harga_dasar: job.harga_dasar,
+      lansia_nama: lansia?.nama || 'Lansia Anonim',
+      lansia_alamat: lansia?.alamat || '-',
+      catatan_kondisi: lansia?.catatan_kondisi || '',
+      kategori_nama: category?.nama || 'Tugas',
+      kategori_tingkat: category?.tingkat || 'ringan',
+      distanceKm,
+      distanceStr,
+    };
+  });
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-5xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Cari Pekerjaan (Tugas DIAJUKAN)</h1>
-          <p className="text-gray-500 mt-1">Pekerjaan di radius &lt; 5 KM dari Anda.</p>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {jobs.length > 0 ? jobs.map(job => {
-          const lansia = job.lansia_profiles;
-          const category = job.service_categories;
-          
-          let distanceStr = '? km';
-          if (profile?.domisili_lat && profile?.domisili_lng && lansia?.lat && lansia?.lng) {
-            const dist = getDistance(profile.domisili_lat, profile.domisili_lng, lansia.lat, lansia.lng);
-            if (dist) distanceStr = `${dist} km`;
-          }
-
-          // Build tags from category name, condition, etc.
-          const tags = [];
-          if (category?.nama) tags.push(category.nama);
-          if (category?.tingkat) tags.push(`Tingkat ${category.tingkat.charAt(0).toUpperCase() + category.tingkat.slice(1)}`);
-          if (lansia?.catatan_kondisi) tags.push('Perhatian Khusus');
-
-          return (
-            <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-6 hover:border-blue-200 transition-colors">
-              <div className="flex-1 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{lansia?.nama || 'Lansia Anonim'}</h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {tags.map((tag, idx) => (
-                        <span key={idx} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-bold text-[#0D47A1] bg-blue-50 px-3 py-1 rounded-full text-sm">{distanceStr}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 mt-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span className="line-clamp-1">{lansia?.alamat || '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span>{formatTaskDate(job.jadwal_waktu)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-end justify-end w-full md:w-48 shrink-0 mt-4 md:mt-0">
-                <Button asChild className="w-full bg-[#0D47A1] text-white hover:bg-blue-800">
-                  <Link href={`/helper/pekerjaan/${job.id}`}>
-                    Lihat Detail <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          );
-        }) : (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
-             <p className="text-gray-500 font-medium">Belum ada tugas baru yang tersedia di wilayah Anda.</p>
-          </div>
-        )}
-      </div>
-    </div>
+    <CariPekerjaanClient 
+      initialJobs={formattedJobs} 
+      radius={Number(profile?.radius_layanan_km) || 5} 
+    />
   );
 }
