@@ -49,7 +49,7 @@ export default async function HelperDashboardPage() {
   }
 
   // Get recent tasks
-  let recentTasks: any[] = [];
+  let recentTasks: Record<string, unknown>[] = [];
   if (profile) {
     const { data: tasksData } = await supabase
       .from('tasks')

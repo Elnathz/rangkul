@@ -22,8 +22,6 @@ export default function HelperVerifikasiPage() {
   const [modalOpenTier, setModalOpenTier] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [categories, setCategories] = useState<{id: string, nama: string}[]>([]);
-  const [kategoriIds, setKategoriIds] = useState<string[]>([]);
-  const [ktpFileName, setKtpFileName] = useState<string | null>(null);
 
   const tiers = [
     {
@@ -95,18 +93,7 @@ export default function HelperVerifikasiPage() {
       selected_categories: prev.selected_categories.filter(c => !activeCategories.includes(c))
     }));
   };
-  const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setKtpFileName(file.name);
-    }
-  };
 
-  const toggleKategori = (id: string) => {
-    setKategoriIds(prev => 
-      prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
