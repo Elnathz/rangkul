@@ -29,10 +29,14 @@ export default function DetailPekerjaanPage() {
       </Button>
 
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-6">
-        <div className="border-b border-gray-100 pb-6">
-           <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 font-bold text-xs rounded-full mb-3 tracking-wider">STATUS: DIAJUKAN</span>
-           <h1 className="text-2xl font-bold text-gray-900 mb-1">Pendampingan Opa Budi Hartanto</h1>
-           <p className="text-gray-500">ID Reservasi: BKG-1029</p>
+        <div className="border-b border-gray-100 pb-6 flex items-start gap-5">
+           {/* eslint-disable-next-line @next/next/no-img-element */}
+           <img src="https://i.pravatar.cc/150?img=11" alt="Foto Lansia" className="w-28 h-28 rounded-2xl object-cover border-2 border-gray-100 shadow-sm" />
+           <div>
+             <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 font-bold text-xs rounded-full mb-3 tracking-wider">STATUS: DIAJUKAN</span>
+             <h1 className="text-2xl font-bold text-gray-900 mb-1">Pendampingan Opa Budi Hartanto</h1>
+             <p className="text-gray-500">ID Reservasi: BKG-1029</p>
+           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
