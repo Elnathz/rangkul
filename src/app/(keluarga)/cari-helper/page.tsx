@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Search, MapPin, Star, Filter, Heart, ArrowUpDown, Info } from "lucide-react";
@@ -215,8 +216,10 @@ export default function CariHelperPage() {
                     <span className="text-xs text-slate-500 block">Tarif Layanan</span>
                     <span className="font-bold text-slate-900">Rp 50.000 <span className="font-normal text-xs text-slate-500">/ 2 jam</span></span>
                   </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                    Tanya Ketersediaan
+                  <Button size="sm" asChild className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold">
+                    <Link href={`/booking/${h.id}`}>
+                      Tanya Ketersediaan
+                    </Link>
                   </Button>
                 </div>
               </div>
