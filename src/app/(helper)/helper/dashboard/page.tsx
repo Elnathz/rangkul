@@ -114,7 +114,7 @@ export default async function HelperDashboardPage() {
             <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: 
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ml-2 uppercase tracking-wider backdrop-blur-md ${
                 helperStatus === 'verified' ? 'bg-green-500/20 text-white border-green-300/30' :
-                (helperStatus === 'suspended' || helperStatus === 'rejected') ? 'bg-red-500/20 text-white border-red-300/30' :
+                (helperStatus === 'suspended') ? 'bg-red-500/20 text-white border-red-300/30' :
                 helperStatus === 'unregistered' ? 'bg-gray-500/20 text-white border-gray-300/30' :
                 'bg-orange-500/20 text-white border-orange-300/30'
               }`}>
