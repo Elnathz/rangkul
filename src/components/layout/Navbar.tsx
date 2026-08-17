@@ -93,7 +93,6 @@ export default function Navbar() {
         } else {
           setIsVerified(true);
         }
-        }
       }
     });
 
