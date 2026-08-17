@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 
-// GET /api/helper/queue — Koordinator melihat antrean Helper pending di wilayahnya
+// GET /api/helper/queue Koordinator melihat antrean Helper pending di wilayahnya
 export async function GET() {
   try {
     const supabase = await createClient();

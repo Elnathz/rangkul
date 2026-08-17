@@ -110,22 +110,27 @@ export default function Navbar() {
     role === "koordinator" ? "/koordinator/pengajuan" : "#";
 
   let currentNavLinks = defaultNavLinks;
-  if (role === 'keluarga') {
+  if (pathname === '/') {
+    currentNavLinks = defaultNavLinks;
+  } else if (role === 'keluarga') {
     currentNavLinks = [
       { href: "/beranda", label: "Dashboard" },
       { href: "/cari-helper", label: "Cari Helper" },
+      { href: "/kunjungan", label: "Kunjungan" },
       { href: "/lansia/tambah", label: "Profil Keluarga" },
     ];
   } else if (role === 'helper') {
     currentNavLinks = [
       { href: "/helper/dashboard", label: "Dashboard" },
-      { href: "/helper/tugas/baru", label: "Cari Tugas" },
+      { href: "/tugas", label: "Cari Tugas" },
+      { href: "/kunjungan", label: "Papan Tugas" },
       ...(isVerified ? [] : [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }]),
     ];
   } else if (role === 'koordinator') {
     currentNavLinks = [
       { href: "/koordinator/dashboard", label: "Dashboard" },
       { href: "/koordinator/antrean", label: "Antrean Helper" },
+      { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
       ...(isVerified ? [] : [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }]),
     ];
   }
@@ -138,7 +143,7 @@ export default function Navbar() {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <nav className="w-full max-w-7xl mx-auto px-4 lg:px-5 h-16 flex items-center justify-between">
+      <nav className="w-full max-w-7xl mx-auto px-4 lg:px-5 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center group shrink-0">
           <Image
@@ -153,7 +158,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+        <ul className="hidden md:flex items-center gap-8 text-base font-semibold text-muted-foreground">
           {currentNavLinks.map(({ href, label }) => {
             const isActive = pathname === href;
             return (
@@ -248,7 +253,7 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className="text-sm font-medium text-foreground hover:text-[#0D47A1] py-1"
+              className="text-base font-semibold text-foreground hover:text-[#0D47A1] py-1"
               onClick={() => setMenuOpen(false)}
             >
               {label}
