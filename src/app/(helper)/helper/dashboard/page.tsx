@@ -31,7 +31,7 @@ export default async function HelperDashboardPage() {
   // Get helper profile
   const { data: profile } = await supabase
     .from('helper_profiles')
-    .select('id, status, total_tugas_selesai, saldo_tersedia')
+    .select('id, status, total_tugas_selesai, saldo_tersedia, suspend_reason')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -90,13 +90,22 @@ export default async function HelperDashboardPage() {
     }).format(date);
   };
 
-  // Build the stats
   const stats = [
     { label: 'Tugas Aktif', value: activeTasksCount.toString(), icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
     { label: 'Menunggu Verifikasi', value: '0', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
     { label: 'Tugas Selesai', value: (profile?.total_tugas_selesai || 0).toString(), icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
     { label: 'Estimasi Fee', value: formatIDR(profile?.saldo_tersedia || 0), icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
   ];
+
+  let rejectReason = '';
+  let rejectPhoto = '';
+  if (helperStatus === 'rejected' && profile?.suspend_reason) {
+    const parts = profile.suspend_reason.split('\n\nLampiran Foto: ');
+    rejectReason = parts[0];
+    if (parts.length > 1) {
+      rejectPhoto = parts[1];
+    }
+  }
 
 
 
@@ -246,10 +255,28 @@ export default async function HelperDashboardPage() {
                   Berkas Ditolak Koordinator
                 </h3>
                 <p className="text-sm text-red-800 mb-4 leading-relaxed relative z-10">
-                  Mohon perbaiki dan perbarui profil Anda berdasarkan revisi Koordinator wilayah Anda untuk dapat mulai mengambil pekerjaan!
+                  Mohon perbaiki dan perbarui profil Anda berdasarkan revisi Koordinator wilayah Anda untuk dapat mulai mengambil pekerjaan.
                 </p>
-                <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white rounded-lg w-full font-semibold relative z-10">
-                  <Link href="/helper/verifikasi">Perbarui Sekarang</Link>
+                
+                {rejectReason && (
+                  <div className="bg-white/60 border border-red-100 rounded-xl p-4 mb-4 relative z-10">
+                    <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-1">Alasan Penolakan:</p>
+                    <p className="text-sm text-gray-800 italic">"{rejectReason}"</p>
+                    
+                    {rejectPhoto && (
+                      <div className="mt-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-2">Lampiran Bukti:</p>
+                        <a href={rejectPhoto} target="_blank" rel="noreferrer" className="block w-full max-w-[200px] rounded-lg overflow-hidden border border-red-200 shadow-sm hover:opacity-90 transition-opacity">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={rejectPhoto} alt="Bukti Penolakan" className="w-full h-auto object-cover" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white rounded-lg w-full font-semibold relative z-10 mt-2">
+                  <Link href="/helper/verifikasi">Perbarui Formulir Sekarang</Link>
                 </Button>
               </div>
             )}

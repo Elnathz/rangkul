@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (existing && existing.status !== 'suspended') {
+    if (existing && existing.status !== 'suspended' && existing.status !== 'rejected') {
       return createApiError(
         'conflict',
         `Profil helper sudah ada dengan status: ${existing.status}`,
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { bio, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, kategori_ids, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw, koordinator_id } =
+    const { bio, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, foto_wajah_url, kategori_ids, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw, koordinator_id } =
       validation.data;
 
     // Update tabel users untuk mengisi lokasi granular
@@ -82,31 +82,67 @@ export async function POST(request: Request) {
       return createApiError('validation_error', 'Satu atau lebih kategori tidak valid', 400);
     }
 
-    // Insert helper_profiles
-    const { data: profile, error: insertError } = await supabase
-      .from('helper_profiles')
-      .insert({
-        user_id: user.id,
-        bio: bio || null,
-        wilayah_domisili,
-        domisili_lat,
-        domisili_lng,
-        radius_layanan_km,
-        ktp_url,
-        koordinator_id: koordinator_id || null,
-        status: 'pending_verification',
-        tingkat_kepercayaan: 'probation',
-      })
-      .select('id')
-      .single();
+    // Update atau Insert helper_profiles
+    let profileId = existing?.id;
+    let errorMsg = '';
+    
+    if (existing) {
+      const { data: updated, error: updateError } = await supabase
+        .from('helper_profiles')
+        .update({
+          bio: bio || null,
+          wilayah_domisili,
+          domisili_lat,
+          domisili_lng,
+          radius_layanan_km,
+          ktp_url,
+          foto_wajah_url,
+          koordinator_id: koordinator_id || null,
+          status: 'pending_verification',
+          suspend_reason: null, // Reset alasan penolakan
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id)
+        .select('id')
+        .single();
+        
+      if (updateError) errorMsg = updateError.message;
+      else profileId = updated.id;
+      
+      // Hapus kategori lama
+      if (!errorMsg) {
+        await supabase.from('helper_service_categories').delete().eq('helper_id', profileId);
+      }
+    } else {
+      const { data: profile, error: insertError } = await supabase
+        .from('helper_profiles')
+        .insert({
+          user_id: user.id,
+          bio: bio || null,
+          wilayah_domisili,
+          domisili_lat,
+          domisili_lng,
+          radius_layanan_km,
+          ktp_url,
+          foto_wajah_url,
+          koordinator_id: koordinator_id || null,
+          status: 'pending_verification',
+          tingkat_kepercayaan: 'probation',
+        })
+        .select('id')
+        .single();
+        
+      if (insertError) errorMsg = insertError.message;
+      else profileId = profile.id;
+    }
 
-    if (insertError) {
-      return createApiError('server_error', insertError.message, 500);
+    if (errorMsg || !profileId) {
+      return createApiError('server_error', errorMsg || 'Gagal menyimpan profil', 500);
     }
 
     // Insert relasi kategori layanan
     const categoryInserts = kategori_ids.map((service_category_id) => ({
-      helper_id: profile.id,
+      helper_id: profileId,
       service_category_id,
     }));
 
@@ -115,15 +151,13 @@ export async function POST(request: Request) {
       .insert(categoryInserts);
 
     if (catInsertError) {
-      // Rollback: hapus helper_profiles yang baru dibuat
-      await supabase.from('helper_profiles').delete().eq('id', profile.id);
       return createApiError('server_error', 'Gagal menyimpan kategori layanan', 500);
     }
 
     return apiResponse(
       {
         message: 'Pendaftaran helper berhasil. Menunggu verifikasi koordinator wilayah.',
-        helper_profile_id: profile.id,
+        helper_profile_id: profileId,
       },
       201
     );

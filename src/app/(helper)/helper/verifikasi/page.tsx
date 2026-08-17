@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 export default function HelperVerifikasiPage() {
   const router = useRouter();
   const ktpInputRef = useRef<HTMLInputElement>(null);
+  const fotoWajahInputRef = useRef<HTMLInputElement>(null);
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -27,6 +28,7 @@ export default function HelperVerifikasiPage() {
   const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
+  const [fotoWajahFileName, setFotoWajahFileName] = useState<string | null>(null);
   const [koordinators, setKoordinators] = useState<any[]>([]);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
@@ -78,6 +80,7 @@ export default function HelperVerifikasiPage() {
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
     radius_layanan_km: 1, // Minimum 1 KM
+    foto_wajah_url: "",
     ktp_url: "",
     koordinator_id: "",
   });
@@ -160,16 +163,44 @@ export default function HelperVerifikasiPage() {
 
     try {
       let ktpUrl = null;
-      const file = ktpInputRef.current?.files?.[0];
+      let fotoWajahUrl = null;
+      const ktpFile = ktpInputRef.current?.files?.[0];
+      const fotoWajahFile = fotoWajahInputRef.current?.files?.[0];
       
-      if (!file) {
+      if (!fotoWajahFile) {
+        setErrorMsg("Harap unggah foto wajah Anda.");
+        setLoading(false);
+        return;
+      }
+      
+      if (!ktpFile) {
         setErrorMsg("Harap unggah foto KTP/Dokumen Identitas.");
         setLoading(false);
         return;
       }
 
+      // Upload Foto Wajah
+      const fwFormData = new FormData();
+      fwFormData.append("file", fotoWajahFile);
+      fwFormData.append("docType", "foto_helper");
+      
+      const uploadFwRes = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: fwFormData,
+      });
+      
+      const uploadFwData = await uploadFwRes.json();
+      
+      if (!uploadFwRes.ok) {
+        setErrorMsg(uploadFwData.message || "Gagal mengunggah foto wajah.");
+        setLoading(false);
+        return;
+      }
+      fotoWajahUrl = uploadFwData.url;
+
+      // Upload KTP
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", ktpFile);
       formData.append("docType", "ktp");
       
       const uploadRes = await fetch("/api/storage/upload", {
@@ -193,6 +224,7 @@ export default function HelperVerifikasiPage() {
         domisili_lng: form.domisili_lng,
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
+        foto_wajah_url: fotoWajahUrl,
         kategori_ids: kategoriIds,
         koordinator_id: form.koordinator_id || null,
         provinsi: form.region.provinsi,
@@ -559,8 +591,65 @@ export default function HelperVerifikasiPage() {
             <div className={step === 3 ? "block animate-in fade-in" : "hidden"}>
               <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 3: Unggah Identitas</h2>
               
+              {/* Foto Wajah */}
+              <div className="mb-6 border-b border-gray-100 pb-6">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                  Foto Wajah Terkini <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-slate-500 mb-4">Unggah pas foto atau swafoto (selfie) wajah Anda. Pastikan pencahayaan cukup dan wajah terlihat jelas.</p>
+                
+                <Label 
+                  htmlFor="foto_wajah_upload"
+                  className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
+                    form.foto_wajah_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
+                  }`}
+                >
+                  <input 
+                    type="file" 
+                    id="foto_wajah_upload" 
+                    ref={fotoWajahInputRef}
+                    className="hidden" 
+                    accept="image/jpeg, image/png"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setForm({ ...form, foto_wajah_url: URL.createObjectURL(e.target.files[0]) });
+                        setFotoWajahFileName(e.target.files[0].name);
+                      }
+                    }}
+                  />
+                  
+                  {form.foto_wajah_url ? (
+                    <>
+                      <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                         <img src={form.foto_wajah_url} alt="Preview Foto Wajah" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="relative z-10 text-center p-4">
+                        <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
+                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{fotoWajahFileName || 'Foto Wajah Disimpan'}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto Wajah</p>
+                      <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                    </div>
+                  )}
+                </Label>
+                {fieldErrors.foto_wajah_url && (
+                  <p className="text-xs text-red-500 mt-1">{fieldErrors.foto_wajah_url[0]}</p>
+                )}
+              </div>
+
+              {/* KTP */}
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                URL Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
+                Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
               </Label>
               <p className="text-xs text-slate-500 mb-4">Mohon perhatikan tulisan KTP harus jelas dan tidak terpotong atau tertutup silau cahaya.</p>
               
