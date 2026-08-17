@@ -293,6 +293,7 @@ export type Database = {
           created_at: string
           domisili_lat: number | null
           domisili_lng: number | null
+          foto_url: string | null
           id: string
           is_available: boolean
           koordinator_id: string | null
@@ -315,6 +316,7 @@ export type Database = {
           created_at?: string
           domisili_lat?: number | null
           domisili_lng?: number | null
+          foto_url?: string | null
           id?: string
           is_available?: boolean
           koordinator_id?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           created_at?: string
           domisili_lat?: number | null
           domisili_lng?: number | null
+          foto_wajah_url?: string | null
           id?: string
           is_available?: boolean
           koordinator_id?: string | null

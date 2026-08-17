@@ -66,6 +66,7 @@ export default function Navbar() {
   }, []);
 
   const [isVerified, setIsVerified] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -74,11 +75,17 @@ export default function Navbar() {
       if (data.user) {
         const role = data.user.user_metadata?.role;
         if (role === 'helper') {
-          const { data: prof } = await supabase.from('helper_profiles').select('id').eq('user_id', data.user.id).single();
-          if (prof) setIsVerified(true);
+          const { data: prof } = await supabase.from('helper_profiles').select('id, foto_url').eq('user_id', data.user.id).single();
+          if (prof) {
+            setIsVerified(true);
+            if (prof.foto_url) setAvatarUrl(prof.foto_url);
+          }
         } else if (role === 'koordinator') {
-          const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', data.user.id).single();
-          if (prof) setIsVerified(true);
+          const { data: prof } = await supabase.from('koordinator_profiles').select('id, foto_url').eq('user_id', data.user.id).single();
+          if (prof) {
+            setIsVerified(true);
+            if (prof.foto_url) setAvatarUrl(prof.foto_url);
+          }
         }
       }
     });
@@ -181,7 +188,7 @@ export default function Navbar() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
+                  src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
                   alt="Avatar" 
                   className="w-8 h-8 rounded-full border border-gray-200 object-cover bg-blue-50"
                 />
@@ -265,9 +272,9 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 p-2 mb-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
-                    src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
+                    src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
                     alt="Avatar" 
-                    className="w-10 h-10 rounded-full border border-gray-200 bg-blue-50"
+                    className="w-10 h-10 rounded-full border border-gray-200 bg-blue-50 object-cover"
                   />
                   <div className="flex flex-col overflow-hidden">
                     <span className="text-sm font-semibold text-gray-900 truncate">@{username}</span>
