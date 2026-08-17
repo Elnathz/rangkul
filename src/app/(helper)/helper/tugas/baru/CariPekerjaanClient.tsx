@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,16 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
   // Job modal state
   const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
   
-  // Warning Modal state based on apply button
+  // Warning Modal state based on helperStatus
   const [warningAction, setWarningAction] = useState<"unverified" | "pending" | null>(null);
+
+  useEffect(() => {
+    if (!helperStatus || helperStatus === "unregistered") {
+      setWarningAction("unverified");
+    } else if (helperStatus !== "verified") {
+      setWarningAction("pending");
+    }
+  }, [helperStatus]);
 
   const filteredJobs = initialJobs.filter((job) => {
     const matchSearch = job.lansia_nama.toLowerCase().includes(search.toLowerCase()) || 
@@ -76,11 +84,7 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
   };
 
   const handleApplyClick = () => {
-    if (!helperStatus || helperStatus === "none") {
-      setWarningAction("unverified");
-    } else if (helperStatus === "pending_verification" || helperStatus === "under_review") {
-      setWarningAction("pending");
-    } else if (helperStatus === "verified" && selectedJob) {
+    if (helperStatus === "verified" && selectedJob) {
       // Direct access allowed
       router.push(`/helper/pekerjaan/${selectedJob.id}`);
     }
@@ -362,21 +366,13 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
             <div className="space-y-3">
               <Button 
                 onClick={() => {
-                   setWarningAction(null);
-                   if (warningAction === "unverified") router.push("/helper/verifikasi");
+                   if (warningAction === "unverified") router.push("/helper/profil/edit");
                    else router.push("/helper/dashboard");
                 }} 
                 className="w-full bg-[#0D47A1] hover:bg-blue-800 h-12 rounded-xl font-bold flex items-center justify-center gap-2"
               >
-                {warningAction === "unverified" ? "Isi Data Penjamin" : "Cek Dashboard"}
+                {warningAction === "unverified" ? "Lengkapi Profil" : "Kembali ke Dashboard"}
                 <ExternalLink size={16} />
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => setWarningAction(null)} 
-                className="w-full h-12 rounded-xl font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-              >
-                Batal
               </Button>
             </div>
           </div>
