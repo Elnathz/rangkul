@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { helperApproveSchema } from '@/lib/validations/helper';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { writeAuditLog } from '@/lib/audit';
@@ -65,13 +65,16 @@ export async function PUT(
       }
 
       // Guard: wilayah harus matching (case-insensitive)
-      const wilayahKoord = koordProfile.wilayah.toLowerCase();
-      const wilayahHelper = helperProfile.wilayah_domisili.toLowerCase();
+      const wilayahKoordFull = koordProfile.wilayah.toLowerCase();
+      const wilayahHelperFull = helperProfile.wilayah_domisili.toLowerCase();
+      
+      const kelurahanKoord = wilayahKoordFull.split('|')[0].trim();
+      const kelurahanHelper = wilayahHelperFull.split('|')[0].trim();
 
-      if (!wilayahHelper.includes(wilayahKoord) && !wilayahKoord.includes(wilayahHelper)) {
+      if (kelurahanKoord !== kelurahanHelper && !wilayahHelperFull.includes(wilayahKoordFull) && !wilayahKoordFull.includes(wilayahHelperFull)) {
         return createApiError(
           'forbidden',
-          'Anda hanya dapat menyetujui helper yang berdomisili di wilayah Anda',
+          'Anda hanya dapat menyetujui helper yang berdomisili di kelurahan/wilayah Anda',
           403
         );
       }
@@ -88,8 +91,10 @@ export async function PUT(
       return createApiError('validation_error', 'Data tidak valid', 400);
     }
 
+    const adminSupabase = await createAdminClient();
+
     // Update helper_profiles
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from('helper_profiles')
       .update({
         status: 'verified',

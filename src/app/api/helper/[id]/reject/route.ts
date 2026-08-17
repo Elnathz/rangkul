@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { helperRejectSchema } from '@/lib/validations/helper';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { writeAuditLog } from '@/lib/audit';
@@ -55,13 +55,16 @@ export async function PUT(
         return createApiError('forbidden', 'Akun koordinator belum diverifikasi admin', 403);
       }
 
-      const wilayahKoord = koordProfile.wilayah.toLowerCase();
-      const wilayahHelper = helperProfile.wilayah_domisili.toLowerCase();
+      const wilayahKoordFull = koordProfile.wilayah.toLowerCase();
+      const wilayahHelperFull = helperProfile.wilayah_domisili.toLowerCase();
+      
+      const kelurahanKoord = wilayahKoordFull.split('|')[0].trim();
+      const kelurahanHelper = wilayahHelperFull.split('|')[0].trim();
 
-      if (!wilayahHelper.includes(wilayahKoord) && !wilayahKoord.includes(wilayahHelper)) {
+      if (kelurahanKoord !== kelurahanHelper && !wilayahHelperFull.includes(wilayahKoordFull) && !wilayahKoordFull.includes(wilayahHelperFull)) {
         return createApiError(
           'forbidden',
-          'Anda hanya dapat menolak helper yang berdomisili di wilayah Anda',
+          'Anda hanya dapat menolak helper yang berdomisili di kelurahan/wilayah Anda',
           403
         );
       }
@@ -81,12 +84,19 @@ export async function PUT(
       );
     }
 
-    // Status kembali ke suspended agar tidak bisa re-apply (harus hubungi admin)
-    const { error: updateError } = await supabase
+    let finalReason = validation.data.alasan;
+    if (validation.data.foto_url) {
+      finalReason += `\n\nLampiran Foto: ${validation.data.foto_url}`;
+    }
+
+    const adminSupabase = await createAdminClient();
+
+    // Status menjadi rejected agar Helper bisa memperbaiki dan apply ulang
+    const { error: updateError } = await adminSupabase
       .from('helper_profiles')
       .update({
-        status: 'suspended',
-        suspend_reason: validation.data.alasan,
+        status: 'rejected',
+        suspend_reason: finalReason,
         updated_at: new Date().toISOString(),
       })
       .eq('id', helperId);

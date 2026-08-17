@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, FileCheck, UserCheck } from 'lucide-react';
+import { CheckCircle2, FileCheck, UserCheck, MapPin } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
@@ -26,7 +26,7 @@ export default async function AntreanHelperPage() {
   let pendingHelpers: any[] = [];
 
   if (!isProfileIncomplete) {
-    // Fetch pending helpers without koordinator in the SAME wilayah
+    // Fetch pending helpers assigned to this koordinator, or unassigned ones in their wilayah
     const { data: helpers } = await supabase
       .from('helper_profiles')
       .select(`
@@ -34,16 +34,19 @@ export default async function AntreanHelperPage() {
         wilayah_domisili,
         status,
         created_at,
+        koordinator_id,
         users (
           full_name
         )
       `)
       .eq('status', 'pending_verification')
-      .is('koordinator_id', null)
-      .eq('wilayah_domisili', koordinator.wilayah)
+      .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`)
       .order('created_at', { ascending: false });
 
-    pendingHelpers = helpers || [];
+    pendingHelpers = (helpers || []).filter(h => 
+      h.koordinator_id === koordinator.id || 
+      (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
+    );
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -60,6 +63,28 @@ export default async function AntreanHelperPage() {
     } else {
       return `${diffDays} Hari lalu`;
     }
+  };
+
+  const formatWilayah = (wilayahStr: string) => {
+    if (!wilayahStr) return <span className="text-sm text-gray-500">-</span>;
+    const parts = wilayahStr.split(' | ');
+    if (parts.length >= 3) {
+      const region = parts[0].split(',').map(s => s.trim());
+      const kelurahan = region[0];
+      const kecamatan = region[1] || '';
+      const rtrw = parts[1];
+      const detail = parts[2];
+      return (
+        <div className="space-y-0.5 mt-1.5 mb-2">
+          <p className="text-sm font-semibold text-gray-800 flex items-center">
+            <MapPin className="w-3.5 h-3.5 mr-1 text-[#0D47A1] shrink-0" />
+            {rtrw}, {kelurahan}{kecamatan ? `, ${kecamatan}` : ''}
+          </p>
+          <p className="text-xs text-gray-500 line-clamp-1 ml-4" title={detail}>{detail}</p>
+        </div>
+      );
+    }
+    return <p className="text-sm font-medium text-gray-500 mb-1 line-clamp-2">{wilayahStr}</p>;
   };
 
   return (
@@ -128,7 +153,7 @@ export default async function AntreanHelperPage() {
                                   {helper.status === 'under_review' ? 'Sedang Ditinjau' : helper.status}
                                 </span>
                               </div>
-                              <p className="text-sm font-medium text-gray-500">{helper.wilayah_domisili}</p>
+                              {formatWilayah(helper.wilayah_domisili)}
                               <p className="text-xs text-gray-400 mt-1">Dikirim pada: {formatTimeAgo(helper.created_at)}</p>
                             </div>
                           </div>
