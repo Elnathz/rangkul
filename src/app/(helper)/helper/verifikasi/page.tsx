@@ -305,6 +305,7 @@ export default function HelperVerifikasiPage() {
         domisili_lng: form.domisili_lng,
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
+        foto_wajah_url: fotoUrl,
         kategori_ids: kategoriIds,
         koordinator_id: form.koordinator_id || null,
         provinsi: form.region.provinsi,
