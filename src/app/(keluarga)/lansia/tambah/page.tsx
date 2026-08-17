@@ -10,17 +10,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Camera, Image as ImageIcon, UploadCloud } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { AlertCircle } from "lucide-react";
 
 export default function TambahLansiaPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const identitasInputRef = useRef<HTMLInputElement>(null);
   const hubunganInputRef = useRef<HTMLInputElement>(null);
+  
+  const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   const [identitasFileName, setIdentitasFileName] = useState<string | null>(null);
   const [hubunganFileName, setHubunganFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
   
   // Local state for photo preview mock
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -63,7 +70,7 @@ export default function TambahLansiaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg("");
+    setToast(null);
     setFieldErrors({});
 
     const finalHubungan = form.hubungan_keluarga === "Lainnya" 
@@ -71,7 +78,8 @@ export default function TambahLansiaPage() {
       : form.hubungan_keluarga;
 
     if (!photoPreview) {
-      setErrorMsg("Harap unggah foto lansia terlebih dahulu.");
+      showToast("Harap unggah foto lansia terlebih dahulu.");
+      setFieldErrors({ foto: ["Foto lansia wajib diunggah"] });
       setLoading(false);
       return;
     }
@@ -83,13 +91,13 @@ export default function TambahLansiaPage() {
     }
 
     if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan || !form.rt || !form.rw) {
-      setErrorMsg("Harap melengkapi pilihan wilayah administrasi (termasuk RT/RW).");
+      showToast("Harap melengkapi pilihan wilayah administrasi (termasuk RT/RW).");
       setLoading(false);
       return;
     }
 
     if (form.lat === null || form.lng === null) {
-      setErrorMsg("Harap tentukan titik koordinat domisili di peta.");
+      showToast("Harap tentukan titik koordinat domisili di peta.");
       setLoading(false);
       return;
     }
@@ -112,7 +120,7 @@ export default function TambahLansiaPage() {
         
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok) {
-          setErrorMsg(uploadData.message || "Gagal mengunggah foto lansia.");
+          showToast(uploadData.message || "Gagal mengunggah foto lansia.");
           setLoading(false);
           return;
         }
@@ -132,7 +140,7 @@ export default function TambahLansiaPage() {
         
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok) {
-          setErrorMsg(uploadData.message || "Gagal mengunggah dokumen identitas lansia.");
+          showToast(uploadData.message || "Gagal mengunggah dokumen identitas lansia.");
           setLoading(false);
           return;
         }
@@ -152,7 +160,7 @@ export default function TambahLansiaPage() {
         
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok) {
-          setErrorMsg(uploadData.message || "Gagal mengunggah dokumen hubungan keluarga.");
+          showToast(uploadData.message || "Gagal mengunggah dokumen hubungan keluarga.");
           setLoading(false);
           return;
         }
@@ -188,20 +196,33 @@ export default function TambahLansiaPage() {
 
       if (!res.ok) {
         if (data.fieldErrors) setFieldErrors(data.fieldErrors);
-        setErrorMsg(data.message || "Gagal menyimpan data lansia.");
+        showToast(data.message || "Gagal menyimpan data lansia.");
         setLoading(false);
         return;
       }
 
       router.push("/beranda");
     } catch {
-      setErrorMsg("Terjadi kesalahan koneksi jaringan.");
+      showToast("Terjadi kesalahan koneksi jaringan.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6">
+    <div className="py-8 px-4 sm:px-6 relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[100] max-w-sm w-full p-4 rounded-xl shadow-lg border animate-in slide-in-from-top-4 fade-in duration-300 ${toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
+          <div className="flex items-start gap-3">
+            <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${toast.type === 'error' ? 'text-red-500' : 'text-green-500'}`} />
+            <div>
+              <p className="font-semibold text-sm mb-0.5">{toast.type === 'error' ? 'Peringatan' : 'Berhasil'}</p>
+              <p className="text-xs opacity-90">{toast.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild className="rounded-full">
@@ -216,11 +237,6 @@ export default function TambahLansiaPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-border p-5 sm:p-7 shadow-sm space-y-6">
-          {errorMsg && (
-            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-medium">
-              {errorMsg}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Field: Foto Lansia (Photo Upload Feature) */}
@@ -237,7 +253,24 @@ export default function TambahLansiaPage() {
                   accept="image/jpeg,image/png,image/jpg"
                   ref={fileInputRef} 
                   className="hidden" 
-                  onChange={handlePhotoUpload}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast("Ukuran foto lansia tidak boleh lebih dari 5MB", "error");
+                        setFieldErrors(prev => ({...prev, foto: ["File terlalu besar (Maksimal 5MB)"]}));
+                        e.target.value = '';
+                        setPhotoPreview(null);
+                        return;
+                      }
+                      setFieldErrors(prev => ({...prev, foto: []}));
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setPhotoPreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                 />
                 {photoPreview ? (
                   <>
@@ -420,7 +453,20 @@ export default function TambahLansiaPage() {
                     accept="image/jpeg,image/png,application/pdf"
                     ref={identitasInputRef} 
                     className="hidden" 
-                    onChange={handleIdentitasUpload}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          showToast("Ukuran KTP/Identitas tidak boleh lebih dari 5MB", "error");
+                          setFieldErrors(prev => ({...prev, identitas: ["File terlalu besar (Maksimal 5MB)"]}));
+                          e.target.value = '';
+                          setIdentitasFileName(null);
+                          return;
+                        }
+                        setFieldErrors(prev => ({...prev, identitas: []}));
+                        setIdentitasFileName(file.name);
+                      }
+                    }}
                   />
                   <div className="mx-auto w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
                     <svg className={`w-4 h-4 ${identitasFileName ? 'text-green-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,7 +485,20 @@ export default function TambahLansiaPage() {
                     accept="image/jpeg,image/png,application/pdf"
                     ref={hubunganInputRef} 
                     className="hidden" 
-                    onChange={handleHubunganUpload}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          showToast("Ukuran Dokumen Hubungan tidak boleh lebih dari 5MB", "error");
+                          setFieldErrors(prev => ({...prev, hubungan: ["File terlalu besar (Maksimal 5MB)"]}));
+                          e.target.value = '';
+                          setHubunganFileName(null);
+                          return;
+                        }
+                        setFieldErrors(prev => ({...prev, hubungan: []}));
+                        setHubunganFileName(file.name);
+                      }
+                    }}
                   />
                   <div className="mx-auto w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
                     <svg className={`w-4 h-4 ${hubunganFileName ? 'text-green-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

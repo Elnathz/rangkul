@@ -70,15 +70,15 @@ export default function KunjunganPage() {
               return (
                 <Card key={task.id} className="overflow-hidden shadow-md hover:shadow-lg transition-all border-none">
                   <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex flex-col md:flex-row md:justify-between items-start gap-4 mb-6">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">ID: {task.id.substring(0,8)}</span>
                           <TaskStatusBadge status={task.status} />
                         </div>
-                        <h3 className="text-2xl font-bold text-foreground">{task.service_category.nama}</h3>
+                        <h3 className="text-xl md:text-2xl font-bold text-foreground">{task.service_category.nama}</h3>
                       </div>
-                      <div className="text-right">
+                      <div className="w-full md:w-auto text-left md:text-right border-t border-border md:border-none pt-4 md:pt-0">
                         <p className="text-sm font-medium text-muted-foreground mb-1">Total Biaya</p>
                         <p className="text-xl font-bold text-primary">Rp {(task.harga_final || task.harga_dasar).toLocaleString('id-ID')}</p>
                       </div>
@@ -87,24 +87,24 @@ export default function KunjunganPage() {
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="flex-1 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-[#F5F8FC] p-4 rounded-2xl">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Jadwal & Waktu</p>
-                            <div className="flex items-start gap-2 text-sm font-medium">
+                          <div className="border border-border p-4 rounded-lg bg-white shadow-sm">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Jadwal & Waktu</p>
+                            <div className="flex items-start gap-3 text-sm font-medium">
                               <Calendar className="w-4 h-4 text-primary mt-0.5" />
                               <div>
-                                <p>{taskDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                                <p className="text-muted-foreground">Mulai: {taskDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
-                                <p className="text-muted-foreground">Estimasi Selesai: {estimasiSelesai.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="mb-1">{taskDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-muted-foreground font-normal">Mulai: {taskDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-muted-foreground font-normal">Estimasi Selesai: {estimasiSelesai.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
                               </div>
                             </div>
                           </div>
                           
-                          <div className="bg-[#F5F8FC] p-4 rounded-2xl">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Lansia & Lokasi</p>
-                            <div className="flex items-start gap-2 text-sm font-medium">
+                          <div className="border border-border p-4 rounded-lg bg-white shadow-sm">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Lansia & Lokasi</p>
+                            <div className="flex items-start gap-3 text-sm font-medium">
                               <MapPin className="w-4 h-4 text-primary mt-0.5" />
                               <div>
-                                <p className="font-bold">{task.lansia.nama}</p>
+                                <p className="font-bold mb-1">{task.lansia.nama}</p>
                                 {task.service_category.lokasi_jemput ? (
                                   <div className="mt-1 space-y-1">
                                     <p className="text-muted-foreground font-normal text-xs leading-relaxed"><span className="font-bold text-foreground">Diambil di:</span> {task.service_category.lokasi_jemput}</p>
