@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { wilayah, tingkat, dokumen_url, ktp_url, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw } = validation.data;
+    const { wilayah, tingkat, dokumen_url, ktp_url, foto_url, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw } = validation.data;
 
     // Update tabel users untuk mengisi lokasi granular
     const { error: userUpdateError } = await supabase
@@ -81,6 +81,7 @@ export async function POST(request: Request) {
           tingkat,
           dokumen_url,
           ktp_url: ktp_url || null,
+          foto_url: foto_url || null,
           status: 'pending_verification',
           updated_at: new Date().toISOString(),
         })
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
           tingkat,
           dokumen_url,
           ktp_url: ktp_url || null,
+          foto_url: foto_url || null,
           status: 'pending_verification',
         })
         .select('id')

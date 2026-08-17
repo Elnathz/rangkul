@@ -26,6 +26,8 @@ export default function KoordinatorPengajuanPage() {
   const [ktpPreview, setKtpPreview] = useState<string | null>(null);
   const [skFile, setSkFile] = useState<File | null>(null);
   const [skPreview, setSkPreview] = useState<string | null>(null);
+  const [fotoWajahFile, setFotoWajahFile] = useState<File | null>(null);
+  const [fotoWajahPreview, setFotoWajahPreview] = useState<string | null>(null);
   
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -52,6 +54,7 @@ export default function KoordinatorPengajuanPage() {
       // 1. Upload files
       let uploadedSkUrl = "";
       let uploadedKtpUrl = null;
+      let uploadedFotoWajahUrl = null;
 
       const skFormData = new FormData();
       skFormData.append('file', skFile);
@@ -85,6 +88,23 @@ export default function KoordinatorPengajuanPage() {
         uploadedKtpUrl = uploadKtpData.data?.url || uploadKtpData.url;
       }
 
+      if (fotoWajahFile) {
+        const fotoFormData = new FormData();
+        fotoFormData.append('file', fotoWajahFile);
+        fotoFormData.append('docType', 'foto_koordinator');
+        
+        const uploadFotoRes = await fetch('/api/storage/upload', {
+          method: 'POST',
+          body: fotoFormData,
+        });
+        
+        const uploadFotoData = await uploadFotoRes.json();
+        if (!uploadFotoRes.ok) {
+          throw new Error(uploadFotoData.message || 'Gagal mengunggah Foto Wajah.');
+        }
+        uploadedFotoWajahUrl = uploadFotoData.data?.url || uploadFotoData.url;
+      }
+
       // 2. Compose "wilayah" from inputs
       const wilayahString = `${region.kelurahan}, ${region.kecamatan}, ${region.kota}, ${region.provinsi} | RT ${rt}/RW ${rw} | ${alamat}`;
       
@@ -102,7 +122,8 @@ export default function KoordinatorPengajuanPage() {
           kelurahan: region.kelurahan,
           rt: parseInt(rt, 10),
           rw: parseInt(rw, 10),
-          ...(uploadedKtpUrl ? { ktp_url: uploadedKtpUrl } : {})
+          ...(uploadedKtpUrl ? { ktp_url: uploadedKtpUrl } : {}),
+          ...(uploadedFotoWajahUrl ? { foto_url: uploadedFotoWajahUrl } : {})
         })
       });
       
@@ -257,7 +278,44 @@ export default function KoordinatorPengajuanPage() {
         {/* Section 2: Upload Dokumen */}
         <div className={step === 2 ? "block animate-in fade-in" : "hidden"}>
           <h2 className="text-lg font-bold text-slate-800 border-b pb-2 mb-4">Langkah 2: Dokumen Validasi SK</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            <Label 
+              htmlFor="foto_wajah_upload"
+              className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
+            >
+              <input type="file" accept="image/jpeg,image/png" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setFotoWajahFile(file);
+                    if (file.type.startsWith('image/')) setFotoWajahPreview(URL.createObjectURL(file));
+                    else setFotoWajahPreview(null);
+                  }
+              }} />
+              {fotoWajahPreview ? (
+                <>
+                  <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                     <img src={fotoWajahPreview} alt="Preview Foto" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto shadow-sm relative z-10 ring-4 ring-white">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div className="relative z-10 text-sm font-bold text-slate-800 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm self-center">
+                    {fotoWajahFile?.name}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:bg-[#0D47A1] group-hover:text-white transition-colors relative z-10">
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-sm font-semibold text-slate-700">Upload Foto Wajah (Opsional)</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB (JPG, PNG)</p>
+                  </div>
+                </>
+              )}
+            </Label>
+
             <Label 
               htmlFor="ktp_upload"
               className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
@@ -289,7 +347,7 @@ export default function KoordinatorPengajuanPage() {
                   </div>
                   <div className="relative z-10">
                     <p className="text-sm font-semibold text-slate-700">Upload KTP (Opsional)</p>
-                    <p className="text-xs text-slate-500 mt-1">Maks. 2MB (JPG, PNG)</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB (JPG, PNG)</p>
                   </div>
                 </>
               )}
