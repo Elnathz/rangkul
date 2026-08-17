@@ -7,6 +7,7 @@ export const koordinatorApplySchema = z.object({
   }),
   dokumen_url: z.string().url('URL dokumen jabatan tidak valid'),
   ktp_url: z.string().url('URL KTP tidak valid').optional(),
+  foto_url: z.string().url('URL Foto Wajah tidak valid').optional(),
   provinsi: z.string().min(1, 'Provinsi wajib diisi'),
   kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
   kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
@@ -23,6 +24,7 @@ export const koordinatorActionSchema = z.object({
 
 export const koordinatorRejectSchema = z.object({
   alasan: z.string().min(5, 'Alasan penolakan wajib diisi minimal 5 karakter'),
+  foto_url: z.string().url('URL Foto tidak valid').optional(),
 });
 
 export type KoordinatorRejectInput = z.infer<typeof koordinatorRejectSchema>;
