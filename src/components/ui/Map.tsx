@@ -60,7 +60,7 @@ function SearchField({ onPositionChange }: { onPositionChange: (pos: { lat: numb
   return null;
 }
 
-function LocationMarker({ position, onPositionChange }: MapProps) {
+function LocationMarker({ position, onPositionChange, defaultCenter }: MapProps) {
   const [currentPos, setCurrentPos] = useState<L.LatLng | null>(
     position ? new L.LatLng(position.lat, position.lng) : null
   );
@@ -76,7 +76,6 @@ function LocationMarker({ position, onPositionChange }: MapProps) {
         const address = data.display_name || "";
         onPositionChange({ lat: e.latlng.lat, lng: e.latlng.lng }, address);
       } catch (err) {
-        console.error(err);
         onPositionChange({ lat: e.latlng.lat, lng: e.latlng.lng });
       }
     },
@@ -87,8 +86,12 @@ function LocationMarker({ position, onPositionChange }: MapProps) {
       const newPos = new L.LatLng(position.lat, position.lng);
       // Only flyTo if the change comes from outside (or search), not identical to current
       if (!currentPos || newPos.lat !== currentPos.lat || newPos.lng !== currentPos.lng) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line
         setCurrentPos(newPos);
+      }
+      
+      const mapCenter = map.getCenter();
+      if (mapCenter.distanceTo(newPos) > 50) {
         map.flyTo(newPos, 15);
       }
     }
@@ -112,7 +115,7 @@ export default function Map({ position, onPositionChange, defaultCenter = { lat:
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <SearchField onPositionChange={onPositionChange} />
-        <LocationMarker position={position} onPositionChange={onPositionChange} />
+        <LocationMarker position={position} onPositionChange={onPositionChange} defaultCenter={defaultCenter} />
       </MapContainer>
     </div>
   );

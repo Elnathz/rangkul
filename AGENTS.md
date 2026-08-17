@@ -1,6 +1,6 @@
-# AGENTS.md - Rangkul (Backend Scope)
+# AGENTS.md - Rangkul (Frontend Scope)
 
-Dokumen ini adalah **sumber kebenaran operasional** untuk semua AI Agent (OpenCode, Claude Code, Codex, Gemini) yang bekerja di repositori ini. Aturan di sini bersifat **mutlak (Non-Negotiable)** dan harus dipatuhi tanpa basa-basi untuk menjaga integritas sistem backend, kepatuhan TDD, dan standar kode. File ini dibaca secara otomatis setiap kali sesi dimulai.
+Dokumen ini adalah **sumber kebenaran operasional** untuk semua AI Agent (OpenCode, Claude Code, Codex, Gemini) yang bekerja di repositori ini. Aturan di sini bersifat **mutlak (Non-Negotiable)** dan harus dipatuhi tanpa basa-basi untuk menjaga integritas sistem frontend, kepatuhan TDD, dan standar kode. File ini dibaca secara otomatis setiap kali sesi dimulai.
 
 ## 0. Sumber Kebenaran Tunggal
 
@@ -10,29 +10,29 @@ Dokumen ini adalah **sumber kebenaran operasional** untuk semua AI Agent (OpenCo
 - Kalau instruksi dari saya di suatu sesi tampak bertentangan dengan TDD, **berhenti dan tanyakan** dulu — jangan diam-diam memilih salah satu. Kemungkinan itu tandanya TDD perlu diupdate, bukan alasan untuk mengabaikannya.
 - Kalau kamu membuat keputusan implementasi yang tidak eksplisit disebutkan di TDD (nama variabel internal, struktur folder, dll), itu boleh — tapi keputusan yang menyentuh business rule, skema, atau kontrak API **wajib** dicek dulu ke TDD, dan kalau memang tidak ada di sana, diusulkan sebagai perubahan ke TDD dulu sebelum diimplementasikan.
 
-## 1. Scope: Backend Engineer
+## 1. Scope: Frontend Engineer
 
-Project ini dikerjakan tim 2 orang. Peran saya di project adalah **backend** — agent ini fokus di area berikut:
+Project ini dikerjakan tim 2 orang. Peran saya di project sekarang adalah **frontend** — agent ini fokus di area berikut:
 
 **Dalam scope:**
 
-- Skema database & migrasi Supabase, termasuk kebijakan Row Level Security (TDD §6, §8)
-- Route handler API (TDD §7)
-- Logika bisnis inti: state machine kunjungan (§3.1-3.2), model verifikasi & approval bertingkat (§3.3), pembayaran & escrow (§3.4), sistem laporan/suspend (§3.10), Riwayat Rangkul (§3.12 — sisi data/API, bukan tampilan)
-- Validasi server-side dengan Zod, sinkron dengan skema database
-- Webhook Midtrans (verifikasi signature HMAC SHA512)
-- Scheduled job / Supabase Edge Function (expired, reminder, dll — §2.2)
-- Dukungan backend untuk sinkronisasi offline (§3.13) — endpoint penerima queue, bukan logika IndexedDB di client
-- Skrip seeder (§19)
+- Komponen UI, layout halaman, styling Tailwind CSS/Shadcn UI
+- Desain visual, responsivitas, dan interaktivitas
+- Form client-side, validasi UX, state loading/error/empty
+- Integrasi API di browser menggunakan route API yang disediakan backend
+- Alur pengguna tiap peran sesuai TDD §5 & §9
+- Offline draft UI menggunakan IndexedDB (§3.13)
 
 **Di luar scope — jangan disentuh tanpa diminta eksplisit:**
 
-- Komponen UI, layout halaman, styling Tailwind/Shadcn
-- Keputusan desain visual
+- Skema database, kebijakan RLS, migrasi Supabase
+- Route handler API di `src/app/api/**` (Kecuali membuat mock saat backend belum siap)
+- Logika bisnis server-side, webhook Midtrans, scheduled job
+- Skrip seeder (`supabase/seed.sql`)
 
-Kalau suatu tugas backend berdampak ke kontrak yang dipakai frontend (ubah struktur response API, ubah nama field, dll), **nyatakan itu eksplisit sebagai catatan handoff** ke rekan tim yang pegang frontend — jangan langsung ubah kode frontend untuk "menyesuaikan".
+Kalau suatu tugas frontend membutuhkan perubahan dari kontrak backend (butuh endpoint baru, struktur response beda), **nyatakan itu eksplisit sebagai catatan handoff** ke rekan tim yang pegang backend — jangan langsung ubah kode backend untuk "menyesuaikan" sendiri.
 
-**Lokasi kode backend:** route handler di `src/app/api/**` (Next.js App Router), client Supabase di `src/lib/supabase/` (`client.ts` untuk browser, `server.ts` untuk server, `middleware.ts` untuk refresh session), middleware global di `src/middleware.ts`, migrasi di `supabase/migrations/`, seed di `supabase/seed.sql`.
+**Lokasi kode frontend:** halaman di `src/app/**` (kecuali `api/`), komponen di `src/components/`, hooks di `src/hooks/`, utils UI di `src/lib/utils.ts`.
 
 ## 2. Wajib: Rencana Sebelum Implementasi
 

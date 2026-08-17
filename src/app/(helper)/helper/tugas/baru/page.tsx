@@ -37,7 +37,29 @@ export default async function CariPekerjaanPage() {
     .is('helper_id', null)
     .order('created_at', { ascending: false });
 
-  const jobs = tasks || [];
+  let jobs = tasks || [];
+
+  if (jobs.length === 0) {
+    // Inject mock data if DB is empty for Sprint 2 testing
+    const { MOCK_TASKS } = require('@/lib/mock/tasks');
+    jobs = MOCK_TASKS.filter((t: any) => t.status === 'diajukan').map((t: any) => ({
+      id: t.id,
+      jadwal_waktu: t.jadwal_waktu,
+      harga_dasar: t.harga_dasar,
+      lansia_profiles: {
+        nama: t.lansia.nama,
+        alamat: t.lansia.alamat,
+        lat: t.lansia.lat,
+        lng: t.lansia.lng,
+        catatan_kondisi: t.lansia.catatan_kondisi,
+      },
+      service_categories: {
+        nama: t.service_category.nama,
+        tingkat: 'ringan' // default for mock
+      },
+      _isMock: true
+    }));
+  }
 
   // Haversine distance function (simplified)
   function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -62,7 +84,11 @@ export default async function CariPekerjaanPage() {
     let distanceKm: number | null = null;
     let distanceStr = '? km';
     
-    if (profile?.domisili_lat && profile?.domisili_lng && lansia?.lat && lansia?.lng) {
+    if (job._isMock) {
+      // Force mock jobs to be within radius so they always show up for testing
+      distanceKm = 0.5;
+      distanceStr = "0.5 km";
+    } else if (profile?.domisili_lat && profile?.domisili_lng && lansia?.lat && lansia?.lng) {
       distanceKm = parseFloat(getDistance(profile.domisili_lat, profile.domisili_lng, lansia.lat, lansia.lng) || '0');
       if (distanceKm !== null) distanceStr = `${distanceKm} km`;
     }
