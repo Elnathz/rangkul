@@ -65,7 +65,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -75,10 +75,12 @@ export default function Navbar() {
         const role = data.user.user_metadata?.role;
         if (role === 'helper') {
           const { data: prof } = await supabase.from('helper_profiles').select('id').eq('user_id', data.user.id).single();
-          if (prof) setIsVerified(true);
+          setIsVerified(!!prof);
         } else if (role === 'koordinator') {
           const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', data.user.id).single();
-          if (prof) setIsVerified(true);
+          setIsVerified(!!prof);
+        } else {
+          setIsVerified(true);
         }
       }
     });
@@ -106,7 +108,7 @@ export default function Navbar() {
       : "/beranda";
 
   const editProfileHref = 
-    role === "helper" ? "/helper/verifikasi" :
+    role === "helper" ? "/helper/profil/edit" :
     role === "koordinator" ? "/koordinator/pengajuan" : "#";
 
   let currentNavLinks = defaultNavLinks;
@@ -124,14 +126,14 @@ export default function Navbar() {
       { href: "/helper/dashboard", label: "Dashboard" },
       { href: "/tugas", label: "Cari Tugas" },
       { href: "/kunjungan", label: "Papan Tugas" },
-      ...(isVerified ? [] : [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }]),
+      ...(isVerified === false ? [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }] : []),
     ];
   } else if (role === 'koordinator') {
     currentNavLinks = [
       { href: "/koordinator/dashboard", label: "Dashboard" },
       { href: "/koordinator/antrean", label: "Antrean Helper" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
-      ...(isVerified ? [] : [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }]),
+      ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
   }
 
