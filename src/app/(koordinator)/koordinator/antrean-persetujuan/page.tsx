@@ -4,10 +4,31 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { MOCK_TASKS } from "@/lib/mock/tasks";
 import { Calendar, MapPin, AlertTriangle, CheckCircle2, XCircle, UserCheck } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import KoordinatorStatusGuard from "@/components/koordinator/KoordinatorStatusGuard";
 
 export default function AntreanPersetujuanPage() {
   const [tasks, setTasks] = React.useState(MOCK_TASKS);
   const [processingId, setProcessingId] = React.useState<string | null>(null);
+  const [koordinator, setKoordinator] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchKoordinator = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('koordinator_profiles')
+          .select('id, wilayah, status')
+          .eq('user_id', user.id)
+          .single();
+        setKoordinator(profile);
+      }
+      setLoading(false);
+    };
+    fetchKoordinator();
+  }, []);
 
   // Filter tugas yang butuh approval koordinator
   const antreanTasks = tasks.filter(t => t.status === "menunggu_persetujuan_koordinator");
@@ -30,8 +51,13 @@ export default function AntreanPersetujuanPage() {
     }
   };
 
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Memuat status koordinator...</div>;
+  }
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-5xl mx-auto">
+    <KoordinatorStatusGuard koordinator={koordinator}>
+      <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-5xl mx-auto">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Antrean Persetujuan Tugas</h1>
@@ -149,5 +175,6 @@ export default function AntreanPersetujuanPage() {
         </div>
       </div>
     </div>
+    </KoordinatorStatusGuard>
   );
 }
