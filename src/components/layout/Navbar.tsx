@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, AlertCircle } from "lucide-react";
+import { Bell, LogOut, AlertCircle } from "lucide-react";
 import SOSDialog from "@/components/ui/SOSDialog";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -41,6 +41,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -103,6 +104,31 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let isMounted = true;
+    const loadUnreadNotifications = async () => {
+      try {
+        const response = await fetch("/api/notifications?limit=1", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json() as { unread_count?: number };
+        if (isMounted) setUnreadNotificationCount(data.unread_count || 0);
+      } catch {
+        if (isMounted) setUnreadNotificationCount(0);
+      }
+    };
+
+    void loadUnreadNotifications();
+    const intervalId = window.setInterval(loadUnreadNotifications, 60000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [user]);
+
   const role = user?.user_metadata?.role;
   const username =
     user?.user_metadata?.username ||
@@ -147,6 +173,7 @@ export default function Navbar() {
     currentNavLinks = [
       { href: "/koordinator/dashboard", label: "Dashboard" },
       { href: "/koordinator/antrean", label: "Antrean Helper" },
+      { href: "/koordinator/helper", label: "Helper Terverifikasi" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
       ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
@@ -200,21 +227,34 @@ export default function Navbar() {
             </button>
           )}
           {user ? (
-            <div className="relative profile-dropdown-container">
-              <button 
-                onClick={() => setDropdownOpen(!dropdownOpen)} 
-                className="flex items-center gap-2 hover:bg-gray-100 p-1 pl-1 pr-3 rounded-full transition-colors border border-transparent hover:border-gray-200"
+            <div className="flex items-center gap-2">
+              <Link
+                href="/notifikasi"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:bg-slate-50 hover:text-[#0D47A1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
+                aria-label={unreadNotificationCount > 0 ? `Notifikasi, ${unreadNotificationCount} belum dibaca` : "Notifikasi"}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
-                  alt="Avatar" 
-                  className="w-8 h-8 rounded-full border border-gray-200 object-cover bg-blue-50"
-                />
-                <span className="text-sm font-semibold text-gray-700">@{username}</span>
-              </button>
+                <Bell className="h-5 w-5" aria-hidden="true" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white" role="status" aria-live="polite">
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </span>
+                )}
+              </Link>
+              <div className="relative profile-dropdown-container">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 rounded-full border border-transparent p-1 pl-1 pr-3 transition-colors hover:border-gray-200 hover:bg-gray-100"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`}
+                    alt="Avatar"
+                    className="h-8 w-8 rounded-full border border-gray-200 bg-blue-50 object-cover"
+                  />
+                  <span className="text-sm font-semibold text-gray-700">@{username}</span>
+                </button>
 
-              {dropdownOpen && (
+                {dropdownOpen && (
                 <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-2 border-b border-gray-50 mb-1">
                     <p className="text-sm font-semibold text-gray-900 truncate">{username}</p>
@@ -244,7 +284,8 @@ export default function Navbar() {
                     <LogOut className="w-4 h-4" /> Keluar
                   </button>
                 </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -311,6 +352,12 @@ export default function Navbar() {
                     <span className="text-xs text-gray-500 capitalize">{role}</span>
                   </div>
                 </div>
+                <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm">
+                  <Link href="/notifikasi" onClick={() => setMenuOpen(false)}>
+                    <Bell className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Notifikasi{unreadNotificationCount > 0 ? ` (${unreadNotificationCount})` : ""}
+                  </Link>
+                </Button>
                 <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm">
                   <Link href={profileHref} onClick={() => setMenuOpen(false)}>
                     Dashboard
