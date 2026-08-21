@@ -293,8 +293,48 @@ export default function KeluargaEditProfilPage() {
               </div>
 
               <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Alamat Rumah Lengkap</Label>
-                <Textarea value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} placeholder="Contoh: Jl. Merdeka No.1 RT 01/RW 02..." className="rounded-xl min-h-[100px] bg-slate-50 border-slate-200 focus:bg-white" />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+                  Wilayah Administrasi Domisili <span className="text-red-500">*</span>
+                </Label>
+                <RegionSelect 
+                  onRegionChange={(region, coords) => {
+                    setForm(f => ({
+                      ...f,
+                      region,
+                      ...(coords ? { 
+                        domisili_lat: coords.lat, 
+                        domisili_lng: coords.lng,
+                        ...(coords.address ? { alamat: coords.address } : {})
+                      } : {})
+                    }));
+                  }}
+                />
+                <div className="grid grid-cols-2 gap-4 mt-4 mb-2">
+                  <div>
+                    <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                      RT <span className="text-red-500">*</span>
+                    </Label>
+                    <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                  </div>
+                  <div>
+                     <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                      RW <span className="text-red-500">*</span>
+                    </Label>
+                    <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                  </div>
+                </div>
+                <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
+                  Alamat Spesifik Tempat Tinggal / Detail Patokan <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="alamat"
+                  required
+                  rows={3}
+                  placeholder="Contoh: Jl. Merdeka No.1..."
+                  value={form.alamat}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, alamat: e.target.value })}
+                  className="rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus-visible:border-[#0D47A1]"
+                />
               </div>
 
               <div>
