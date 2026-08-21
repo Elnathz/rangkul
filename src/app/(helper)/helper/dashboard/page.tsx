@@ -99,7 +99,7 @@ export default async function HelperDashboardPage() {
 
   let rejectReason = '';
   let rejectPhoto = '';
-  if (helperStatus === 'rejected' && profile?.suspend_reason) {
+  if ((helperStatus as string) === 'rejected' && profile?.suspend_reason) {
     const parts = profile.suspend_reason.split('\n\nLampiran Foto: ');
     rejectReason = parts[0];
     if (parts.length > 1) {
@@ -176,13 +176,13 @@ export default async function HelperDashboardPage() {
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
               {recentTasks.length > 0 ? recentTasks.map((task) => {
-                const isActive = ['dikonfirmasi', 'dikerjakan'].includes(task.status);
-                const title = task.service_categories?.nama || 'Tugas Rangkul';
-                const lansiaName = task.lansia_profiles?.nama || 'Anonim';
-                const location = task.lansia_profiles?.alamat || '-';
+                const isActive = ['dikonfirmasi', 'dikerjakan'].includes(task.status as string);
+                const title = (task.service_categories as any)?.nama || 'Tugas Rangkul';
+                const lansiaName = (task.lansia_profiles as any)?.nama || 'Anonim';
+                const location = (task.lansia_profiles as any)?.alamat || '-';
                 
                 return (
-                  <div key={task.id} className="p-5 hover:bg-gray-50/50 transition-colors">
+                  <div key={task.id as string} className="p-5 hover:bg-gray-50/50 transition-colors">
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -191,7 +191,7 @@ export default async function HelperDashboardPage() {
                           }`}>
                             {isActive ? 'AKTIF' : 'MENUNGGU'}
                           </span>
-                          <span className="text-sm font-semibold text-gray-400">ID: {task.id.split('-')[0]}...</span>
+                          <span className="text-sm font-semibold text-gray-400">ID: {(task.id as string).split('-')[0]}...</span>
                         </div>
                         <h3 className="text-base font-bold text-gray-900 mb-1">{title}</h3>
                         <p className="text-sm font-medium text-gray-600 mb-3">Klien: {lansiaName}</p>
@@ -199,7 +199,7 @@ export default async function HelperDashboardPage() {
                         <div className="flex flex-col gap-2 text-sm text-gray-500">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 shrink-0 text-gray-400" />
-                            <span>{formatTaskDate(task.jadwal_waktu)}</span>
+                            <span>{formatTaskDate(task.jadwal_waktu as string)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 shrink-0 text-gray-400" />
@@ -245,7 +245,7 @@ export default async function HelperDashboardPage() {
               </div>
             )}
             
-            {helperStatus === 'rejected' && (
+            {(helperStatus as string) === 'rejected' && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                   <AlertCircle className="w-24 h-24 text-red-600" />

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (existing && existing.status !== 'suspended' && existing.status !== 'rejected') {
+    if (existing && existing.status !== 'suspended' && (existing.status as string) !== 'rejected') {
       return createApiError(
         'conflict',
         `Profil helper sudah ada dengan status: ${existing.status}`,
@@ -110,9 +110,8 @@ export async function POST(request: Request) {
       else profileId = updated.id;
       
       // Hapus kategori lama
-      if (!errorMsg) {
-        await supabase.from('helper_service_categories').delete().eq('helper_id', profileId);
-      }
+      const { error: deleteError } = await supabase.from('helper_service_categories').delete().eq('helper_id', profileId as string);
+      if (deleteError) errorMsg = deleteError.message;
     } else {
       const { data: profile, error: insertError } = await supabase
         .from('helper_profiles')
@@ -128,7 +127,7 @@ export async function POST(request: Request) {
           koordinator_id: koordinator_id || null,
           status: 'pending_verification',
           tingkat_kepercayaan: 'probation',
-        })
+        } as any)
         .select('id')
         .single();
         

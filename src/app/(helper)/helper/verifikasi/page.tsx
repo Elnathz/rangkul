@@ -16,7 +16,10 @@ export default function HelperVerifikasiPage() {
   const router = useRouter();
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
+  const suratTugasInputRef = useRef<HTMLInputElement>(null);
   
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [rejectionPhoto, setRejectionPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   const [step, setStep] = useState(1);
@@ -34,11 +37,11 @@ export default function HelperVerifikasiPage() {
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  const [suratTugasFileName, setSuratTugasFileName] = useState<string | null>(null);
   const [koordinators, setKoordinators] = useState<any[]>([]);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
   const tiers = [
     {
@@ -88,6 +91,7 @@ export default function HelperVerifikasiPage() {
     radius_layanan_km: 1, // Minimum 1 KM
     ktp_url: "",
     foto_url: "",
+    surat_tugas_url: "",
     koordinator_id: "",
   });
 
@@ -112,11 +116,17 @@ export default function HelperVerifikasiPage() {
           .single();
 
         if (profile) {
-          if (profile.status === 'rejected') {
-            setRejectionReason(profile.suspend_reason || 'Pengajuan Anda sebelumnya ditolak. Silakan perbarui data Anda.');
+          if ((profile.status as string) === 'rejected') {
+            if (profile.suspend_reason) {
+              const parts = profile.suspend_reason.split('\n\nLampiran Foto: ');
+              setRejectionReason(parts[0]);
+              if (parts.length > 1) {
+                setRejectionPhoto(parts[1]);
+              }
+            } else {
+              setRejectionReason('Pengajuan Anda sebelumnya ditolak. Silakan perbarui data Anda.');
+            }
           }
-          
-          // Parse wilayah_domisili if possible to fill region, rt, rw, alamat
           // Format: "Kelurahan, Kecamatan, Kota, Provinsi | RT X/RW Y | Alamat"
           let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
           let rt = "", rw = "", alamat = "";
@@ -149,6 +159,8 @@ export default function HelperVerifikasiPage() {
             domisili_lng: profile.domisili_lng,
             radius_layanan_km: profile.radius_layanan_km || 1,
             ktp_url: profile.ktp_url || "",
+            // Provide empty default if surat_tugas_url doesn't exist on profile
+            surat_tugas_url: (profile as any).surat_tugas_url || "",
             koordinator_id: profile.koordinator_id || "",
             region,
             rt,
@@ -254,6 +266,14 @@ export default function HelperVerifikasiPage() {
         return;
       }
 
+      const fileSuratTugas = suratTugasInputRef.current?.files?.[0];
+      if (!fileSuratTugas && !form.surat_tugas_url) {
+        showToast("Harap unggah Surat Tugas RT/RW.");
+        setFieldErrors({ surat_tugas_url: ["Surat Tugas wajib diunggah"] });
+        setLoading(false);
+        return;
+      }
+
       if (fileKtp) {
         const formData = new FormData();
         formData.append("file", fileKtp);
@@ -298,6 +318,24 @@ export default function HelperVerifikasiPage() {
         fotoUrl = form.foto_url;
       }
 
+      let suratTugasUrl = null;
+      if (fileSuratTugas) {
+        const formData = new FormData();
+        formData.append("file", fileSuratTugas);
+        formData.append("docType", "surat_tugas");
+        
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          showToast(uploadData.message || "Gagal mengunggah Surat Tugas.");
+          setLoading(false); return;
+        }
+        suratTugasUrl = uploadData.url;
+      } else {
+        suratTugasUrl = form.surat_tugas_url;
+      }
+
       const payload = {
         bio: form.bio,
         wilayah_domisili: `${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi} | RT ${form.rt}/RW ${form.rw} | ${form.alamat}`,
@@ -306,6 +344,7 @@ export default function HelperVerifikasiPage() {
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
         foto_wajah_url: fotoUrl,
+        surat_tugas_url: suratTugasUrl,
         kategori_ids: kategoriIds,
         koordinator_id: form.koordinator_id || null,
         provinsi: form.region.provinsi,
@@ -361,19 +400,33 @@ export default function HelperVerifikasiPage() {
         <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
 
           {rejectionReason && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 animate-in fade-in">
-              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-              <div>
-                <h3 className="text-sm font-bold text-red-800">Alasan Penolakan Sebelumnya</h3>
-                <p className="text-sm text-red-700 mt-1">{rejectionReason}</p>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-3 animate-in fade-in">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold text-red-800">Alasan Penolakan Sebelumnya</h3>
+                  <p className="text-sm text-red-700 mt-1">{rejectionReason}</p>
+                </div>
               </div>
+              {rejectionPhoto && (
+                <div className="mt-2 ml-8">
+                  <a href={rejectionPhoto} target="_blank" rel="noreferrer" className="block w-24 h-24 rounded-lg overflow-hidden border border-red-200 shadow-sm hover:opacity-90 transition-opacity">
+                    <img src={rejectionPhoto} alt="Lampiran Penolakan" className="w-full h-full object-cover" />
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {/* Progress Bar */}
           <div className="flex gap-2 mb-2">
             {[1, 2, 3].map((s) => (
-              <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${step >= s ? 'bg-[#0D47A1]' : 'bg-gray-100'}`} />
+              <button 
+                key={s} 
+                type="button"
+                onClick={() => setStep(s)}
+                className={`h-2 flex-1 rounded-full transition-colors cursor-pointer ${step >= s ? 'bg-[#0D47A1]' : 'bg-gray-200'}`} 
+              />
             ))}
           </div>
 
@@ -816,6 +869,71 @@ export default function HelperVerifikasiPage() {
               </Label>
               {fieldErrors.foto_url && (
                 <p className="text-xs text-red-500 mt-1">{fieldErrors.foto_url[0]}</p>
+              )}
+
+              <div className="mt-6 mb-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Surat Tugas RT/RW <span className="text-red-500">*</span>
+                </Label>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">Surat pengantar atau tugas resmi dari RT/RW setempat sebagai validasi domisili Anda.</p>
+              
+              <Label 
+                htmlFor="surat_tugas_upload"
+                className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
+                  form.surat_tugas_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
+                }`}
+              >
+                <input 
+                  type="file" 
+                  id="surat_tugas_upload" 
+                  ref={suratTugasInputRef}
+                  className="hidden" 
+                  accept="image/jpeg, image/png, application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast("Ukuran file tidak boleh lebih dari 5MB", "error");
+                        setFieldErrors(prev => ({...prev, surat_tugas_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                        e.target.value = '';
+                        setForm({ ...form, surat_tugas_url: "" });
+                        setSuratTugasFileName(null);
+                        return;
+                      }
+                      setForm({ ...form, surat_tugas_url: URL.createObjectURL(file) });
+                      setSuratTugasFileName(file.name);
+                      setFieldErrors(prev => ({...prev, surat_tugas_url: []}));
+                    }
+                  }}
+                />
+                
+                {form.surat_tugas_url ? (
+                  <>
+                    <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                       <img src={form.surat_tugas_url} alt="Preview Surat" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="relative z-10 text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{suratTugasFileName || 'Surat Tugas Disimpan'}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Surat Tugas</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG/PDF)</p>
+                  </div>
+                )}
+              </Label>
+              {fieldErrors.surat_tugas_url && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.surat_tugas_url[0]}</p>
               )}
             </div>
 
