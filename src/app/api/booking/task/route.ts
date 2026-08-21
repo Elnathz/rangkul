@@ -92,6 +92,7 @@ export async function POST(request: Request) {
         status: 'diajukan',
         harga_dasar,
         harga_final,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       })
       .select('*')
       .single();
