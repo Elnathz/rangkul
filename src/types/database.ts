@@ -294,6 +294,7 @@ export type Database = {
           domisili_lat: number | null
           domisili_lng: number | null
           foto_url: string | null
+          foto_wajah_url: string | null
           id: string
           is_available: boolean
           koordinator_id: string | null
@@ -317,6 +318,7 @@ export type Database = {
           domisili_lat?: number | null
           domisili_lng?: number | null
           foto_url?: string | null
+          foto_wajah_url?: string | null
           id?: string
           is_available?: boolean
           koordinator_id?: string | null
@@ -749,7 +751,11 @@ export type Database = {
           id: string
           is_active: boolean
           is_high_risk: boolean
+          jarak_max_km: number | null
+          jarak_min_km: number | null
           nama: string
+          parent_id: string | null
+          tingkat: string
         }
         Insert: {
           created_at?: string
@@ -759,7 +765,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_high_risk?: boolean
+          jarak_max_km?: number | null
+          jarak_min_km?: number | null
           nama: string
+          parent_id?: string | null
+          tingkat?: string
         }
         Update: {
           created_at?: string
@@ -769,7 +779,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_high_risk?: boolean
+          jarak_max_km?: number | null
+          jarak_min_km?: number | null
           nama?: string
+          parent_id?: string | null
+          tingkat?: string
         }
         Relationships: []
       }
@@ -1038,7 +1052,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_extra_service: {
+        Args: {
+          p_biaya: number
+          p_nama_layanan: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["task_extra_services"]["Row"]
+      }
+      decide_extra_service: {
+        Args: {
+          p_decision: string
+          p_extra_service_id: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
     }
     Enums: {
       account_status: "active" | "restricted" | "suspended"
@@ -1052,6 +1081,7 @@ export type Database = {
         | "pending_verification"
         | "verified"
         | "under_review"
+        | "rejected"
         | "suspended"
       koordinator_status:
         | "pending_verification"
@@ -1232,6 +1262,7 @@ export const Constants = {
         "pending_verification",
         "verified",
         "under_review",
+        "rejected",
         "suspended",
       ],
       koordinator_status: [

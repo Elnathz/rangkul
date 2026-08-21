@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           foto_url: foto_url || null,
           status: 'pending_verification',
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', existing.id)
         .select('id')
         .single();
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
           ktp_url: ktp_url || null,
           foto_url: foto_url || null,
           status: 'pending_verification',
-        })
+        } as any)
         .select('id')
         .single();
 

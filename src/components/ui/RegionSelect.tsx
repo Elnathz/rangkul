@@ -13,12 +13,13 @@ interface RegionSelectProps {
     region: { provinsi: string; kota: string; kecamatan: string; kelurahan: string },
     autoCoords?: { lat: number; lng: number; address?: string }
   ) => void;
+  initialRegion?: { provinsi: string; kota: string; kecamatan: string; kelurahan: string };
   required?: boolean;
 }
 
 const API_BASE = "https://www.emsifa.com/api-wilayah-indonesia/api";
 
-export default function RegionSelect({ onRegionChange, required = true }: RegionSelectProps) {
+export default function RegionSelect({ onRegionChange, initialRegion, required = true }: RegionSelectProps) {
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [cities, setCities] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);

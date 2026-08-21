@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         kelurahan,
         rt,
         rw,
-      })
+      } as any)
       .select('*')
       .single();
 

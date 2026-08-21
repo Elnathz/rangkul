@@ -10,25 +10,34 @@ import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
   const ktpInputRef = useRef<HTMLInputElement>(null);
-  const fotoWajahInputRef = useRef<HTMLInputElement>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const suratTugasInputRef = useRef<HTMLInputElement>(null);
   
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [rejectionPhoto, setRejectionPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState('ringan'); // used in Step 2 preview
   const [modalOpen, setModalOpen] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState('ringan'); // used in Modal
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+  
   const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
-  const [fotoWajahFileName, setFotoWajahFileName] = useState<string | null>(null);
+  const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  const [suratTugasFileName, setSuratTugasFileName] = useState<string | null>(null);
   const [koordinators, setKoordinators] = useState<any[]>([]);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
@@ -80,21 +89,97 @@ export default function HelperVerifikasiPage() {
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
     radius_layanan_km: 1, // Minimum 1 KM
-    foto_wajah_url: "",
     ktp_url: "",
+    foto_url: "",
+    surat_tugas_url: "",
     koordinator_id: "",
   });
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchExistingProfileAndCats = async () => {
       const supabase = createClient();
-      const { data } = await supabase
+      
+      // Fetch categories
+      const { data: cats } = await supabase
         .from('service_categories')
         .select('id, nama')
         .eq('is_active', true);
-      if (data) setDbCategories(data);
+      if (cats) setDbCategories(cats);
+
+      // Fetch user profile if exists
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('helper_profiles')
+          .select('id, bio, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, koordinator_id, suspend_reason, status, wilayah_domisili')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile) {
+          if ((profile.status as string) === 'rejected') {
+            if (profile.suspend_reason) {
+              const parts = profile.suspend_reason.split('\n\nLampiran Foto: ');
+              setRejectionReason(parts[0]);
+              if (parts.length > 1) {
+                setRejectionPhoto(parts[1]);
+              }
+            } else {
+              setRejectionReason('Pengajuan Anda sebelumnya ditolak. Silakan perbarui data Anda.');
+            }
+          }
+          // Format: "Kelurahan, Kecamatan, Kota, Provinsi | RT X/RW Y | Alamat"
+          let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+          let rt = "", rw = "", alamat = "";
+          
+          if (profile.wilayah_domisili) {
+            const parts = profile.wilayah_domisili.split(' | ');
+            if (parts.length >= 3) {
+               const adminParts = parts[0].split(', ');
+               if (adminParts.length >= 4) {
+                  region.kelurahan = adminParts[0];
+                  region.kecamatan = adminParts[1];
+                  region.kota = adminParts[2];
+                  region.provinsi = adminParts[3];
+               }
+               const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
+               if (rtrw) {
+                  rt = rtrw[1];
+                  rw = rtrw[2];
+               }
+               alamat = parts[2];
+            } else {
+               alamat = profile.wilayah_domisili;
+            }
+          }
+
+          setForm(prev => ({
+            ...prev,
+            bio: profile.bio || "",
+            domisili_lat: profile.domisili_lat,
+            domisili_lng: profile.domisili_lng,
+            radius_layanan_km: profile.radius_layanan_km || 1,
+            ktp_url: profile.ktp_url || "",
+            // Provide empty default if surat_tugas_url doesn't exist on profile
+            surat_tugas_url: (profile as any).surat_tugas_url || "",
+            koordinator_id: profile.koordinator_id || "",
+            region,
+            rt,
+            rw,
+            alamat
+          }));
+
+          const { data: helperCats } = await supabase
+            .from('helper_service_categories')
+            .select('service_category_id')
+            .eq('helper_id', profile.id);
+            
+          if (helperCats) {
+            setKategoriIds(helperCats.map(c => c.service_category_id));
+          }
+        }
+      }
     };
-    fetchCategories();
+    fetchExistingProfileAndCats();
   }, []);
 
   useEffect(() => {
@@ -152,70 +237,104 @@ export default function HelperVerifikasiPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg("");
+    setToast(null);
     setFieldErrors({});
 
     if (kategoriIds.length === 0) {
-      setErrorMsg("Harap pilih minimal 1 kategori layanan sebelum menyimpan profil Anda.");
+      showToast("Harap pilih minimal 1 kategori layanan sebelum menyimpan profil Anda.");
       setLoading(false);
       return;
     }
 
     try {
       let ktpUrl = null;
-      let fotoWajahUrl = null;
-      const ktpFile = ktpInputRef.current?.files?.[0];
-      const fotoWajahFile = fotoWajahInputRef.current?.files?.[0];
+      let fotoUrl = null;
       
-      if (!fotoWajahFile) {
-        setErrorMsg("Harap unggah foto wajah Anda.");
-        setLoading(false);
-        return;
-      }
-      
-      if (!ktpFile) {
-        setErrorMsg("Harap unggah foto KTP/Dokumen Identitas.");
+      const fileKtp = ktpInputRef.current?.files?.[0];
+      if (!fileKtp && !form.ktp_url) {
+        showToast("Harap unggah foto KTP/Dokumen Identitas.");
+        setFieldErrors({ ktp_url: ["Foto KTP wajib diunggah"] });
         setLoading(false);
         return;
       }
 
-      // Upload Foto Wajah
-      const fwFormData = new FormData();
-      fwFormData.append("file", fotoWajahFile);
-      fwFormData.append("docType", "foto_helper");
-      
-      const uploadFwRes = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: fwFormData,
-      });
-      
-      const uploadFwData = await uploadFwRes.json();
-      
-      if (!uploadFwRes.ok) {
-        setErrorMsg(uploadFwData.message || "Gagal mengunggah foto wajah.");
+      const fileFoto = fotoInputRef.current?.files?.[0];
+      if (!fileFoto && !form.foto_url) {
+        showToast("Harap unggah Foto Profil Anda.");
+        setFieldErrors({ foto_url: ["Foto Profil wajib diunggah"] });
         setLoading(false);
         return;
       }
-      fotoWajahUrl = uploadFwData.url;
 
-      // Upload KTP
-      const formData = new FormData();
-      formData.append("file", ktpFile);
-      formData.append("docType", "ktp");
-      
-      const uploadRes = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: formData,
-      });
-      
-      const uploadData = await uploadRes.json();
-      
-      if (!uploadRes.ok) {
-        setErrorMsg(uploadData.message || "Gagal mengunggah KTP.");
+      const fileSuratTugas = suratTugasInputRef.current?.files?.[0];
+      if (!fileSuratTugas && !form.surat_tugas_url) {
+        showToast("Harap unggah Surat Tugas RT/RW.");
+        setFieldErrors({ surat_tugas_url: ["Surat Tugas wajib diunggah"] });
         setLoading(false);
         return;
       }
-      ktpUrl = uploadData.url;
+
+      if (fileKtp) {
+        const formData = new FormData();
+        formData.append("file", fileKtp);
+        formData.append("docType", "ktp");
+        
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          showToast(uploadData.message || "Gagal mengunggah KTP.");
+          setLoading(false);
+          return;
+        }
+        ktpUrl = uploadData.url;
+      } else {
+        ktpUrl = form.ktp_url;
+      }
+
+      if (fileFoto) {
+        const formData = new FormData();
+        formData.append("file", fileFoto);
+        formData.append("docType", "foto_helper");
+        
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          showToast(uploadData.message || "Gagal mengunggah Foto Profil.");
+          setLoading(false);
+          return;
+        }
+        fotoUrl = uploadData.url;
+      } else {
+        fotoUrl = form.foto_url;
+      }
+
+      let suratTugasUrl = null;
+      if (fileSuratTugas) {
+        const formData = new FormData();
+        formData.append("file", fileSuratTugas);
+        formData.append("docType", "surat_tugas");
+        
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          showToast(uploadData.message || "Gagal mengunggah Surat Tugas.");
+          setLoading(false); return;
+        }
+        suratTugasUrl = uploadData.url;
+      } else {
+        suratTugasUrl = form.surat_tugas_url;
+      }
 
       const payload = {
         bio: form.bio,
@@ -224,7 +343,8 @@ export default function HelperVerifikasiPage() {
         domisili_lng: form.domisili_lng,
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
-        foto_wajah_url: fotoWajahUrl,
+        foto_wajah_url: fotoUrl,
+        surat_tugas_url: suratTugasUrl,
         kategori_ids: kategoriIds,
         koordinator_id: form.koordinator_id || null,
         provinsi: form.region.provinsi,
@@ -245,36 +365,68 @@ export default function HelperVerifikasiPage() {
 
       if (!res.ok) {
         if (data.fieldErrors) setFieldErrors(data.fieldErrors);
-        setErrorMsg(data.message || "Gagal menyimpan profil helper.");
+        showToast(data.message || "Gagal menyimpan profil helper.");
         setLoading(false);
         return;
       }
 
       router.push("/helper/dashboard");
     } catch {
-      setErrorMsg("Terjadi kesalahan koneksi jaringan.");
+      showToast("Terjadi kesalahan koneksi jaringan.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6 relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[100] max-w-sm w-full p-4 rounded-xl shadow-lg border animate-in slide-in-from-top-4 fade-in duration-300 ${toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
+          <div className="flex items-start gap-3">
+            <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${toast.type === 'error' ? 'text-red-500' : 'text-green-500'}`} />
+            <div>
+              <p className="font-semibold text-sm mb-0.5">{toast.type === 'error' ? 'Peringatan' : 'Berhasil'}</p>
+              <p className="text-xs opacity-90">{toast.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Verifikasi & Profil Helper</h1>
         </div>
 
         <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
-          {errorMsg && (
-            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-medium">
-              {errorMsg}
+
+          {rejectionReason && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-3 animate-in fade-in">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold text-red-800">Alasan Penolakan Sebelumnya</h3>
+                  <p className="text-sm text-red-700 mt-1">{rejectionReason}</p>
+                </div>
+              </div>
+              {rejectionPhoto && (
+                <div className="mt-2 ml-8">
+                  <a href={rejectionPhoto} target="_blank" rel="noreferrer" className="block w-24 h-24 rounded-lg overflow-hidden border border-red-200 shadow-sm hover:opacity-90 transition-opacity">
+                    <img src={rejectionPhoto} alt="Lampiran Penolakan" className="w-full h-full object-cover" />
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {/* Progress Bar */}
           <div className="flex gap-2 mb-2">
             {[1, 2, 3].map((s) => (
-              <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${step >= s ? 'bg-[#0D47A1]' : 'bg-gray-100'}`} />
+              <button 
+                key={s} 
+                type="button"
+                onClick={() => setStep(s)}
+                className={`h-2 flex-1 rounded-full transition-colors cursor-pointer ${step >= s ? 'bg-[#0D47A1]' : 'bg-gray-200'}`} 
+              />
             ))}
           </div>
 
@@ -591,65 +743,8 @@ export default function HelperVerifikasiPage() {
             <div className={step === 3 ? "block animate-in fade-in" : "hidden"}>
               <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 3: Unggah Identitas</h2>
               
-              {/* Foto Wajah */}
-              <div className="mb-6 border-b border-gray-100 pb-6">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                  Foto Wajah Terkini <span className="text-red-500">*</span>
-                </Label>
-                <p className="text-xs text-slate-500 mb-4">Unggah pas foto atau swafoto (selfie) wajah Anda. Pastikan pencahayaan cukup dan wajah terlihat jelas.</p>
-                
-                <Label 
-                  htmlFor="foto_wajah_upload"
-                  className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
-                    form.foto_wajah_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
-                  }`}
-                >
-                  <input 
-                    type="file" 
-                    id="foto_wajah_upload" 
-                    ref={fotoWajahInputRef}
-                    className="hidden" 
-                    accept="image/jpeg, image/png"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        setForm({ ...form, foto_wajah_url: URL.createObjectURL(e.target.files[0]) });
-                        setFotoWajahFileName(e.target.files[0].name);
-                      }
-                    }}
-                  />
-                  
-                  {form.foto_wajah_url ? (
-                    <>
-                      <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
-                         <img src={form.foto_wajah_url} alt="Preview Foto Wajah" className="w-full h-full object-cover" />
-                      </div>
-                      <div className="relative z-10 text-center p-4">
-                        <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
-                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                        </div>
-                        <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{fotoWajahFileName || 'Foto Wajah Disimpan'}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
-                        <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto Wajah</p>
-                      <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
-                    </div>
-                  )}
-                </Label>
-                {fieldErrors.foto_wajah_url && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.foto_wajah_url[0]}</p>
-                )}
-              </div>
-
-              {/* KTP */}
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
+                URL Foto KTP / Dokumen Identitas <span className="text-red-500">*</span>
               </Label>
               <p className="text-xs text-slate-500 mb-4">Mohon perhatikan tulisan KTP harus jelas dan tidak terpotong atau tertutup silau cahaya.</p>
               
@@ -667,8 +762,18 @@ export default function HelperVerifikasiPage() {
                   accept="image/jpeg, image/png"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
-                      setForm({ ...form, ktp_url: URL.createObjectURL(e.target.files[0]) });
-                      setKtpFileName(e.target.files[0].name);
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast("Ukuran file KTP tidak boleh lebih dari 5MB", "error");
+                        setFieldErrors(prev => ({...prev, ktp_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                        e.target.value = '';
+                        setForm({ ...form, ktp_url: "" });
+                        setKtpFileName(null);
+                        return;
+                      }
+                      setForm({ ...form, ktp_url: URL.createObjectURL(file) });
+                      setKtpFileName(file.name);
+                      setFieldErrors(prev => ({...prev, ktp_url: []}));
                     }
                   }}
                 />
@@ -698,7 +803,137 @@ export default function HelperVerifikasiPage() {
                 )}
               </Label>
               {fieldErrors.ktp_url && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.ktp_url[0]}</p>
+                <p className="text-xs text-red-500 mt-1 mb-4">{fieldErrors.ktp_url[0]}</p>
+              )}
+              
+              <div className="mt-6 mb-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Foto Profil Anda <span className="text-red-500">*</span>
+                </Label>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">Foto wajah yang jelas untuk dikenali oleh Klien/Lansia saat bertugas.</p>
+              
+              <Label 
+                htmlFor="foto_upload"
+                className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
+                  form.foto_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
+                }`}
+              >
+                <input 
+                  type="file" 
+                  id="foto_upload" 
+                  ref={fotoInputRef}
+                  className="hidden" 
+                  accept="image/jpeg, image/png"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast("Ukuran file foto profil tidak boleh lebih dari 5MB", "error");
+                        setFieldErrors(prev => ({...prev, foto_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                        e.target.value = '';
+                        setForm({ ...form, foto_url: "" });
+                        setFotoFileName(null);
+                        return;
+                      }
+                      setForm({ ...form, foto_url: URL.createObjectURL(file) });
+                      setFotoFileName(file.name);
+                      setFieldErrors(prev => ({...prev, foto_url: []}));
+                    }
+                  }}
+                />
+                
+                {form.foto_url ? (
+                  <>
+                    <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                       <img src={form.foto_url} alt="Preview Foto" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="relative z-10 text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{fotoFileName || 'Foto Profil Disimpan'}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto Profil</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                  </div>
+                )}
+              </Label>
+              {fieldErrors.foto_url && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.foto_url[0]}</p>
+              )}
+
+              <div className="mt-6 mb-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Surat Tugas RT/RW <span className="text-red-500">*</span>
+                </Label>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">Surat pengantar atau tugas resmi dari RT/RW setempat sebagai validasi domisili Anda.</p>
+              
+              <Label 
+                htmlFor="surat_tugas_upload"
+                className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
+                  form.surat_tugas_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
+                }`}
+              >
+                <input 
+                  type="file" 
+                  id="surat_tugas_upload" 
+                  ref={suratTugasInputRef}
+                  className="hidden" 
+                  accept="image/jpeg, image/png, application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast("Ukuran file tidak boleh lebih dari 5MB", "error");
+                        setFieldErrors(prev => ({...prev, surat_tugas_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                        e.target.value = '';
+                        setForm({ ...form, surat_tugas_url: "" });
+                        setSuratTugasFileName(null);
+                        return;
+                      }
+                      setForm({ ...form, surat_tugas_url: URL.createObjectURL(file) });
+                      setSuratTugasFileName(file.name);
+                      setFieldErrors(prev => ({...prev, surat_tugas_url: []}));
+                    }
+                  }}
+                />
+                
+                {form.surat_tugas_url ? (
+                  <>
+                    <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                       <img src={form.surat_tugas_url} alt="Preview Surat" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="relative z-10 text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{suratTugasFileName || 'Surat Tugas Disimpan'}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Surat Tugas</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG/PDF)</p>
+                  </div>
+                )}
+              </Label>
+              {fieldErrors.surat_tugas_url && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.surat_tugas_url[0]}</p>
               )}
             </div>
 
@@ -708,7 +943,7 @@ export default function HelperVerifikasiPage() {
                   type="button" 
                   variant="outline" 
                   onClick={() => {
-                     setErrorMsg("");
+                     setToast(null);
                      setStep(s => s - 1);
                   }} 
                   className="font-semibold rounded-xl flex-1 border-gray-200 h-11"
@@ -721,19 +956,20 @@ export default function HelperVerifikasiPage() {
                 <Button
                   type="button"
                   onClick={() => {
-                    setErrorMsg("");
+                    setToast(null);
                     // Validasi khusus tiap langkah sebelum lanjut!
                     if (step === 1 && (!form.region.kelurahan || !form.alamat || !form.rt || !form.rw || form.domisili_lat === null)) {
-                       setErrorMsg("Harap lengkapi wilayah domisili, (termasuk RT/RW), alamat spesifik, dan koordinat sebelum melanjutkan.");
+                       showToast("Harap lengkapi wilayah domisili, (termasuk RT/RW), alamat spesifik, dan koordinat sebelum melanjutkan.");
                        return;
                     }
                     if (step === 2) {
                        if (form.radius_layanan_km < 1) {
-                         setErrorMsg("Radius minimal adalah 1 KM.");
+                         showToast("Radius minimal adalah 1 KM.");
+                         setFieldErrors(prev => ({...prev, radius_layanan_km: ["Minimal 1 KM"]}));
                          return;
                        }
                        if (kategoriIds.length === 0) {
-                         setErrorMsg("Anda harus memilih minimal satu kategori layanan!");
+                         showToast("Anda harus memilih minimal satu kategori layanan!");
                          return;
                        }
                     }

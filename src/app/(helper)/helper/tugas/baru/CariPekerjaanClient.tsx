@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,12 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
   // Job modal state
   const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
   
-  // Warning Modal state based on apply button
-  const [warningAction, setWarningAction] = useState<"unverified" | "pending" | null>(null);
+  // Warning Modal state based on helperStatus is no longer shown on mount
+  const [warningAction, setWarningAction] = useState<"unverified" | "pending" | "rejected" | null>(null);
+
+  useEffect(() => {
+    // Do not show warning automatically on mount
+  }, [helperStatus]);
 
   const filteredJobs = initialJobs.filter((job) => {
     const matchSearch = job.lansia_nama.toLowerCase().includes(search.toLowerCase()) || 
@@ -76,13 +80,16 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
   };
 
   const handleApplyClick = () => {
-    if (!helperStatus || helperStatus === "none") {
-      setWarningAction("unverified");
-    } else if (helperStatus === "pending_verification" || helperStatus === "under_review") {
-      setWarningAction("pending");
-    } else if (helperStatus === "verified" && selectedJob) {
-      // Direct access allowed
+    if (helperStatus === "verified" && selectedJob) {
       router.push(`/helper/pekerjaan/${selectedJob.id}`);
+    } else {
+      if (!helperStatus || helperStatus === "unregistered") {
+        setWarningAction("unverified");
+      } else if (helperStatus === "rejected") {
+        setWarningAction("rejected");
+      } else {
+        setWarningAction("pending");
+      }
     }
   };
 
@@ -343,40 +350,40 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
       {/* --- Warning Action Modal --- */}
       {warningAction && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in transition-all">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden text-center p-8 animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden text-center p-8 animate-in zoom-in-95 duration-200 relative">
+            <button 
+              onClick={() => setWarningAction(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors"
+            >
+              <X size={16} />
+            </button>
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 relative">
               <div className="absolute inset-0 bg-orange-200 animate-ping rounded-full opacity-20"></div>
               <AlertCircle className="w-10 h-10 text-orange-500 relative z-10" />
             </div>
             
             <h3 className="text-xl font-bold text-slate-900 mb-3">
-              {warningAction === "unverified" ? "Lengkapi Profil Utama" : "Sedang Ditinjau"}
+              {warningAction === "unverified" ? "Lengkapi Profil Utama" : warningAction === "rejected" ? "Pendaftaran Ditolak" : "Sedang Ditinjau"}
             </h3>
             
             <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
               {warningAction === "unverified" 
                 ? "Anda belum melengkapi formulir verifikasi Helper Rangkul. Harap lengkapi dan serahkan dokumen KTP Anda sebelum dapat mengambil pekerjaan."
+                : warningAction === "rejected"
+                ? "Mohon maaf, pendaftaran Anda sebelumnya ditolak. Silakan perbaiki dan ajukan ulang dokumen Anda pada halaman verifikasi."
                 : "Akun Anda saat ini masih dalam proses peninjauan oleh Koordinator setempat. Anda baru bisa mengambil pekerjaan setelah status berpindah diverifikasi."}
             </p>
             
             <div className="space-y-3">
               <Button 
                 onClick={() => {
-                   setWarningAction(null);
-                   if (warningAction === "unverified") router.push("/helper/verifikasi");
+                   if (warningAction === "unverified" || warningAction === "rejected") router.push("/helper/verifikasi");
                    else router.push("/helper/dashboard");
                 }} 
                 className="w-full bg-[#0D47A1] hover:bg-blue-800 h-12 rounded-xl font-bold flex items-center justify-center gap-2"
               >
-                {warningAction === "unverified" ? "Isi Data Penjamin" : "Cek Dashboard"}
+                {warningAction === "unverified" ? "Lengkapi Profil" : warningAction === "rejected" ? "Perbaiki Dokumen" : "Kembali ke Dashboard"}
                 <ExternalLink size={16} />
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => setWarningAction(null)} 
-                className="w-full h-12 rounded-xl font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-              >
-                Batal
               </Button>
             </div>
           </div>

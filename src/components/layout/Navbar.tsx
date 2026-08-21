@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, AlertCircle } from "lucide-react";
+import SOSDialog from "@/components/ui/SOSDialog";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -38,6 +39,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sosOpen, setSosOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   const handleLogout = async () => {
@@ -65,7 +67,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,13 +81,18 @@ export default function Navbar() {
           if (prof) {
             setIsVerified(true);
             if (prof.foto_url) setAvatarUrl(prof.foto_url);
+          } else {
+            setIsVerified(false);
           }
         } else if (role === 'koordinator') {
-          const { data: prof } = await supabase.from('koordinator_profiles').select('id, foto_url').eq('user_id', data.user.id).single();
+          const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', data.user.id).single();
           if (prof) {
             setIsVerified(true);
-            if (prof.foto_url) setAvatarUrl(prof.foto_url);
+          } else {
+            setIsVerified(false);
           }
+        } else {
+          setIsVerified(true);
         }
       }
     });
@@ -113,8 +120,9 @@ export default function Navbar() {
       : "/beranda";
 
   const editProfileHref = 
-    role === "helper" ? "/helper/verifikasi" :
-    role === "koordinator" ? "/koordinator/pengajuan" : "#";
+    role === "helper" ? "/helper/profil/edit" :
+    role === "koordinator" ? "/koordinator/profil/edit" : 
+    role === "keluarga" ? "/beranda/profil/edit" : "#";
 
   let currentNavLinks = defaultNavLinks;
   if (pathname === '/') {
@@ -125,20 +133,22 @@ export default function Navbar() {
       { href: "/cari-helper", label: "Cari Helper" },
       { href: "/kunjungan", label: "Kunjungan" },
       { href: "/lansia/tambah", label: "Profil Keluarga" },
+      { href: "/beranda/pesan", label: "Pesan" },
     ];
   } else if (role === 'helper') {
     currentNavLinks = [
       { href: "/helper/dashboard", label: "Dashboard" },
-      { href: "/tugas", label: "Cari Tugas" },
-      { href: "/kunjungan", label: "Papan Tugas" },
-      ...(isVerified ? [] : [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }]),
+      { href: "/helper/tugas/baru", label: "Cari Tugas" },
+      { href: "/tugas", label: "Papan Tugas" },
+      { href: "/helper/pesan", label: "Pesan" },
+      ...(isVerified === false ? [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }] : []),
     ];
   } else if (role === 'koordinator') {
     currentNavLinks = [
       { href: "/koordinator/dashboard", label: "Dashboard" },
       { href: "/koordinator/antrean", label: "Antrean Helper" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
-      ...(isVerified ? [] : [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }]),
+      ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
   }
 
@@ -180,6 +190,15 @@ export default function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
+          {role === "helper" && (
+            <button 
+              onClick={() => setSosOpen(true)}
+              className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-full flex items-center gap-1.5 font-bold transition-colors border border-red-200 shadow-sm mr-2"
+            >
+              <AlertCircle className="w-4 h-4" />
+              <span>SOS</span>
+            </button>
+          )}
           {user ? (
             <div className="relative profile-dropdown-container">
               <button 
@@ -208,7 +227,7 @@ export default function Navbar() {
                   >
                     Dashboard Anda
                   </Link>
-                  {role !== "keluarga" && role !== "admin" && (
+                  {role !== "admin" && (
                     <Link 
                       href={editProfileHref} 
                       onClick={() => setDropdownOpen(false)}
@@ -243,14 +262,25 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Buka menu navigasi"
-        >
-          <HamburgerIcon open={menuOpen} />
-        </button>
+        {/* Mobile SOS & hamburger */}
+        <div className="md:hidden flex items-center gap-2">
+          {role === "helper" && (
+            <button 
+              onClick={() => setSosOpen(true)}
+              className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-full flex items-center justify-center transition-colors border border-red-200 shadow-sm"
+              aria-label="Darurat SOS"
+            >
+              <AlertCircle className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Buka menu navigasi"
+          >
+            <HamburgerIcon open={menuOpen} />
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}
@@ -286,7 +316,7 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                 </Button>
-                {role !== "keluarga" && role !== "admin" && (
+                {role !== "admin" && (
                   <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm gap-2">
                     <Link href={editProfileHref} onClick={() => setMenuOpen(false)}>
                       <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -312,6 +342,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
+      <SOSDialog isOpen={sosOpen} onClose={() => setSosOpen(false)} userRole={role} />
     </header>
   );
 }
