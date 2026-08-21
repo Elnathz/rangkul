@@ -216,11 +216,11 @@ export default function CariHelperPage() {
                     <span className="text-xs text-slate-500 block">Tarif Layanan</span>
                     <span className="font-bold text-slate-900">Rp 50.000 <span className="font-normal text-xs text-slate-500">/ 2 jam</span></span>
                   </div>
-                  <Button size="sm" asChild className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold">
-                    <Link href={`/booking/${h.id}`}>
+                  <Link href={`/booking/${h.id}`}>
+                    <Button size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold select-none">
                       Tanya Ketersediaan
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ))}
