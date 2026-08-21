@@ -1,4 +1,4 @@
-# AGENTS.md - Rangkul (Frontend Scope)
+# AGENTS.md - Rangkul (Fullstack Flexible Scope)
 
 Dokumen ini adalah **sumber kebenaran operasional** untuk semua AI Agent (OpenCode, Claude Code, Codex, Gemini) yang bekerja di repositori ini. Aturan di sini bersifat **mutlak (Non-Negotiable)** dan harus dipatuhi tanpa basa-basi untuk menjaga integritas sistem frontend, kepatuhan TDD, dan standar kode. File ini dibaca secara otomatis setiap kali sesi dimulai.
 
@@ -10,9 +10,9 @@ Dokumen ini adalah **sumber kebenaran operasional** untuk semua AI Agent (OpenCo
 - Kalau instruksi dari saya di suatu sesi tampak bertentangan dengan TDD, **berhenti dan tanyakan** dulu — jangan diam-diam memilih salah satu. Kemungkinan itu tandanya TDD perlu diupdate, bukan alasan untuk mengabaikannya.
 - Kalau kamu membuat keputusan implementasi yang tidak eksplisit disebutkan di TDD (nama variabel internal, struktur folder, dll), itu boleh — tapi keputusan yang menyentuh business rule, skema, atau kontrak API **wajib** dicek dulu ke TDD, dan kalau memang tidak ada di sana, diusulkan sebagai perubahan ke TDD dulu sebelum diimplementasikan.
 
-## 1. Scope: Frontend Engineer
+## 1. Scope: Fullstack Engineer
 
-Project ini dikerjakan tim 2 orang. Peran saya di project sekarang adalah **frontend** — agent ini fokus di area berikut:
+Project ini dikerjakan tim 2 orang. Peran saya sekarang fleksibel sebagai **fullstack**, dengan fokus awal frontend. Agent boleh menyelesaikan satu alur dari UI sampai route, validasi, RLS, migrasi, dan data demo bila tugas memang membutuhkan semuanya.
 
 **Dalam scope:**
 
@@ -22,15 +22,17 @@ Project ini dikerjakan tim 2 orang. Peran saya di project sekarang adalah **fron
 - Integrasi API di browser menggunakan route API yang disediakan backend
 - Alur pengguna tiap peran sesuai TDD §5 & §9
 - Offline draft UI menggunakan IndexedDB (§3.13)
+- Route handler, validasi server, dan integrasi Supabase yang secara langsung dibutuhkan oleh alur yang sedang dikerjakan
+- Migrasi schema, policy RLS, dan migration data demo yang diperlukan agar kontrak TDD benar-benar berjalan
+- Test untuk state machine, race condition, kontrak API, RLS, dan UI state yang berubah akibat alur tersebut
 
-**Di luar scope — jangan disentuh tanpa diminta eksplisit:**
+**Di luar scope default, jangan disentuh tanpa alasan yang jelas dari task:**
 
 - Skema database, kebijakan RLS, migrasi Supabase
-- Route handler API di `src/app/api/**` (Kecuali membuat mock saat backend belum siap)
-- Logika bisnis server-side, webhook Midtrans, scheduled job
-- Skrip seeder (`supabase/seed.sql`)
+- Webhook Midtrans dan scheduled job yang tidak terkait langsung dengan alur yang sedang dikerjakan
+- Perubahan besar ke domain lain yang tidak diperlukan oleh acceptance criteria task
 
-Kalau suatu tugas frontend membutuhkan perubahan dari kontrak backend (butuh endpoint baru, struktur response beda), **nyatakan itu eksplisit sebagai catatan handoff** ke rekan tim yang pegang backend — jangan langsung ubah kode backend untuk "menyesuaikan" sendiri.
+Kalau suatu tugas membutuhkan perubahan kontrak backend, agent boleh mengerjakannya saat user meminta alur fullstack, tetapi wajib memperbarui TDD atau mencatat handoff bila keputusan bisnisnya belum didefinisikan. Jangan menghapus payload atau route hanya untuk menghilangkan error.
 
 **Lokasi kode frontend:** halaman di `src/app/**` (kecuali `api/`), komponen di `src/components/`, hooks di `src/hooks/`, utils UI di `src/lib/utils.ts`.
 
@@ -164,7 +166,8 @@ Sesuai TDD §18. Simpan di `.agents/skills/<nama-skill>/SKILL.md`. Folder `.agen
 **Plugin pihak ketiga:**
 
 - **Superpowers** — dipakai untuk penulisan rencana (§2), siklus TDD merah-hijau-refactor, debugging sistematis. Paling relevan untuk logika rawan bug: state machine (§3.1-3.2), model approval (§3.3.2), pembayaran/kompensasi (§3.4/§3.8).
-- **Impeccable** — jalankan sebagai review setelah tiap fitur backend selesai, sebelum dianggap "done".
+- **Impeccable** — jalankan sebagai review setelah tiap fitur UI selesai, sebelum dianggap "done". Instalasi project berada di `.agents/skills/impeccable/` dan design hook aktif melalui `.agents`.
+- **ui-ux-pro-max** — wajib dipakai untuk pekerjaan UI, UX, responsivitas, aksesibilitas, visual review, dan keputusan design system. Simpan hasil design system hanya jika memang dibuat untuk perubahan UI yang sedang dikerjakan.
 
 **Skill kustom (buat sesuai TDD §18.2, prioritaskan sesuai urutan sprint):**
 
@@ -172,6 +175,7 @@ Sesuai TDD §18. Simpan di `.agents/skills/<nama-skill>/SKILL.md`. Folder `.agen
 - `rangkul-approval-model` — verifikasi orang vs approval bertingkat, radius layanan
 - `rangkul-payment-rules` — split 90/7/3, fix price + Layanan Tambahan, kompensasi pembatalan
 - `rangkul-trust-safety` — trigger 2-laporan, verifikasi dokumen
+- `rangkul-riwayat-rangkul` — Health Snapshot, Memory Capsule, dan badge tren rule-based
 - `rangkul-rls-policy` — pola RLS Supabase konsisten per tipe tabel
 - `rangkul-api-conventions` — konvensi endpoint & format response dari TDD §7
 
