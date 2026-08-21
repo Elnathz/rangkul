@@ -1,1 +1,1 @@
-ALTER TYPE helper_status_enum ADD VALUE IF NOT EXISTS 'rejected';
+ALTER TYPE public.helper_status ADD VALUE IF NOT EXISTS 'rejected';
