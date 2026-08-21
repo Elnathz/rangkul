@@ -1,180 +1,149 @@
 "use client";
 
+// impeccable-disable gray-on-color -- badges and text live in separate nested surfaces.
+
 import * as React from "react";
-import { Button } from "@/components/ui/button";
-import { MOCK_TASKS } from "@/lib/mock/tasks";
-import { Calendar, MapPin, AlertTriangle, CheckCircle2, XCircle, UserCheck } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+
+import { ApprovalTaskCard, type ApprovalQueueTask } from "@/components/koordinator/ApprovalTaskCard";
 import KoordinatorStatusGuard from "@/components/koordinator/KoordinatorStatusGuard";
+import { createClient } from "@/lib/supabase/client";
+
+type KoordinatorProfile = {
+  id: string;
+  wilayah: string;
+  status: string;
+};
 
 export default function AntreanPersetujuanPage() {
-  const [tasks, setTasks] = React.useState(MOCK_TASKS);
+  const [tasks, setTasks] = React.useState<ApprovalQueueTask[]>([]);
   const [processingId, setProcessingId] = React.useState<string | null>(null);
-  const [koordinator, setKoordinator] = React.useState<any>(null);
+  const [koordinator, setKoordinator] = React.useState<KoordinatorProfile | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    const fetchKoordinator = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('koordinator_profiles')
-          .select('id, wilayah, status')
-          .eq('user_id', user.id)
-          .single();
-        setKoordinator(profile);
-      }
+  const loadQueue = React.useCallback(async () => {
+    const supabase = createClient();
+    setError(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Sesi Anda sudah berakhir. Silakan login kembali.");
       setLoading(false);
-    };
-    fetchKoordinator();
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("koordinator_profiles")
+      .select("id, wilayah, status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      setError("Status Koordinator belum dapat dimuat.");
+      setLoading(false);
+      return;
+    }
+
+    setKoordinator(profile);
+
+    if (!profile || profile.status !== "verified") {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: taskRows, error: taskError } = await supabase
+      .from("tasks")
+      .select(`
+        id,
+        status,
+        helper_id,
+        jadwal_waktu,
+        harga_final,
+        catatan,
+        lansia_profiles!inner ( nama, alamat, catatan_kondisi, foto_url ),
+        service_categories!inner ( nama, tingkat, is_high_risk ),
+        helper_profiles!inner ( tingkat_kepercayaan, total_tugas_selesai, rating_avg, wilayah_domisili, bio, foto_url, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
+      `)
+      .eq("status", "menunggu_persetujuan_koordinator")
+      .order("jadwal_waktu", { ascending: true });
+
+    if (taskError) {
+      setError("Antrean tugas belum dapat dimuat. Periksa migration RLS Koordinator.");
+      setLoading(false);
+      return;
+    }
+
+    setTasks((taskRows || []) as unknown as ApprovalQueueTask[]);
+    setLoading(false);
   }, []);
 
-  // Filter tugas yang butuh approval koordinator
-  const antreanTasks = tasks.filter(t => t.status === "menunggu_persetujuan_koordinator");
+  React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadQueue();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadQueue]);
 
-  const handleApprove = (id: string) => {
-    setProcessingId(id);
-    setTimeout(() => {
-      setTasks(prev => prev.filter(t => t.id !== id));
+  async function approveTask(taskId: string) {
+    setProcessingId(taskId);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/koordinator-approve`, { method: "PATCH" });
+      const payload = await response.json() as { message?: string };
+
+      if (!response.ok) {
+        setError(payload.message || "Tugas belum dapat disetujui.");
+        if (response.status === 409) void loadQueue();
+        return;
+      }
+
+      setTasks((current) => current.filter((task) => task.id !== taskId));
+      setNotice(payload.message || "Tugas berhasil disetujui.");
+    } catch {
+      setError("Koneksi bermasalah. Status tugas belum dapat dipastikan.");
+    } finally {
       setProcessingId(null);
-    }, 1000);
-  };
-
-  const handleReject = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menolak Helper ini untuk mengambil tugas?")) {
-      setProcessingId(id);
-      setTimeout(() => {
-        setTasks(prev => prev.filter(t => t.id !== id));
-        setProcessingId(null);
-      }, 1000);
     }
-  };
+  }
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Memuat status koordinator...</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm font-semibold text-slate-500"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Memuat antrean tugas...</div>;
   }
 
   return (
     <KoordinatorStatusGuard koordinator={koordinator}>
-      <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-5xl mx-auto">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Antrean Persetujuan Tugas</h1>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">{antreanTasks.length} Tugas Menunggu</h2>
-              <p className="text-sm text-gray-500">Validasi pengambilan tugas berisiko tinggi atau Helper masa percobaan.</p>
-            </div>
+      <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl space-y-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Koordinator wilayah</p>
+            <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Antrean Persetujuan Tugas</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Review detail Helper, lansia, jadwal, dan lokasi sebelum tugas yang membutuhkan approval eksplisit diaktifkan.</p>
           </div>
 
-          <div className="space-y-4">
-            {antreanTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-500" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Semua Aman!</h3>
-                <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                  Saat ini tidak ada tugas berisiko tinggi yang menunggu persetujuan Anda.
-                </p>
-              </div>
+          {error && <div role="alert" className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><div className="flex-1"><p className="font-bold">Antrean belum siap</p><p className="mt-1">{error}</p></div><button type="button" onClick={() => { setLoading(true); void loadQueue(); }} className="rounded-lg px-3 py-2 font-bold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700">Coba lagi</button></div>}
+          {notice && <div role="status" className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><p className="font-semibold">{notice}</p></div>}
+
+          <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></div>
+              <div><h2 className="text-lg font-bold text-slate-950">{tasks.length} tugas menunggu</h2><p className="mt-1 text-sm text-slate-500">Approval eksplisit hanya muncul untuk kondisi yang membutuhkan penilaian Koordinator.</p></div>
+            </div>
+
+            {tasks.length === 0 ? (
+              <div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-14 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm"><CheckCircle2 className="h-7 w-7" aria-hidden="true" /></div><h3 className="mt-4 text-base font-bold text-slate-900">Semua aman</h3><p className="mt-1 max-w-sm text-sm leading-relaxed text-slate-500">Belum ada task nyata yang menunggu persetujuan di wilayahmu.</p></div>
             ) : (
-              antreanTasks.map((task) => {
-                const taskDate = new Date(task.jadwal_waktu);
-                const isProcessing = processingId === task.id;
-                
-                return (
-                  <div key={task.id} className="p-5 rounded-xl shadow-md hover:shadow-lg transition-all group bg-white border-none">
-                    <div className="flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
-                      <div className="flex-1 w-full space-y-4">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-gray-900">{task.service_category.nama}</h3>
-                            {task.service_category.is_high_risk && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">
-                                Risiko Tinggi
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-400">ID Tugas: {task.id.substring(0,8)}</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F5F8FC] p-4 rounded-2xl">
-                          <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Jadwal</p>
-                            <div className="flex items-start gap-2 text-sm font-medium text-foreground">
-                              <Calendar className="w-4 h-4 text-primary mt-0.5" />
-                              <span>
-                                {taskDate.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}<br/>
-                                <span className="text-muted-foreground">{taskDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                              </span>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Lokasi</p>
-                            <div className="flex items-start gap-2 text-sm font-medium text-foreground">
-                              <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                              <span>
-                                {task.lansia.alamat}
-                                {task.lansia.rt && task.lansia.rw ? `, RT ${task.lansia.rt}/RW ${task.lansia.rw}` : ''}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {task.helper && (
-                        <div className="md:w-56 w-full shrink-0 border-none shadow-sm rounded-xl p-4 bg-[#F5F8FC] flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0">
-                            <UserCheck className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Helper Pemohon</p>
-                            <p className="text-sm font-bold text-foreground truncate">{task.helper.user.full_name}</p>
-                            <p className="text-xs text-amber-600 font-medium mt-0.5">⭐ {task.helper.rating_avg} ({task.helper.total_tugas_selesai} tugas)</p>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex flex-col sm:flex-row items-center gap-2 w-full mt-3 pt-4 border-t border-gray-100 md:w-auto md:mt-0 md:pt-0 md:border-0 md:flex-col lg:flex-row">
-                        <Button 
-                          variant="outline" 
-                          className="w-full sm:flex-none border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl flex items-center justify-center gap-2"
-                          onClick={() => handleReject(task.id)}
-                          disabled={isProcessing}
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Tolak
-                        </Button>
-                        <Button 
-                          className="w-full sm:flex-none bg-[#0D47A1] text-white hover:bg-blue-800 rounded-xl flex items-center justify-center gap-2"
-                          onClick={() => handleApprove(task.id)}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? "Memproses..." : (
-                            <>
-                              <CheckCircle2 className="w-4 h-4" />
-                              Setujui
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              <div className="mt-5 space-y-5">
+                {tasks.map((task) => <ApprovalTaskCard key={task.id} task={task} isProcessing={processingId === task.id} onApprove={(taskId) => void approveTask(taskId)} />)}
+              </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
-    </div>
+      </main>
     </KoordinatorStatusGuard>
   );
 }

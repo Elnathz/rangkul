@@ -7,11 +7,20 @@ import {
   ChevronRight, 
   UserCheck,
   AlertCircle,
-  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
+import { RegionAddress } from '@/components/ui/RegionAddress';
+
+type PendingHelper = {
+  id: string;
+  created_at: string;
+  wilayah_domisili: string;
+  status: string;
+  koordinator_id: string | null;
+  users: { full_name: string | null } | { full_name: string | null }[] | null;
+};
 
 export default async function KoordinatorDashboardPage() {
   const supabase = await createClient();
@@ -36,7 +45,7 @@ export default async function KoordinatorDashboardPage() {
 
   // Default values
   let totalHelper = 0, pendingHelperCount = 0, activeHelper = 0;
-  let pendingHelpers: any[] = [];
+  let pendingHelpers: PendingHelper[] = [];
 
   if (koordinator?.wilayah) {
     // Ambil semua helper yang mungkin terkait untuk menghitung statistik
@@ -96,31 +105,13 @@ export default async function KoordinatorDashboardPage() {
   };
 
   const formatWilayah = (wilayahStr: string) => {
-    if (!wilayahStr) return <span className="text-sm text-gray-500">-</span>;
-    const parts = wilayahStr.split(' | ');
-    if (parts.length >= 3) {
-      const region = parts[0].split(',').map(s => s.trim());
-      const kelurahan = region[0];
-      const kecamatan = region[1] || '';
-      const rtrw = parts[1];
-      const detail = parts[2];
-      return (
-        <div className="space-y-0.5 mt-1 mb-2">
-          <p className="text-sm font-semibold text-gray-800 flex items-center">
-            <MapPin className="w-3.5 h-3.5 mr-1 text-[#0D47A1] shrink-0" />
-            {rtrw}, {kelurahan}{kecamatan ? `, ${kecamatan}` : ''}
-          </p>
-          <p className="text-xs text-gray-500 line-clamp-1 ml-4" title={detail}>{detail}</p>
-        </div>
-      );
-    }
-    return <p className="text-sm font-medium text-gray-600 mb-2 line-clamp-2">{wilayahStr}</p>;
+    return <RegionAddress value={wilayahStr} compact />;
   };
 
   const stats = [
     { label: 'Total Helper Wilayah', value: (totalHelper || 0).toString(), icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
     { label: 'Antrean Verifikasi', value: (pendingHelperCount || 0).toString(), icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Helper Aktif', value: (activeHelper || 0).toString(), icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
+    { label: 'Helper Terverifikasi', value: (activeHelper || 0).toString(), icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
   ];
 
   return (
@@ -135,7 +126,10 @@ export default async function KoordinatorDashboardPage() {
           
           <div className="relative z-10">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Koordinator'}</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Wilayah Operasional: <span className="font-bold text-white">{koordinator?.wilayah || 'Belum Diatur'}</span></p>
+            <div className="mt-3 max-w-3xl">
+              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue-100">Wilayah operasional</p>
+              <RegionAddress value={koordinator?.wilayah} tone="inverse" compact />
+            </div>
           </div>
         </div>
 
@@ -159,6 +153,16 @@ export default async function KoordinatorDashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="flex justify-end">
+          <Link
+            href="/koordinator/helper"
+            className="inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-bold text-[#0D47A1] shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+          >
+            Pantau status aktivitas Helper
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -188,11 +192,11 @@ export default async function KoordinatorDashboardPage() {
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-                {pendingHelpers.length > 0 ? pendingHelpers.map((helper: any) => (
+                {pendingHelpers.length > 0 ? pendingHelpers.map((helper) => (
                   <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                     <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
                       <div className="flex-1 w-full relative">
-                        <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
+                        <h3 className="text-base font-bold text-gray-900 mb-1">{(Array.isArray(helper.users) ? helper.users[0]?.full_name : helper.users?.full_name) || 'Helper Anonim'}</h3>
                         {formatWilayah(helper.wilayah_domisili)}
                         <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
                       </div>
