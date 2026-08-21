@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const DOC_TYPES = ['ktp', 'identitas_lansia', 'hubungan_keluarga', 'dokumen_koordinator', 'foto_lansia', 'foto_helper', 'foto_koordinator'] as const;
+export const DOC_TYPES = ['ktp', 'identitas_lansia', 'hubungan_keluarga', 'dokumen_koordinator', 'foto_lansia', 'foto_helper', 'foto_koordinator', 'foto_bukti'] as const;
 
 export const ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 

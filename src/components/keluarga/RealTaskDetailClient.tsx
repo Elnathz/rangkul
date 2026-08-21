@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPinned, ShieldCheck, UserRound } from "lucide-react";
 
 import { ExtraServiceApprovalCard } from "@/components/keluarga/ExtraServiceApprovalCard";
+import { TaskScheduleActions } from "@/components/keluarga/TaskScheduleActions";
 import { LansiaPhotoPreview } from "@/components/helper/LansiaPhotoPreview";
 import { ImagePreviewModal } from "@/components/ui/ImagePreviewModal";
 import { RegionAddress } from "@/components/ui/RegionAddress";
@@ -50,6 +51,20 @@ export type RealTaskDetail = {
     users: { full_name: string } | { full_name: string }[] | null;
   } | null;
   extraServices: ExtraService[];
+  evidence: {
+    foto_bukti_url: string;
+    catatan_kondisi: string;
+    created_at: string;
+  } | null;
+  healthSnapshot: {
+    energi: number;
+    mobilitas: number;
+    mood: number;
+    nafsu_makan: number;
+    kualitas_tidur: number;
+    cerita_hari_ini: string | null;
+    created_at: string;
+  } | null;
 };
 
 type HelperDetail = NonNullable<RealTaskDetail["helper"]>;
@@ -97,10 +112,12 @@ function HelperPhoto({ src, name }: { src: string | null; name: string }) {
 }
 
 export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
+  const [evidenceOpen, setEvidenceOpen] = React.useState(false);
   const mapUrl = getMapUrl(task.lansia);
   const pendingServices = task.extraServices.filter((service) => service.status === "menunggu_persetujuan_keluarga");
   const decidedServices = task.extraServices.filter((service) => service.status !== "menunggu_persetujuan_keluarga");
   const helperName = task.helper ? getUserName(task.helper.users) : null;
+
 
   return (
     <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 pb-24 sm:px-6 lg:px-8">
@@ -176,6 +193,8 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
                 <RegionAddress value={task.lansia.alamat} />
               </section>
 
+              <TaskScheduleActions taskId={task.id} status={task.status} jadwalWaktu={task.jadwal_waktu} />
+
               {pendingServices.map((service) => <ExtraServiceApprovalCard key={service.id} taskId={task.id} service={service} />)}
 
               {decidedServices.length > 0 && (
@@ -192,6 +211,24 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
                       </div>
                     ))}
                   </div>
+                </section>
+              )}
+
+              {task.evidence && task.healthSnapshot && (
+                <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Laporan kunjungan</p><h2 className="mt-1 text-lg font-black text-slate-950">Catatan dari Helper</h2></div>
+                    <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" aria-hidden="true" />
+                  </div>
+                  <button type="button" className="group mt-4 block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1]" onClick={() => setEvidenceOpen(true)} aria-label="Perbesar foto bukti kunjungan">
+                    <img src={task.evidence.foto_bukti_url} alt="Bukti kunjungan lansia" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  </button>
+                  <ImagePreviewModal open={evidenceOpen} onOpenChange={setEvidenceOpen} src={task.evidence.foto_bukti_url} alt="Bukti kunjungan lansia" title="Bukti kunjungan" />
+                  <p className="mt-4 text-sm leading-relaxed text-slate-700">{task.evidence.catatan_kondisi}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                    {[['Energi', task.healthSnapshot.energi], ['Mobilitas', task.healthSnapshot.mobilitas], ['Mood', task.healthSnapshot.mood], ['Nafsu makan', task.healthSnapshot.nafsu_makan], ['Tidur', task.healthSnapshot.kualitas_tidur]].map(([label, score]) => <div key={String(label)} className="rounded-xl border border-emerald-100 bg-white p-3 text-center"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-lg font-black text-emerald-700">{score}/5</p></div>)}
+                  </div>
+                  {task.healthSnapshot.cerita_hari_ini && <div className="mt-4 rounded-xl border border-emerald-100 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Memory Capsule</p><p className="mt-1 text-sm leading-relaxed text-slate-700">{task.healthSnapshot.cerita_hari_ini}</p></div>}
                 </section>
               )}
 
@@ -225,6 +262,12 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
                 </div>
                 {helperName && <Link href="/beranda/pesan" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>}
               </section>
+              {task.status === "selesai" && task.evidence && (
+                <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+                  <p className="text-sm font-bold text-slate-900">Laporan kunjungan sudah diterima</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">Kunjungan sudah berstatus selesai. Konfirmasi pembayaran dan pencairan Demo Ledger akan tersedia pada alur pembayaran Sprint 3.</p>
+                </section>
+              )}
             </aside>
           </div>
         </section>

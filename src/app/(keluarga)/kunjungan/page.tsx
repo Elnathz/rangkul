@@ -1,160 +1,105 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
+import { Calendar, Clock3, MapPin, ReceiptText } from "lucide-react";
+import { redirect } from "next/navigation";
+
+import { RegionAddress } from "@/components/ui/RegionAddress";
+import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
-import { MOCK_TASKS } from "@/lib/mock/tasks";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import type { TaskStatus } from "@/lib/constants/task-status";
 
-export default function KunjunganPage() {
-  const [tasks] = React.useState(MOCK_TASKS);
-  const [activeTab, setActiveTab] = React.useState<"mendatang" | "riwayat">("mendatang");
+type Relation<T> = T | T[] | null;
+type TaskRow = {
+  id: string;
+  status: TaskStatus;
+  jadwal_waktu: string;
+  harga_dasar: number;
+  harga_final: number;
+  lansia_profiles: Relation<{ nama: string; alamat: string; rt: number | null; rw: number | null; kelurahan: string | null; kecamatan: string | null; kabupaten_kota: string | null; provinsi: string | null; foto_url: string | null }>;
+  service_categories: Relation<{ nama: string; estimasi_durasi_menit: number }>;
+  helper_profiles: Relation<{ foto_url: string | null; foto_wajah_url: string | null; users: Relation<{ full_name: string }> }>;
+};
 
-  // In a real app, this would be fetched from /api/tasks?role=keluarga
-  const mendatangTasks = tasks.filter(t => 
-    ["diajukan", "dikonfirmasi", "dikerjakan", "menunggu_persetujuan_koordinator", "menunggu_persetujuan_keluarga"].includes(t.status)
-  );
-  
-  const riwayatTasks = tasks.filter(t => 
-    ["selesai", "dibatalkan"].includes(t.status)
-  );
+function relation<T>(value: Relation<T>) {
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
 
-  const displayedTasks = activeTab === "mendatang" ? mendatangTasks : riwayatTasks;
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+export default async function KunjunganPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("id, status, jadwal_waktu, harga_dasar, harga_final, lansia_profiles!inner ( nama, alamat, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi, foto_url ), service_categories!inner ( nama, estimasi_durasi_menit ), helper_profiles ( foto_url, foto_wajah_url, users ( full_name ) )")
+    .eq("keluarga_id", user.id)
+    .order("jadwal_waktu", { ascending: false });
+
+  const tasks = (error ? [] : (data ?? [])) as unknown as TaskRow[];
+  const upcoming = tasks.filter((task) => ["diajukan", "menunggu_persetujuan_koordinator", "dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga"].includes(task.status));
+  const history = tasks.filter((task) => ["selesai", "dibatalkan"].includes(task.status));
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-foreground">Daftar Kunjungan</h1>
-          <Button variant="outline" asChild>
-            <Link href="/cari-helper">Pesan Baru</Link>
-          </Button>
-        </div>
+    <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Perjalanan pendampingan</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Daftar kunjungan</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Pantau status, jadwal, biaya, dan laporan kunjungan lansia dari satu tempat.</p>
+          </div>
+          <Button asChild className="rounded-xl bg-[#0D47A1] font-bold hover:bg-blue-800"><Link href="/cari-helper">Pesan Helper</Link></Button>
+        </header>
 
-        <div className="flex space-x-2 bg-white p-1 rounded-xl border border-border shadow-sm">
-          <button
-            onClick={() => setActiveTab("mendatang")}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === "mendatang" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            Akan Datang & Aktif ({mendatangTasks.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("riwayat")}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === "riwayat" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            Riwayat ({riwayatTasks.length})
-          </button>
-        </div>
+        <section className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Mendatang dan aktif</p><p className="mt-1 text-2xl font-black text-blue-950">{upcoming.length}</p></div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Riwayat</p><p className="mt-1 text-2xl font-black text-slate-950">{history.length}</p></div>
+        </section>
 
-        <div className="space-y-4">
-          {displayedTasks.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-border p-12 text-center shadow-sm">
-              <p className="text-muted-foreground mb-4">Tidak ada kunjungan di tab ini.</p>
-              {activeTab === "mendatang" && (
-                <Button asChild>
-                  <Link href="/cari-helper">Cari Helper Sekarang</Link>
-                </Button>
-              )}
-            </div>
-          ) : (
-            displayedTasks.map((task: any) => {
-              const taskDate = new Date(task.jadwal_waktu);
-              const estimasiSelesai = new Date(taskDate.getTime() + task.service_category.estimasi_durasi_menit * 60000);
-              
-              return (
-                <Card key={task.id} className="overflow-hidden shadow-md hover:shadow-lg transition-all border-none">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:justify-between items-start gap-4 mb-6">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">ID: {task.id.substring(0,8)}</span>
-                          <TaskStatusBadge status={task.status} />
-                        </div>
-                        <h3 className="text-xl md:text-2xl font-bold text-foreground">{task.service_category.nama}</h3>
-                      </div>
-                      <div className="w-full md:w-auto text-left md:text-right border-t border-border md:border-none pt-4 md:pt-0">
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Total Biaya</p>
-                        <p className="text-xl font-bold text-primary">Rp {(task.harga_final || task.harga_dasar).toLocaleString('id-ID')}</p>
-                      </div>
-                    </div>
+        <section className="space-y-4" aria-label="Kunjungan mendatang dan aktif">
+          <div className="flex items-center justify-between"><h2 className="text-lg font-black text-slate-950">Mendatang dan aktif</h2><span className="text-sm font-semibold text-slate-500">{upcoming.length} tugas</span></div>
+          {upcoming.length === 0 ? <EmptyState /> : upcoming.map((task) => <TaskCard key={task.id} task={task} />)}
+        </section>
 
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border border-border p-4 rounded-lg bg-white shadow-sm">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Jadwal & Waktu</p>
-                            <div className="flex items-start gap-3 text-sm font-medium">
-                              <Calendar className="w-4 h-4 text-primary mt-0.5" />
-                              <div>
-                                <p className="mb-1">{taskDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                                <p className="text-muted-foreground font-normal">Mulai: {taskDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
-                                <p className="text-muted-foreground font-normal">Estimasi Selesai: {estimasiSelesai.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="border border-border p-4 rounded-lg bg-white shadow-sm">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Lansia & Lokasi</p>
-                            <div className="flex items-start gap-3 text-sm font-medium">
-                              <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                              <div>
-                                <p className="font-bold mb-1">{task.lansia.nama}</p>
-                                {task.service_category.lokasi_jemput ? (
-                                  <div className="mt-1 space-y-1">
-                                    <p className="text-muted-foreground font-normal text-xs leading-relaxed"><span className="font-bold text-foreground">Diambil di:</span> {task.service_category.lokasi_jemput}</p>
-                                    <p className="text-muted-foreground font-normal text-xs leading-relaxed"><span className="font-bold text-foreground">Diantar ke:</span> {task.service_category.lokasi_antar}</p>
-                                  </div>
-                                ) : (
-                                  <p className="text-muted-foreground font-normal text-xs mt-1 leading-relaxed">
-                                    {task.lansia.alamat}
-                                    {task.lansia.rt && task.lansia.rw ? `, RT ${task.lansia.rt}/RW ${task.lansia.rw}` : ''}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {task.helper && (
-                        <div className="md:w-56 bg-[#F5F8FC] rounded-2xl overflow-hidden flex flex-col">
-                          <div className="h-40 bg-muted relative">
-                            {task.helper.foto_url ? (
-                              <img src={task.helper.foto_url} alt={task.helper.user.full_name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold text-4xl">
-                                {task.helper.user.full_name.charAt(0)}
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-3 text-center bg-white flex-1 flex flex-col justify-center">
-                            <p className="text-sm font-bold truncate">{task.helper.user.full_name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Helper Terpercaya</p>
-                            <div className="text-xs font-medium text-amber-600 flex items-center justify-center gap-1">
-                              ⭐ {task.helper.rating_avg} <span className="text-muted-foreground">({task.helper.total_tugas_selesai} tugas)</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="px-6 py-4 flex justify-end">
-                    <Button asChild className="rounded-xl px-6 font-bold shadow-sm">
-                      <Link href={`/kunjungan/${task.id}`}>Lihat Detail Tugas</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })
-          )}
-        </div>
+        <section className="space-y-4" aria-label="Riwayat kunjungan">
+          <div className="flex items-center justify-between"><h2 className="text-lg font-black text-slate-950">Riwayat kunjungan</h2><span className="text-sm font-semibold text-slate-500">{history.length} tugas</span></div>
+          {history.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">Belum ada kunjungan yang selesai atau dibatalkan.</p> : history.map((task) => <TaskCard key={task.id} task={task} />)}
+        </section>
       </div>
-    </div>
+    </main>
+  );
+}
+
+function EmptyState() {
+  return <div className="rounded-2xl border border-dashed border-blue-200 bg-white p-10 text-center"><ReceiptText className="mx-auto h-9 w-9 text-blue-300" /><p className="mt-3 font-bold text-slate-900">Belum ada kunjungan aktif</p><p className="mt-1 text-sm text-slate-500">Pesan Helper untuk memulai pendampingan.</p><Button asChild variant="outline" className="mt-5 rounded-xl"><Link href="/cari-helper">Cari Helper</Link></Button></div>;
+}
+
+function TaskCard({ task }: { task: TaskRow }) {
+  const lansia = relation(task.lansia_profiles);
+  const category = relation(task.service_categories);
+  const helper = relation(task.helper_profiles);
+  const helperUsers = helper ? relation(helper.users) : null;
+  if (!lansia || !category) return null;
+
+  return (
+    <Card className="overflow-hidden border-slate-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-bold uppercase tracking-wider text-slate-400">ID {task.id.slice(0, 8)}</span><TaskStatusBadge status={task.status} /></div><h3 className="mt-2 text-xl font-black text-slate-950">{category.nama}</h3><p className="mt-1 text-sm text-slate-600">Untuk {lansia.nama}</p></div>
+          <div className="shrink-0 rounded-xl bg-emerald-50 px-4 py-3 sm:text-right"><p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Total pembayaran</p><p className="mt-1 text-lg font-black text-emerald-800">Rp {Number(task.harga_final || task.harga_dasar).toLocaleString("id-ID")}</p></div>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex gap-3"><Calendar className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div><p className="text-xs font-bold uppercase tracking-wider text-blue-900">Jadwal</p><p className="mt-1 text-sm font-bold text-blue-950">{formatDate(task.jadwal_waktu)}</p><p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#0D47A1]"><Clock3 className="h-3.5 w-3.5" />{category.estimasi_durasi_menit} menit</p></div></div></div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-700">Lokasi lansia</p><RegionAddress value={lansia.alamat} compact /></div></div></div>
+        </div>
+         <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-sm font-black text-[#0D47A1]">{helper?.foto_wajah_url || helper?.foto_url ? <img src={helper.foto_wajah_url || helper.foto_url || ""} alt="" className="h-full w-full object-cover" /> : helperUsers?.full_name?.slice(0, 1) || "H"}</div><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-700">Helper</p><p className="truncate text-sm font-bold text-slate-950">{helperUsers?.full_name || "Belum ditugaskan"}</p></div></div>
+      </CardContent>
+      <CardFooter className="justify-end border-t border-slate-100 bg-slate-50 px-5 py-4"><Button asChild className="rounded-xl bg-[#0D47A1] font-bold hover:bg-blue-800"><Link href={`/kunjungan/${task.id}`}>Lihat detail</Link></Button></CardFooter>
+    </Card>
   );
 }

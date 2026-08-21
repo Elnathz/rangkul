@@ -26,6 +26,7 @@ type ConfirmDialogProps = {
   loading?: boolean
   tone?: ConfirmDialogTone
   icon?: React.ReactNode
+  children?: React.ReactNode
 }
 
 const toneStyles: Record<ConfirmDialogTone, { bar: string; icon: string; button: string }> = {
@@ -56,6 +57,7 @@ export function ConfirmDialog({
   loading = false,
   tone = "primary",
   icon,
+  children,
 }: ConfirmDialogProps) {
   const styles = toneStyles[tone]
 
@@ -76,6 +78,7 @@ export function ConfirmDialog({
               <DialogDescription className="text-sm leading-relaxed text-slate-600">
                 {description}
               </DialogDescription>
+              {children}
             </div>
           </DialogHeader>
           <DialogFooter className="mt-7 gap-2 sm:justify-end">
