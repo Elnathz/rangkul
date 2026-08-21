@@ -6,7 +6,8 @@ import {
   FileCheck, 
   ChevronRight, 
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
@@ -38,28 +39,24 @@ export default async function KoordinatorDashboardPage() {
   let pendingHelpers: any[] = [];
 
   if (koordinator?.wilayah) {
-    // Fetch counts
-    const { count: c1 } = await supabase
+    // Ambil semua helper yang mungkin terkait untuk menghitung statistik
+    const { data: allHelpers } = await supabase
       .from('helper_profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('wilayah_domisili', koordinator.wilayah);
-    totalHelper = c1 || 0;
+      .select('id, wilayah_domisili, status, koordinator_id')
+      .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`);
 
-    const { count: c2 } = await supabase
-      .from('helper_profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('wilayah_domisili', koordinator.wilayah)
-      .eq('status', 'pending_verification');
-    pendingHelperCount = c2 || 0;
+    if (allHelpers) {
+      const myHelpers = allHelpers.filter(h => 
+        h.koordinator_id === koordinator.id || 
+        (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
+      );
+      
+      totalHelper = myHelpers.length;
+      pendingHelperCount = myHelpers.filter(h => h.status === 'pending_verification').length;
+      activeHelper = myHelpers.filter(h => h.status === 'verified').length;
+    }
 
-    const { count: c3 } = await supabase
-      .from('helper_profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('wilayah_domisili', koordinator.wilayah)
-      .eq('status', 'verified');
-    activeHelper = c3 || 0;
-
-    // Fetch pending helpers list
+    // Fetch pending helpers list (top 3)
     const { data: pendingData } = await supabase
       .from('helper_profiles')
       .select(`
@@ -67,14 +64,21 @@ export default async function KoordinatorDashboardPage() {
         created_at,
         wilayah_domisili,
         status,
+        koordinator_id,
         users ( full_name )
       `)
-      .eq('wilayah_domisili', koordinator.wilayah)
       .eq('status', 'pending_verification')
-      .order('created_at', { ascending: false })
-      .limit(3);
+      .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`)
+      .order('created_at', { ascending: false });
 
-    pendingHelpers = pendingData || [];
+    if (pendingData) {
+      pendingHelpers = pendingData
+        .filter(h => 
+          h.koordinator_id === koordinator.id || 
+          (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
+        )
+        .slice(0, 3);
+    }
   }
 
   const isProfileIncomplete = !koordinator?.wilayah;
@@ -89,6 +93,28 @@ export default async function KoordinatorDashboardPage() {
       minute: '2-digit',
       timeZoneName: 'short'
     }).format(date);
+  };
+
+  const formatWilayah = (wilayahStr: string) => {
+    if (!wilayahStr) return <span className="text-sm text-gray-500">-</span>;
+    const parts = wilayahStr.split(' | ');
+    if (parts.length >= 3) {
+      const region = parts[0].split(',').map(s => s.trim());
+      const kelurahan = region[0];
+      const kecamatan = region[1] || '';
+      const rtrw = parts[1];
+      const detail = parts[2];
+      return (
+        <div className="space-y-0.5 mt-1 mb-2">
+          <p className="text-sm font-semibold text-gray-800 flex items-center">
+            <MapPin className="w-3.5 h-3.5 mr-1 text-[#0D47A1] shrink-0" />
+            {rtrw}, {kelurahan}{kecamatan ? `, ${kecamatan}` : ''}
+          </p>
+          <p className="text-xs text-gray-500 line-clamp-1 ml-4" title={detail}>{detail}</p>
+        </div>
+      );
+    }
+    return <p className="text-sm font-medium text-gray-600 mb-2 line-clamp-2">{wilayahStr}</p>;
   };
 
   const stats = [
@@ -167,7 +193,7 @@ export default async function KoordinatorDashboardPage() {
                     <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
                       <div className="flex-1 w-full relative">
                         <h3 className="text-base font-bold text-gray-900 mb-1">{helper.users?.full_name || 'Helper Anonim'}</h3>
-                        <p className="text-sm font-medium text-gray-600 mb-2">Area: {helper.wilayah_domisili}</p>
+                        {formatWilayah(helper.wilayah_domisili)}
                         <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
                       </div>
                       

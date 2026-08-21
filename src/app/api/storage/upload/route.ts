@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import {
   ALLOWED_FILE_TYPES,
@@ -49,7 +49,9 @@ export async function POST(request: Request) {
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const filePath = `${authUser.id}/${docType}/${Date.now()}-${sanitizedFileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const adminSupabase = await createAdminClient();
+
+    const { error: uploadError } = await adminSupabase.storage
       .from('dokumen')
       .upload(filePath, file, {
         contentType: file.type,
@@ -57,12 +59,13 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
-      return createApiError('upload_failed', uploadError.message, 500);
+      console.error("Storage Upload Error:", uploadError);
+      return createApiError('upload_failed', typeof uploadError === 'object' ? JSON.stringify(uploadError) : uploadError.message, 500);
     }
 
-    const { data: signedData, error: signedError } = await supabase.storage
+    const { data: signedData, error: signedError } = await adminSupabase.storage
       .from('dokumen')
-      .createSignedUrl(filePath, 3600);
+      .createSignedUrl(filePath, 315360000); // 10 years
 
     if (signedError || !signedData) {
       return createApiError('signed_url_failed', 'Gagal membuat signed URL', 500);

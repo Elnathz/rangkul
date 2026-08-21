@@ -53,12 +53,11 @@ export async function proxy(request: NextRequest) {
   
   // API Route Checks
   const isAdminApiRoute = pathname.startsWith('/api/admin');
-  const isKoordinatorApiRoute = pathname.startsWith('/api/koordinator');
+  const isKoordinatorApiRoute = pathname.startsWith('/api/koordinator') || /^\/api\/helper\/[^/]+\/(approve|reject)$/.test(pathname);
   const isHelperApiRoute =
     pathname.startsWith('/api/helper/apply') ||
     pathname.startsWith('/api/helper/profile') ||
-    pathname.startsWith('/api/helper/queue') ||
-    /^\/api\/helper\/[^/]+\/(approve|reject)$/.test(pathname);
+    pathname.startsWith('/api/helper/queue');
   const isKeluargaApiRoute = pathname.startsWith('/api/lansia');
   const isBookingApiRoute = pathname.startsWith('/api/booking');
   

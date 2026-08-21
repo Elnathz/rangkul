@@ -49,10 +49,20 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<React.ElementRef<typeof ButtonPrimitive>, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : ButtonPrimitive
+  ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
+    if (asChild) {
+      return (
+        <Slot
+          data-slot="button"
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref as any}
+          {...props}
+        />
+      )
+    }
+
     return (
-      <Comp
+      <ButtonPrimitive
         data-slot="button"
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
