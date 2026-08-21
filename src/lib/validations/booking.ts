@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const createTaskSchema = z.object({
-  lansia_id: z.string({ required_error: 'ID Lansia tidak valid' }),
-  service_category_id: z.string({ required_error: 'ID Kategori layanan tidak valid' }),
+  lansia_id: z.string().min(1, 'ID Lansia tidak valid'),
+  service_category_id: z.string().min(1, 'ID Kategori layanan tidak valid'),
   helper_id: z.string().optional(),
   jadwal_waktu: z.string().datetime({ message: 'Format jadwal waktu ISO 8601 tidak valid' }),
   tambahan_waktu_menit: z.number().min(0).optional(),

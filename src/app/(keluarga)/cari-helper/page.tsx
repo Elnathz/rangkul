@@ -26,7 +26,7 @@ export default function CariHelperPage() {
   const [category, setCategory] = useState("Semua");
   const [sortBy, setSortBy] = useState("rekomendasi");
   const [selectedLansia, setSelectedLansia] = useState("");
-  const [lansias, setLansias] = useState<{id: string, nama: string, alamat: string, lat: number, lng: number}[]>([]);
+  const [lansias, setLansias] = useState<{id: string, nama: string, alamat: string, lat: number | null, lng: number | null}[]>([]);
   const [helpers, setHelpers] = useState<any[]>([]);
   const [loadingHelpers, setLoadingHelpers] = useState(true);
 
