@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
+import { AlertCircle } from "lucide-react";
 
 interface Lansia {
   id: string;
@@ -21,8 +22,9 @@ interface ServiceCategory {
   tingkat?: 'ringan' | 'sedang' | 'berat';
 }
 
-export default function BookingPage() {
+export default function BookingPage({ params }: { params: Promise<{ helper_id: string }> }) {
   const router = useRouter();
+  const { helper_id } = use(params);
 
 
   const [lansiaList, setLansiaList] = useState<Lansia[]>([]);
@@ -75,6 +77,7 @@ export default function BookingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          helper_id: helper_id !== "direct" ? helper_id : undefined,
           jadwal_waktu: new Date(form.jadwal_waktu).toISOString(),
         }),
       });
@@ -82,7 +85,12 @@ export default function BookingPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.message || "Gagal membuat pemesanan task.");
+        let msg = data.message || "Gagal membuat pemesanan task.";
+        if (data.fieldErrors) {
+          const errors = Object.values(data.fieldErrors).flat().join(', ');
+          msg += ` (${errors})`;
+        }
+        setErrorMsg(msg);
         setLoading(false);
         return;
       }
@@ -111,8 +119,14 @@ export default function BookingPage() {
 
         <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
           {errorMsg && (
-            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-medium">
-              {errorMsg}
+            <div className="fixed top-6 right-6 z-[100] max-w-sm w-full p-4 rounded-xl shadow-lg border animate-in slide-in-from-top-4 fade-in duration-300 bg-red-50 border-red-200 text-red-800">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+                <div>
+                  <p className="font-semibold text-sm mb-0.5">Peringatan</p>
+                  <p className="text-xs opacity-90">{errorMsg}</p>
+                </div>
+              </div>
             </div>
           )}
 

@@ -5,12 +5,40 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
-import { MOCK_TASKS } from "@/lib/mock/tasks";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { Calendar, MapPin } from "lucide-react";
 
 export default function KunjunganPage() {
-  const [tasks] = React.useState(MOCK_TASKS);
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<"mendatang" | "riwayat">("mendatang");
+  const supabase = createClient();
+
+  React.useEffect(() => {
+    async function fetchTasks() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          lansia:lansia_profiles(*),
+          service_category:service_categories(*),
+          helper:helper_profiles(
+            *,
+            user:users(full_name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setTasks(data);
+      }
+      setLoading(false);
+    }
+    fetchTasks();
+  }, [supabase]);
 
   // In a real app, this would be fetched from /api/tasks?role=keluarga
   const mendatangTasks = tasks.filter(t => 
@@ -53,7 +81,12 @@ export default function KunjunganPage() {
         </div>
 
         <div className="space-y-4">
-          {displayedTasks.length === 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl border border-border p-12 text-center shadow-sm">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Memuat data kunjungan...</p>
+            </div>
+          ) : displayedTasks.length === 0 ? (
             <div className="bg-white rounded-2xl border border-border p-12 text-center shadow-sm">
               <p className="text-muted-foreground mb-4">Tidak ada kunjungan di tab ini.</p>
               {activeTab === "mendatang" && (

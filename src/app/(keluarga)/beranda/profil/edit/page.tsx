@@ -220,8 +220,15 @@ export default function KeluargaEditProfilPage() {
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
                         const file = e.target.files[0];
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                          showToast("Format file salah. Harus berupa JPG atau PNG.", "error");
+                          e.target.value = '';
+                          setForm({ ...form, foto_url: "" });
+                          setFotoFileName(null);
+                          return;
+                        }
                         if (file.size > 5 * 1024 * 1024) {
-                          showToast("Ukuran file foto profil tidak boleh lebih dari 5MB", "error");
+                          showToast("Ukuran file terlalu besar. Maksimal 5MB.", "error");
                           e.target.value = '';
                           setForm({ ...form, foto_url: "" });
                           setFotoFileName(null);

@@ -96,11 +96,42 @@ function HelperPhoto({ src, name }: { src: string | null; name: string }) {
   );
 }
 
-export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
+export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDetail }) {
+  const router = useRouter();
+  const [task, setTask] = React.useState(initialTask);
+  const [tipAmount, setTipAmount] = React.useState("");
+  const [isSubmittingTip, setIsSubmittingTip] = React.useState(false);
+
   const mapUrl = getMapUrl(task.lansia);
   const pendingServices = task.extraServices.filter((service) => service.status === "menunggu_persetujuan_keluarga");
   const decidedServices = task.extraServices.filter((service) => service.status !== "menunggu_persetujuan_keluarga");
   const helperName = task.helper ? getUserName(task.helper.users) : null;
+
+  const handleSubmitTip = async () => {
+    setIsSubmittingTip(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/tip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nominal: parseInt(tipAmount) })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal mengirim tip');
+      
+      // Update state locally
+      setTask((prev: typeof task) => ({ 
+        ...prev, 
+        harga_final: prev.harga_final + parseInt(tipAmount),
+        extraServices: [...prev.extraServices, { id: 'tip-' + Date.now(), nama_layanan: 'Tip untuk Helper', biaya: parseInt(tipAmount), status: 'disetujui' as const, created_at: new Date().toISOString() }]
+      }));
+      setTipAmount("");
+      alert("Tip berhasil diberikan!");
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsSubmittingTip(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 pb-24 sm:px-6 lg:px-8">
@@ -206,6 +237,33 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
                   <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total saat ini</span><span className="text-xl text-[#0D47A1]">Rp {Number(task.harga_final).toLocaleString("id-ID")}</span></div>
                 </div>
                 <p className="mt-4 text-xs leading-relaxed text-slate-500">Biaya aplikasi, pajak, dan status pembayaran ditampilkan setelah kontrak pembayaran mengembalikan nominal tersebut.</p>
+
+                {/* Tip Helper Section */}
+                {task.status === "selesai" && (
+                   <div className="mt-6 pt-6 border-t border-blue-100">
+                      <p className="text-sm font-bold text-slate-900 mb-3">Berikan Tip untuk Helper (Opsional)</p>
+                      <div className="flex gap-2">
+                         <div className="relative flex-1">
+                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
+                           <input 
+                             type="number" 
+                             placeholder="0"
+                             className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20"
+                             value={tipAmount}
+                             onChange={(e) => setTipAmount(e.target.value)}
+                             disabled={isSubmittingTip}
+                           />
+                         </div>
+                         <Button 
+                           onClick={handleSubmitTip}
+                           disabled={isSubmittingTip || !tipAmount || parseInt(tipAmount) <= 0}
+                           className="rounded-xl bg-[#0D47A1] hover:bg-blue-800 px-6"
+                         >
+                           {isSubmittingTip ? '...' : 'Kirim Tip'}
+                         </Button>
+                      </div>
+                   </div>
+                )}
               </section>
             </div>
 

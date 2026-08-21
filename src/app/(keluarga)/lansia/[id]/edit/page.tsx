@@ -119,13 +119,60 @@ export default function LansiaEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      let finalFotoUrl = form.foto_url;
+      const file = fotoInputRef.current?.files?.[0];
+      
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/lansia/${id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('dokumen')
+          .upload(fileName, file, { upsert: true });
+          
+        if (uploadError) throw uploadError;
+        
+        const { data: signedUrlData } = await supabase.storage
+          .from('dokumen')
+          .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
+          
+        if (signedUrlData) {
+           finalFotoUrl = signedUrlData.signedUrl;
+        }
+      }
+
+      // Format alamat lengkap
+      let fullAlamat = form.alamat;
+      if (form.rt || form.rw) {
+         fullAlamat += `, RT ${form.rt}/RW ${form.rw}`;
+      }
+      if (form.region.kelurahan) {
+         fullAlamat += `, ${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi}`;
+      }
+
+      const { error: updateError } = await supabase
+        .from('lansia_profiles')
+        .update({
+          nama: form.nama,
+          alamat: fullAlamat,
+          catatan_kondisi: form.kondisi_medis,
+          foto_url: finalFotoUrl,
+          lat: form.domisili_lat,
+          lng: form.domisili_lng,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('keluarga_id', user.id);
+
+      if (updateError) throw updateError;
       
       showToast("Profil lansia berhasil diperbarui!", "success");
       setTimeout(() => router.push(`/lansia/${id}`), 2000);
-    } catch {
-      showToast("Terjadi kesalahan koneksi.");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Terjadi kesalahan koneksi.");
       setLoading(false);
     }
   };
