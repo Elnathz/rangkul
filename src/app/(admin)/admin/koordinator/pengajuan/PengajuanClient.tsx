@@ -6,14 +6,25 @@ import { Button } from '@/components/ui/button';
 import { FileCheck, ExternalLink, UserCheck, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog';
 
-export default function PengajuanClient({ queue }: { queue: any[] }) {
+type KoordinatorSubmission = {
+  id: string;
+  tingkat: string;
+  wilayah: string;
+  dokumen_url: string | null;
+  ktp_url: string | null;
+  users?: { full_name: string | null } | null;
+};
+
+export default function PengajuanClient({ queue }: { queue: KoordinatorSubmission[] }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   
   // Reject dialog state
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [alasan, setAlasan] = useState('');
+  const [feedback, setFeedback] = useState<{ title: string; description: string } | null>(null);
 
   const handleApprove = async (id: string) => {
     try {
@@ -26,7 +37,10 @@ export default function PengajuanClient({ queue }: { queue: any[] }) {
       if (!res.ok) throw new Error('Gagal menyetujui');
       router.refresh();
     } catch (error) {
-      alert('Gagal menyetujui pengajuan');
+      setFeedback({
+        title: 'Pengajuan belum disetujui',
+        description: error instanceof Error ? error.message : 'Terjadi kendala saat menyetujui pengajuan. Coba lagi.',
+      });
     } finally {
       setLoadingId(null);
     }
@@ -46,7 +60,10 @@ export default function PengajuanClient({ queue }: { queue: any[] }) {
       setAlasan('');
       router.refresh();
     } catch (error) {
-      alert('Gagal menolak pengajuan');
+      setFeedback({
+        title: 'Pengajuan belum ditolak',
+        description: error instanceof Error ? error.message : 'Terjadi kendala saat menolak pengajuan. Coba lagi.',
+      });
     } finally {
       setLoadingId(null);
     }
@@ -54,8 +71,15 @@ export default function PengajuanClient({ queue }: { queue: any[] }) {
 
   return (
     <>
+      <FeedbackDialog
+        open={!!feedback}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        title={feedback?.title ?? ''}
+        description={feedback?.description ?? ''}
+        tone="danger"
+      />
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-        {queue.map((koord: any) => (
+        {queue.map((koord) => (
           <div key={koord.id} className="p-6 hover:bg-gray-50/50 transition-colors">
             <div className="flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
               <div className="flex gap-4 flex-1">
