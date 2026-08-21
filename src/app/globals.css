@@ -140,6 +140,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  button, a {
+    @apply select-none;
+  }
   html {
     @apply font-sans;
     scroll-behavior: smooth;
