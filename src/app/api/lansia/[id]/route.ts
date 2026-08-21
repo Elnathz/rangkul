@@ -79,7 +79,7 @@ export async function PUT(
 
     const { data: updated, error: updateError } = await supabase
       .from('lansia_profiles')
-      .update({ ...validation.data, updated_at: new Date().toISOString() })
+      .update({ ...validation.data, updated_at: new Date().toISOString() } as any)
       .eq('id', id)
       .eq('keluarga_id', user.id)
       .select('*')
