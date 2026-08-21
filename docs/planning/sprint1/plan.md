@@ -1,5 +1,11 @@
 # Sprint 1: Autentikasi & Profil Pengguna — Implementation Plan
 
+## Progress Audit 22 Agustus 2026
+
+- Verifikasi Helper, approval Koordinator/Admin, radius layanan, fallback wilayah, foto profil, upload privat, dan direktori Helper sudah tersedia.
+- Status Helper demo diarahkan ke Koordinator `mbahburgas` dan akun Helper `masburgas` melalui migration idempoten.
+- Gap tersisa: seed belum memenuhi seluruh matriks jumlah akun dan status pada TDD Â§19, sehingga migration demo Sprint 2 masih perlu diperluas sebelum checklist Sprint 1 dapat dianggap penuh.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Menambahkan update profil pengguna (PUT `/api/users/me`), upload dokumen ke Supabase Storage (POST `/api/storage/upload`), dan RLS policies lengkap untuk tabel profil + storage bucket private.

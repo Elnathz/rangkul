@@ -1,5 +1,13 @@
 # Sprint 0 Foundation Implementation Plan
 
+## Progress Audit 22 Agustus 2026
+
+- Fondasi Next.js, route groups, autentikasi, Supabase, storage privat, RLS dasar, response helper, dan middleware sudah tersedia.
+- Quality gate CI sudah menjalankan lint, typecheck, test, dan build.
+- Kontrak API sekarang dipusatkan di `docs/api-contract.md`.
+- Seed remote idempoten memakai migration demo, dengan UUID yang dibuat database.
+- Gap tersisa: pengujian RLS dua akun secara remote dan prosedur reset lokal membutuhkan Docker atau akses database yang aktif.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete the backend foundation by refactoring existing auth routes to standardized API response format, adding missing Zod schemas, username support with new validation rules, comprehensive API contract, role-based middleware, storage bucket policies, RLS policies, and GitHub Actions integration while passing all quality gates.
