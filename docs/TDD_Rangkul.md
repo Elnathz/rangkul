@@ -690,7 +690,7 @@ flowchart TD
 | radius_layanan_km               | numeric                                 | Jangkauan pengambilan tugas (§3.3.1)                                      |
 | koordinator_id                  | uuid, FK koordinator_profiles, nullable |                                                                            |
 | verified_by_admin_fallback      | boolean, default false                  | Wilayah tanpa Koordinator aktif (§3.3.1)                                  |
-| status                          | enum                                    | `pending_verification` / `verified` / `under_review` / `suspended` |
+| status                          | enum                                    | `pending_verification` / `verified` / `under_review` / `rejected` / `suspended` |
 | tingkat_kepercayaan             | enum, default`probation`              | `probation` / `terpercaya` (§3.3.3)                                   |
 | tugas_selesai_berturut          | int, default 0                          | Reset ke 0 jika kena laporan; naik`terpercaya` di angka 5                |
 | suspend_reason                  | text, nullable                          |                                                                            |
@@ -934,6 +934,7 @@ PATCH  /api/helpers/:id/status    (koordinator: verify/reject/suspend)
 POST   /api/koordinator/apply         (self-register + dokumen, §3.3)
 GET    /api/koordinator/commissions
 GET    /api/koordinator/pengawasan    (khusus tingkat=rw, filter per RT/keluarga, §3.3.4)
+GET    /api/koordinator/helpers        (Helper verified di wilayah Koordinator + snapshot tugas aktif)
 ```
 
 ### Kategori Jasa
@@ -1162,6 +1163,7 @@ flowchart LR
 | `/koordinator/dashboard`   | Ringkasan Helper aktif, pengajuan baru, notifikasi transaksi pasif wilayah.                      |
 | `/koordinator/pengajuan`   | Antrean verifikasi Helper baru domisilinya.                                                      |
 | `/koordinator/persetujuan` | Antrean booking yang butuh approval eksplisit (§3.3.2).                                         |
+| `/koordinator/helper`      | Directory Helper verified di wilayah Koordinator dengan status aktivitas tugas.                  |
 | `/koordinator/helper/{id}` | Detail profil & rekam jejak Helper.                                                              |
 | `/koordinator/laporan`     | Antrean laporan/komplain, termasuk Helper`under_review` (2 laporan).                           |
 | `/koordinator/darurat`     | Alert SOS aktif.                                                                                 |
