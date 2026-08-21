@@ -13,6 +13,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 
+type RecentTask = {
+  id: string;
+  jadwal_waktu: string;
+  status: string;
+  lansia_profiles: { nama: string; alamat: string } | null;
+  service_categories: { nama: string } | null;
+};
+
 export default async function HelperDashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -49,7 +57,7 @@ export default async function HelperDashboardPage() {
   }
 
   // Get recent tasks
-  let recentTasks: Record<string, unknown>[] = [];
+  let recentTasks: RecentTask[] = [];
   if (profile) {
     const { data: tasksData } = await supabase
       .from('tasks')
@@ -65,7 +73,7 @@ export default async function HelperDashboardPage() {
       .order('jadwal_waktu', { ascending: true })
       .limit(3);
       
-    recentTasks = tasksData || [];
+    recentTasks = (tasksData || []) as RecentTask[];
   }
 
   // Format IDR helper
@@ -176,22 +184,23 @@ export default async function HelperDashboardPage() {
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
               {recentTasks.length > 0 ? recentTasks.map((task) => {
-                const isActive = ['dikonfirmasi', 'dikerjakan'].includes(task.status as string);
-                const title = (task.service_categories as any)?.nama || 'Tugas Rangkul';
-                const lansiaName = (task.lansia_profiles as any)?.nama || 'Anonim';
-                const location = (task.lansia_profiles as any)?.alamat || '-';
+                const isActive = ['dikonfirmasi', 'dikerjakan'].includes(task.status);
+                const needsConfirmation = task.status === 'diajukan';
+                const title = task.service_categories?.nama || 'Tugas Rangkul';
+                const lansiaName = task.lansia_profiles?.nama || 'Anonim';
+                const location = task.lansia_profiles?.alamat || '-';
                 
                 return (
-                  <div key={task.id as string} className="p-5 hover:bg-gray-50/50 transition-colors">
+                  <div key={task.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
-                            isActive ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                            isActive ? 'bg-blue-100 text-blue-700' : needsConfirmation ? 'bg-amber-100 text-amber-800' : 'bg-orange-100 text-orange-700'
                           }`}>
-                            {isActive ? 'AKTIF' : 'MENUNGGU'}
+                            {isActive ? 'AKTIF' : needsConfirmation ? 'MENUNGGU KONFIRMASI ANDA' : 'MENUNGGU'}
                           </span>
-                          <span className="text-sm font-semibold text-gray-400">ID: {(task.id as string).split('-')[0]}...</span>
+                          <span className="text-sm font-semibold text-gray-400">ID: {task.id.split('-')[0]}...</span>
                         </div>
                         <h3 className="text-base font-bold text-gray-900 mb-1">{title}</h3>
                         <p className="text-sm font-medium text-gray-600 mb-3">Klien: {lansiaName}</p>
@@ -210,7 +219,9 @@ export default async function HelperDashboardPage() {
                       
                       <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
                         <Button asChild variant="outline" size="sm" className="rounded-lg font-semibold w-full sm:w-auto h-9">
-                          <Link href={`/helper/pekerjaan/${task.id}`}>Lihat Detail</Link>
+                          <Link href={`/tugas/${task.id}`}>
+                            {needsConfirmation ? 'Konfirmasi tugas' : 'Lihat Detail'}
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -261,7 +272,7 @@ export default async function HelperDashboardPage() {
                 {rejectReason && (
                   <div className="bg-white/60 border border-red-100 rounded-xl p-4 mb-4 relative z-10">
                     <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-1">Alasan Penolakan:</p>
-                    <p className="text-sm text-gray-800 italic">"{rejectReason}"</p>
+                    <p className="text-sm text-gray-800 italic">&quot;{rejectReason}&quot;</p>
                     
                     {rejectPhoto && (
                       <div className="mt-3">

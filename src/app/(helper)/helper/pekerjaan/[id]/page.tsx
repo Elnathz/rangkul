@@ -1,88 +1,155 @@
-"use client";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Clock, HeartHandshake, Map, MapPin, ShieldAlert } from "lucide-react";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, MapPin, Clock, ShieldAlert } from 'lucide-react';
+import { AcceptTaskButton } from "@/components/helper/AcceptTaskButton";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 
-export default function DetailPekerjaanPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+type PageProps = { params: Promise<{ id: string }> };
 
-  const handleTerimaPekerjaan = () => {
-    setLoading(true);
-    // Simulate API request to accept the job
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/helper/dashboard");
-    }, 800);
-  };
+function formatTaskDate(value: string) {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(value));
+}
+
+export default async function DetailPekerjaanPage({ params }: PageProps) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: helperProfile } = await supabase
+    .from("helper_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const { data: task, error } = await supabase
+    .from("tasks")
+    .select(`
+      id,
+      status,
+      helper_id,
+      jadwal_waktu,
+      harga_dasar,
+      harga_final,
+      catatan,
+      lansia_profiles!inner ( nama, alamat, catatan_kondisi ),
+      service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, tingkat, is_high_risk )
+    `)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !task) notFound();
+
+  const lansia = Array.isArray(task.lansia_profiles) ? task.lansia_profiles[0] : task.lansia_profiles;
+  const category = Array.isArray(task.service_categories) ? task.service_categories[0] : task.service_categories;
+
+  if (!lansia || !category) notFound();
+
+  const isAvailable = task.status === "diajukan" && (
+    task.helper_id === null || task.helper_id === helperProfile?.id
+  );
+  const statusLabel = task.status === "diajukan"
+    ? "DIAJUKAN"
+    : task.status === "menunggu_persetujuan_koordinator"
+      ? "MENUNGGU APPROVAL KOORDINATOR"
+      : task.status.toUpperCase().replaceAll("_", " ");
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6 p-4 pb-24 font-sans sm:p-6 lg:p-8">
       <Button variant="ghost" size="sm" asChild className="rounded-full hover:bg-gray-100">
-        <Link href="/helper/dashboard">
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          Kembali ke Dashboard
+        <Link href="/helper/tugas/baru">
+          <ArrowLeft className="mr-1 h-5 w-5" />
+          Kembali ke daftar tugas
         </Link>
       </Button>
 
-      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-6">
-        <div className="border-b border-gray-100 pb-6 flex items-start gap-5">
-           {/* eslint-disable-next-line @next/next/no-img-element */}
-           <img src="https://i.pravatar.cc/150?img=11" alt="Foto Lansia" className="w-28 h-28 rounded-2xl object-cover border-2 border-gray-100 shadow-sm" />
-           <div>
-             <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 font-bold text-xs rounded-full mb-3 tracking-wider">STATUS: DIAJUKAN</span>
-             <h1 className="text-2xl font-bold text-gray-900 mb-1">Pendampingan Opa Budi Hartanto</h1>
-             <p className="text-gray-500">ID Reservasi: BKG-1029</p>
-           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="font-bold text-gray-900 border-b border-gray-50 pb-2">Jadwal Tugas</h3>
-             <div className="flex items-start gap-3">
-               <Clock className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-               <div>
-                  <p className="font-semibold text-sm text-gray-900">Besok, 12 Agustus 2026</p>
-                  <p className="text-sm text-gray-500">08:00 - 12:00 WIB (4 Jam)</p>
-               </div>
-             </div>
-             
-             <div className="flex items-start gap-3">
-               <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-               <div>
-                  <p className="font-semibold text-sm text-gray-900">Kecamatan Beji</p>
-                  <p className="text-sm text-gray-500">Alamat lengkap akan terbuka setelah rincian DIKONFIRMASI.</p>
-               </div>
-             </div>
+      <div className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex items-start gap-5 border-b border-gray-100 pb-6">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-sm">
+            <HeartHandshake className="h-10 w-10" aria-hidden="true" />
           </div>
-          
-          <div className="space-y-4">
-             <h3 className="font-bold text-gray-900 border-b border-gray-50 pb-2">Catatan Kondisi Lansia</h3>
-             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-               <li>Mobilitas terbatas, menggunakan tongkat.</li>
-               <li>Hipertensi ringan (jangan aktivitas berat).</li>
-             </ul>
+          <div className="min-w-0">
+            <span className="mb-3 inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold tracking-wider text-[#0D47A1]">
+              STATUS: {statusLabel}
+            </span>
+            <h1 className="text-2xl font-bold text-gray-900">{category.nama}</h1>
+            <p className="mt-1 break-all text-sm text-gray-500">ID Tugas: {task.id}</p>
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex gap-3">
-           <ShieldAlert className="w-6 h-6 text-blue-600 shrink-0" />
-           <div className="text-sm text-blue-900">
-             <p className="font-bold mb-1">Persetujuan Transaksi (State Machine)</p>
-             <p>Dengan menekan tombol di bawah, status ini akan berubah mendadi <span className="font-medium bg-white px-1 rounded">DIKONFIRMASI</span> karena batas radius terpenuhi. Tugas mengikat!</p>
-           </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h2 className="border-b border-gray-50 pb-2 font-bold text-gray-900">Jadwal Tugas</h2>
+            <div className="flex items-start gap-3">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+              <div>
+                <p className="font-semibold text-sm text-gray-900">{formatTaskDate(task.jadwal_waktu)}</p>
+                <p className="text-sm text-gray-500">Estimasi {category.estimasi_durasi_menit} menit</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+              <div>
+                <p className="font-semibold text-sm text-gray-900">{lansia.nama}</p>
+                <p className="text-sm leading-relaxed text-gray-500">{lansia.alamat}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="border-b border-gray-50 pb-2 font-bold text-gray-900">Rincian Layanan</h2>
+            <p className="text-sm leading-relaxed text-gray-600">{category.deskripsi}</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-700">
+                Tingkat {category.tingkat}
+              </span>
+              {category.is_high_risk && (
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                  Perlu approval Koordinator
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <Button 
-          onClick={handleTerimaPekerjaan} 
-          disabled={loading}
-          className="w-full h-12 bg-brand-gradient hover:opacity-90 font-bold text-white rounded-xl shadow-md"
-        >
-          {loading ? "Memproses Transaksi..." : "Terima & Konfirmasi Pekerjaan"}
-        </Button>
+        <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <Map className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" aria-hidden="true" />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Lokasi tugas</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-700">{lansia.alamat}</p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-blue-900">
+          <div className="flex gap-3">
+            <ShieldAlert className="h-6 w-6 shrink-0 text-blue-600" aria-hidden="true" />
+            <div className="space-y-2 text-sm">
+              <p className="font-bold">Catatan dari keluarga</p>
+              <p>{task.catatan || "Tidak ada catatan tambahan dari keluarga."}</p>
+              <p className="border-t border-blue-200 pt-2">Kondisi lansia: {lansia.catatan_kondisi || "Tidak ada catatan kondisi khusus."}</p>
+            </div>
+          </div>
+        </div>
+
+        {isAvailable ? (
+          <AcceptTaskButton taskId={task.id} />
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm font-medium text-slate-600">
+            Tugas ini sudah tidak tersedia untuk diterima.
+          </div>
+        )}
       </div>
     </div>
   );

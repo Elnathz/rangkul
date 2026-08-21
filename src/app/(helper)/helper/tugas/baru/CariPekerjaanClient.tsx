@@ -1,27 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from 'next/link';
+import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Search, MapPin, Filter, ArrowUpDown, Clock, ChevronRight, AlertCircle, X, ChevronLeft, Map, ExternalLink } from "lucide-react";
+import { Search, MapPin, Filter, ArrowUpDown, Clock, ChevronRight, AlertCircle, X, Map, ExternalLink, HeartHandshake, ShieldCheck } from "lucide-react";
 
-type JobData = {
+export type JobData = {
   id: string;
   jadwal_waktu: string;
   harga_dasar: number;
+  harga_final: number;
   lansia_nama: string;
   lansia_alamat: string;
+  catatan_tugas: string;
   catatan_kondisi: string;
   kategori_nama: string;
+  kategori_deskripsi: string;
   kategori_tingkat: string;
-  distanceKm: number | null;
+  estimasi_durasi_menit: number;
+  is_high_risk: boolean;
+  distanceKm: number;
   distanceStr: string;
-  foto_url?: string;
 };
 
-export default function CariPekerjaanClient({ initialJobs, radius, isVerified, helperStatus }: { initialJobs: JobData[], radius: number, isVerified: boolean, helperStatus?: string }) {
+export default function CariPekerjaanClient({
+  initialJobs,
+  radius,
+  isVerified,
+  helperStatus,
+  loadError,
+}: {
+  initialJobs: JobData[];
+  radius: number;
+  isVerified: boolean;
+  helperStatus?: string;
+  loadError: string;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
@@ -33,13 +48,10 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
   // Warning Modal state based on helperStatus is no longer shown on mount
   const [warningAction, setWarningAction] = useState<"unverified" | "pending" | "rejected" | null>(null);
 
-  useEffect(() => {
-    // Do not show warning automatically on mount
-  }, [helperStatus]);
-
   const filteredJobs = initialJobs.filter((job) => {
     const matchSearch = job.lansia_nama.toLowerCase().includes(search.toLowerCase()) || 
-                        job.kategori_nama.toLowerCase().includes(search.toLowerCase());
+                        job.kategori_nama.toLowerCase().includes(search.toLowerCase()) ||
+                        job.lansia_alamat.toLowerCase().includes(search.toLowerCase());
     
     let matchCategory = true;
     if (category !== "Semua") {
@@ -81,7 +93,7 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
 
   const handleApplyClick = () => {
     if (helperStatus === "verified" && selectedJob) {
-      router.push(`/helper/pekerjaan/${selectedJob.id}`);
+      router.push(`/tugas/${selectedJob.id}`);
     } else {
       if (!helperStatus || helperStatus === "unregistered") {
         setWarningAction("unverified");
@@ -97,8 +109,22 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
     <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Cari Pekerjaan</h1>
-        <p className="text-gray-500 mt-1">Menampilkan pekerjaan dalam radius &lt; {radius} KM dari domisili Anda.</p>
-      </div>
+            <p className="text-gray-500 mt-1">Menampilkan booking keluarga dalam radius {radius > 0 ? `maksimal ${radius} KM` : "yang tersedia"} dari domisili Anda.</p>
+          </div>
+
+          {!isVerified && (
+            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
+              <p>Profil Helper harus berstatus verified dan memiliki koordinat domisili sebelum dapat menerima tugas.</p>
+            </div>
+          )}
+
+          {loadError && (
+            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+              <p>{loadError}</p>
+            </div>
+          )}
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-8">
         {/* Sidebar Filters */}
@@ -167,8 +193,7 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
             {filteredJobs.map((job) => {
               const tags = [job.kategori_nama];
               if (job.kategori_tingkat) tags.push(`Tingkat ${job.kategori_tingkat.charAt(0).toUpperCase() + job.kategori_tingkat.slice(1)}`);
-              
-              const avatar = job.foto_url || `https://i.pravatar.cc/300?u=${job.id}`;
+              if (job.is_high_risk) tags.push("Approval Koordinator");
 
               return (
                 <div 
@@ -176,8 +201,17 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
                   onClick={() => setSelectedJob(job)}
                   className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-blue-900/5 hover:border-blue-200 transition-all group flex flex-col cursor-pointer"
                 >
-                  <div className="relative h-44 w-full bg-slate-100 overflow-hidden shrink-0">
-                    <img src={avatar} alt={job.lansia_nama} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <div className="relative h-44 w-full overflow-hidden bg-brand-gradient shrink-0">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.24),transparent_35%)]" aria-hidden="true" />
+                    <div className="relative flex h-full flex-col justify-between p-5 text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/30">
+                        <HeartHandshake className="h-7 w-7" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100">Booking keluarga</p>
+                        <p className="mt-1 text-sm font-semibold text-white/90">{job.kategori_deskripsi}</p>
+                      </div>
+                    </div>
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-sm border border-white flex items-center gap-1.5">
                       <MapPin size={12} className="text-[#0D47A1]" />
                       <span className="font-bold text-[#0D47A1] text-[11px] uppercase tracking-wider">
@@ -260,11 +294,10 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
             </div>
             
             <div className="overflow-y-auto bg-slate-50 flex-1 relative">
-               {/* Hero Detail Image */}
-               <div className="w-full h-48 bg-slate-200 shrink-0 relative">
-                  <img src={selectedJob.foto_url || `https://i.pravatar.cc/300?u=${selectedJob.id}`} className="w-full h-full object-cover" alt="Profile" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+               <div className="relative h-48 w-full shrink-0 overflow-hidden bg-brand-gradient">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.24),transparent_35%)]" aria-hidden="true" />
                   <div className="absolute bottom-4 left-5 right-5 text-white">
+                     <HeartHandshake className="mb-3 h-8 w-8" aria-hidden="true" />
                      <h2 className="text-2xl font-bold font-display">{selectedJob.lansia_nama}</h2>
                      <div className="flex items-center gap-1.5 mt-1 text-sm font-medium text-white/90">
                         <MapPin size={16} />
@@ -275,9 +308,10 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
 
                <div className="p-6 space-y-6">
                  {/* Kategori Card */}
-                 <div className="bg-white rounded-2xl border border-blue-100 p-4 border-l-4 border-l-blue-500 shadow-sm">
+                 <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
                     <span className="text-xs font-bold uppercase text-slate-400 mb-1 block">Rincian Tugas</span>
                     <p className="font-bold text-slate-800">{selectedJob.kategori_nama}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{selectedJob.kategori_deskripsi}</p>
                     <span className="inline-block mt-2 text-[11px] font-bold uppercase tracking-wider px-2 py-1 bg-slate-100 text-slate-600 rounded">
                        Tingkat {selectedJob.kategori_tingkat}
                     </span>
@@ -289,7 +323,7 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
                       <span className="text-xs font-bold uppercase text-slate-400 mb-1.5 block">Jadwal Penugasan</span>
                       <div className="flex items-center gap-2 font-semibold text-slate-800">
                         <Clock size={16} className="text-blue-500" />
-                        {formatTaskDate(selectedJob.jadwal_waktu)}
+                        {formatTaskDate(selectedJob.jadwal_waktu)} · {selectedJob.estimasi_durasi_menit} menit
                       </div>
                     </div>
                     <div className="w-full">
@@ -316,6 +350,11 @@ export default function CariPekerjaanClient({ initialJobs, radius, isVerified, h
                         </div>
                       </div>
                     </div>
+                 </div>
+
+                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <span className="text-xs font-bold uppercase text-slate-400 mb-1.5 block">Catatan dari keluarga</span>
+                    <p className="text-sm leading-relaxed text-slate-700">{selectedJob.catatan_tugas}</p>
                  </div>
 
                  {/* Catatan Area */}

@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, Loader2, UploadCloud, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, Loader2, UploadCloud, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function HelperVerificationButtons({ helperId }: { helperId: string }) {
   const router = useRouter();
   const [loadingApprove, setLoadingApprove] = useState(false);
   const [loadingReject, setLoadingReject] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [alasanPenolakan, setAlasanPenolakan] = useState("");
@@ -28,8 +30,6 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleApprove = async () => {
-    if (!confirm("Anda yakin ingin menyetujui Helper ini?")) return;
-    
     setLoadingApprove(true);
     setErrorMsg("");
     try {
@@ -44,8 +44,9 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
       
       router.refresh();
       router.push('/koordinator/antrean');
-    } catch (err: any) {
-      setErrorMsg(err.message);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Gagal menyetujui helper");
+      setIsApproveModalOpen(false);
     } finally {
       setLoadingApprove(false);
     }
@@ -55,9 +56,11 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        alert("Ukuran file maksimal 5MB");
+        setErrorMsg(`Lampiran ditolak: ${file.name}. Ukuran file maksimal 5MB.`);
+        e.target.value = "";
         return;
       }
+      setErrorMsg("");
       setFotoPenolakanFile(file);
       setFotoPenolakanUrl(URL.createObjectURL(file));
     }
@@ -65,7 +68,7 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
 
   const submitReject = async () => {
     if (alasanPenolakan.length < 5) {
-      alert("Alasan penolakan minimal 5 karakter");
+      setErrorMsg("Alasan penolakan minimal 5 karakter.");
       return;
     }
     
@@ -108,8 +111,8 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
       setIsRejectModalOpen(false);
       router.refresh();
       router.push('/koordinator/antrean');
-    } catch (err: any) {
-      setErrorMsg(err.message);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Gagal menolak helper");
     } finally {
       setLoadingReject(false);
     }
@@ -127,7 +130,10 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
           <Button 
             variant="outline" 
             className="flex-1 h-12 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 bg-white shadow-sm font-bold"
-            onClick={() => setIsRejectModalOpen(true)}
+            onClick={() => {
+              setErrorMsg("");
+              setIsRejectModalOpen(true);
+            }}
             disabled={loadingApprove || loadingReject}
           >
             {loadingReject ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <XCircle className="w-5 h-5 mr-2" />} 
@@ -135,7 +141,10 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
           </Button>
           <Button 
             className="flex-1 h-12 bg-[#0D47A1] text-white hover:bg-blue-800 shadow-md font-bold"
-            onClick={handleApprove}
+            onClick={() => {
+              setErrorMsg("");
+              setIsApproveModalOpen(true);
+            }}
             disabled={loadingApprove || loadingReject}
           >
             {loadingApprove ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CheckCircle2 className="w-5 h-5 mr-2" />} 
@@ -143,6 +152,18 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={isApproveModalOpen}
+        onOpenChange={setIsApproveModalOpen}
+        title="Setujui Helper?"
+        description="Helper ini akan mendapatkan akses untuk mengambil tugas setelah verifikasi disetujui. Pastikan dokumen identitas dan foto sudah sesuai."
+        confirmLabel="Ya, Setujui Helper"
+        tone="primary"
+        icon={<CheckCircle2 className="h-6 w-6" aria-hidden="true" />}
+        loading={loadingApprove}
+        onConfirm={handleApprove}
+      />
 
       <Dialog open={isRejectModalOpen} onOpenChange={(open) => !loadingReject && setIsRejectModalOpen(open)}>
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
@@ -166,6 +187,12 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
             </DialogHeader>
             
             <div className="space-y-5">
+              {errorMsg && (
+                <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
               <div className="space-y-2.5">
                 <Label htmlFor="alasan" className="text-sm font-bold text-gray-700 flex items-center">
                   Alasan Penolakan <span className="text-red-500 ml-1 text-lg leading-none">*</span>

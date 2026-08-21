@@ -60,7 +60,8 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error("Storage Upload Error:", uploadError);
-      return createApiError('upload_failed', typeof uploadError === 'object' ? JSON.stringify(uploadError) : uploadError.message, 500);
+      const uploadMessage = (uploadError as { message?: string }).message || 'Upload file gagal';
+      return createApiError('upload_failed', uploadMessage, 500);
     }
 
     const { data: signedData, error: signedError } = await adminSupabase.storage

@@ -1,118 +1,150 @@
-import React from 'react';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import CariPekerjaanClient from './CariPekerjaanClient';
+import React from "react";
+import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
+import CariPekerjaanClient, { type JobData } from "./CariPekerjaanClient";
+
+type RawJob = {
+  id: string;
+  jadwal_waktu: string;
+  harga_dasar: number;
+  harga_final: number;
+  catatan: string | null;
+  lansia_profiles: {
+    id: string;
+    nama: string;
+    alamat: string;
+    lat: number | null;
+    lng: number | null;
+    catatan_kondisi: string | null;
+  } | null;
+  service_categories: {
+    id: string;
+    nama: string;
+    deskripsi: string;
+    estimasi_durasi_menit: number;
+    tingkat: string;
+    is_high_risk: boolean;
+  } | null;
+};
+
+function getDistanceKm(
+  originLat: number,
+  originLng: number,
+  targetLat: number,
+  targetLng: number,
+) {
+  const radiusKm = 6371;
+  const latitudeDelta = (targetLat - originLat) * (Math.PI / 180);
+  const longitudeDelta = (targetLng - originLng) * (Math.PI / 180);
+  const originLatitude = originLat * (Math.PI / 180);
+  const targetLatitude = targetLat * (Math.PI / 180);
+  const haversine =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(originLatitude) * Math.cos(targetLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+
+  return radiusKm * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+}
+
+function isCompleteJob(job: RawJob): job is RawJob & {
+  lansia_profiles: NonNullable<RawJob["lansia_profiles"]>;
+  service_categories: NonNullable<RawJob["service_categories"]>;
+} {
+  return Boolean(
+    job.jadwal_waktu &&
+      job.lansia_profiles?.id &&
+      job.lansia_profiles.nama &&
+      job.lansia_profiles.alamat &&
+      Number.isFinite(Number(job.lansia_profiles.lat)) &&
+      Number.isFinite(Number(job.lansia_profiles.lng)) &&
+      job.service_categories?.id &&
+      job.service_categories.nama &&
+      job.service_categories.deskripsi &&
+      job.service_categories.estimasi_durasi_menit > 0 &&
+      job.service_categories.tingkat,
+  );
+}
 
 export default async function CariPekerjaanPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
+  if (!user) redirect("/login");
 
-  // Get helper profile to calculate distance if needed (and to ensure they are verified)
   const { data: profile } = await supabase
-    .from('helper_profiles')
-    .select('id, status, domisili_lat, domisili_lng, radius_layanan_km')
-    .eq('user_id', user.id)
-    .single();
+    .from("helper_profiles")
+    .select("id, status, domisili_lat, domisili_lng, radius_layanan_km")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  if (profile?.status !== 'verified') {
-    // If not verified, they shouldn't take jobs, but we still render the page
-    // Maybe show a warning, or just an empty list. We'll show the list but they can't apply later.
-  }
+  const radius = Number(profile?.radius_layanan_km);
+  const originLat = Number(profile?.domisili_lat);
+  const originLng = Number(profile?.domisili_lng);
+  const canBrowse = profile?.status === "verified" && Number.isFinite(radius) && radius > 0;
 
-  // Fetch available jobs (status = 'diajukan', helper_id is null)
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select(`
-      id,
-      jadwal_waktu,
-      harga_dasar,
-      lansia_profiles ( nama, alamat, lat, lng, catatan_kondisi ),
-      service_categories ( nama, tingkat )
-    `)
-    .eq('status', 'diajukan')
-    .is('helper_id', null)
-    .order('created_at', { ascending: false });
+  let jobs: JobData[] = [];
+  let loadError = "";
 
-  let jobs = tasks || [];
+  if (canBrowse && Number.isFinite(originLat) && Number.isFinite(originLng)) {
+    const { data: taskRows, error: taskError } = await supabase
+      .from("tasks")
+      .select(`
+        id,
+        jadwal_waktu,
+        harga_dasar,
+        harga_final,
+        catatan,
+        lansia_profiles!inner ( id, nama, alamat, lat, lng, catatan_kondisi ),
+        service_categories!inner ( id, nama, deskripsi, estimasi_durasi_menit, tingkat, is_high_risk )
+      `)
+      .eq("status", "diajukan")
+      .is("helper_id", null)
+      .gt("expires_at", new Date().toISOString())
+      .gte("jadwal_waktu", new Date().toISOString())
+      .order("created_at", { ascending: false });
 
-  if (jobs.length === 0) {
-    // Inject mock data if DB is empty for Sprint 2 testing
-    const { MOCK_TASKS } = require('@/lib/mock/tasks');
-    jobs = MOCK_TASKS.filter((t: any) => t.status === 'diajukan').map((t: any) => ({
-      id: t.id,
-      jadwal_waktu: t.jadwal_waktu,
-      harga_dasar: t.harga_dasar,
-      lansia_profiles: {
-        nama: t.lansia.nama,
-        alamat: t.lansia.alamat,
-        lat: t.lansia.lat,
-        lng: t.lansia.lng,
-        catatan_kondisi: t.lansia.catatan_kondisi,
-      },
-      service_categories: {
-        nama: t.service_category.nama,
-        tingkat: 'ringan' // default for mock
-      },
-      _isMock: true
-    }));
-  }
+    if (taskError) {
+      loadError = "Daftar tugas belum bisa dimuat. Coba refresh setelah koneksi database siap.";
+    } else {
+      jobs = (taskRows as unknown as RawJob[])
+        .filter(isCompleteJob)
+        .map((job) => {
+          const distanceKm = getDistanceKm(
+            originLat,
+            originLng,
+            Number(job.lansia_profiles.lat),
+            Number(job.lansia_profiles.lng),
+          );
 
-  // Haversine distance function (simplified)
-  function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);  
-    const dLon = (lon2 - lon1) * (Math.PI / 180); 
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-      Math.sin(dLon / 2) * Math.sin(dLon / 2); 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
-    const d = R * c; 
-    return d.toFixed(1);
-  }
-
-  // Map to JobData format for Client Component
-  const formattedJobs = jobs.map((job: any) => {
-    const lansia = job.lansia_profiles;
-    const category = job.service_categories;
-    
-    let distanceKm: number | null = null;
-    let distanceStr = '? km';
-    
-    if (job._isMock) {
-      // Force mock jobs to be within radius so they always show up for testing
-      distanceKm = 0.5;
-      distanceStr = "0.5 km";
-    } else if (profile?.domisili_lat && profile?.domisili_lng && lansia?.lat && lansia?.lng) {
-      distanceKm = parseFloat(getDistance(profile.domisili_lat, profile.domisili_lng, lansia.lat, lansia.lng) || '0');
-      if (distanceKm !== null) distanceStr = `${distanceKm} km`;
+          return {
+            id: job.id,
+            jadwal_waktu: job.jadwal_waktu,
+            harga_dasar: Number(job.harga_dasar),
+            harga_final: Number(job.harga_final),
+            lansia_nama: job.lansia_profiles.nama,
+            lansia_alamat: job.lansia_profiles.alamat,
+            catatan_tugas: job.catatan || "Tidak ada catatan tambahan dari keluarga.",
+            catatan_kondisi: job.lansia_profiles.catatan_kondisi || "Tidak ada catatan kondisi khusus.",
+            kategori_nama: job.service_categories.nama,
+            kategori_deskripsi: job.service_categories.deskripsi,
+            kategori_tingkat: job.service_categories.tingkat,
+            estimasi_durasi_menit: job.service_categories.estimasi_durasi_menit,
+            is_high_risk: job.service_categories.is_high_risk,
+            distanceKm,
+            distanceStr: `${distanceKm.toFixed(1)} km`,
+          };
+        })
+        .filter((job) => job.distanceKm <= radius);
     }
-
-    return {
-      id: job.id,
-      jadwal_waktu: job.jadwal_waktu,
-      harga_dasar: job.harga_dasar,
-      lansia_nama: lansia?.nama || 'Lansia Anonim',
-      lansia_alamat: lansia?.alamat || '-',
-      catatan_kondisi: lansia?.catatan_kondisi || '',
-      kategori_nama: category?.nama || 'Tugas',
-      kategori_tingkat: category?.tingkat || 'ringan',
-      distanceKm,
-      distanceStr,
-    };
-  });
+  }
 
   return (
-    <CariPekerjaanClient 
-      initialJobs={formattedJobs} 
-      radius={Number(profile?.radius_layanan_km) || 1} 
-      isVerified={profile?.status === 'verified'}
+    <CariPekerjaanClient
+      initialJobs={jobs}
+      radius={Number.isFinite(radius) ? radius : 0}
+      isVerified={profile?.status === "verified"}
       helperStatus={profile?.status}
+      loadError={loadError}
     />
   );
 }

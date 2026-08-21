@@ -2,24 +2,43 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { ImagePreviewModal } from "@/components/ui/ImagePreviewModal";
 import { createClient } from "@/lib/supabase/client";
+import {
+  VERIFICATION_UPLOADS,
+  getUploadFailureMessage,
+} from "@/lib/verification/upload";
 import { Loader2, AlertCircle } from "lucide-react";
+
+type Coordinator = {
+  id: string;
+  wilayah: string;
+  tingkat: string | null;
+  ktp_url: string | null;
+  users: {
+    full_name: string;
+    phone: string | null;
+  } | null;
+};
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
-  const suratTugasInputRef = useRef<HTMLInputElement>(null);
   
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [rejectionPhoto, setRejectionPhoto] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    title: string;
+    alt: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   const [step, setStep] = useState(1);
@@ -37,8 +56,7 @@ export default function HelperVerifikasiPage() {
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
-  const [suratTugasFileName, setSuratTugasFileName] = useState<string | null>(null);
-  const [koordinators, setKoordinators] = useState<any[]>([]);
+  const [koordinators, setKoordinators] = useState<Coordinator[]>([]);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
@@ -91,7 +109,6 @@ export default function HelperVerifikasiPage() {
     radius_layanan_km: 1, // Minimum 1 KM
     ktp_url: "",
     foto_url: "",
-    surat_tugas_url: "",
     koordinator_id: "",
   });
 
@@ -111,7 +128,7 @@ export default function HelperVerifikasiPage() {
       if (user) {
         const { data: profile } = await supabase
           .from('helper_profiles')
-          .select('id, bio, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, koordinator_id, suspend_reason, status, wilayah_domisili')
+          .select('id, bio, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, foto_wajah_url, koordinator_id, suspend_reason, status, wilayah_domisili')
           .eq('user_id', user.id)
           .single();
 
@@ -128,7 +145,7 @@ export default function HelperVerifikasiPage() {
             }
           }
           // Format: "Kelurahan, Kecamatan, Kota, Provinsi | RT X/RW Y | Alamat"
-          let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+          const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
           let rt = "", rw = "", alamat = "";
           
           if (profile.wilayah_domisili) {
@@ -159,8 +176,7 @@ export default function HelperVerifikasiPage() {
             domisili_lng: profile.domisili_lng,
             radius_layanan_km: profile.radius_layanan_km || 1,
             ktp_url: profile.ktp_url || "",
-            // Provide empty default if surat_tugas_url doesn't exist on profile
-            surat_tugas_url: (profile as any).surat_tugas_url || "",
+            foto_url: profile.foto_wajah_url || "",
             koordinator_id: profile.koordinator_id || "",
             region,
             rt,
@@ -183,31 +199,29 @@ export default function HelperVerifikasiPage() {
   }, []);
 
   useEffect(() => {
-    if (form.region.kelurahan) {
-      const fetchKoords = async () => {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('koordinator_profiles')
-          .select(`
-            id, 
-            wilayah, 
-            tingkat,
-            ktp_url,
-            users!koordinator_profiles_user_id_fkey!inner(full_name, phone, provinsi, kabupaten_kota, kecamatan, kelurahan)
-          `)
-          .eq('status', 'verified')
-          .eq('users.provinsi', form.region.provinsi)
-          .eq('users.kabupaten_kota', form.region.kota)
-          .eq('users.kecamatan', form.region.kecamatan)
-          .eq('users.kelurahan', form.region.kelurahan);
-          
-        if (data) setKoordinators(data);
-      };
-      fetchKoords();
-    } else {
-      setKoordinators([]);
-    }
-  }, [form.region.kelurahan]);
+    if (!form.region.kelurahan) return;
+
+    const fetchKoords = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('koordinator_profiles')
+        .select(`
+          id,
+          wilayah,
+          tingkat,
+          ktp_url,
+          users!koordinator_profiles_user_id_fkey!inner(full_name, phone, provinsi, kabupaten_kota, kecamatan, kelurahan)
+        `)
+        .eq('status', 'verified')
+        .eq('users.provinsi', form.region.provinsi)
+        .eq('users.kabupaten_kota', form.region.kota)
+        .eq('users.kecamatan', form.region.kecamatan)
+        .eq('users.kelurahan', form.region.kelurahan);
+
+      if (data) setKoordinators(data as Coordinator[]);
+    };
+    fetchKoords();
+  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi]);
 
   // Helper to toggle by ID
   const toggleKategori = (catId: string) => {
@@ -234,6 +248,73 @@ export default function HelperVerifikasiPage() {
     setKategoriIds(prev => prev.filter(id => !idsToRemove.includes(id)));
   };
 
+  const openCoordinatorImage = (src: string, name: string) => {
+    setPreviewImage({
+      src,
+      title: `Dokumen Koordinator ${name}`,
+      alt: `Dokumen Koordinator ${name}`,
+    });
+  };
+
+  const handlePreviewKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    src: string,
+    name: string,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+      openCoordinatorImage(src, name);
+    }
+  };
+
+  const uploadVerificationFile = async (
+    file: File,
+    document: (typeof VERIFICATION_UPLOADS)[number],
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("docType", document.docType);
+
+      const uploadRes = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json().catch(() => ({}));
+
+      if (!uploadRes.ok) {
+        throw new Error(
+          getUploadFailureMessage(document.label, uploadData.message, file.name),
+        );
+      }
+
+      if (!uploadData.url) {
+        throw new Error(
+          getUploadFailureMessage(
+            document.label,
+            "Server tidak mengembalikan alamat file.",
+            file.name,
+          ),
+        );
+      }
+
+      return uploadData.url as string;
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Gagal mengunggah")) {
+        throw error;
+      }
+
+      throw new Error(
+        getUploadFailureMessage(
+          document.label,
+          "Koneksi upload gagal. Coba lagi.",
+          file.name,
+        ),
+      );
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -247,8 +328,8 @@ export default function HelperVerifikasiPage() {
     }
 
     try {
-      let ktpUrl = null;
-      let fotoUrl = null;
+      let ktpUrl: string | null = null;
+      let fotoUrl: string | null = null;
       
       const fileKtp = ktpInputRef.current?.files?.[0];
       if (!fileKtp && !form.ktp_url) {
@@ -266,74 +347,16 @@ export default function HelperVerifikasiPage() {
         return;
       }
 
-      const fileSuratTugas = suratTugasInputRef.current?.files?.[0];
-      if (!fileSuratTugas && !form.surat_tugas_url) {
-        showToast("Harap unggah Surat Tugas RT/RW.");
-        setFieldErrors({ surat_tugas_url: ["Surat Tugas wajib diunggah"] });
-        setLoading(false);
-        return;
-      }
-
       if (fileKtp) {
-        const formData = new FormData();
-        formData.append("file", fileKtp);
-        formData.append("docType", "ktp");
-        
-        const uploadRes = await fetch("/api/storage/upload", {
-          method: "POST",
-          body: formData,
-        });
-        
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          showToast(uploadData.message || "Gagal mengunggah KTP.");
-          setLoading(false);
-          return;
-        }
-        ktpUrl = uploadData.url;
+        ktpUrl = await uploadVerificationFile(fileKtp, VERIFICATION_UPLOADS[0]);
       } else {
         ktpUrl = form.ktp_url;
       }
 
       if (fileFoto) {
-        const formData = new FormData();
-        formData.append("file", fileFoto);
-        formData.append("docType", "foto_helper");
-        
-        const uploadRes = await fetch("/api/storage/upload", {
-          method: "POST",
-          body: formData,
-        });
-        
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          showToast(uploadData.message || "Gagal mengunggah Foto Profil.");
-          setLoading(false);
-          return;
-        }
-        fotoUrl = uploadData.url;
+        fotoUrl = await uploadVerificationFile(fileFoto, VERIFICATION_UPLOADS[1]);
       } else {
         fotoUrl = form.foto_url;
-      }
-
-      let suratTugasUrl = null;
-      if (fileSuratTugas) {
-        const formData = new FormData();
-        formData.append("file", fileSuratTugas);
-        formData.append("docType", "surat_tugas");
-        
-        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: formData });
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          showToast(uploadData.message || "Gagal mengunggah Surat Tugas.");
-          setLoading(false); return;
-        }
-        suratTugasUrl = uploadData.url;
-      } else {
-        suratTugasUrl = form.surat_tugas_url;
       }
 
       const payload = {
@@ -344,7 +367,6 @@ export default function HelperVerifikasiPage() {
         radius_layanan_km: form.radius_layanan_km,
         ktp_url: ktpUrl,
         foto_wajah_url: fotoUrl,
-        surat_tugas_url: suratTugasUrl,
         kategori_ids: kategoriIds,
         koordinator_id: form.koordinator_id || null,
         provinsi: form.region.provinsi,
@@ -371,8 +393,8 @@ export default function HelperVerifikasiPage() {
       }
 
       router.push("/helper/dashboard");
-    } catch {
-      showToast("Terjadi kesalahan koneksi jaringan.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Terjadi kesalahan koneksi jaringan.");
       setLoading(false);
     }
   };
@@ -400,22 +422,36 @@ export default function HelperVerifikasiPage() {
         <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
 
           {rejectionReason && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-3 animate-in fade-in">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-                <div>
-                  <h3 className="text-sm font-bold text-red-800">Alasan Penolakan Sebelumnya</h3>
-                  <p className="text-sm text-red-700 mt-1">{rejectionReason}</p>
+            <section className="relative overflow-hidden rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-orange-50 p-5 shadow-sm animate-in fade-in">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-red-100/70 blur-2xl" />
+              <div className="relative flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600 ring-8 ring-red-50">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold text-red-900">Pengajuan perlu diperbaiki</h3>
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">Ditolak</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-red-800">{rejectionReason}</p>
+                  <p className="mt-3 text-xs font-medium text-red-700/80">Perbaiki data yang diminta, lalu kirim ulang verifikasi Anda.</p>
                 </div>
               </div>
               {rejectionPhoto && (
-                <div className="mt-2 ml-8">
-                  <a href={rejectionPhoto} target="_blank" rel="noreferrer" className="block w-24 h-24 rounded-lg overflow-hidden border border-red-200 shadow-sm hover:opacity-90 transition-opacity">
-                    <img src={rejectionPhoto} alt="Lampiran Penolakan" className="w-full h-full object-cover" />
-                  </a>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImage({ src: rejectionPhoto, title: "Lampiran alasan penolakan", alt: "Lampiran alasan penolakan" })}
+                  className="group relative mt-5 flex w-full items-center gap-4 overflow-hidden rounded-xl border border-red-200 bg-white/80 p-3 text-left shadow-sm transition hover:border-red-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                >
+                  <img src={rejectionPhoto} alt="Lampiran alasan penolakan" className="h-20 w-24 shrink-0 rounded-lg border border-red-100 object-cover transition duration-300 group-hover:scale-105" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-slate-900">Lampiran dari Koordinator</span>
+                    <span className="mt-1 block text-xs text-slate-500">Ketuk untuk melihat gambar lebih besar dan memperbesar detail.</span>
+                  </span>
+                  <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 transition group-hover:bg-red-100">Lihat</span>
+                </button>
               )}
-            </div>
+            </section>
           )}
 
           {/* Progress Bar */}
@@ -503,14 +539,14 @@ export default function HelperVerifikasiPage() {
                         <div className="flex border-b border-gray-100">
                           <button
                             type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'kelurahan' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
+                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'kelurahan' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-[#475569] hover:bg-gray-50'}`}
                             onClick={() => setKoordTab('kelurahan')}
                           >
                             Semua (Kel. {form.region.kelurahan})
                           </button>
                           <button
                             type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'rtrw' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
+                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'rtrw' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-[#475569] hover:bg-gray-50'}`}
                             onClick={() => setKoordTab('rtrw')}
                           >
                             RT {form.rt || '-'}/RW {form.rw || '-'} Anda
@@ -520,7 +556,7 @@ export default function HelperVerifikasiPage() {
                         <div className="max-h-64 overflow-y-auto">
                            <button 
                              type="button"
-                             className={`w-full text-left p-3 text-sm hover:bg-blue-50 border-b border-gray-50 ${!form.koordinator_id ? 'bg-blue-50/50 font-semibold text-[#0D47A1]' : 'text-gray-700'}`}
+                             className={`w-full text-left p-3 text-sm hover:bg-blue-50 border-b border-gray-50 ${!form.koordinator_id ? 'bg-blue-50/50 font-semibold text-[#0D47A1]' : 'text-[#334155]'}`}
                              onClick={() => { setForm({...form, koordinator_id: ''}); setShowKoordDropdown(false); }}
                            >
                              -- Saya tidak mengetahui Koordinator saya --
@@ -545,7 +581,23 @@ export default function HelperVerifikasiPage() {
                                      className={`w-full text-left p-3 hover:bg-blue-50 border-b border-gray-50 flex items-start gap-3 transition-colors ${form.koordinator_id === k.id ? 'bg-blue-50/50 border-l-2 border-l-[#0D47A1]' : ''}`}
                                      onClick={() => { setForm({...form, koordinator_id: k.id}); setShowKoordDropdown(false); }}
                                    >
-                                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100">
+                                     <div
+                                       className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100"
+                                       role={k.ktp_url ? "button" : undefined}
+                                       tabIndex={k.ktp_url ? 0 : undefined}
+                                       aria-label={k.ktp_url ? `Lihat dokumen ${k.users?.full_name || "Koordinator"}` : undefined}
+                                       onClick={(event) => {
+                                         if (!k.ktp_url) return;
+                                         event.preventDefault();
+                                         event.stopPropagation();
+                                         openCoordinatorImage(k.ktp_url, k.users?.full_name || "Rangkul");
+                                       }}
+                                       onKeyDown={(event) => {
+                                         if (!k.ktp_url) return;
+                                         event.stopPropagation();
+                                         handlePreviewKeyDown(event, k.ktp_url, k.users?.full_name || "Rangkul");
+                                       }}
+                                     >
                                        {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                                      </div>
                                      <div>
@@ -625,7 +677,7 @@ export default function HelperVerifikasiPage() {
                      key={tier.id}
                      type="button"
                      onClick={() => setActiveTab(tier.id)}
-                     className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+                      className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 whitespace-nowrap ${
                        activeTab === tier.id 
                          ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
                          : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
@@ -871,70 +923,6 @@ export default function HelperVerifikasiPage() {
                 <p className="text-xs text-red-500 mt-1">{fieldErrors.foto_url[0]}</p>
               )}
 
-              <div className="mt-6 mb-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                  Surat Tugas RT/RW <span className="text-red-500">*</span>
-                </Label>
-              </div>
-              <p className="text-xs text-slate-500 mb-4">Surat pengantar atau tugas resmi dari RT/RW setempat sebagai validasi domisili Anda.</p>
-              
-              <Label 
-                htmlFor="surat_tugas_upload"
-                className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-40 group ${
-                  form.surat_tugas_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
-                }`}
-              >
-                <input 
-                  type="file" 
-                  id="surat_tugas_upload" 
-                  ref={suratTugasInputRef}
-                  className="hidden" 
-                  accept="image/jpeg, image/png, application/pdf"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      const file = e.target.files[0];
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast("Ukuran file tidak boleh lebih dari 5MB", "error");
-                        setFieldErrors(prev => ({...prev, surat_tugas_url: ["File terlalu besar (Maksimal 5MB)"]}));
-                        e.target.value = '';
-                        setForm({ ...form, surat_tugas_url: "" });
-                        setSuratTugasFileName(null);
-                        return;
-                      }
-                      setForm({ ...form, surat_tugas_url: URL.createObjectURL(file) });
-                      setSuratTugasFileName(file.name);
-                      setFieldErrors(prev => ({...prev, surat_tugas_url: []}));
-                    }
-                  }}
-                />
-                
-                {form.surat_tugas_url ? (
-                  <>
-                    <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
-                       <img src={form.surat_tugas_url} alt="Preview Surat" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="relative z-10 text-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-white">
-                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                      </div>
-                      <p className="text-sm font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{suratTugasFileName || 'Surat Tugas Disimpan'}</p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center p-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-6 h-6 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Surat Tugas</p>
-                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG/PDF)</p>
-                  </div>
-                )}
-              </Label>
-              {fieldErrors.surat_tugas_url && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.surat_tugas_url[0]}</p>
-              )}
             </div>
 
             <div className="flex gap-3 pt-6 border-t border-gray-100 mt-8">
@@ -1023,7 +1011,7 @@ export default function HelperVerifikasiPage() {
                    <button
                      key={tier.id}
                      onClick={() => setModalActiveTab(tier.id)}
-                     className={`px-5 py-2.5 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex-1 text-center ${
+                      className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 whitespace-nowrap flex-1 text-center ${
                        modalActiveTab === tier.id 
                          ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
                          : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
@@ -1128,7 +1116,23 @@ export default function HelperVerifikasiPage() {
                          className={`w-full text-left p-4 rounded-2xl border-2 flex items-start gap-4 transition-all hover:shadow-sm ${form.koordinator_id === k.id ? 'bg-blue-50/50 border-[#0D47A1] shadow-sm' : 'bg-white border-gray-100 hover:border-blue-200'}`}
                          onClick={() => { setForm({...form, koordinator_id: k.id}); setKoordModalOpen(false); }}
                        >
-                         <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border-4 border-white shadow-sm">
+                         <div
+                           className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border-4 border-white shadow-sm"
+                           role={k.ktp_url ? "button" : undefined}
+                           tabIndex={k.ktp_url ? 0 : undefined}
+                           aria-label={k.ktp_url ? `Lihat dokumen ${k.users?.full_name || "Koordinator"}` : undefined}
+                           onClick={(event) => {
+                             if (!k.ktp_url) return;
+                             event.preventDefault();
+                             event.stopPropagation();
+                             openCoordinatorImage(k.ktp_url, k.users?.full_name || "Rangkul");
+                           }}
+                           onKeyDown={(event) => {
+                             if (!k.ktp_url) return;
+                             event.stopPropagation();
+                             handlePreviewKeyDown(event, k.ktp_url, k.users?.full_name || "Rangkul");
+                           }}
+                         >
                            {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                          </div>
                          <div className="flex-1">
@@ -1157,6 +1161,16 @@ export default function HelperVerifikasiPage() {
           </div>
         </div>
       )}
+
+      <ImagePreviewModal
+        open={Boolean(previewImage)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewImage(null);
+        }}
+        src={previewImage?.src || null}
+        title={previewImage?.title || "Pratinjau gambar"}
+        alt={previewImage?.alt || "Pratinjau gambar"}
+      />
     </div>
   );
 }
