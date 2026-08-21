@@ -96,7 +96,7 @@ export default async function BerandaKeluargaPage() {
                     </div>
                     <div>
                       <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider bg-blue-50 text-blue-700 mb-3 inline-block">
-                        {(lansia as any).hubungan_keluarga || 'Keluarga'}
+                        {lansia.hubungan_keluarga || 'Keluarga'}
                       </span>
                       <h3 className="text-lg font-bold text-gray-900 mb-1">{lansia.nama}</h3>
                       <p className="text-sm font-medium text-gray-500 line-clamp-2">

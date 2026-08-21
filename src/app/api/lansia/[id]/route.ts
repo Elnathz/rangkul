@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { lansiaProfileSchema } from '@/lib/validations/lansia';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import type { Database } from '@/types/database';
 
 // GET /api/lansia/[id] — detail satu lansia milik keluarga yang login
 export async function GET(
@@ -79,7 +80,7 @@ export async function PUT(
 
     const { data: updated, error: updateError } = await supabase
       .from('lansia_profiles')
-      .update({ ...validation.data, updated_at: new Date().toISOString() } as any)
+      .update({ ...validation.data, updated_at: new Date().toISOString() } as unknown as Database['public']['Tables']['lansia_profiles']['Update'])
       .eq('id', id)
       .eq('keluarga_id', user.id)
       .select('*')

@@ -56,7 +56,7 @@ export default function BookingPage() {
           .from("service_categories")
           .select("id, nama, harga_dasar, tingkat")
           .eq("is_active", true);
-        if (catData) setCategories(catData as any);
+        if (catData) setCategories(catData as unknown as ServiceCategory[]);
       } finally {
         setFetching(false);
       }

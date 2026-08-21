@@ -85,7 +85,7 @@ export default function HelperEditProfilPage() {
       if (profile) {
         setHelperProfileId(profile.id);
         
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = "";
         
         if (profile.wilayah_domisili) {

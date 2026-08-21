@@ -11,6 +11,17 @@ import { Loader2, AlertCircle, MapPin, Heart, ArrowLeft, UserRound, Stethoscope 
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import Link from "next/link";
+import type { Database } from "@/types/database";
+
+type LansiaEditData = Database["public"]["Tables"]["lansia_profiles"]["Row"] & {
+  umur?: number | null;
+  kondisi_medis?: string | null;
+  tingkat_mobilitas?: string | null;
+  kebutuhan_khusus?: string | null;
+  wilayah_domisili?: string | null;
+  domisili_lat?: number | null;
+  domisili_lng?: number | null;
+};
 
 export default function LansiaEditProfilPage() {
   const params = useParams();
@@ -59,10 +70,10 @@ export default function LansiaEditProfilPage() {
         .eq('id', id)
         .eq('keluarga_id', user.id)
         .single();
-      const data = dbData as any;
+      const data = dbData as unknown as LansiaEditData | null;
 
       if (data) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = data.alamat || "";
         
         if (data.wilayah_domisili) {
@@ -98,8 +109,8 @@ export default function LansiaEditProfilPage() {
           rt,
           rw,
           region,
-          domisili_lat: data.domisili_lat,
-          domisili_lng: data.domisili_lng,
+          domisili_lat: data.domisili_lat ?? null,
+          domisili_lng: data.domisili_lng ?? null,
         }));
       }
       setFetching(false);

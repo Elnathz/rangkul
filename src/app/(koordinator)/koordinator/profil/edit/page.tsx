@@ -59,7 +59,7 @@ export default function KoordinatorEditProfilPage() {
         .single();
 
       if (profile) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = "";
         
         if (profile.wilayah) {

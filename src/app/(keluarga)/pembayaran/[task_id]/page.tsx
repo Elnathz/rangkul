@@ -47,7 +47,7 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-500">ID Referensi</span>
-            <span className="font-medium text-gray-900 font-mono">TRX-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+            <span className="font-medium text-gray-900 font-mono">TRX-{task_id.slice(0, 8).toUpperCase()}</span>
           </div>
         </div>
 

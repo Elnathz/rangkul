@@ -12,6 +12,9 @@ import { Loader2, AlertCircle, MapPin, User, Phone, ShieldCheck, Users } from "l
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import React from "react";
+import type { Database } from "@/types/database";
+
+type LansiaProfile = Database["public"]["Tables"]["lansia_profiles"]["Row"];
 
 export default function KeluargaEditProfilPage() {
   const router = useRouter();
@@ -21,7 +24,7 @@ export default function KeluargaEditProfilPage() {
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   
   const [activeTab, setActiveTab] = useState<'mandiri' | 'operasional' | 'lansia'>('mandiri');
-  const [lansias, setLansias] = useState<any[]>([]);
+  const [lansias, setLansias] = useState<LansiaProfile[]>([]);
 
   const [form, setForm] = useState({
     username: "",
@@ -73,7 +76,7 @@ export default function KeluargaEditProfilPage() {
       }
 
       if (profile) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = "";
         
         if (profile.alamat_detail) {
