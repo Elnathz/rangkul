@@ -215,7 +215,7 @@ npm run test
 npm run build
 ```
 
-Jangan memakai `npm install` untuk quality gate karena dapat mengubah `package-lock.json`. Pastikan dependency font, icon, dan asset yang dibutuhkan build tersedia di `package.json` dan lockfile. Hindari dependency build-time yang membutuhkan akses jaringan eksternal, termasuk `next/font/google`; gunakan package font lokal bila font harus selalu tersedia di Vercel. Jika `npm run build` gagal, commit dan push harus dihentikan sampai error diperbaiki.
+Jangan memakai `npm install` untuk quality gate karena dapat mengubah `package-lock.json`. Pastikan dependency font, icon, dan asset yang dibutuhkan build tersedia di `package.json` dan lockfile. Hindari dependency build-time yang membutuhkan akses jaringan eksternal, termasuk `next/font/google`; gunakan package font lokal bila font harus selalu tersedia di Vercel. Project ini membutuhkan Node.js 22.6 atau lebih baru karena test memakai `--experimental-strip-types`. Jika `npm run build` gagal, commit dan push harus dihentikan sampai error diperbaiki.
 
 **Script yang belum ada di package.json, jangan berasumsi tersedia:**
 
