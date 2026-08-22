@@ -63,10 +63,10 @@ export default function LansiaEditProfilPage() {
         .eq('id', id)
         .eq('keluarga_id', user.id)
         .single();
-      const data = dbData as any;
+      const data = dbData as { nama?: string; umur?: number; catatan_kondisi?: string; tingkat_mobilitas?: string; kebutuhan_khusus?: string; foto_url?: string; alamat?: string; lat?: number; lng?: number } | null;
 
       if (data) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", baseAlamat = data.alamat || "";
         
         const rtrwMatch = baseAlamat.match(/(.*),\s*RT\s*(\d+)\/RW\s*(\d+)(.*)/i);
@@ -163,9 +163,9 @@ export default function LansiaEditProfilPage() {
       
       showToast("Profil lansia berhasil diperbarui!", "success");
       setTimeout(() => router.push(`/lansia/${id}`), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      showToast(err.message || "Terjadi kesalahan koneksi.");
+      showToast((err as Error).message || "Terjadi kesalahan koneksi.");
       setLoading(false);
     }
   };

@@ -21,7 +21,7 @@ export default function KeluargaEditProfilPage() {
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   
   const [activeTab, setActiveTab] = useState<'mandiri' | 'operasional' | 'lansia'>('mandiri');
-  const [lansias, setLansias] = useState<any[]>([]);
+  const [lansias, setLansias] = useState<Record<string, unknown>[]>([]);
 
   const [form, setForm] = useState({
     username: "",
