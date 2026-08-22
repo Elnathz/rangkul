@@ -18,7 +18,6 @@ type LansiaProfile = Database["public"]["Tables"]["lansia_profiles"]["Row"];
 
 export default function KeluargaEditProfilPage() {
   const router = useRouter();
-  const supabase = createClient();
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
@@ -50,6 +49,7 @@ export default function KeluargaEditProfilPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
@@ -115,7 +115,7 @@ export default function KeluargaEditProfilPage() {
       }
     };
     fetchData();
-  }, [supabase, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

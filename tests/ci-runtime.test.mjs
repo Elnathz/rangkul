@@ -18,4 +18,19 @@ test("CI dan deployment memakai runtime yang mendukung TypeScript stripping", ()
     const workflow = fs.readFileSync(path.join(root, workflowFile), "utf8");
     assert.match(workflow, /node-version:\s*['"]22['"]/);
   }
+
+  const clientPages = [
+    "src/app/(keluarga)/beranda/profil/edit/page.tsx",
+    "src/app/(helper)/helper/profil/edit/page.tsx",
+    "src/app/(koordinator)/koordinator/profil/edit/page.tsx",
+  ];
+
+  for (const clientPage of clientPages) {
+    const source = fs.readFileSync(path.join(root, clientPage), "utf8");
+    const renderSection = source.slice(
+      source.indexOf("export default function"),
+      source.indexOf("useEffect("),
+    );
+    assert.doesNotMatch(renderSection, /const supabase = createClient\(\);/);
+  }
 });

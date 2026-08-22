@@ -13,7 +13,6 @@ import RegionSelect from "@/components/ui/RegionSelect";
 
 export default function HelperEditProfilPage() {
   const router = useRouter();
-  const supabase = createClient();
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
@@ -73,6 +72,7 @@ export default function HelperEditProfilPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
@@ -139,7 +139,7 @@ export default function HelperEditProfilPage() {
       if (allCats) setDbCategories(allCats);
     };
     fetchData();
-  }, [supabase, router]);
+  }, [router]);
 
   const toggleKategori = (catId: string) => {
     setKategoriIds(prev => prev.includes(catId) ? prev.filter(k => k !== catId) : [...prev, catId]);
