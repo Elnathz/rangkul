@@ -158,7 +158,7 @@ export default function Navbar() {
       { href: "/beranda", label: "Dashboard" },
       { href: "/cari-helper", label: "Cari Helper" },
       { href: "/kunjungan", label: "Kunjungan" },
-      { href: "/lansia/tambah", label: "Profil Keluarga" },
+      { href: "/beranda/profil", label: "Profil Keluarga" },
       { href: "/beranda/pesan", label: "Pesan" },
     ];
   } else if (role === 'helper') {
@@ -190,14 +190,12 @@ export default function Navbar() {
       <nav className="w-full max-w-7xl mx-auto px-4 lg:px-5 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center group shrink-0">
-          <Image
+          <img
             src="/long-logo.svg"
             alt="Rangkul"
             width={110}
             height={32}
             className="transition-transform group-hover:scale-[1.02]"
-            priority
-            unoptimized
           />
         </Link>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export default function HelperEditProfilPage() {
   const [form, setForm] = useState({
     username: "",
     phone: "",
+    foto_url: "",
     password: "",
     confirmPassword: "",
     alamat: "",
@@ -40,6 +41,9 @@ export default function HelperEditProfilPage() {
   const [catTab, setCatTab] = useState<string>("ringan");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState<string>("ringan");
+
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const [fotoFileName, setFotoFileName] = useState<string | null>(null);
 
   const tiers = [
     {
@@ -239,6 +243,68 @@ export default function HelperEditProfilPage() {
                   <User className="w-5 h-5 text-[#0D47A1]" />
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Akun & Keamanan</h2>
+              </div>
+              
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Foto Profil Anda</Label>
+                <Label 
+                  htmlFor="foto_upload"
+                  className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-32 group ${
+                    form.foto_url ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
+                  }`}
+                >
+                  <input 
+                    type="file" 
+                    id="foto_upload" 
+                    ref={fotoInputRef}
+                    className="hidden" 
+                    accept="image/jpeg, image/png"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                          showToast("Format file salah. Harus berupa JPG atau PNG.", "error");
+                          e.target.value = '';
+                          setForm({ ...form, foto_url: "" });
+                          setFotoFileName(null);
+                          return;
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          showToast("Ukuran file terlalu besar. Maksimal 5MB.", "error");
+                          e.target.value = '';
+                          setForm({ ...form, foto_url: "" });
+                          setFotoFileName(null);
+                          return;
+                        }
+                        setForm({ ...form, foto_url: URL.createObjectURL(file) });
+                        setFotoFileName(file.name);
+                      }
+                    }}
+                  />
+                  
+                  {form.foto_url ? (
+                    <>
+                      <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                         {/* eslint-disable-next-line @next/next/no-img-element */}
+                         <img src={form.foto_url} alt="Preview Foto" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="relative z-10 text-center p-4">
+                        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-2 shadow-md ring-4 ring-white">
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm inline-block">{fotoFileName || 'Foto Profil Disimpan'}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-4">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-2">
+                        <User className="w-5 h-5 text-[#0D47A1]" />
+                      </div>
+                      <p className="text-sm font-bold text-[#0D47A1]">Ketuk untuk Unggah Foto</p>
+                      <p className="text-xs text-gray-500 mt-1">Maksimal 5MB (Format JPG/PNG)</p>
+                    </div>
+                  )}
+                </Label>
               </div>
               
               <div>

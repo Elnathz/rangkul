@@ -190,6 +190,33 @@ lint:       npm run lint     (eslint, tanpa --fix)
 start:      npm run start
 ```
 
+### Quality gate sebelum commit
+
+CI wajib dijalankan sebelum setiap commit. Jalankan seluruh pemeriksaan berikut dari root repository dan jangan membuat commit jika salah satunya gagal:
+
+```
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+Urutan ini mengikuti workflow `.github/workflows/ci.yml`. Hasil pemeriksaan harus diverifikasi ulang setelah perubahan terakhir, bukan memakai hasil dari sebelum perubahan.
+
+### Menjaga build Vercel tetap konsisten
+
+Build lokal harus memakai lockfile yang sama dengan Vercel. Sebelum commit yang akan dipush, jalankan:
+
+```
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+Jangan memakai `npm install` untuk quality gate karena dapat mengubah `package-lock.json`. Pastikan dependency font, icon, dan asset yang dibutuhkan build tersedia di `package.json` dan lockfile. Hindari dependency build-time yang membutuhkan akses jaringan eksternal, termasuk `next/font/google`; gunakan package font lokal bila font harus selalu tersedia di Vercel. Jika `npm run build` gagal, commit dan push harus dihentikan sampai error diperbaiki.
+
 **Script yang belum ada di package.json, jangan berasumsi tersedia:**
 
 - `test` — tidak ada test framework terpasang sama sekali.
