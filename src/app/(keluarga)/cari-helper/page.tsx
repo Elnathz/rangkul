@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Search, MapPin, Star, Filter, Heart, ArrowUpDown, Info } from "lucide-react";
 
+type ServiceCategory = {
+  nama: string;
+  harga_dasar: number;
+  estimasi_durasi_menit: number;
+};
+
 type HelperCard = {
   id: string;
   name: string;
   rating: number;
   reviews: number;
-  category: string;
+  services: ServiceCategory[];
   radius_layanan_km: number;
   lat: number | null;
   lng: number | null;
@@ -32,6 +38,7 @@ type HelperProfileRecord = {
   status: string;
   foto_wajah_url: string | null;
   users: { full_name: string | null } | null;
+  helper_service_categories?: { service_categories: ServiceCategory | null }[];
 };
 
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -57,9 +64,15 @@ export default function CariHelperPage() {
   const [helpers, setHelpers] = useState<HelperCard[]>([]);
   const [loadingHelpers, setLoadingHelpers] = useState(true);
 
+  const [dbCategories, setDbCategories] = useState<ServiceCategory[]>([]);
+
   useEffect(() => {
-    const fetchLansias = async () => {
+    const fetchLansiasAndCategories = async () => {
       const supabase = createClient();
+      
+      const { data: catData } = await supabase.from('service_categories').select('nama, harga_dasar, estimasi_durasi_menit');
+      if (catData) setDbCategories(catData as ServiceCategory[]);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data } = await supabase
@@ -72,7 +85,7 @@ export default function CariHelperPage() {
         }
       }
     };
-    fetchLansias();
+    fetchLansiasAndCategories();
   }, []);
 
   useEffect(() => {
@@ -92,24 +105,33 @@ export default function CariHelperPage() {
           domisili_lng,
           status,
           foto_wajah_url,
-          users ( full_name )
+          users ( full_name ),
+          helper_service_categories (
+            service_categories ( nama, harga_dasar, estimasi_durasi_menit )
+          )
         `)
         .eq('status', 'verified');
         
       if (data) {
-        const formatted = (data as unknown as HelperProfileRecord[]).map((item) => ({
-          id: item.id,
-          name: item.users?.full_name || "Helper Rangkul",
-          rating: item.rating_avg || 5.0,
-          reviews: item.total_tugas_selesai || 0,
-          category: "Layanan Umum", 
-          radius_layanan_km: item.radius_layanan_km || 0,
-          lat: item.domisili_lat,
-          lng: item.domisili_lng,
-          verified: item.status === 'verified',
-          avatar: item.foto_wajah_url || "/images/helpers/helper-placeholder.jpg",
-          bio: item.bio || "Siap membantu merawat lansia dengan sepenuh hati.",
-        }));
+        const formatted = (data as unknown as HelperProfileRecord[]).map((item) => {
+          const services = item.helper_service_categories
+            ?.map(hsc => hsc.service_categories)
+            .filter((cat): cat is ServiceCategory => cat !== null) || [];
+          
+          return {
+            id: item.id,
+            name: item.users?.full_name || "Helper Rangkul",
+            rating: item.rating_avg || 5.0,
+            reviews: item.total_tugas_selesai || 0,
+            services: services, 
+            radius_layanan_km: item.radius_layanan_km || 0,
+            lat: item.domisili_lat,
+            lng: item.domisili_lng,
+            verified: item.status === 'verified',
+            avatar: item.foto_wajah_url || "/images/helpers/helper-placeholder.jpg",
+            bio: item.bio || "Siap membantu merawat lansia dengan sepenuh hati.",
+          };
+        });
         setHelpers(formatted);
       }
       setLoadingHelpers(false);
@@ -138,7 +160,7 @@ export default function CariHelperPage() {
     return { ...h, distanceVal: distVal };
   }).filter((h) => {
     const matchSearch = h.name.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = category === "Semua" || h.category.includes(category);
+    const matchCategory = category === "Semua" || h.services.some(s => s.nama === category);
     return matchSearch && matchCategory;
   }).sort((a, b) => {
     if (sortBy === "rating") return b.rating - a.rating;
@@ -198,17 +220,27 @@ export default function CariHelperPage() {
             </div>
             <div>
               <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Kategori Layanan</Label>
-              <div className="space-y-2">
-                {["Semua", "Layanan Kunjungan", "Teman Ngobrol", "Bantuan Kedaruratan"].map((cat) => (
-                  <label key={cat} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2 transition-colors">
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="cat" 
+                    className="w-4 h-4 text-blue-600" 
+                    checked={category === "Semua"}
+                    onChange={() => setCategory("Semua")}
+                  />
+                  <span className="text-sm font-medium text-slate-700">Semua Layanan</span>
+                </label>
+                {dbCategories.map((cat) => (
+                  <label key={cat.nama} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2 transition-colors">
                     <input 
                       type="radio" 
                       name="cat" 
                       className="w-4 h-4 text-blue-600" 
-                      checked={category === cat}
-                      onChange={() => setCategory(cat)}
+                      checked={category === cat.nama}
+                      onChange={() => setCategory(cat.nama)}
                     />
-                    <span className="text-sm font-medium text-slate-700">{cat}</span>
+                    <span className="text-sm font-medium text-slate-700">{cat.nama}</span>
                   </label>
                 ))}
               </div>
@@ -256,70 +288,101 @@ export default function CariHelperPage() {
 
           {/* Grid Cards */}
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredHelpers.map((h) => (
-              <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
-                <div className="relative w-full aspect-[5/4] bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] overflow-hidden shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={h.avatar}
-                    alt={`Foto ${h.name}`}
-                    className="w-full h-full object-cover object-top"
-                  />
-                  <button className="absolute top-3 right-3 text-white hover:text-red-500 drop-shadow-md transition-colors w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm">
-                    <Heart size={18} />
-                  </button>
-                  <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/90 text-green-700 border border-green-200 backdrop-blur-sm">
-                   Tersertifikasi
-                  </span>
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  
-                  <div className="mb-2">
-                    <h3 className="font-display font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {h.name}
-                      {h.verified && (
-                        <span className="inline-block align-middle ml-1" title="Terverifikasi RT/RW">
-                          <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+            {filteredHelpers.map((h) => {
+              // Menghitung harga yang ditampilkan
+              let displayPrice = "";
+              if (category === "Semua") {
+                if (h.services.length > 0) {
+                  const cheapest = h.services.reduce((min, curr) => curr.harga_dasar < min.harga_dasar ? curr : min, h.services[0]);
+                  displayPrice = `Mulai Rp ${(cheapest.harga_dasar).toLocaleString('id-ID')} / ${cheapest.estimasi_durasi_menit} mnt`;
+                } else {
+                  displayPrice = "Belum Ada Layanan";
+                }
+              } else {
+                const specificService = h.services.find(s => s.nama === category);
+                if (specificService) {
+                  displayPrice = `Rp ${(specificService.harga_dasar).toLocaleString('id-ID')} / ${specificService.estimasi_durasi_menit} mnt`;
+                } else {
+                  displayPrice = "Belum Ada Layanan";
+                }
+              }
+
+              return (
+                <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
+                  <div className="relative w-full aspect-[5/4] bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] overflow-hidden shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={h.avatar}
+                      alt={`Foto ${h.name}`}
+                      className="w-full h-full object-cover object-top"
+                    />
+                    <button className="absolute top-3 right-3 text-white hover:text-red-500 drop-shadow-md transition-colors w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm">
+                      <Heart size={18} />
+                    </button>
+                    {h.verified && (
+                      <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/90 text-green-700 border border-green-200 backdrop-blur-sm">
+                       Tersertifikasi
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    
+                    <div className="mb-2">
+                      <h3 className="font-display font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                        {h.name}
+                        {h.verified && (
+                          <span className="inline-block align-middle ml-1" title="Terverifikasi RT/RW">
+                            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                      </h3>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mb-4">
+                      <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded">
+                        <Star size={14} className="fill-amber-500" />
+                        <span>{h.rating} ({h.reviews})</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin size={14} className="text-blue-500 shrink-0" />
+                        <span className="text-sm font-semibold text-slate-700">{h.distanceVal === 999 ? "Jarak ?" : `${h.distanceVal.toFixed(1)} km`}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-slate-600 line-clamp-2 h-10 leading-relaxed mb-4">
+                      {h.bio}
+                    </p>
+
+                    <div className="flex flex-wrap gap-1 mt-auto">
+                      {h.services.slice(0, 2).map((s, idx) => (
+                        <span key={idx} className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-full">
+                          {s.nama}
+                        </span>
+                      ))}
+                      {h.services.length > 2 && (
+                        <span className="inline-block px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold rounded-full">
+                          +{h.services.length - 2}
                         </span>
                       )}
-                    </h3>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mb-4">
-                    <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded">
-                      <Star size={14} className="fill-amber-500" />
-                      <span>{h.rating} ({h.reviews})</span>
+                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">Tarif Layanan</span>
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm">{displayPrice}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} className="text-blue-500 shrink-0" />
-                      <span className="text-sm font-semibold text-slate-700">{h.distanceVal === 999 ? "Jarak ?" : `${h.distanceVal.toFixed(1)} km`}</span>
-                    </div>
+                    <Link href={`/booking/${h.id}`}>
+                      <Button size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold select-none ml-2">
+                        Ketersediaan
+                      </Button>
+                    </Link>
                   </div>
-
-                  <p className="text-sm text-slate-600 line-clamp-2 h-10 leading-relaxed mb-4">
-                    {h.bio}
-                  </p>
-
-                  <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-full mt-auto w-fit">
-                    {h.category}
-                  </span>
                 </div>
-                
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 block">Tarif Layanan</span>
-                    <span className="font-bold text-slate-900">Rp 50.000 <span className="font-normal text-xs text-slate-500">/ 2 jam</span></span>
-                  </div>
-                  <Link href={`/booking/${h.id}`}>
-                    <Button size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold select-none">
-                      Tanya Ketersediaan
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {loadingHelpers ? (

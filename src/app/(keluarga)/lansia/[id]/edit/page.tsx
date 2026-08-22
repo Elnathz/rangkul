@@ -69,11 +69,34 @@ export default function LansiaEditProfilPage() {
         const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", baseAlamat = data.alamat || "";
         
-        const rtrwMatch = baseAlamat.match(/(.*),\s*RT\s*(\d+)\/RW\s*(\d+)(.*)/i);
+        // Coba ekstrak RT/RW
+        const rtrwMatch = baseAlamat.match(/RT\s*(\d+)\s*\/?\s*RW\s*(\d+)/i);
         if (rtrwMatch) {
-            baseAlamat = (rtrwMatch[1] + rtrwMatch[4]).trim();
-            rt = rtrwMatch[2];
-            rw = rtrwMatch[3];
+            rt = rtrwMatch[1];
+            rw = rtrwMatch[2];
+        }
+
+        // Pisahkan bagian alamat depan dan bagian wilayah
+        const parts = baseAlamat.split(',').map(p => p.trim());
+        if (parts.length >= 4) {
+          // Asumsi format: Alamat, RT/RW, Kelurahan, Kecamatan, Kota, Provinsi
+          // Cari mana yang mengandung RT/RW
+          const rtRwIndex = parts.findIndex(p => p.match(/RT\s*\d+\s*\/?\s*RW\s*\d+/i));
+          
+          if (rtRwIndex > 0) {
+             baseAlamat = parts.slice(0, rtRwIndex).join(', ');
+             if (parts.length >= rtRwIndex + 4) {
+                region.kelurahan = parts[rtRwIndex + 1];
+                region.kecamatan = parts[rtRwIndex + 2];
+                region.kota = parts[rtRwIndex + 3];
+                if (parts.length > rtRwIndex + 4) {
+                   region.provinsi = parts[rtRwIndex + 4];
+                }
+             }
+          } else {
+             // Fallback jika tidak ada RT/RW tapi ada banyak part
+             baseAlamat = parts[0];
+          }
         }
 
         setForm(prev => ({

@@ -33,9 +33,66 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
   useEffect(() => {
     fetch(`${API_BASE}/provinces.json`)
       .then((res) => res.json())
-      .then((data) => setProvinces(data))
+      .then((data) => {
+        setProvinces(data);
+      })
       .catch((err) => console.error("Error fetching provinces", err));
   }, []);
+
+  // Effect for handling initialRegion
+  useEffect(() => {
+    if (initialRegion && initialRegion.provinsi && provinces.length > 0 && !selectedProv) {
+      const initializeRegion = async () => {
+        // Find province (case insensitive)
+        const prov = provinces.find(p => p.name.toUpperCase() === initialRegion.provinsi.toUpperCase());
+        if (prov) {
+          setSelectedProv(prov);
+          try {
+            const cityRes = await fetch(`${API_BASE}/regencies/${prov.id}.json`);
+            const cityData = await cityRes.json();
+            setCities(cityData);
+            
+            if (initialRegion.kota) {
+              // Usually the API prefix is "KABUPATEN " or "KOTA "
+              // We'll try a flexible match
+              const targetCity = initialRegion.kota.toUpperCase();
+              const city = cityData.find((c: Region) => c.name.toUpperCase() === targetCity || c.name.toUpperCase().includes(targetCity) || targetCity.includes(c.name.toUpperCase()));
+              
+              if (city) {
+                setSelectedCity(city);
+                const distRes = await fetch(`${API_BASE}/districts/${city.id}.json`);
+                const distData = await distRes.json();
+                setDistricts(distData);
+
+                if (initialRegion.kecamatan) {
+                  const targetDist = initialRegion.kecamatan.toUpperCase();
+                  const dist = distData.find((d: Region) => d.name.toUpperCase() === targetDist);
+                  if (dist) {
+                    setSelectedDist(dist);
+                    const villRes = await fetch(`${API_BASE}/villages/${dist.id}.json`);
+                    const villData = await villRes.json();
+                    setVillages(villData);
+
+                    if (initialRegion.kelurahan) {
+                      const targetVill = initialRegion.kelurahan.toUpperCase();
+                      const vill = villData.find((v: Region) => v.name.toUpperCase() === targetVill);
+                      if (vill) {
+                        setSelectedVill(vill);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error initializing region", err);
+          }
+        }
+      };
+      initializeRegion();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRegion, provinces]);
 
   const triggerChange = (prov: Region | null, city: Region | null, dist: Region | null, vill: Region | null, coords?: { lat: number; lng: number; address?: string }) => {
     onRegionChange({

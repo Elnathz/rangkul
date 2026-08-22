@@ -16,6 +16,9 @@ export const lansiaProfileSchema = z.object({
   kelurahan: z.string().min(1, 'Kelurahan wajib diisi'),
   rt: z.number().int().min(1, 'RT wajib diisi'),
   rw: z.number().int().min(1, 'RW wajib diisi'),
+  umur: z.number().int().min(50, 'Lansia minimal berumur 50 tahun'),
+  tingkat_mobilitas: z.string().min(1, 'Tingkat mobilitas wajib diisi'),
+  kebutuhan_khusus: z.string().optional().or(z.literal('')),
 });
 
 export type LansiaProfileInput = z.infer<typeof lansiaProfileSchema>;
