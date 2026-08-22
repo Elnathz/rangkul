@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+docs/superpowers
+AGENTS.md
+Template README.md - ITECHNO CUP.md
+.codex/

@@ -30,22 +30,22 @@ SDG yang diangkat: SDG 11 (Kota & Komunitas Berkelanjutan) — SDG 8 (Pekerjaan 
 
 ## Daftar Isi
 
-1. [Ringkasan Produk & Latar Belakang](#1-ringkasan-produk--latar-belakang)
-2. [Tech Stack & Justifikasi](#2-tech-stack--justifikasi)
-3. [Aturan Bisnis & Keputusan Desain](#3-aturan-bisnis--keputusan-desain)
+1. [Ringkasan Produk &amp; Latar Belakang](#1-ringkasan-produk--latar-belakang)
+2. [Tech Stack &amp; Justifikasi](#2-tech-stack--justifikasi)
+3. [Aturan Bisnis &amp; Keputusan Desain](#3-aturan-bisnis--keputusan-desain)
 4. [Functional Requirements](#4-functional-requirements)
 5. [User Flow](#5-user-flow)
 6. [Skema Database](#6-skema-database)
 7. [API Design](#7-api-design)
-8. [Security Design & Flow](#8-security-design--flow)
-9. [Struktur Halaman & Rute](#9-struktur-halaman--rute)
+8. [Security Design &amp; Flow](#8-security-design--flow)
+9. [Struktur Halaman &amp; Rute](#9-struktur-halaman--rute)
 10. [Sequence Diagram](#10-sequence-diagram)
 11. [Risk Analysis](#11-risk-analysis)
 12. [Non-Functional Requirements](#12-non-functional-requirements)
 13. [Development Guideline](#13-development-guideline)
-14. [Rencana Sprint & Milestone](#14-rencana-sprint--milestone)
+14. [Rencana Sprint &amp; Milestone](#14-rencana-sprint--milestone)
 15. [Ruang Lingkup MVP](#15-ruang-lingkup-mvp)
-16. [Keamanan & Privasi](#16-keamanan--privasi)
+16. [Keamanan &amp; Privasi](#16-keamanan--privasi)
 17. [Kesesuaian dengan Guidebook ITechno Cup 2026](#17-kesesuaian-dengan-guidebook-itechno-cup-2026)
 18. [Skill AI untuk Development (Claude Code)](#18-skill-ai-untuk-development-claude-code)
 19. [Data Seeder](#19-data-seeder)
@@ -68,13 +68,13 @@ Rangkul memungkinkan **Keluarga** memesan kunjungan terjadwal dari pendamping lo
 
 ### 1.3 Peran Pengguna
 
-| Peran | Deskripsi Singkat |
-|---|---|
-| **Keluarga** | Memesan & membayar kunjungan, mengelola profil lansia (dengan verifikasi identitas, §3.11), menerima laporan & Riwayat Rangkul, memberi rating, chat dengan Helper. |
-| **Helper** (Pendamping Lokal) | Mengajukan verifikasi di RT/RW domisilinya, menerima tugas kunjungan sesuai radius layanan, melapor hasil kunjungan (termasuk Health Snapshot), menerima pembayaran. |
-| **Koordinator Komunitas** | Ketua RT/RW (atau RW sebagai fallback jika RT tidak aktif). Self-register dengan dokumen pendukung jabatan, diverifikasi Admin (§3.3). Memverifikasi Helper di wilayahnya, menerima notifikasi pasif setiap transaksi, memberi approval eksplisit hanya pada kondisi tertentu, menindaklanjuti laporan, menerima komisi. Koordinator level RW punya filter pengawasan lintas-RT (§3.3.4). |
-| **Admin** | Staf internal Rangkul. Memverifikasi dokumen Koordinator baru, menjadi verifikator fallback untuk wilayah tanpa Koordinator aktif, mengelola akun & kategori jasa, memantau statistik platform, menindaklanjuti eskalasi laporan berat & banding, melihat audit log. |
-| **Lansia** | Penerima manfaat langsung. Tidak wajib menggunakan aplikasi. |
+| Peran                               | Deskripsi Singkat                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Keluarga**                  | Memesan & membayar kunjungan, mengelola profil lansia (dengan verifikasi identitas, §3.11), menerima laporan & Riwayat Rangkul, memberi rating, chat dengan Helper.                                                                                                                                                                                                                        |
+| **Helper** (Pendamping Lokal) | Mengajukan verifikasi di RT/RW domisilinya, menerima tugas kunjungan sesuai radius layanan, melapor hasil kunjungan (termasuk Health Snapshot), menerima pembayaran.                                                                                                                                                                                                                        |
+| **Koordinator Komunitas**     | Ketua RT/RW (atau RW sebagai fallback jika RT tidak aktif). Self-register dengan dokumen pendukung jabatan, diverifikasi Admin (§3.3). Memverifikasi Helper di wilayahnya, menerima notifikasi pasif setiap transaksi, memberi approval eksplisit hanya pada kondisi tertentu, menindaklanjuti laporan, menerima komisi. Koordinator level RW punya filter pengawasan lintas-RT (§3.3.4). |
+| **Admin**                     | Staf internal Rangkul. Memverifikasi dokumen Koordinator baru, menjadi verifikator fallback untuk wilayah tanpa Koordinator aktif, mengelola akun & kategori jasa, memantau statistik platform, menindaklanjuti eskalasi laporan berat & banding, melihat audit log.                                                                                                                        |
+| **Lansia**                    | Penerima manfaat langsung. Tidak wajib menggunakan aplikasi.                                                                                                                                                                                                                                                                                                                                |
 
 ### 1.4 Catatan Kejujuran Kompetitif
 
@@ -82,53 +82,53 @@ Wajib disebutkan di README/pitch:
 
 Tim menyadari eksistensi Care24/Homecare24 (segmen medis profesional) dan Temanika (marketplace pendampingan serba-guna). Diferensiasi Rangkul terletak pada model kepercayaan berbasis struktur komunitas nyata (RT/RW) dan fokus tunggal pada satu masalah, bukan klaim "belum ada yang mengerjakan ini".
 
-| Kompetitor | Model Mereka | Perbedaan Rangkul |
-|---|---|---|
-| Care24 / Homecare24 | Perawat & caregiver bersertifikat medis, harga premium, untuk kebutuhan kesehatan serius. | Non-medis, pendampingan sehari-hari, harga terjangkau. |
-| Temanika | Marketplace pendampingan serba-guna (lansia cuma 1 dari 6 kategori). Verifikasi terpusat (KTP + selfie + background check tim internal). | Fokus tunggal masalah lansia-Keluarga. Verifikasi berbasis kepercayaan komunitas lokal (RT/RW), plus Riwayat Rangkul yang mengubah tiap kunjungan jadi data kondisi lansia berkelanjutan — bukan transaksi sekali booking. |
-| SIDAYA (Kemendukbangga/BKKBN) | Sistem informasi & pendaftaran program pemerintah. | Marketplace layanan langsung, bukan sistem administrasi program. |
+| Kompetitor                    | Model Mereka                                                                                                                             | Perbedaan Rangkul                                                                                                                                                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Care24 / Homecare24           | Perawat & caregiver bersertifikat medis, harga premium, untuk kebutuhan kesehatan serius.                                                | Non-medis, pendampingan sehari-hari, harga terjangkau.                                                                                                                                                                      |
+| Temanika                      | Marketplace pendampingan serba-guna (lansia cuma 1 dari 6 kategori). Verifikasi terpusat (KTP + selfie + background check tim internal). | Fokus tunggal masalah lansia-Keluarga. Verifikasi berbasis kepercayaan komunitas lokal (RT/RW), plus Riwayat Rangkul yang mengubah tiap kunjungan jadi data kondisi lansia berkelanjutan — bukan transaksi sekali booking. |
+| SIDAYA (Kemendukbangga/BKKBN) | Sistem informasi & pendaftaran program pemerintah.                                                                                       | Marketplace layanan langsung, bukan sistem administrasi program.                                                                                                                                                            |
 
 ---
 
 ## 2. Tech Stack & Justifikasi
 
-| Layer | Pilihan | Alasan |
-|---|---|---|
-| Frontend | Next.js + TypeScript + Tailwind CSS + Shadcn UI | App Router untuk routing berbasis peran, TypeScript menekan bug runtime, Tailwind + Shadcn UI mempercepat & menstandarkan UI (§13). |
-| Validasi | **Zod** + React Hook Form | 4 lapis validasi: Zod (client) → React Hook Form (UX form) → validasi server (route handler) → constraint Supabase (database). Skema Zod idealnya diturunkan sinkron dari tipe skema database (§6). |
-| Backend / Database | Supabase (PostgreSQL + Auth + Storage + Row Level Security + Realtime) | Auth & Storage bawaan menghemat waktu. RLS menegakkan akses data di level database. Realtime dipakai untuk chat & notifikasi live (§2.2). |
-| Deployment | Vercel (Hobby, gratis) | Direkomendasikan guidebook kompetisi. Auto-deploy per push, preview per branch. |
-| Payment Gateway | Midtrans (mode Sandbox untuk demo) | Split/escrow bawaan untuk pembagian dana. Dilengkapi jalur cadangan Saldo Demo untuk kebutuhan penjurian (§3.4). |
-| Offline Storage | **IndexedDB** (bukan localStorage) | Menyimpan draf laporan kunjungan + foto sementara saat Helper offline, kapasitas jauh lebih besar dan mendukung data terstruktur (§3.13). |
+| Layer              | Pilihan                                                                | Alasan                                                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend           | Next.js + TypeScript + Tailwind CSS + Shadcn UI                        | App Router untuk routing berbasis peran, TypeScript menekan bug runtime, Tailwind + Shadcn UI mempercepat & menstandarkan UI (§13).                                                                    |
+| Validasi           | **Zod** + React Hook Form                                        | 4 lapis validasi: Zod (client) → React Hook Form (UX form) → validasi server (route handler) → constraint Supabase (database). Skema Zod idealnya diturunkan sinkron dari tipe skema database (§6). |
+| Backend / Database | Supabase (PostgreSQL + Auth + Storage + Row Level Security + Realtime) | Auth & Storage bawaan menghemat waktu. RLS menegakkan akses data di level database. Realtime dipakai untuk chat & notifikasi live (§2.2).                                                              |
+| Deployment         | Vercel (Hobby, gratis)                                                 | Direkomendasikan guidebook kompetisi. Auto-deploy per push, preview per branch.                                                                                                                         |
+| Payment Gateway    | Midtrans (mode Sandbox untuk demo)                                     | Split/escrow bawaan untuk pembagian dana. Dilengkapi jalur cadangan Saldo Demo untuk kebutuhan penjurian (§3.4).                                                                                       |
+| Offline Storage    | **IndexedDB** (bukan localStorage)                               | Menyimpan draf laporan kunjungan + foto sementara saat Helper offline, kapasitas jauh lebih besar dan mendukung data terstruktur (§3.13).                                                              |
 
 > **Catatan AI:** dihapus dari tech stack karena tidak dibutuhkan untuk MVP. Guidebook §4.1 poin 7 hanya _mengizinkan_ AI kalau dipakai, bukan mewajibkannya (detail §17.4). Fitur "Riwayat Rangkul" (§3.12) dan klasifikasi darurat (§3.6) sengaja dirancang berbasis input manual terstruktur, bukan model AI — lebih murah dibangun, lebih akuntabel, nol risiko etis tambahan.
 
 ### 2.1 Catatan Operasional Penting: Supabase Free Tier
 
-| Batasan | Nilai | Mitigasi |
-|---|---|---|
-| Database storage | 500 MB | Cukup untuk skala pilot/MVP kompetisi. |
-| File storage | 1 GB | Kompres foto/dokumen sebelum upload (client-side resize). |
-| Monthly Active Users | 50.000 | Jauh di atas kebutuhan demo. |
-| Auto-pause | Setelah 7 hari tanpa aktivitas | GitHub Actions heartbeat 2x/minggu — detail §2.3. |
-| Proyek aktif bersamaan | 2 project | Gunakan 1 project untuk development+demo. |
+| Batasan                | Nilai                          | Mitigasi                                                  |
+| ---------------------- | ------------------------------ | --------------------------------------------------------- |
+| Database storage       | 500 MB                         | Cukup untuk skala pilot/MVP kompetisi.                    |
+| File storage           | 1 GB                           | Kompres foto/dokumen sebelum upload (client-side resize). |
+| Monthly Active Users   | 50.000                         | Jauh di atas kebutuhan demo.                              |
+| Auto-pause             | Setelah 7 hari tanpa aktivitas | GitHub Actions heartbeat 2x/minggu — detail §2.3.       |
+| Proyek aktif bersamaan | 2 project                      | Gunakan 1 project untuk development+demo.                 |
 
 **Checklist wajib sebelum submission:** Pastikan GitHub Actions heartbeat sudah aktif dan teruji minimal 3 hari sebelum deadline.
 
 ### 2.2 Skills & Komponen Teknis Wajib
 
-| Kebutuhan Fitur | Skill / Komponen Teknis | Keterangan |
-|---|---|---|
-| Chat real-time & notifikasi live | **Supabase Realtime** | Dipakai di `/pesan`, `/notifikasi`, notifikasi pasif Koordinator (§3.3). |
-| Booking & anti race-condition | Conditional update via Supabase client / RPC function Postgres | §3.2 — jangan pola baca-lalu-tulis. |
-| Auto-expired tugas, reminder H-1, reschedule, akumulasi pembatalan | **Supabase Scheduled Edge Function** / `pg_cron` | Satu job terjadwal untuk beberapa pengecekan berbasis waktu. |
-| Pembayaran & escrow | **Midtrans Snap/Core API** + verifikasi signature webhook (HMAC SHA512) | Validasi signature sebelum memproses payload webhook. |
-| Verifikasi dokumen (Helper, Koordinator, identitas lansia) | Supabase Storage bucket private + signed URL | Dokumen sensitif tidak boleh diakses lewat URL publik permanen. |
-| Validasi input API | **Zod** di setiap route handler | Konsisten dengan §8. |
-| Kompres foto/dokumen sebelum upload | `browser-image-compression` / Canvas API | Menjaga limit storage 1 GB (§2.1). |
-| Draf laporan offline | **IndexedDB** (`idb` library) + event listener `online`/`offline` | §3.13 — bukan Background Sync API native (dukungan browser tidak seragam). |
-| CI & mencegah Supabase auto-pause | **GitHub Actions** | Detail §2.3. |
-| Component library & konsistensi UI | **Shadcn UI** + Tailwind CSS | §13. |
+| Kebutuhan Fitur                                                    | Skill / Komponen Teknis                                                       | Keterangan                                                                   |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Chat real-time & notifikasi live                                   | **Supabase Realtime**                                                   | Dipakai di`/pesan`, `/notifikasi`, notifikasi pasif Koordinator (§3.3). |
+| Booking & anti race-condition                                      | Conditional update via Supabase client / RPC function Postgres                | §3.2 — jangan pola baca-lalu-tulis.                                        |
+| Auto-expired tugas, reminder H-1, reschedule, akumulasi pembatalan | **Supabase Scheduled Edge Function** / `pg_cron`                      | Satu job terjadwal untuk beberapa pengecekan berbasis waktu.                 |
+| Pembayaran & escrow                                                | **Midtrans Snap/Core API** + verifikasi signature webhook (HMAC SHA512) | Validasi signature sebelum memproses payload webhook.                        |
+| Verifikasi dokumen (Helper, Koordinator, identitas lansia)         | Supabase Storage bucket private + signed URL                                  | Dokumen sensitif tidak boleh diakses lewat URL publik permanen.              |
+| Validasi input API                                                 | **Zod** di setiap route handler                                         | Konsisten dengan §8.                                                        |
+| Kompres foto/dokumen sebelum upload                                | `browser-image-compression` / Canvas API                                    | Menjaga limit storage 1 GB (§2.1).                                          |
+| Draf laporan offline                                               | **IndexedDB** (`idb` library) + event listener `online`/`offline` | §3.13 — bukan Background Sync API native (dukungan browser tidak seragam). |
+| CI & mencegah Supabase auto-pause                                  | **GitHub Actions**                                                      | Detail §2.3.                                                                |
+| Component library & konsistensi UI                                 | **Shadcn UI** + Tailwind CSS                                            | §13.                                                                        |
 
 ### 2.3 CI/CD & Heartbeat GitHub Actions
 
@@ -188,13 +188,13 @@ Job CI **tidak** melakukan deploy — hanya memastikan build tidak rusak sebelum
 
 Rating tidak dimodelkan sebagai state wajib — bisa muncul kapan saja setelah SELESAI.
 
-| Status | Dipicu Oleh | Bukti yang Dibutuhkan |
-|---|---|---|
-| DIAJUKAN | Keluarga membuat pesanan | Tidak ada. Berlaku maksimal **1 jam** (§3.2). |
-| DIKONFIRMASI | Helper menerima tugas | Constraint unik di database agar tidak ada dua Helper menerima tugas sama. Jika tugas termasuk kategori yang butuh approval eksplisit (§3.3.2), status sementara `menunggu_persetujuan_koordinator` sebelum resmi DIKONFIRMASI. |
-| DIKERJAKAN | Helper check-in di lokasi | Timestamp otomatis + lokasi opsional. |
-| SELESAI | Helper submit laporan (termasuk Health Snapshot, §3.12) | Foto bukti + catatan kondisi + skor Health Snapshot. |
-| DIBATALKAN | Keluarga (sebelum DIKERJAKAN) atau sistem (timeout 1 jam) | Alasan wajib diisi. |
+| Status       | Dipicu Oleh                                               | Bukti yang Dibutuhkan                                                                                                                                                                                                             |
+| ------------ | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DIAJUKAN     | Keluarga membuat pesanan                                  | Tidak ada. Berlaku maksimal**1 jam** (§3.2).                                                                                                                                                                               |
+| DIKONFIRMASI | Helper menerima tugas                                     | Constraint unik di database agar tidak ada dua Helper menerima tugas sama. Jika tugas termasuk kategori yang butuh approval eksplisit (§3.3.2), status sementara`menunggu_persetujuan_koordinator` sebelum resmi DIKONFIRMASI. |
+| DIKERJAKAN   | Helper check-in di lokasi                                 | Timestamp otomatis + lokasi opsional.                                                                                                                                                                                             |
+| SELESAI      | Helper submit laporan (termasuk Health Snapshot, §3.12)  | Foto bukti + catatan kondisi + skor Health Snapshot.                                                                                                                                                                              |
+| DIBATALKAN   | Keluarga (sebelum DIKERJAKAN) atau sistem (timeout 1 jam) | Alasan wajib diisi.                                                                                                                                                                                                               |
 
 ### 3.2 Batas Waktu Penerimaan Tugas & Penanganan Race Condition
 
@@ -228,13 +228,13 @@ Skenario yang harus dihindari: Keluarga butuh Helper mendesak (mis. lansia jatuh
 
 **Approval eksplisit hanya diwajibkan pada kondisi berikut** (status sementara `menunggu_persetujuan_koordinator`):
 
-| Kondisi | Alasan |
-|---|---|
-| Booking pertama yang diterima seorang Helper baru | Belum ada rekam jejak transaksi sama sekali. |
-| Helper berstatus `probation` (§3.3.3) | Masih dalam masa observasi. |
-| Helper baru kembali aktif setelah lama vakum (>60 hari tanpa tugas) | Kondisi/keandalan bisa berubah selama vakum. |
-| Helper pernah kena sanksi (`suspend_reason` terisi sebelumnya) | Riwayat pelanggaran butuh pengawasan ekstra sebelum dipercaya penuh lagi. |
-| Kategori tugas ditandai **berisiko tinggi** (§3.4.1, mis. antar ke faskes) | Implikasi keselamatan lebih besar, terlepas dari status Helper. |
+| Kondisi                                                                          | Alasan                                                                    |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Booking pertama yang diterima seorang Helper baru                                | Belum ada rekam jejak transaksi sama sekali.                              |
+| Helper berstatus`probation` (§3.3.3)                                          | Masih dalam masa observasi.                                               |
+| Helper baru kembali aktif setelah lama vakum (>60 hari tanpa tugas)              | Kondisi/keandalan bisa berubah selama vakum.                              |
+| Helper pernah kena sanksi (`suspend_reason` terisi sebelumnya)                 | Riwayat pelanggaran butuh pengawasan ekstra sebelum dipercaya penuh lagi. |
+| Kategori tugas ditandai**berisiko tinggi** (§3.4.1, mis. antar ke faskes) | Implikasi keselamatan lebih besar, terlepas dari status Helper.           |
 
 Untuk kondisi di luar tabel ini, transaksi berjalan otomatis tanpa menunggu siapa pun.
 
@@ -242,26 +242,26 @@ Untuk kondisi di luar tabel ini, transaksi berjalan otomatis tanpa menunggu siap
 
 `helper_profiles.tingkat_kepercayaan`:
 
-| Tingkat | Syarat | Konsekuensi |
-|---|---|---|
-| `probation` | Default saat Helper baru VERIFIED | Setiap booking butuh approval Koordinator (§3.3.2). **Tidak ditampilkan** untuk tugas dengan target waktu mendesak (< 3 jam dari sekarang) — mencegah skenario darurat justru terjebak menunggu approval. |
-| `terpercaya` | Otomatis naik setelah **5 tugas SELESAI** tanpa laporan/suspend | Transaksi berjalan otomatis (kecuali kategori berisiko tinggi, §3.3.2), termasuk boleh menerima tugas mendesak. |
+| Tingkat        | Syarat                                                               | Konsekuensi                                                                                                                                                                                                      |
+| -------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `probation`  | Default saat Helper baru VERIFIED                                    | Setiap booking butuh approval Koordinator (§3.3.2).**Tidak ditampilkan** untuk tugas dengan target waktu mendesak (< 3 jam dari sekarang) — mencegah skenario darurat justru terjebak menunggu approval. |
+| `terpercaya` | Otomatis naik setelah**5 tugas SELESAI** tanpa laporan/suspend | Transaksi berjalan otomatis (kecuali kategori berisiko tinggi, §3.3.2), termasuk boleh menerima tugas mendesak.                                                                                                 |
 
 #### 3.3.4 Status Helper & Koordinator
 
-| Status Helper | Kondisi |
-|---|---|
-| PENDING_VERIFICATION | Baru mengajukan diri, menunggu review Koordinator wilayah domisilinya. |
-| VERIFIED | Disetujui, status awal `probation` (§3.3.3). |
-| UNDER_REVIEW | Terkumpul **2 laporan (reports)** — otomatis, tidak bisa menerima tugas baru sampai ditinjau (§3.10). |
-| SUSPENDED | Terbukti melanggar setelah investigasi Koordinator/Admin. |
+| Status Helper        | Kondisi                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| PENDING_VERIFICATION | Baru mengajukan diri, menunggu review Koordinator wilayah domisilinya.                                       |
+| VERIFIED             | Disetujui, status awal`probation` (§3.3.3).                                                               |
+| UNDER_REVIEW         | Terkumpul**2 laporan (reports)** — otomatis, tidak bisa menerima tugas baru sampai ditinjau (§3.10). |
+| SUSPENDED            | Terbukti melanggar setelah investigasi Koordinator/Admin.                                                    |
 
-| Status Koordinator | Kondisi |
-|---|---|
-| PENDING_VERIFICATION | Baru mendaftar, dokumen jabatan menunggu review Admin. |
-| VERIFIED | Dokumen disetujui Admin, bisa mulai memverifikasi Helper di wilayahnya. |
-| REJECTED | Dokumen ditolak Admin (bisa mengajukan ulang). |
-| SUSPENDED | Dinonaktifkan Admin karena pelanggaran. |
+| Status Koordinator   | Kondisi                                                                 |
+| -------------------- | ----------------------------------------------------------------------- |
+| PENDING_VERIFICATION | Baru mendaftar, dokumen jabatan menunggu review Admin.                  |
+| VERIFIED             | Dokumen disetujui Admin, bisa mulai memverifikasi Helper di wilayahnya. |
+| REJECTED             | Dokumen ditolak Admin (bisa mengajukan ulang).                          |
+| SUSPENDED            | Dinonaktifkan Admin karena pelanggaran.                                 |
 
 **Filter pengawasan RW**: Koordinator dengan `tingkat = rw` mendapat halaman tambahan `/koordinator/pengawasan` — filter aktivitas berdasarkan RT dan keluarga di bawah cakupan RW-nya (§9), untuk visibilitas lintas-RT tanpa mengambil alih otoritas approval RT masing-masing.
 
@@ -283,11 +283,11 @@ Setiap kategori jasa (`service_categories`, daftar final §6) punya `harga_dasar
 
 Keluarga membayar `harga_final` (harga_dasar + total layanan tambahan yang disetujui) → dana `HELD_ESCROW` di Midtrans → Helper mengerjakan tugas → Keluarga konfirmasi selesai → dana cair:
 
-| Penerima | Persentase |
-|---|---|
-| Helper | **90%** |
-| Platform | **7%** |
-| Koordinator wilayah | **3%** |
+| Penerima            | Persentase    |
+| ------------------- | ------------- |
+| Helper              | **90%** |
+| Platform            | **7%**  |
+| Koordinator wilayah | **3%**  |
 
 Yang berhak menandai "selesai & dibayar" adalah Keluarga. Auto-release jika Keluarga tidak merespons dalam 3x24 jam. Pembayaran online-only (bukan tunai paralel) supaya komisi Koordinator & platform fee bisa ditegakkan dan diverifikasi. Setiap event pembayaran dicatat di `transaction_logs`.
 
@@ -306,10 +306,12 @@ Dipicu Helper. Tombol darurat menampilkan `tel:` quick-dial ke 112/RS terdekat (
 ### 3.7 Fitur Reschedule
 
 **Booking ≥ 24 jam (H-1) sebelum jadwal:**
+
 - Notifikasi konfirmasi otomatis H-1 ke Keluarga.
 - Reschedule bebas selama status DIAJUKAN/DIKONFIRMASI, minimal **3 jam** sebelum jadwal, maksimal **2 kali** per tugas.
 
 **Booking same-day (< 24 jam):**
+
 - Konfirmasi instan saat booking dibuat (checkbox kepastian lansia ada di rumah).
 - Reschedule hanya boleh minimal **2 jam** sebelum jadwal, dan hanya jika Helper belum check-in.
 - Kurang dari 2 jam & Helper sudah DIKONFIRMASI → harus dibatalkan (bukan reschedule), tunduk pada aturan kompensasi §3.8.
@@ -360,6 +362,7 @@ Ini identitas utama Rangkul yang membedakannya dari sekadar "marketplace booking
 2. **Cerita Hari Ini** (Memory Capsule) — satu kolom teks singkat bebas, mis. "Hari ini Ibu cerita soal masa kecilnya di Solo."
 
 **Ditampilkan di profil lansia** (`/lansia/{id}/riwayat`) sebagai:
+
 - Timeline kronologis tiap kunjungan (foto + cerita + skor).
 - Grafik tren per indikator dari waktu ke waktu (mis. "Mobilitas turun 15% selama 3 minggu terakhir").
 - **Badge peringatan otomatis** (rule-based, bukan AI): jika rata-rata skor turun pada **3 kunjungan berturut-turut**, tampilkan badge "Perlu Perhatian" + saran menaikkan frekuensi kunjungan. Murni aturan `IF` di atas data yang sudah terkumpul — tidak mengklaim diagnosis medis apa pun, hanya menyoroti pola untuk keputusan Keluarga.
@@ -391,14 +394,14 @@ upload foto → upload data → update database → status "Submitted" (🟢)
 
 Seluruh keputusan terbuka dari draf sebelumnya telah dikunci pada revisi ini:
 
-| Keputusan | Status |
-|---|---|
-| Window reschedule | Dikunci §3.7 (3 jam H-1+, 2 jam same-day) |
-| Model harga | Dikunci §3.4.1 (fix price + extra service, bukan ±25%) |
-| Klasifikasi darurat | Dikunci §3.6 |
-| Model approval transaksi | Dikunci §3.3.2 |
-| Verifikasi wilayah | Dikunci §3.3.1 |
-| Trigger suspend Helper | Dikunci §3.10 |
+| Keputusan                | Status                                                   |
+| ------------------------ | -------------------------------------------------------- |
+| Window reschedule        | Dikunci §3.7 (3 jam H-1+, 2 jam same-day)               |
+| Model harga              | Dikunci §3.4.1 (fix price + extra service, bukan ±25%) |
+| Klasifikasi darurat      | Dikunci §3.6                                            |
+| Model approval transaksi | Dikunci §3.3.2                                          |
+| Verifikasi wilayah       | Dikunci §3.3.1                                          |
+| Trigger suspend Helper   | Dikunci §3.10                                           |
 
 ---
 
@@ -408,149 +411,149 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 
 ### 4.1 Autentikasi & Akun
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-AUTH-01 | Registrasi dengan pilih peran Keluarga, Helper, atau Koordinator Komunitas | Must |
-| FR-AUTH-02 | Login email/phone + password via Supabase Auth | Must |
-| FR-AUTH-03 | JWT berisi klaim `user_id` + `role`, dipakai untuk otorisasi tiap request API | Must |
-| FR-AUTH-04 | Reset password via email | Should |
-| FR-AUTH-05 | Koordinator self-register dengan wajib unggah dokumen jabatan (RT/RW); akun aktif setelah diverifikasi Admin (§3.3) | Must |
-| FR-AUTH-06 | Akun Admin dibuat manual (seed di Supabase), tidak ada UI registrasi publik | Must |
+| ID         | Requirement                                                                                                          | Prioritas |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-AUTH-01 | Registrasi dengan pilih peran Keluarga, Helper, atau Koordinator Komunitas                                           | Must      |
+| FR-AUTH-02 | Login email/phone + password via Supabase Auth                                                                       | Must      |
+| FR-AUTH-03 | JWT berisi klaim`user_id` + `role`, dipakai untuk otorisasi tiap request API                                     | Must      |
+| FR-AUTH-04 | Reset password via email                                                                                             | Should    |
+| FR-AUTH-05 | Koordinator self-register dengan wajib unggah dokumen jabatan (RT/RW); akun aktif setelah diverifikasi Admin (§3.3) | Must      |
+| FR-AUTH-06 | Akun Admin dibuat manual (seed di Supabase), tidak ada UI registrasi publik                                          | Must      |
 
 ### 4.2 Manajemen Profil Lansia (Keluarga)
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-LAN-01 | Tambah profil lansia, wajib disertai KTP lansia + bukti hubungan keluarga (§3.11) | Must |
-| FR-LAN-02 | Edit profil lansia yang sudah ada | Must |
-| FR-LAN-03 | Soft delete profil lansia | Must |
-| FR-LAN-04 | Satu akun Keluarga bisa kelola lebih dari satu profil lansia | Should |
-| FR-LAN-05 | Dokumen identitas lansia dapat direview Admin/Koordinator saat ada laporan | Should |
+| ID        | Requirement                                                                        | Prioritas |
+| --------- | ---------------------------------------------------------------------------------- | --------- |
+| FR-LAN-01 | Tambah profil lansia, wajib disertai KTP lansia + bukti hubungan keluarga (§3.11) | Must      |
+| FR-LAN-02 | Edit profil lansia yang sudah ada                                                  | Must      |
+| FR-LAN-03 | Soft delete profil lansia                                                          | Must      |
+| FR-LAN-04 | Satu akun Keluarga bisa kelola lebih dari satu profil lansia                       | Should    |
+| FR-LAN-05 | Dokumen identitas lansia dapat direview Admin/Koordinator saat ada laporan         | Should    |
 
 ### 4.3 Pencarian & Profil Helper
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-HLP-01 | Katalog Helper terverifikasi, filter per wilayah (dalam radius layanan) & kategori jasa | Must |
-| FR-HLP-02 | Lihat detail profil Helper: bio, rating, jumlah tugas selesai, tingkat kepercayaan | Must |
-| FR-HLP-03 | Pengajuan verifikasi Helper (KTP, wilayah domisili, radius layanan, bio) | Must |
-| FR-HLP-04 | Koordinator approve/reject Helper di wilayah domisilinya | Must |
-| FR-HLP-05 | Helper `probation` tidak ditampilkan untuk booking bertarget < 3 jam (§3.3.3) | Must |
-| FR-HLP-06 | Helper otomatis naik ke `terpercaya` setelah 5 tugas SELESAI tanpa laporan | Must |
+| ID        | Requirement                                                                             | Prioritas |
+| --------- | --------------------------------------------------------------------------------------- | --------- |
+| FR-HLP-01 | Katalog Helper terverifikasi, filter per wilayah (dalam radius layanan) & kategori jasa | Must      |
+| FR-HLP-02 | Lihat detail profil Helper: bio, rating, jumlah tugas selesai, tingkat kepercayaan      | Must      |
+| FR-HLP-03 | Pengajuan verifikasi Helper (KTP, wilayah domisili, radius layanan, bio)                | Must      |
+| FR-HLP-04 | Koordinator approve/reject Helper di wilayah domisilinya                                | Must      |
+| FR-HLP-05 | Helper`probation` tidak ditampilkan untuk booking bertarget < 3 jam (§3.3.3)         | Must      |
+| FR-HLP-06 | Helper otomatis naik ke`terpercaya` setelah 5 tugas SELESAI tanpa laporan             | Must      |
 
 ### 4.4 Kategori & Jasa Helper
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-SVC-01 | Admin kelola daftar kategori jasa final (nama, estimasi durasi, harga dasar, status berisiko tinggi — §6) | Must |
-| FR-SVC-02 | Keluarga wajib pilih salah satu kategori jasa saat booking (tidak ada teks bebas) | Must |
-| FR-SVC-03 | Helper dapat mengajukan Layanan Tambahan di lapangan (§3.4.1), tugas pause sampai disetujui | Must |
-| FR-SVC-04 | Keluarga approve/reject usulan Layanan Tambahan | Must |
+| ID        | Requirement                                                                                                 | Prioritas |
+| --------- | ----------------------------------------------------------------------------------------------------------- | --------- |
+| FR-SVC-01 | Admin kelola daftar kategori jasa final (nama, estimasi durasi, harga dasar, status berisiko tinggi — §6) | Must      |
+| FR-SVC-02 | Keluarga wajib pilih salah satu kategori jasa saat booking (tidak ada teks bebas)                           | Must      |
+| FR-SVC-03 | Helper dapat mengajukan Layanan Tambahan di lapangan (§3.4.1), tugas pause sampai disetujui                | Must      |
+| FR-SVC-04 | Keluarga approve/reject usulan Layanan Tambahan                                                             | Must      |
 
 ### 4.5 Booking & Siklus Hidup Tugas
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-TSK-01 | Keluarga booking kunjungan (pilih Helper, kategori, jadwal) | Must |
-| FR-TSK-02 | Helper terima tugas via conditional update (anti race-condition) | Must |
-| FR-TSK-03 | Tugas otomatis DIBATALKAN (expired) jika tak diterima dalam 1 jam | Must |
-| FR-TSK-04 | Helper check-in saat tiba (status DIKERJAKAN) | Must |
-| FR-TSK-05 | Helper submit laporan (foto + catatan + Health Snapshot) → status SELESAI | Must |
-| FR-TSK-06 | Keluarga bisa batalkan tugas sebelum DIKERJAKAN (wajib isi alasan) | Must |
-| FR-TSK-07 | Riwayat status tugas terlihat jelas oleh Keluarga & Helper | Should |
-| FR-TSK-08 | Keluarga dapat reschedule sesuai aturan §3.7, maks 2x | Must |
-| FR-TSK-09 | Sistem menghitung akumulasi pembatalan Keluarga; >2 kali otomatis `restricted` (§3.9) | Must |
-| FR-TSK-10 | Booking yang butuh approval Koordinator (§3.3.2) berstatus sementara `menunggu_persetujuan_koordinator` sebelum DIKONFIRMASI | Must |
-| FR-TSK-11 | Koordinator menerima notifikasi pasif untuk setiap transaksi di wilayahnya (§3.3.2), tanpa perlu aksi | Must |
+| ID        | Requirement                                                                                                                    | Prioritas |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| FR-TSK-01 | Keluarga booking kunjungan (pilih Helper, kategori, jadwal)                                                                    | Must      |
+| FR-TSK-02 | Helper terima tugas via conditional update (anti race-condition)                                                               | Must      |
+| FR-TSK-03 | Tugas otomatis DIBATALKAN (expired) jika tak diterima dalam 1 jam                                                              | Must      |
+| FR-TSK-04 | Helper check-in saat tiba (status DIKERJAKAN)                                                                                  | Must      |
+| FR-TSK-05 | Helper submit laporan (foto + catatan + Health Snapshot) → status SELESAI                                                     | Must      |
+| FR-TSK-06 | Keluarga bisa batalkan tugas sebelum DIKERJAKAN (wajib isi alasan)                                                             | Must      |
+| FR-TSK-07 | Riwayat status tugas terlihat jelas oleh Keluarga & Helper                                                                     | Should    |
+| FR-TSK-08 | Keluarga dapat reschedule sesuai aturan §3.7, maks 2x                                                                         | Must      |
+| FR-TSK-09 | Sistem menghitung akumulasi pembatalan Keluarga; >2 kali otomatis`restricted` (§3.9)                                        | Must      |
+| FR-TSK-10 | Booking yang butuh approval Koordinator (§3.3.2) berstatus sementara`menunggu_persetujuan_koordinator` sebelum DIKONFIRMASI | Must      |
+| FR-TSK-11 | Koordinator menerima notifikasi pasif untuk setiap transaksi di wilayahnya (§3.3.2), tanpa perlu aksi                         | Must      |
 
 ### 4.6 Pembayaran & Escrow
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-PAY-01 | Keluarga bayar via Midtrans, dana ditahan (HELD_ESCROW) | Must |
-| FR-PAY-02 | Keluarga konfirmasi selesai → dana cair 90% Helper / 7% Platform / 3% Koordinator | Must |
-| FR-PAY-03 | Auto-release dana jika Keluarga tidak respons dalam 3x24 jam | Must |
-| FR-PAY-04 | Setiap event pembayaran tercatat di `transaction_logs` | Must |
-| FR-PAY-05 | Helper lihat riwayat penghasilan & status pencairan | Should |
-| FR-PAY-06 | Koordinator lihat riwayat komisi per wilayah | Should |
-| FR-PAY-07 | Admin dapat top-up saldo dummy ke akun Keluarga untuk kebutuhan demo/judging | Should |
-| FR-PAY-08 | Sistem menyediakan jalur "Bayar dengan Saldo Demo" sebagai fallback saat Midtrans gagal/timeout | Should |
-| FR-PAY-09 | Pembatalan tugas DIKONFIRMASI dengan dana HELD_ESCROW otomatis split 50/50 (§3.8) | Must |
+| ID        | Requirement                                                                                     | Prioritas |
+| --------- | ----------------------------------------------------------------------------------------------- | --------- |
+| FR-PAY-01 | Keluarga bayar via Midtrans, dana ditahan (HELD_ESCROW)                                         | Must      |
+| FR-PAY-02 | Keluarga konfirmasi selesai → dana cair 90% Helper / 7% Platform / 3% Koordinator              | Must      |
+| FR-PAY-03 | Auto-release dana jika Keluarga tidak respons dalam 3x24 jam                                    | Must      |
+| FR-PAY-04 | Setiap event pembayaran tercatat di`transaction_logs`                                         | Must      |
+| FR-PAY-05 | Helper lihat riwayat penghasilan & status pencairan                                             | Should    |
+| FR-PAY-06 | Koordinator lihat riwayat komisi per wilayah                                                    | Should    |
+| FR-PAY-07 | Admin dapat top-up saldo dummy ke akun Keluarga untuk kebutuhan demo/judging                    | Should    |
+| FR-PAY-08 | Sistem menyediakan jalur "Bayar dengan Saldo Demo" sebagai fallback saat Midtrans gagal/timeout | Should    |
+| FR-PAY-09 | Pembatalan tugas DIKONFIRMASI dengan dana HELD_ESCROW otomatis split 50/50 (§3.8)              | Must      |
 
 ### 4.7 Bukti Kunjungan & Riwayat Rangkul
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-EVD-01 | Upload foto bukti + catatan kondisi (wajib sebelum status SELESAI) | Must |
-| FR-EVD-02 | Timestamp otomatis saat submit bukti | Must |
-| FR-EVD-03 | Keluarga lihat laporan kunjungan lengkap | Must |
-| FR-RWT-01 | Helper isi Health Snapshot (5 indikator skala 1–5) di setiap laporan (§3.12) | Must |
-| FR-RWT-02 | Helper isi kolom "Cerita Hari Ini" (Memory Capsule) di setiap laporan | Must |
-| FR-RWT-03 | Halaman `/lansia/{id}/riwayat` menampilkan timeline kronologis + grafik tren per indikator | Must |
-| FR-RWT-04 | Badge "Perlu Perhatian" otomatis muncul jika skor rata-rata turun 3 kunjungan berturut | Should |
+| ID        | Requirement                                                                                 | Prioritas |
+| --------- | ------------------------------------------------------------------------------------------- | --------- |
+| FR-EVD-01 | Upload foto bukti + catatan kondisi (wajib sebelum status SELESAI)                          | Must      |
+| FR-EVD-02 | Timestamp otomatis saat submit bukti                                                        | Must      |
+| FR-EVD-03 | Keluarga lihat laporan kunjungan lengkap                                                    | Must      |
+| FR-RWT-01 | Helper isi Health Snapshot (5 indikator skala 1–5) di setiap laporan (§3.12)              | Must      |
+| FR-RWT-02 | Helper isi kolom "Cerita Hari Ini" (Memory Capsule) di setiap laporan                       | Must      |
+| FR-RWT-03 | Halaman`/lansia/{id}/riwayat` menampilkan timeline kronologis + grafik tren per indikator | Must      |
+| FR-RWT-04 | Badge "Perlu Perhatian" otomatis muncul jika skor rata-rata turun 3 kunjungan berturut      | Should    |
 
 ### 4.8 Rating & Chat
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-RAT-01 | Keluarga beri rating + komentar setelah status SELESAI (opsional, tidak memblokir alur) | Must |
-| FR-RAT-02 | Rating ditampilkan di profil Helper sebagai sinyal kualitas, **tidak** memicu suspend otomatis (§3.10) | Must |
-| FR-MSG-01 | Chat antara Keluarga–Helper per tugas | Must |
-| FR-MSG-02 | Status pesan terbaca (`read_at`) | Should |
-| FR-MSG-03 | Halaman inbox menampilkan seluruh percakapan aktif, live via Supabase Realtime | Should |
+| ID        | Requirement                                                                                                  | Prioritas |
+| --------- | ------------------------------------------------------------------------------------------------------------ | --------- |
+| FR-RAT-01 | Keluarga beri rating + komentar setelah status SELESAI (opsional, tidak memblokir alur)                      | Must      |
+| FR-RAT-02 | Rating ditampilkan di profil Helper sebagai sinyal kualitas,**tidak** memicu suspend otomatis (§3.10) | Must      |
+| FR-MSG-01 | Chat antara Keluarga–Helper per tugas                                                                       | Must      |
+| FR-MSG-02 | Status pesan terbaca (`read_at`)                                                                           | Should    |
+| FR-MSG-03 | Halaman inbox menampilkan seluruh percakapan aktif, live via Supabase Realtime                               | Should    |
 
 ### 4.9 Notifikasi
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-NOT-01 | Notifikasi in-app untuk perubahan status tugas, pesan baru, pembayaran | Must |
-| FR-NOT-02 | Notifikasi SOS ke Keluarga & Koordinator wilayah (push + SMS) | Must |
-| FR-NOT-03 | Tandai notifikasi sudah dibaca | Should |
-| FR-NOT-04 | Halaman `/notifikasi` terpusat, live via Supabase Realtime | Must |
+| ID        | Requirement                                                            | Prioritas |
+| --------- | ---------------------------------------------------------------------- | --------- |
+| FR-NOT-01 | Notifikasi in-app untuk perubahan status tugas, pesan baru, pembayaran | Must      |
+| FR-NOT-02 | Notifikasi SOS ke Keluarga & Koordinator wilayah (push + SMS)          | Must      |
+| FR-NOT-03 | Tandai notifikasi sudah dibaca                                         | Should    |
+| FR-NOT-04 | Halaman`/notifikasi` terpusat, live via Supabase Realtime            | Must      |
 
 ### 4.10 Darurat & Komplain
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-SOS-01 | Tombol darurat Helper: `tel:` quick-dial + notifikasi persisten sampai di-acknowledge | Must |
-| FR-RPT-01 | Keluarga laporkan Helper/kejadian bermasalah (laporan formal, §3.10) | Must |
-| FR-RPT-02 | Koordinator/Admin tindak lanjuti laporan; 2 laporan terkumpul → Helper otomatis `under_review` | Must |
+| ID        | Requirement                                                                                      | Prioritas |
+| --------- | ------------------------------------------------------------------------------------------------ | --------- |
+| FR-SOS-01 | Tombol darurat Helper:`tel:` quick-dial + notifikasi persisten sampai di-acknowledge           | Must      |
+| FR-RPT-01 | Keluarga laporkan Helper/kejadian bermasalah (laporan formal, §3.10)                            | Must      |
+| FR-RPT-02 | Koordinator/Admin tindak lanjuti laporan; 2 laporan terkumpul → Helper otomatis`under_review` | Must      |
 
 ### 4.11 Help Center
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-HLC-01 | Halaman FAQ & tutorial | Should |
-| FR-HLC-02 | Form lapor bug & kontak admin | Should |
+| ID        | Requirement                   | Prioritas |
+| --------- | ----------------------------- | --------- |
+| FR-HLC-01 | Halaman FAQ & tutorial        | Should    |
+| FR-HLC-02 | Form lapor bug & kontak admin | Should    |
 
 ### 4.12 Panel Admin
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-ADM-01 | Hapus akun pengguna | Must |
-| FR-ADM-02 | Suspend Helper | Must |
-| FR-ADM-03 | Lihat statistik platform (jumlah tugas, GMV, dll) | Should |
-| FR-ADM-04 | Kelola kategori jasa (termasuk tandai kategori berisiko tinggi) | Must |
-| FR-ADM-05 | Lihat audit log seluruh aksi sensitif | Should |
-| FR-ADM-06 | Review & verifikasi dokumen pengajuan Koordinator baru (approve/reject) | Must |
-| FR-ADM-07 | Top-up saldo dummy ke akun Keluarga (fallback demo) | Should |
-| FR-ADM-08 | Menjadi verifikator fallback untuk Helper di wilayah tanpa Koordinator aktif (§3.3.1) | Must |
-| FR-ADM-09 | Meninjau Helper `under_review` (2 laporan terkumpul) dan memutuskan tindak lanjut | Must |
+| ID        | Requirement                                                                            | Prioritas |
+| --------- | -------------------------------------------------------------------------------------- | --------- |
+| FR-ADM-01 | Hapus akun pengguna                                                                    | Must      |
+| FR-ADM-02 | Suspend Helper                                                                         | Must      |
+| FR-ADM-03 | Lihat statistik platform (jumlah tugas, GMV, dll)                                      | Should    |
+| FR-ADM-04 | Kelola kategori jasa (termasuk tandai kategori berisiko tinggi)                        | Must      |
+| FR-ADM-05 | Lihat audit log seluruh aksi sensitif                                                  | Should    |
+| FR-ADM-06 | Review & verifikasi dokumen pengajuan Koordinator baru (approve/reject)                | Must      |
+| FR-ADM-07 | Top-up saldo dummy ke akun Keluarga (fallback demo)                                    | Should    |
+| FR-ADM-08 | Menjadi verifikator fallback untuk Helper di wilayah tanpa Koordinator aktif (§3.3.1) | Must      |
+| FR-ADM-09 | Meninjau Helper`under_review` (2 laporan terkumpul) dan memutuskan tindak lanjut     | Must      |
 
 ### 4.13 Banding
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-APL-01 | Keluarga ajukan banding ke Admin jika akun di-restrict karena pembatalan berulang (§3.9) | Must |
-| FR-APL-02 | Admin review & putuskan banding (setujui/tolak) | Must |
+| ID        | Requirement                                                                               | Prioritas |
+| --------- | ----------------------------------------------------------------------------------------- | --------- |
+| FR-APL-01 | Keluarga ajukan banding ke Admin jika akun di-restrict karena pembatalan berulang (§3.9) | Must      |
+| FR-APL-02 | Admin review & putuskan banding (setujui/tolak)                                           | Must      |
 
 ### 4.14 Offline Behaviour
 
-| ID | Requirement | Prioritas |
-|---|---|---|
-| FR-OFF-01 | Draf laporan (Health Snapshot, cerita, foto) tersimpan lokal di IndexedDB saat offline | Must |
-| FR-OFF-02 | Indikator status sinkronisasi (🟡 belum tersinkron / 🟢 sudah terkirim) tampil di UI Helper | Must |
-| FR-OFF-03 | Sinkronisasi otomatis terpicu saat koneksi kembali (event `online`) | Must |
+| ID        | Requirement                                                                                 | Prioritas |
+| --------- | ------------------------------------------------------------------------------------------- | --------- |
+| FR-OFF-01 | Draf laporan (Health Snapshot, cerita, foto) tersimpan lokal di IndexedDB saat offline      | Must      |
+| FR-OFF-02 | Indikator status sinkronisasi (🟡 belum tersinkron / 🟢 sudah terkirim) tampil di UI Helper | Must      |
+| FR-OFF-03 | Sinkronisasi otomatis terpicu saat koneksi kembali (event`online`)                        | Must      |
 
 ---
 
@@ -653,234 +656,234 @@ flowchart TD
 
 ### `users`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| email, phone | text, unique | |
-| password_hash | text | Dikelola Supabase Auth |
-| full_name | text | |
-| role | enum | `keluarga` / `helper` / `koordinator` / `admin` |
-| account_status | enum | `active` / `restricted` / `suspended` |
-| created_at | timestamptz | |
+| Kolom          | Tipe         | Keterangan                                              |
+| -------------- | ------------ | ------------------------------------------------------- |
+| id             | uuid, PK     |                                                         |
+| email, phone   | text, unique |                                                         |
+| password_hash  | text         | Dikelola Supabase Auth                                  |
+| full_name      | text         |                                                         |
+| role           | enum         | `keluarga` / `helper` / `koordinator` / `admin` |
+| account_status | enum         | `active` / `restricted` / `suspended`             |
+| created_at     | timestamptz  |                                                         |
 
 ### `lansia_profiles`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| keluarga_id | uuid, FK users | |
-| nama, alamat | text | |
-| lat, lng | numeric | |
-| catatan_kondisi | text | |
-| dokumen_identitas_lansia_url | text | Bucket private (§3.11) |
-| dokumen_hubungan_keluarga_url | text | Bucket private (§3.11) |
-| deleted_at | timestamptz, nullable | Soft delete |
+| Kolom                         | Tipe                  | Keterangan              |
+| ----------------------------- | --------------------- | ----------------------- |
+| id                            | uuid, PK              |                         |
+| keluarga_id                   | uuid, FK users        |                         |
+| nama, alamat                  | text                  |                         |
+| lat, lng                      | numeric               |                         |
+| catatan_kondisi               | text                  |                         |
+| dokumen_identitas_lansia_url  | text                  | Bucket private (§3.11) |
+| dokumen_hubungan_keluarga_url | text                  | Bucket private (§3.11) |
+| deleted_at                    | timestamptz, nullable | Soft delete             |
 
 ### `helper_profiles`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| user_id | uuid, FK users | |
-| ktp_url, bio | text | |
-| wilayah_domisili | text | RT/RW tempat diverifikasi |
-| radius_layanan_km | numeric | Jangkauan pengambilan tugas (§3.3.1) |
-| koordinator_id | uuid, FK koordinator_profiles, nullable | |
-| verified_by_admin_fallback | boolean, default false | Wilayah tanpa Koordinator aktif (§3.3.1) |
-| status | enum | `pending_verification` / `verified` / `under_review` / `suspended` |
-| tingkat_kepercayaan | enum, default `probation` | `probation` / `terpercaya` (§3.3.3) |
-| tugas_selesai_berturut | int, default 0 | Reset ke 0 jika kena laporan; naik `terpercaya` di angka 5 |
-| suspend_reason | text, nullable | |
-| rating_avg, total_tugas_selesai | numeric, int | |
-| saldo_tersedia | numeric | |
+| Kolom                           | Tipe                                    | Keterangan                                                                 |
+| ------------------------------- | --------------------------------------- | -------------------------------------------------------------------------- |
+| id                              | uuid, PK                                |                                                                            |
+| user_id                         | uuid, FK users                          |                                                                            |
+| ktp_url, bio                    | text                                    |                                                                            |
+| wilayah_domisili                | text                                    | RT/RW tempat diverifikasi                                                  |
+| radius_layanan_km               | numeric                                 | Jangkauan pengambilan tugas (§3.3.1)                                      |
+| koordinator_id                  | uuid, FK koordinator_profiles, nullable |                                                                            |
+| verified_by_admin_fallback      | boolean, default false                  | Wilayah tanpa Koordinator aktif (§3.3.1)                                  |
+| status                          | enum                                    | `pending_verification` / `verified` / `under_review` / `rejected` / `suspended` |
+| tingkat_kepercayaan             | enum, default`probation`              | `probation` / `terpercaya` (§3.3.3)                                   |
+| tugas_selesai_berturut          | int, default 0                          | Reset ke 0 jika kena laporan; naik`terpercaya` di angka 5                |
+| suspend_reason                  | text, nullable                          |                                                                            |
+| rating_avg, total_tugas_selesai | numeric, int                            |                                                                            |
+| saldo_tersedia                  | numeric                                 |                                                                            |
 
 ### `koordinator_profiles`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| user_id | uuid, FK users | |
-| wilayah | text | |
-| tingkat | enum | `rt` / `rw` (§3.3.1) |
-| dokumen_url | text | Dokumen pendukung jabatan |
-| status | enum | `pending_verification` / `verified` / `rejected` / `suspended` |
-| diverifikasi_oleh, diverifikasi_at | uuid, timestamptz, nullable | Admin |
-| saldo_komisi | numeric | |
+| Kolom                              | Tipe                        | Keterangan                                                             |
+| ---------------------------------- | --------------------------- | ---------------------------------------------------------------------- |
+| id                                 | uuid, PK                    |                                                                        |
+| user_id                            | uuid, FK users              |                                                                        |
+| wilayah                            | text                        |                                                                        |
+| tingkat                            | enum                        | `rt` / `rw` (§3.3.1)                                              |
+| dokumen_url                        | text                        | Dokumen pendukung jabatan                                              |
+| status                             | enum                        | `pending_verification` / `verified` / `rejected` / `suspended` |
+| diverifikasi_oleh, diverifikasi_at | uuid, timestamptz, nullable | Admin                                                                  |
+| saldo_komisi                       | numeric                     |                                                                        |
 
 ### `service_categories`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| nama, deskripsi | text | |
-| estimasi_durasi_menit | int | |
-| harga_dasar | numeric | Fix price, ditentukan Admin (§3.4.1) |
-| is_high_risk | boolean | Selalu butuh approval Koordinator (§3.3.2) |
-| is_active | boolean | |
+| Kolom                 | Tipe     | Keterangan                                  |
+| --------------------- | -------- | ------------------------------------------- |
+| id                    | uuid, PK |                                             |
+| nama, deskripsi       | text     |                                             |
+| estimasi_durasi_menit | int      |                                             |
+| harga_dasar           | numeric  | Fix price, ditentukan Admin (§3.4.1)       |
+| is_high_risk          | boolean  | Selalu butuh approval Koordinator (§3.3.2) |
+| is_active             | boolean  |                                             |
 
 **Kategori final (§3.4.1 & catatan 12 diskusi):**
 
-| Kategori | Durasi | Harga Dasar | Berisiko Tinggi? |
-|---|---|---|---|
-| Antar Obat | 30 menit | Rp35.000 | Tidak |
-| Pengingat Obat | 30 menit | Rp25.000 | Tidak |
-| Belanja Kebutuhan | 60 menit | Rp40.000 | Tidak |
-| Menemani Mengobrol | 60 menit | Rp50.000 | Tidak |
-| Membersihkan Rumah Ringan | 90 menit | Rp70.000 | Tidak |
-| Bantuan Teknologi (video call dgn keluarga, dll) | 45 menit | Rp30.000 | Tidak |
-| Kontrol Kesehatan (antar ke faskes) | 90 menit | Rp120.000 | **Ya** |
+| Kategori                                         | Durasi   | Harga Dasar | Berisiko Tinggi? |
+| ------------------------------------------------ | -------- | ----------- | ---------------- |
+| Antar Obat                                       | 30 menit | Rp35.000    | Tidak            |
+| Pengingat Obat                                   | 30 menit | Rp25.000    | Tidak            |
+| Belanja Kebutuhan                                | 60 menit | Rp40.000    | Tidak            |
+| Menemani Mengobrol                               | 60 menit | Rp50.000    | Tidak            |
+| Membersihkan Rumah Ringan                        | 90 menit | Rp70.000    | Tidak            |
+| Bantuan Teknologi (video call dgn keluarga, dll) | 45 menit | Rp30.000    | Tidak            |
+| Kontrol Kesehatan (antar ke faskes)              | 90 menit | Rp120.000   | **Ya**     |
 
 ### `tasks`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| keluarga_id, lansia_id, helper_id | uuid, FK | `helper_id` nullable sampai DIKONFIRMASI |
-| service_category_id | uuid, FK service_categories | |
-| jadwal_waktu, jadwal_waktu_asli | timestamptz, nullable | |
-| reschedule_count | int, default 0 | Maks 2 |
-| status | enum | `diajukan` / `menunggu_persetujuan_koordinator` / `dikonfirmasi` / `dikerjakan` / `menunggu_persetujuan_keluarga` / `selesai` / `dibatalkan` |
-| harga_dasar | numeric | Snapshot kategori saat booking |
-| harga_final | numeric, nullable | harga_dasar + layanan tambahan disetujui |
-| dibatalkan_oleh, alasan_batal | uuid, text, nullable | |
-| confirmed_at, started_at, completed_at | timestamptz, nullable | |
-| created_at | timestamptz | |
+| Kolom                                  | Tipe                        | Keterangan                                                                                                                                                 |
+| -------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                                     | uuid, PK                    |                                                                                                                                                            |
+| keluarga_id, lansia_id, helper_id      | uuid, FK                    | `helper_id` nullable sampai DIKONFIRMASI                                                                                                                 |
+| service_category_id                    | uuid, FK service_categories |                                                                                                                                                            |
+| jadwal_waktu, jadwal_waktu_asli        | timestamptz, nullable       |                                                                                                                                                            |
+| reschedule_count                       | int, default 0              | Maks 2                                                                                                                                                     |
+| status                                 | enum                        | `diajukan` / `menunggu_persetujuan_koordinator` / `dikonfirmasi` / `dikerjakan` / `menunggu_persetujuan_keluarga` / `selesai` / `dibatalkan` |
+| harga_dasar                            | numeric                     | Snapshot kategori saat booking                                                                                                                             |
+| harga_final                            | numeric, nullable           | harga_dasar + layanan tambahan disetujui                                                                                                                   |
+| dibatalkan_oleh, alasan_batal          | uuid, text, nullable        |                                                                                                                                                            |
+| confirmed_at, started_at, completed_at | timestamptz, nullable       |                                                                                                                                                            |
+| created_at                             | timestamptz                 |                                                                                                                                                            |
 
 ### `task_extra_services`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks | |
-| deskripsi, biaya_tambahan | text, numeric | Diajukan Helper (§3.4.1) |
-| status | enum | `menunggu` / `disetujui` / `ditolak` |
+| Kolom                     | Tipe           | Keterangan                                 |
+| ------------------------- | -------------- | ------------------------------------------ |
+| id                        | uuid, PK       |                                            |
+| task_id                   | uuid, FK tasks |                                            |
+| deskripsi, biaya_tambahan | text, numeric  | Diajukan Helper (§3.4.1)                  |
+| status                    | enum           | `menunggu` / `disetujui` / `ditolak` |
 
 ### `task_evidence`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks, unique | |
-| foto_url, catatan_kondisi | text | |
-| sync_status | enum | `pending_sync` / `submitted` (§3.13) |
+| Kolom                     | Tipe                   | Keterangan                                |
+| ------------------------- | ---------------------- | ----------------------------------------- |
+| id                        | uuid, PK               |                                           |
+| task_id                   | uuid, FK tasks, unique |                                           |
+| foto_url, catatan_kondisi | text                   |                                           |
+| sync_status               | enum                   | `pending_sync` / `submitted` (§3.13) |
 
 ### `health_snapshots`
 
 Inti dari fitur Riwayat Rangkul (§3.12).
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks, unique | |
-| lansia_id | uuid, FK lansia_profiles | Denormalisasi untuk query timeline cepat |
-| skor_energi, skor_mobilitas, skor_mood, skor_nafsu_makan, skor_tidur | int (1-5) | |
-| cerita_hari_ini | text | Memory Capsule |
-| created_at | timestamptz | |
+| Kolom                                                                | Tipe                     | Keterangan                               |
+| -------------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
+| id                                                                   | uuid, PK                 |                                          |
+| task_id                                                              | uuid, FK tasks, unique   |                                          |
+| lansia_id                                                            | uuid, FK lansia_profiles | Denormalisasi untuk query timeline cepat |
+| skor_energi, skor_mobilitas, skor_mood, skor_nafsu_makan, skor_tidur | int (1-5)                |                                          |
+| cerita_hari_ini                                                      | text                     | Memory Capsule                           |
+| created_at                                                           | timestamptz              |                                          |
 
 ### `ratings`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks, unique | |
-| rating_value, komentar | int, text | Sinyal kualitas saja, tidak trigger suspend (§3.10) |
+| Kolom                  | Tipe                   | Keterangan                                           |
+| ---------------------- | ---------------------- | ---------------------------------------------------- |
+| id                     | uuid, PK               |                                                      |
+| task_id                | uuid, FK tasks, unique |                                                      |
+| rating_value, komentar | int, text              | Sinyal kualitas saja, tidak trigger suspend (§3.10) |
 
 ### `payments`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks, unique | |
-| payment_method | enum | `midtrans` / `dummy_saldo` |
-| jumlah_total | numeric | = `harga_final` |
-| helper_share, platform_fee, koordinator_share | numeric | 90/7/3 normal, 50/0/0 jika kompensasi pembatalan (§3.8) |
-| status | enum | `pending` / `held_escrow` / `released` / `refunded` / `disputed` / `dibatalkan_kompensasi` |
-| gateway_ref | text | Kosong jika `payment_method = dummy_saldo` |
-| released_at | timestamptz, nullable | |
+| Kolom                                         | Tipe                   | Keterangan                                                                                             |
+| --------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| id                                            | uuid, PK               |                                                                                                        |
+| task_id                                       | uuid, FK tasks, unique |                                                                                                        |
+| payment_method                                | enum                   | `midtrans` / `dummy_saldo`                                                                         |
+| jumlah_total                                  | numeric                | =`harga_final`                                                                                       |
+| helper_share, platform_fee, koordinator_share | numeric                | 90/7/3 normal, 50/0/0 jika kompensasi pembatalan (§3.8)                                               |
+| status                                        | enum                   | `pending` / `held_escrow` / `released` / `refunded` / `disputed` / `dibatalkan_kompensasi` |
+| gateway_ref                                   | text                   | Kosong jika`payment_method = dummy_saldo`                                                            |
+| released_at                                   | timestamptz, nullable  |                                                                                                        |
 
 ### `transaction_logs`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| payment_id | uuid, FK payments | |
-| event_type | enum | `created` / `held` / `released` / `refunded` / `disputed` |
-| payload | jsonb | |
-| created_at | timestamptz | |
+| Kolom      | Tipe              | Keterangan                                                          |
+| ---------- | ----------------- | ------------------------------------------------------------------- |
+| id         | uuid, PK          |                                                                     |
+| payment_id | uuid, FK payments |                                                                     |
+| event_type | enum              | `created` / `held` / `released` / `refunded` / `disputed` |
+| payload    | jsonb             |                                                                     |
+| created_at | timestamptz       |                                                                     |
 
 ### `messages`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| sender_id, receiver_id | uuid, FK users | |
-| task_id | uuid, FK tasks, nullable | |
-| message | text | |
-| created_at, read_at | timestamptz, nullable | |
+| Kolom                  | Tipe                     | Keterangan |
+| ---------------------- | ------------------------ | ---------- |
+| id                     | uuid, PK                 |            |
+| sender_id, receiver_id | uuid, FK users           |            |
+| task_id                | uuid, FK tasks, nullable |            |
+| message                | text                     |            |
+| created_at, read_at    | timestamptz, nullable    |            |
 
 ### `notifications`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| user_id | uuid, FK users | |
-| title, body | text | |
-| type | enum | `task` / `payment` / `emergency` / `message` / `system` / `koordinator_info` |
-| is_read | boolean | |
-| created_at | timestamptz | |
+| Kolom       | Tipe           | Keterangan                                                                               |
+| ----------- | -------------- | ---------------------------------------------------------------------------------------- |
+| id          | uuid, PK       |                                                                                          |
+| user_id     | uuid, FK users |                                                                                          |
+| title, body | text           |                                                                                          |
+| type        | enum           | `task` / `payment` / `emergency` / `message` / `system` / `koordinator_info` |
+| is_read     | boolean        |                                                                                          |
+| created_at  | timestamptz    |                                                                                          |
 
 ### `emergency_alerts`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| task_id | uuid, FK tasks | |
-| triggered_by | uuid, FK users | |
-| status | enum | `active` / `acknowledged` / `resolved` |
-| acknowledged_by, acknowledged_at | uuid, timestamptz, nullable | |
+| Kolom                            | Tipe                        | Keterangan                                   |
+| -------------------------------- | --------------------------- | -------------------------------------------- |
+| id                               | uuid, PK                    |                                              |
+| task_id                          | uuid, FK tasks              |                                              |
+| triggered_by                     | uuid, FK users              |                                              |
+| status                           | enum                        | `active` / `acknowledged` / `resolved` |
+| acknowledged_by, acknowledged_at | uuid, timestamptz, nullable |                                              |
 
 ### `reports`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| reported_helper_id, reporter_id | uuid, FK users | |
-| alasan | text | |
-| status | enum | `menunggu` / `ditindak` / `selesai` |
-| ditindak_oleh | uuid, FK users, nullable | Koordinator atau Admin |
+| Kolom                           | Tipe                     | Keterangan                                |
+| ------------------------------- | ------------------------ | ----------------------------------------- |
+| id                              | uuid, PK                 |                                           |
+| reported_helper_id, reporter_id | uuid, FK users           |                                           |
+| alasan                          | text                     |                                           |
+| status                          | enum                     | `menunggu` / `ditindak` / `selesai` |
+| ditindak_oleh                   | uuid, FK users, nullable | Koordinator atau Admin                    |
 
 > **Trigger otomatis:** setiap insert baru ke `reports` untuk `reported_helper_id` yang sama, hitung total laporan aktif. Jika mencapai 2 → update `helper_profiles.status = 'under_review'` (§3.10). Implementasi via Postgres trigger function, bukan logika aplikasi, supaya konsisten meski ada request bersamaan.
 
 ### `appeals`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| user_id | uuid, FK users | Keluarga yang mengajukan banding (§3.9) |
-| alasan | text | |
-| status | enum | `menunggu` / `disetujui` / `ditolak` |
-| direview_oleh, direview_at | uuid, timestamptz, nullable | Admin |
-| created_at | timestamptz | |
+| Kolom                      | Tipe                        | Keterangan                                 |
+| -------------------------- | --------------------------- | ------------------------------------------ |
+| id                         | uuid, PK                    |                                            |
+| user_id                    | uuid, FK users              | Keluarga yang mengajukan banding (§3.9)   |
+| alasan                     | text                        |                                            |
+| status                     | enum                        | `menunggu` / `disetujui` / `ditolak` |
+| direview_oleh, direview_at | uuid, timestamptz, nullable | Admin                                      |
+| created_at                 | timestamptz                 |                                            |
 
 ### `audit_logs`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| actor_id | uuid, FK users, nullable | |
-| action | text | mis. `suspend_helper`, `approve_koordinator`, `topup_demo_wallet`, `resolve_appeal`, `assign_admin_fallback` |
-| entity_type, entity_id | text, uuid | |
-| metadata | jsonb | |
-| created_at | timestamptz | |
+| Kolom                  | Tipe                     | Keterangan                                                                                                            |
+| ---------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| id                     | uuid, PK                 |                                                                                                                       |
+| actor_id               | uuid, FK users, nullable |                                                                                                                       |
+| action                 | text                     | mis.`suspend_helper`, `approve_koordinator`, `topup_demo_wallet`, `resolve_appeal`, `assign_admin_fallback` |
+| entity_type, entity_id | text, uuid               |                                                                                                                       |
+| metadata               | jsonb                    |                                                                                                                       |
+| created_at             | timestamptz              |                                                                                                                       |
 
 ### `demo_wallets`
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | uuid, PK | |
-| user_id | uuid, FK users | |
-| saldo | numeric | |
-| updated_at | timestamptz | |
+| Kolom      | Tipe           | Keterangan |
+| ---------- | -------------- | ---------- |
+| id         | uuid, PK       |            |
+| user_id    | uuid, FK users |            |
+| saldo      | numeric        |            |
+| updated_at | timestamptz    |            |
 
 > Murni untuk kebutuhan demo/judging (§3.4) — bukan bagian dari alur uang sungguhan.
 
@@ -889,6 +892,7 @@ Inti dari fitur Riwayat Rangkul (§3.12).
 ## 7. API Design
 
 ### Auth
+
 ```
 POST   /api/auth/register
 POST   /api/auth/login
@@ -898,12 +902,14 @@ POST   /api/auth/forgot-password
 ```
 
 ### Users
+
 ```
 GET    /api/users/me
 PATCH  /api/users/me
 ```
 
 ### Lansia
+
 ```
 POST   /api/lansia                (wajib dokumen identitas + hubungan keluarga, §3.11)
 GET    /api/lansia
@@ -914,6 +920,7 @@ DELETE /api/lansia/:id            (soft delete)
 ```
 
 ### Helper
+
 ```
 POST   /api/helpers/apply         (sertakan wilayah_domisili + radius_layanan_km)
 GET    /api/helpers?wilayah=&kategori=&radius=
@@ -922,13 +929,16 @@ PATCH  /api/helpers/:id/status    (koordinator: verify/reject/suspend)
 ```
 
 ### Koordinator
+
 ```
 POST   /api/koordinator/apply         (self-register + dokumen, §3.3)
 GET    /api/koordinator/commissions
 GET    /api/koordinator/pengawasan    (khusus tingkat=rw, filter per RT/keluarga, §3.3.4)
+GET    /api/koordinator/helpers        (Helper verified di wilayah Koordinator + snapshot tugas aktif)
 ```
 
 ### Kategori Jasa
+
 ```
 GET    /api/categories
 POST   /api/categories            (admin only)
@@ -940,6 +950,7 @@ PATCH  /api/categories/:id        (admin only, termasuk toggle is_high_risk)
 **Contoh detail — `POST /api/tasks`**
 
 Request:
+
 ```json
 {
   "helper_id": "uuid",
@@ -951,6 +962,7 @@ Request:
 ```
 
 Response `201`:
+
 ```json
 {
   "task_id": "uuid",
@@ -961,11 +973,13 @@ Response `201`:
 ```
 
 Error `409` — Helper tidak tersedia di radius/kategori diminta:
+
 ```json
 { "error": "helper_unavailable", "message": "Helper tidak melayani kategori atau wilayah ini" }
 ```
 
 **Endpoint lengkap:**
+
 ```
 POST   /api/tasks                          (keluarga booking, respons termasuk payment_url draft — diisi setelah DIKONFIRMASI)
 GET    /api/tasks                          (list, filter per role)
@@ -983,6 +997,7 @@ POST   /api/tasks/:id/rating               (§4.8 — sinyal kualitas saja)
 ```
 
 ### Payment
+
 ```
 POST   /api/payments/:task_id/charge          (inisiasi Midtrans)
 POST   /api/payments/:task_id/charge-dummy    (fallback Saldo Demo)
@@ -991,6 +1006,7 @@ GET    /api/payments/:task_id
 ```
 
 **Event Flow pembayaran:**
+
 ```
 POST /payment/create → Midtrans → Webhook → verifikasi signature HMAC SHA512
     → payments.status = held_escrow → transaction_logs (event: held)
@@ -998,6 +1014,7 @@ POST /payment/create → Midtrans → Webhook → verifikasi signature HMAC SHA5
 ```
 
 ### Messages
+
 ```
 GET    /api/messages/conversations
 GET    /api/messages/:task_id
@@ -1006,18 +1023,21 @@ PATCH  /api/messages/:id/read
 ```
 
 ### Notifications
+
 ```
 GET    /api/notifications
 PATCH  /api/notifications/:id/read
 ```
 
 ### Emergency
+
 ```
 POST   /api/emergency
 PATCH  /api/emergency/:id/acknowledge
 ```
 
 **Event Flow SOS:**
+
 ```
 POST /emergency → emergency_alerts (status: active)
     → notifications push+SMS ke Keluarga & Koordinator wilayah
@@ -1025,6 +1045,7 @@ POST /emergency → emergency_alerts (status: active)
 ```
 
 ### Reports
+
 ```
 POST   /api/reports               (trigger DB otomatis hitung akumulasi, §6)
 GET    /api/reports               (koordinator/admin)
@@ -1032,6 +1053,7 @@ PATCH  /api/reports/:id
 ```
 
 ### Banding (Appeals)
+
 ```
 POST   /api/appeals                (keluarga ajukan banding, §3.9)
 GET    /api/admin/appeals
@@ -1039,6 +1061,7 @@ PATCH  /api/admin/appeals/:id      (admin setujui/tolak)
 ```
 
 ### Admin
+
 ```
 GET    /api/admin/stats
 GET    /api/admin/users
@@ -1072,19 +1095,19 @@ flowchart LR
 
 ### 8.2 Kontrol Keamanan
 
-| Kontrol | Implementasi |
-|---|---|
-| Validasi input | **Zod** di client (React Hook Form) + server (route handler) — 4 lapis bersama constraint Supabase (§2) |
-| XSS Protection | React auto-escape output; sanitasi eksplisit untuk konten user-generated (chat, cerita Memory Capsule) |
-| CSRF Token | Token pada form/aksi berbasis cookie session (SSR) |
-| SQL Injection Prevention | Selalu lewat Supabase client / query builder berparameter |
-| Rate Limiter | Endpoint sensitif: login, register, booking |
-| HTTPS | Default Vercel |
-| JWT Expiration | Access token pendek + refresh token rotation |
-| CSP Header | Diatur di `next.config` |
-| Webhook Signature | Payload Midtrans divalidasi HMAC SHA512 sebelum diproses |
-| Dokumen sensitif (KTP, KK, dokumen jabatan) | Supabase Storage bucket private + signed URL |
-| Row Level Security | Aktif di setiap tabel data pribadi — diuji eksplisit sebelum submission |
+| Kontrol                                     | Implementasi                                                                                                    |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Validasi input                              | **Zod** di client (React Hook Form) + server (route handler) — 4 lapis bersama constraint Supabase (§2) |
+| XSS Protection                              | React auto-escape output; sanitasi eksplisit untuk konten user-generated (chat, cerita Memory Capsule)          |
+| CSRF Token                                  | Token pada form/aksi berbasis cookie session (SSR)                                                              |
+| SQL Injection Prevention                    | Selalu lewat Supabase client / query builder berparameter                                                       |
+| Rate Limiter                                | Endpoint sensitif: login, register, booking                                                                     |
+| HTTPS                                       | Default Vercel                                                                                                  |
+| JWT Expiration                              | Access token pendek + refresh token rotation                                                                    |
+| CSP Header                                  | Diatur di`next.config`                                                                                        |
+| Webhook Signature                           | Payload Midtrans divalidasi HMAC SHA512 sebelum diproses                                                        |
+| Dokumen sensitif (KTP, KK, dokumen jabatan) | Supabase Storage bucket private + signed URL                                                                    |
+| Row Level Security                          | Aktif di setiap tabel data pribadi — diuji eksplisit sebelum submission                                        |
 
 ---
 
@@ -1092,84 +1115,85 @@ flowchart LR
 
 ### Auth
 
-| Rute | Pengguna | Fungsi |
-|---|---|---|
-| `/` | Publik | Landing page — "Merangkul Jarak, Menjaga yang Tersayang". |
-| `/login` | Guest | Masuk ke sistem. |
-| `/register` | Guest | Pendaftaran, pilih peran Keluarga, Helper, atau Koordinator Komunitas (dengan unggah dokumen jabatan, §3.3). |
+| Rute          | Pengguna | Fungsi                                                                                                        |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `/`         | Publik   | Landing page — "Merangkul Jarak, Menjaga yang Tersayang".                                                    |
+| `/login`    | Guest    | Masuk ke sistem.                                                                                              |
+| `/register` | Guest    | Pendaftaran, pilih peran Keluarga, Helper, atau Koordinator Komunitas (dengan unggah dokumen jabatan, §3.3). |
 
 ### Bersama (semua peran login)
 
-| Rute | Fungsi |
-|---|---|
+| Rute            | Fungsi                                        |
+| --------------- | --------------------------------------------- |
 | `/notifikasi` | Pusat notifikasi, live via Supabase Realtime. |
 
 ### Keluarga
 
-| Rute | Fungsi |
-|---|---|
-| `/beranda` | Dashboard. |
-| `/lansia/tambah` | Tambah profil lansia + dokumen identitas & hubungan keluarga (§3.11). |
-| `/lansia/{id}/edit` | Edit profil lansia. |
-| `/lansia/{id}/riwayat` | **Riwayat Rangkul** — timeline, grafik tren, badge peringatan (§3.12). |
-| `/cari-helper` | Katalog Helper dalam radius layanan + filter kategori jasa. |
-| `/booking/{helper_id}` | Penjadwalan kunjungan, harga fix ditampilkan jelas (§3.4.1). |
-| `/kunjungan` | Riwayat status tugas. |
-| `/kunjungan/{id}` | Detail: foto bukti, chat, reschedule, approve Layanan Tambahan, rating. |
-| `/kunjungan/{id}/laporkan` | Laporkan Helper/kejadian bermasalah (§3.10). |
-| `/pembayaran/{task_id}` | Status escrow, opsi fallback Saldo Demo. |
-| `/pesan` | Inbox percakapan lintas tugas. |
-| `/banding` | Form banding jika akun `restricted` (§3.9). |
+| Rute                         | Fungsi                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| `/beranda`                 | Dashboard.                                                                     |
+| `/lansia/tambah`           | Tambah profil lansia + dokumen identitas & hubungan keluarga (§3.11).         |
+| `/lansia/{id}/edit`        | Edit profil lansia.                                                            |
+| `/lansia/{id}/riwayat`     | **Riwayat Rangkul** — timeline, grafik tren, badge peringatan (§3.12). |
+| `/cari-helper`             | Katalog Helper dalam radius layanan + filter kategori jasa.                    |
+| `/booking/{helper_id}`     | Penjadwalan kunjungan, harga fix ditampilkan jelas (§3.4.1).                  |
+| `/kunjungan`               | Riwayat status tugas.                                                          |
+| `/kunjungan/{id}`          | Detail: foto bukti, chat, reschedule, approve Layanan Tambahan, rating.        |
+| `/kunjungan/{id}/laporkan` | Laporkan Helper/kejadian bermasalah (§3.10).                                  |
+| `/pembayaran/{task_id}`    | Status escrow, opsi fallback Saldo Demo.                                       |
+| `/pesan`                   | Inbox percakapan lintas tugas.                                                 |
+| `/banding`                 | Form banding jika akun`restricted` (§3.9).                                  |
 
 ### Helper
 
-| Rute | Fungsi |
-|---|---|
-| `/helper/dashboard` | Status verifikasi, tingkat kepercayaan, ringkasan tugas, penghasilan. |
-| `/helper/verifikasi` | Pengajuan diri: KTP, wilayah domisili, radius layanan, bio. |
-| `/helper/tugas` | Job board dalam radius layanan. |
-| `/helper/tugas/{id}` | Terima tugas (harga fix), check-in, ajukan Layanan Tambahan, chat, tombol SOS. |
-| `/helper/laporan` | Formulir laporan: foto + catatan + Health Snapshot + Cerita Hari Ini, dengan indikator sinkronisasi offline (§3.13). |
-| `/helper/penghasilan` | Riwayat transaksi & saldo. |
-| `/helper/pesan` | Inbox percakapan. |
+| Rute                    | Fungsi                                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/helper/dashboard`   | Status verifikasi, tingkat kepercayaan, ringkasan tugas, penghasilan.                                                 |
+| `/helper/verifikasi`  | Pengajuan diri: KTP, wilayah domisili, radius layanan, bio.                                                           |
+| `/helper/tugas`       | Job board dalam radius layanan.                                                                                       |
+| `/helper/tugas/{id}`  | Terima tugas (harga fix), check-in, ajukan Layanan Tambahan, chat, tombol SOS.                                        |
+| `/helper/laporan`     | Formulir laporan: foto + catatan + Health Snapshot + Cerita Hari Ini, dengan indikator sinkronisasi offline (§3.13). |
+| `/helper/penghasilan` | Riwayat transaksi & saldo.                                                                                            |
+| `/helper/pesan`       | Inbox percakapan.                                                                                                     |
 
 ### Koordinator Komunitas
 
-| Rute | Fungsi |
-|---|---|
-| `/koordinator/dashboard` | Ringkasan Helper aktif, pengajuan baru, notifikasi transaksi pasif wilayah. |
-| `/koordinator/pengajuan` | Antrean verifikasi Helper baru domisilinya. |
-| `/koordinator/persetujuan` | Antrean booking yang butuh approval eksplisit (§3.3.2). |
-| `/koordinator/helper/{id}` | Detail profil & rekam jejak Helper. |
-| `/koordinator/laporan` | Antrean laporan/komplain, termasuk Helper `under_review` (2 laporan). |
-| `/koordinator/darurat` | Alert SOS aktif. |
-| `/koordinator/komisi` | Riwayat komisi wilayah. |
-| `/koordinator/pengawasan` | **Khusus tingkat RW** — filter aktivitas per RT & keluarga di bawah cakupannya (§3.3.4). |
+| Rute                         | Fungsi                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `/koordinator/dashboard`   | Ringkasan Helper aktif, pengajuan baru, notifikasi transaksi pasif wilayah.                      |
+| `/koordinator/pengajuan`   | Antrean verifikasi Helper baru domisilinya.                                                      |
+| `/koordinator/persetujuan` | Antrean booking yang butuh approval eksplisit (§3.3.2).                                         |
+| `/koordinator/helper`      | Directory Helper verified di wilayah Koordinator dengan status aktivitas tugas.                  |
+| `/koordinator/helper/{id}` | Detail profil & rekam jejak Helper.                                                              |
+| `/koordinator/laporan`     | Antrean laporan/komplain, termasuk Helper`under_review` (2 laporan).                           |
+| `/koordinator/darurat`     | Alert SOS aktif.                                                                                 |
+| `/koordinator/komisi`      | Riwayat komisi wilayah.                                                                          |
+| `/koordinator/pengawasan`  | **Khusus tingkat RW** — filter aktivitas per RT & keluarga di bawah cakupannya (§3.3.4). |
 
 ### Admin
 
-| Rute | Fungsi |
-|---|---|
-| `/admin/dashboard` | Statistik platform. |
-| `/admin/users` | Kelola akun. |
-| `/admin/koordinator/pengajuan` | Review & verifikasi dokumen pengajuan Koordinator baru (§3.3). |
-| `/admin/helpers` | Suspend Helper, rekam jejak lintas wilayah, tinjau `under_review`. |
-| `/admin/helpers/fallback` | Tetapkan diri sebagai verifikator fallback wilayah tanpa Koordinator (§3.3.1). |
-| `/admin/categories` | Kelola kategori jasa, harga dasar, status berisiko tinggi. |
-| `/admin/reports` | Eskalasi laporan berat. |
-| `/admin/banding` | Review banding pembatalan. |
-| `/admin/demo-wallet` | Top-up saldo dummy. |
-| `/admin/audit-logs` | Audit log. |
+| Rute                             | Fungsi                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| `/admin/dashboard`             | Statistik platform.                                                             |
+| `/admin/users`                 | Kelola akun.                                                                    |
+| `/admin/koordinator/pengajuan` | Review & verifikasi dokumen pengajuan Koordinator baru (§3.3).                 |
+| `/admin/helpers`               | Suspend Helper, rekam jejak lintas wilayah, tinjau`under_review`.             |
+| `/admin/helpers/fallback`      | Tetapkan diri sebagai verifikator fallback wilayah tanpa Koordinator (§3.3.1). |
+| `/admin/categories`            | Kelola kategori jasa, harga dasar, status berisiko tinggi.                      |
+| `/admin/reports`               | Eskalasi laporan berat.                                                         |
+| `/admin/banding`               | Review banding pembatalan.                                                      |
+| `/admin/demo-wallet`           | Top-up saldo dummy.                                                             |
+| `/admin/audit-logs`            | Audit log.                                                                      |
 
 ### Help Center
 
-| Rute | Fungsi |
-|---|---|
-| `/help` | Landing pusat bantuan. |
-| `/help/faq` | FAQ. |
-| `/help/tutorial` | Panduan per peran. |
-| `/help/lapor-bug` | Form laporan bug. |
-| `/help/kontak-admin` | Form kontak Admin. |
+| Rute                   | Fungsi                 |
+| ---------------------- | ---------------------- |
+| `/help`              | Landing pusat bantuan. |
+| `/help/faq`          | FAQ.                   |
+| `/help/tutorial`     | Panduan per peran.     |
+| `/help/lapor-bug`    | Form laporan bug.      |
+| `/help/kontak-admin` | Form kontak Admin.     |
 
 ---
 
@@ -1218,40 +1242,40 @@ sequenceDiagram
 
 ## 11. Risk Analysis
 
-| Risiko | Dampak | Kemungkinan | Mitigasi |
-|---|---|---|---|
-| Helper menipu / berperilaku buruk | Tinggi | Rendah–Sedang | Verifikasi komunitas RT/RW, rating, laporan, suspend |
-| Foto bukti palsu / diambil bukan di lokasi | Sedang | Sedang | Timestamp otomatis + lokasi GPS opsional |
-| Lansia tidak ada di rumah saat kunjungan | Rendah | Sedang | Reminder H-1 / konfirmasi instan same-day, reschedule (§3.7) |
-| Koneksi internet Helper terputus di lokasi | Sedang | Sedang | IndexedDB + sinkronisasi otomatis saat online (§3.13) |
-| Dua Helper terima tugas bersamaan | Tinggi | Rendah | Conditional update di database (§3.2) |
-| Keluarga tidak konfirmasi penyelesaian tugas | Sedang | Sedang | Auto-release setelah 3x24 jam (§3.4) |
-| Koordinator jadi bottleneck / lambat merespons | Tinggi | Sedang | Model notifikasi-pasif, approval hanya kondisi khusus (§3.3.2) — bukan gate di setiap transaksi |
-| Helper probation dapat tugas mendesak, approval telat | Tinggi | Rendah | Helper probation tidak ditampilkan untuk booking bertarget < 3 jam (§3.3.3) |
-| RT tidak punya Koordinator aktif — onboarding wilayah baru | Sedang | Sedang | RW sebagai fallback, Admin sebagai fallback terakhir (§3.3.1) |
-| Kebocoran data pribadi lansia | Tinggi | Rendah | RLS ketat, akses terbatas, audit log |
-| Supabase auto-pause saat dinilai juri | Tinggi | Sedang | Heartbeat GitHub Actions (§2.3) |
-| Midtrans sandbox gagal/limit saat demo | Sedang | Rendah | Jalur cadangan Saldo Demo (§3.4) |
-| SOS dipicu iseng/disalahgunakan | Sedang | Rendah | Log setiap trigger, review Koordinator |
-| Akun Keluarga dibuat bukan oleh kerabat lansia sungguhan | Tinggi | Rendah | Wajib unggah KTP lansia + bukti hubungan keluarga (§3.11) |
-| Laporan dipakai tidak adil untuk menjatuhkan Helper | Sedang | Rendah | Butuh 2 laporan terkumpul (bukan 1 rating), status `under_review` tetap butuh review manual sebelum suspend penuh (§3.10) |
-| Keluarga membatalkan berulang untuk mengganggu Helper | Sedang | Rendah | Restriksi otomatis setelah >2 pembatalan, wajib banding ke Admin (§3.9) |
-| Harga berubah sepihak di tengah transaksi | Sedang | Rendah | Fix price, Layanan Tambahan wajib approval eksplisit Keluarga (§3.4.1) |
+| Risiko                                                      | Dampak | Kemungkinan    | Mitigasi                                                                                                                    |
+| ----------------------------------------------------------- | ------ | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Helper menipu / berperilaku buruk                           | Tinggi | Rendah–Sedang | Verifikasi komunitas RT/RW, rating, laporan, suspend                                                                        |
+| Foto bukti palsu / diambil bukan di lokasi                  | Sedang | Sedang         | Timestamp otomatis + lokasi GPS opsional                                                                                    |
+| Lansia tidak ada di rumah saat kunjungan                    | Rendah | Sedang         | Reminder H-1 / konfirmasi instan same-day, reschedule (§3.7)                                                               |
+| Koneksi internet Helper terputus di lokasi                  | Sedang | Sedang         | IndexedDB + sinkronisasi otomatis saat online (§3.13)                                                                      |
+| Dua Helper terima tugas bersamaan                           | Tinggi | Rendah         | Conditional update di database (§3.2)                                                                                      |
+| Keluarga tidak konfirmasi penyelesaian tugas                | Sedang | Sedang         | Auto-release setelah 3x24 jam (§3.4)                                                                                       |
+| Koordinator jadi bottleneck / lambat merespons              | Tinggi | Sedang         | Model notifikasi-pasif, approval hanya kondisi khusus (§3.3.2) — bukan gate di setiap transaksi                           |
+| Helper probation dapat tugas mendesak, approval telat       | Tinggi | Rendah         | Helper probation tidak ditampilkan untuk booking bertarget < 3 jam (§3.3.3)                                                |
+| RT tidak punya Koordinator aktif — onboarding wilayah baru | Sedang | Sedang         | RW sebagai fallback, Admin sebagai fallback terakhir (§3.3.1)                                                              |
+| Kebocoran data pribadi lansia                               | Tinggi | Rendah         | RLS ketat, akses terbatas, audit log                                                                                        |
+| Supabase auto-pause saat dinilai juri                       | Tinggi | Sedang         | Heartbeat GitHub Actions (§2.3)                                                                                            |
+| Midtrans sandbox gagal/limit saat demo                      | Sedang | Rendah         | Jalur cadangan Saldo Demo (§3.4)                                                                                           |
+| SOS dipicu iseng/disalahgunakan                             | Sedang | Rendah         | Log setiap trigger, review Koordinator                                                                                      |
+| Akun Keluarga dibuat bukan oleh kerabat lansia sungguhan    | Tinggi | Rendah         | Wajib unggah KTP lansia + bukti hubungan keluarga (§3.11)                                                                  |
+| Laporan dipakai tidak adil untuk menjatuhkan Helper         | Sedang | Rendah         | Butuh 2 laporan terkumpul (bukan 1 rating), status`under_review` tetap butuh review manual sebelum suspend penuh (§3.10) |
+| Keluarga membatalkan berulang untuk mengganggu Helper       | Sedang | Rendah         | Restriksi otomatis setelah >2 pembatalan, wajib banding ke Admin (§3.9)                                                    |
+| Harga berubah sepihak di tengah transaksi                   | Sedang | Rendah         | Fix price, Layanan Tambahan wajib approval eksplisit Keluarga (§3.4.1)                                                     |
 
 ---
 
 ## 12. Non-Functional Requirements
 
-| Aspek | Target |
-|---|---|
-| Availability | 99% selama periode penilaian |
-| Response time API | < 2 detik untuk operasi standar |
-| Ukuran upload foto/dokumen | Maksimal 10 MB, dikompres client-side |
-| Concurrent users | Minimal 500 pengguna simultan |
-| Browser | Chrome, Edge, Firefox versi terbaru |
-| Mobile | Fully responsive, mobile-first |
-| Aksesibilitas dasar | Kontras warna memadai, ukuran font terbaca, alt text |
-| Offline resilience | Draf laporan tidak hilang saat koneksi terputus (§3.13) |
+| Aspek                      | Target                                                   |
+| -------------------------- | -------------------------------------------------------- |
+| Availability               | 99% selama periode penilaian                             |
+| Response time API          | < 2 detik untuk operasi standar                          |
+| Ukuran upload foto/dokumen | Maksimal 10 MB, dikompres client-side                    |
+| Concurrent users           | Minimal 500 pengguna simultan                            |
+| Browser                    | Chrome, Edge, Firefox versi terbaru                      |
+| Mobile                     | Fully responsive, mobile-first                           |
+| Aksesibilitas dasar        | Kontras warna memadai, ukuran font terbaca, alt text     |
+| Offline resilience         | Draf laporan tidak hilang saat koneksi terputus (§3.13) |
 
 ---
 
@@ -1259,8 +1283,8 @@ sequenceDiagram
 
 ### 13.1 Design Tokens (Warna & Tipografi)
 
-| Token | Light Mode | Dark Mode |
-|---|---|---|
+| Token   | Light Mode  | Dark Mode   |
+| ------- | ----------- | ----------- |
 | Primary | `#90CAF9` | `#0D47A1` |
 
 - **Heading/Display:** Plus Jakarta Sans (dipakai untuk judul halaman, nama kategori, angka besar di dashboard — karakter geometris-nya cocok dengan nada "merangkul" yang hangat tapi tetap modern).
@@ -1289,11 +1313,11 @@ Rangkul tidak boleh dikerjakan sebagai dua produk terpisah: satu tim membuat sem
 
 Pembagian yang dipakai adalah:
 
-| Workstream | Pemilik utama | Bertanggung jawab atas |
-|---|---|---|
-| **Frontend / Product Experience (FE)** | 1 orang | Halaman, komponen, desain responsif, form, validasi UX, state loading/error/empty, integrasi API di browser, alur pengguna tiap peran, offline draft UI, dan QA visual. |
-| **Backend / Platform (BE)** | 1 orang | Supabase Auth, migrasi database, RLS, Storage privat, route handler/API, RPC/transaction, scheduled job, Realtime, seed data, payment adapter, audit log, dan QA keamanan/data. |
-| **Integrasi & QA** | Bergilir; wajib dikerjakan keduanya | Kontrak API, review pull request, pengujian alur end-to-end, perbaikan bug lintas layer, reset seed demo, dan skrip live demo. |
+| Workstream                                   | Pemilik utama                       | Bertanggung jawab atas                                                                                                                                                          |
+| -------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend / Product Experience (FE)** | 1 orang                             | Halaman, komponen, desain responsif, form, validasi UX, state loading/error/empty, integrasi API di browser, alur pengguna tiap peran, offline draft UI, dan QA visual.         |
+| **Backend / Platform (BE)**            | 1 orang                             | Supabase Auth, migrasi database, RLS, Storage privat, route handler/API, RPC/transaction, scheduled job, Realtime, seed data, payment adapter, audit log, dan QA keamanan/data. |
+| **Integrasi & QA**                     | Bergilir; wajib dikerjakan keduanya | Kontrak API, review pull request, pengujian alur end-to-end, perbaikan bug lintas layer, reset seed demo, dan skrip live demo.                                                  |
 
 Jika tim terdiri dari **dua orang**, orang FE dan BE bergantian menjadi reviewer/integrator setiap sprint. Jika tim terdiri dari **tiga orang**, orang ketiga tidak membuat fitur yang berdiri sendiri; ia menjadi **Integration & QA owner**: menyambungkan fitur, menulis test, menyiapkan seed, merapikan UI, dan menjaga demo tetap stabil.
 
@@ -1303,11 +1327,11 @@ Jika tim terdiri dari **dua orang**, orang FE dan BE bergantian menjadi reviewer
 
 TDD ini memuat terlalu banyak fitur untuk dikerjakan paralel tanpa urutan yang ketat. Nilai lomba datang dari alur yang benar-benar hidup, bukan jumlah menu. Urutan prioritas berikut mengikat seluruh sprint.
 
-| Prioritas | Harus benar-benar berjalan saat demo | Tidak boleh menjadi blocker |
-|---|---|---|
-| **P0 — alur pemenang** | Auth 3 peran publik + Admin seed; profil lansia; verifikasi Helper/Koordinator; katalog Helper; booking; accept/approval; check-in; laporan + Health Snapshot; Riwayat Rangkul; Demo Ledger pembayaran; laporan formal 2x → `under_review`; panel Admin inti; seed reset. | Landing page kompleks, SMS, chat realtime, filter RW detail, dashboard komisi detail. |
-| **P1 — memperkuat demo** | Layanan Tambahan; reschedule/cancel; notifikasi in-app; chat per tugas; SOS `tel:` + alert in-app; offline draft laporan. | Midtrans live/split/escrow, SMS, auto-release 3x24 jam di produksi. |
-| **P2 — hanya jika P0 dan P1 stabil** | Midtrans sandbox yang sudah diverifikasi, badge tren otomatis, filter pengawasan RW, inbox realtime penuh, Help Center lengkap. | Fitur baru yang tidak muncul dalam skrip demo. |
+| Prioritas                                   | Harus benar-benar berjalan saat demo                                                                                                                                                                                                                                        | Tidak boleh menjadi blocker                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **P0 — alur pemenang**               | Auth 3 peran publik + Admin seed; profil lansia; verifikasi Helper/Koordinator; katalog Helper; booking; accept/approval; check-in; laporan + Health Snapshot; Riwayat Rangkul; Demo Ledger pembayaran; laporan formal 2x →`under_review`; panel Admin inti; seed reset. | Landing page kompleks, SMS, chat realtime, filter RW detail, dashboard komisi detail. |
+| **P1 — memperkuat demo**             | Layanan Tambahan; reschedule/cancel; notifikasi in-app; chat per tugas; SOS`tel:` + alert in-app; offline draft laporan.                                                                                                                                                  | Midtrans live/split/escrow, SMS, auto-release 3x24 jam di produksi.                   |
+| **P2 — hanya jika P0 dan P1 stabil** | Midtrans sandbox yang sudah diverifikasi, badge tren otomatis, filter pengawasan RW, inbox realtime penuh, Help Center lengkap.                                                                                                                                             | Fitur baru yang tidak muncul dalam skrip demo.                                        |
 
 **Keputusan teknis yang menghindari kegagalan demo:**
 
@@ -1321,13 +1345,13 @@ TDD ini memuat terlalu banyak fitur untuk dikerjakan paralel tanpa urutan yang k
 
 Frontend boleh mulai memakai mock, tetapi mock tidak boleh dibuat sembarangan. Sebelum suatu layar dibuat, Backend menuliskan kontraknya di `docs/api-contract.md` dan menghasilkan tipe database dari Supabase.
 
-| Artefak bersama | Owner awal | Isi minimum | Selesai saat |
-|---|---|---|---|
-| `docs/api-contract.md` | BE, direview FE | Endpoint, request, response sukses, error, role yang boleh akses, dan contoh data seed. | FE dapat membuat mock yang bentuknya sama dengan API asli. |
-| `src/types/database.ts` | BE | Tipe hasil generate dari schema Supabase. | Dipakai FE; tidak ada tipe tabel ditulis manual dua kali. |
-| `src/lib/validations/*` | BE menulis aturan, FE memakai | Zod schema untuk auth, lansia, Helper, booking, evidence, report. | Validasi form dan route handler memakai source yang sama. |
-| `src/lib/constants/task-status.ts` | BE, direview FE | Semua status task, label UI, dan transisi yang diizinkan. | Tidak ada string status ad-hoc di komponen. |
-| Data mock / seeder | BE | Identitas akun demo, Helper, lansia, kategori, task, payment, report. | FE bisa menguji seluruh state kosong, aktif, error, dan selesai. |
+| Artefak bersama                      | Owner awal                    | Isi minimum                                                                             | Selesai saat                                                     |
+| ------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `docs/api-contract.md`             | BE, direview FE               | Endpoint, request, response sukses, error, role yang boleh akses, dan contoh data seed. | FE dapat membuat mock yang bentuknya sama dengan API asli.       |
+| `src/types/database.ts`            | BE                            | Tipe hasil generate dari schema Supabase.                                               | Dipakai FE; tidak ada tipe tabel ditulis manual dua kali.        |
+| `src/lib/validations/*`            | BE menulis aturan, FE memakai | Zod schema untuk auth, lansia, Helper, booking, evidence, report.                       | Validasi form dan route handler memakai source yang sama.        |
+| `src/lib/constants/task-status.ts` | BE, direview FE               | Semua status task, label UI, dan transisi yang diizinkan.                               | Tidak ada string status ad-hoc di komponen.                      |
+| Data mock / seeder                   | BE                            | Identitas akun demo, Helper, lansia, kategori, task, payment, report.                   | FE bisa menguji seluruh state kosong, aktif, error, dan selesai. |
 
 **Definition of Ready (DoR) sebelum FE mengintegrasikan fitur:**
 
@@ -1343,17 +1367,17 @@ Frontend boleh mulai memakai mock, tetapi mock tidak boleh dibuat sembarangan. S
 
 ### 14.3 Aturan Git, Review, dan Ritme Integrasi
 
-| Aturan | Keputusan |
-|---|---|
-| Branch utama | `main` selalu dapat di-deploy; `develop` adalah branch integrasi harian. |
-| Branch kerja | `dev-eln` adalah area kerja Eln; `dev-mervin` adalah area kerja Mervin. Keduanya branch kerja aktif per orang, bukan branch deployment. |
-| Alur merge | `dev-eln` dan `dev-mervin` membuat Pull Request ke `develop`; `develop` membuat Pull Request ke `main` setelah alur demo diuji. Tidak ada push langsung ke `main`. |
-| Pull request | Tidak merge sendiri untuk perubahan lintas layer. FE meninjau PR BE yang mengubah response/status; BE meninjau PR FE yang memanggil endpoint baru. |
-| Merge | Hanya jika `lint`, `typecheck`, `build`, dan test terkait lulus. Preview Vercel digunakan untuk cek manual. |
-| Integrasi terjadwal | Minimal dua kali per sprint: **akhir Hari 2** (kontrak + happy path awal) dan **akhir Hari 5** (fitur tersambung). Jangan menunggu akhir minggu. |
-| Sinkronisasi branch pribadi | Sebelum mulai kerja setiap hari, Eln dan Mervin menarik perubahan terbaru dari `develop` ke branch masing-masing. Setelah PR mereka masuk `develop`, keduanya langsung menyinkronkan ulang branch pribadi agar tidak menumpuk konflik. |
-| Stand-up | 15 menit setiap hari: “selesai”, “blokir”, “endpoint/UI apa yang harus tersedia besok”. |
-| WIP limit | Masing-masing workstream maksimal dua tiket aktif. Selesaikan satu alur sebelum membuka tiga halaman baru. |
+| Aturan                      | Keputusan                                                                                                                                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Branch utama                | `main` selalu dapat di-deploy; `develop` adalah branch integrasi harian.                                                                                                                                                              |
+| Branch kerja                | `dev-eln` adalah area kerja Eln; `dev-mervin` adalah area kerja Mervin. Keduanya branch kerja aktif per orang, bukan branch deployment.                                                                                               |
+| Alur merge                  | `dev-eln` dan `dev-mervin` membuat Pull Request ke `develop`; `develop` membuat Pull Request ke `main` setelah alur demo diuji. Tidak ada push langsung ke `main`.                                                            |
+| Pull request                | Tidak merge sendiri untuk perubahan lintas layer. FE meninjau PR BE yang mengubah response/status; BE meninjau PR FE yang memanggil endpoint baru.                                                                                        |
+| Merge                       | Hanya jika`lint`, `typecheck`, `build`, dan test terkait lulus. Preview Vercel digunakan untuk cek manual.                                                                                                                          |
+| Integrasi terjadwal         | Minimal dua kali per sprint:**akhir Hari 2** (kontrak + happy path awal) dan **akhir Hari 5** (fitur tersambung). Jangan menunggu akhir minggu.                                                                               |
+| Sinkronisasi branch pribadi | Sebelum mulai kerja setiap hari, Eln dan Mervin menarik perubahan terbaru dari`develop` ke branch masing-masing. Setelah PR mereka masuk `develop`, keduanya langsung menyinkronkan ulang branch pribadi agar tidak menumpuk konflik. |
+| Stand-up                    | 15 menit setiap hari: “selesai”, “blokir”, “endpoint/UI apa yang harus tersedia besok”.                                                                                                                                             |
+| WIP limit                   | Masing-masing workstream maksimal dua tiket aktif. Selesaikan satu alur sebelum membuka tiga halaman baru.                                                                                                                                |
 
 Struktur branch yang dipakai:
 
@@ -1420,14 +1444,14 @@ fix(task): prevent duplicate helper acceptance
 
 Tipe yang boleh dipakai:
 
-| Type | Dipakai untuk | Contoh |
-|---|---|---|
-| `feat` | Fitur baru yang terlihat/dapat digunakan. | `feat(riwayat): add health trend chart` |
-| `fix` | Perbaikan bug atau state salah. | `fix(payment): prevent double release` |
+| Type         | Dipakai untuk                               | Contoh                                       |
+| ------------ | ------------------------------------------- | -------------------------------------------- |
+| `feat`     | Fitur baru yang terlihat/dapat digunakan.   | `feat(riwayat): add health trend chart`    |
+| `fix`      | Perbaikan bug atau state salah.             | `fix(payment): prevent double release`     |
 | `refactor` | Merapikan struktur tanpa mengubah perilaku. | `refactor(api): centralize error response` |
-| `test` | Menambah atau memperbaiki test. | `test(task): cover expired booking rule` |
-| `docs` | Dokumentasi/TDD/README. | `docs(tdd): detail sprint ownership` |
-| `chore` | Setup, dependency, CI, atau konfigurasi. | `chore(ci): add typecheck workflow` |
+| `test`     | Menambah atau memperbaiki test.             | `test(task): cover expired booking rule`   |
+| `docs`     | Dokumentasi/TDD/README.                     | `docs(tdd): detail sprint ownership`       |
+| `chore`    | Setup, dependency, CI, atau konfigurasi.    | `chore(ci): add typecheck workflow`        |
 
 Ketentuan tambahan:
 
@@ -1441,14 +1465,14 @@ Ketentuan tambahan:
 
 #### Sprint 0 — Fondasi yang Tidak Boleh Diulang
 
-**Tanggal:** 29 Juli–3 Agustus 2026  
+**Tanggal:** 29 Juli–3 Agustus 2026
 **Tujuan:** aplikasi bisa login sebagai role yang benar, schema dasar aman, dan kedua workstream bisa mengembangkan fitur tanpa saling menunggu.
 
-| Area | Tugas detail | Hasil yang harus dapat didemokan |
-|---|---|---|
-| **Frontend** | 1. Inisialisasi Next.js, TypeScript, Tailwind, Shadcn UI, font, design token, dan responsive layout. 2. Buat route group publik, Keluarga, Helper, Koordinator, dan Admin. 3. Buat komponen fondasi: `AppShell`, sidebar per role, `PageHeader`, form field, upload field, state loading/error/empty, konfirmasi dialog. 4. Bangun `/`, `/login`, `/register`; pendaftaran publik hanya Keluarga, Helper, Koordinator. 5. Redirect berbasis role dan dashboard placeholder. 6. Buat API client yang bisa ditukar antara mock dan API asli. | Login akun seed mengantar pengguna ke dashboard sesuai peran; tampilan mobile tidak rusak; form register menampilkan error yang benar. |
-| **Backend** | 1. Buat project Supabase development, `.env.example`, dan aturan secret. 2. Migration awal: enum role/status, `users`, `service_categories`, `audit_logs`, `demo_wallets`, `demo_wallet_ledger`; trigger Auth → profile. 3. Tambahkan kolom pendukung: `helper_profiles.domisili_lat`, `domisili_lng`, `is_available`; `tasks.expires_at`; `task_evidence.client_submission_id`. 4. Buat bucket private untuk KTP/KK/dokumen jabatan dan policy signed URL. 5. Terapkan RLS fondasi per role; semua tabel baru default-nya deny. 6. Buat endpoint/me, register, session, dan middleware role. 7. Buat seeder kategori, Admin, serta tiga akun demo publik. 8. Aktifkan CI, migration check, build, dan heartbeat. | Admin dibuat dari seed; user tidak dapat membaca data milik user lain; kategori jasa dan akun seed muncul di database. |
-| **Integrasi & QA** | 1. Tulis `docs/api-contract.md`. 2. Sepakati format error tunggal: `{ error, message, fieldErrors? }`. 3. Uji register/login/logout untuk tiga role publik + login Admin seed. 4. Buat board pekerjaan dan tandai owner FE/BE/integrasi. | Preview deployment hidup; semua orang dapat masuk memakai akun seed; tidak ada secret di repository. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Hasil yang harus dapat didemokan                                                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | 1. Inisialisasi Next.js, TypeScript, Tailwind, Shadcn UI, font, design token, dan responsive layout. 2. Buat route group publik, Keluarga, Helper, Koordinator, dan Admin. 3. Buat komponen fondasi:`AppShell`, sidebar per role, `PageHeader`, form field, upload field, state loading/error/empty, konfirmasi dialog. 4. Bangun `/`, `/login`, `/register`; pendaftaran publik hanya Keluarga, Helper, Koordinator. 5. Redirect berbasis role dan dashboard placeholder. 6. Buat API client yang bisa ditukar antara mock dan API asli.                                                                                                                                                                                     | Login akun seed mengantar pengguna ke dashboard sesuai peran; tampilan mobile tidak rusak; form register menampilkan error yang benar. |
+| **Backend**        | 1. Buat project Supabase development,`.env.example`, dan aturan secret. 2. Migration awal: enum role/status, `users`, `service_categories`, `audit_logs`, `demo_wallets`, `demo_wallet_ledger`; trigger Auth → profile. 3. Tambahkan kolom pendukung: `helper_profiles.domisili_lat`, `domisili_lng`, `is_available`; `tasks.expires_at`; `task_evidence.client_submission_id`. 4. Buat bucket private untuk KTP/KK/dokumen jabatan dan policy signed URL. 5. Terapkan RLS fondasi per role; semua tabel baru default-nya deny. 6. Buat endpoint/me, register, session, dan middleware role. 7. Buat seeder kategori, Admin, serta tiga akun demo publik. 8. Aktifkan CI, migration check, build, dan heartbeat. | Admin dibuat dari seed; user tidak dapat membaca data milik user lain; kategori jasa dan akun seed muncul di database.                 |
+| **Integrasi & QA** | 1. Tulis`docs/api-contract.md`. 2. Sepakati format error tunggal: `{ error, message, fieldErrors? }`. 3. Uji register/login/logout untuk tiga role publik + login Admin seed. 4. Buat board pekerjaan dan tandai owner FE/BE/integrasi.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Preview deployment hidup; semua orang dapat masuk memakai akun seed; tidak ada secret di repository.                                   |
 
 **Quality gate Sprint 0:** `npm run lint`, `npm run typecheck`, dan `npm run build` lulus di CI; RLS dasar diuji dengan dua akun berbeda; dokumentasi cara menjalankan seed tersedia.
 
@@ -1456,14 +1480,13 @@ Ketentuan tambahan:
 
 #### Sprint 1 — Identitas, Verifikasi, dan Katalog Helper
 
-**Tanggal:** 4–10 Agustus 2026  
+**Tanggal:** 4–10 Agustus 2026
 **Tujuan:** Keluarga punya lansia terverifikasi, Helper bisa mendaftar, Koordinator/Admin dapat memverifikasi, lalu Keluarga melihat Helper yang memang layak dipilih.
 
-| Area | Tugas detail | Ketergantungan | Hasil yang harus dapat didemokan |
-|---|---|---|---|
-| **Frontend** | 1. Keluarga: `/beranda`, `/lansia/tambah`, edit, soft-delete, dan daftar lansia. 2. Helper: `/helper/verifikasi` untuk KTP, domisili, koordinat/radius, bio, kategori layanan. 3. Koordinator: pengajuan dokumen jabatan dan halaman antrean verifikasi Helper. 4. Admin: antrean verifikasi Koordinator. 5. Keluarga: `/cari-helper` dan detail profil Helper, filter kategori dan radius. 6. Tangani status `pending`, `verified`, `rejected`, `under_review`, dan empty state. | Kontrak upload, profile, kategori, dan query Helper tersedia maksimal Hari 2. | Dengan akun demo: Keluarga menambah lansia; Helper mengajukan diri; Koordinator/Admin dapat approve; Helper verified muncul di katalog. |
-| **Backend** | 1. Migration `lansia_profiles`, `helper_profiles`, `koordinator_profiles`, serta relasi kategori layanan Helper. 2. Endpoint CRUD lansia + soft-delete; validasi kepemilikan keluarga. 3. Upload private dengan signed URL dan validasi tipe/ukuran file. 4. Endpoint apply Helper/Koordinator, approve/reject oleh pihak tepat, dan fallback Admin. 5. Query katalog hanya untuk Helper `verified`, aktif, melayani kategori, dan masuk radius; gunakan data koordinat seed yang konsisten. 6. RLS: Keluarga hanya data lansianya; dokumen tidak pernah public; Koordinator hanya Helper domisilinya. 7. Tambahkan audit log untuk approve/reject/fallback. | Sprint 0 migration, role middleware, bucket private. | Aksi approve yang dilakukan Koordinator salah wilayah mendapat `403`; signed URL dokumen tidak dapat dibuka oleh user lain. |
-| **Integrasi & QA** | 1. Hari 2: sambungkan form lansia dan Helper application ke API asli. 2. Hari 5: sambungkan antrean Koordinator/Admin dan katalog. 3. Uji tiga skenario: wilayah dengan RT aktif, fallback RW, fallback Admin. 4. Siapkan minimal lima Helper terpercaya pada seed. | FE dan BE selesai masing-masing per Hari 5. | Alur verifikasi dari UI sampai status database tidak memakai edit manual database. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ketergantungan                                       | Hasil yang harus dapat didemokan                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Backend**        | 1. Migration`lansia_profiles`, `helper_profiles`, `koordinator_profiles`, serta relasi kategori layanan Helper. 2. Endpoint CRUD lansia + soft-delete; validasi kepemilikan keluarga. 3. Upload private dengan signed URL dan validasi tipe/ukuran file. 4. Endpoint apply Helper/Koordinator, approve/reject oleh pihak tepat, dan fallback Admin. 5. Query katalog hanya untuk Helper `verified`, aktif, melayani kategori, dan masuk radius; gunakan data koordinat seed yang konsisten. 6. RLS: Keluarga hanya data lansianya; dokumen tidak pernah public; Koordinator hanya Helper domisilinya. 7. Tambahkan audit log untuk approve/reject/fallback. | Sprint 0 migration, role middleware, bucket private. | Aksi approve yang dilakukan Koordinator salah wilayah mendapat`403`; signed URL dokumen tidak dapat dibuka oleh user lain. |
+| **Integrasi & QA** | 1. Hari 2: sambungkan form lansia dan Helper application ke API asli. 2. Hari 5: sambungkan antrean Koordinator/Admin dan katalog. 3. Uji tiga skenario: wilayah dengan RT aktif, fallback RW, fallback Admin. 4. Siapkan minimal lima Helper terpercaya pada seed.                                                                                                                                                                                                                                                                                                                                                                                                 | FE dan BE selesai masing-masing per Hari 5.          | Alur verifikasi dari UI sampai status database tidak memakai edit manual database.                                           |
 
 **Quality gate Sprint 1:** katalog tidak pernah membocorkan KTP/bukti hubungan; satu akun keluarga tidak dapat mengakses lansia akun lain; semua state verifikasi punya label UI yang jelas.
 
@@ -1471,14 +1494,14 @@ Ketentuan tambahan:
 
 #### Sprint 2 — Alur Kunjungan Inti dan Riwayat Data Dasar
 
-**Tanggal:** 11–17 Agustus 2026  
+**Tanggal:** 11–17 Agustus 2026
 **Tujuan:** menyelesaikan “jantung” Rangkul sebelum membangun chat, pembayaran gateway, atau dashboard tambahan. Alur minimal harus sudah hidup: booking → Helper menerima → approval bila perlu → check-in → laporan → Keluarga melihat hasil.
 
-| Area | Tugas detail | Ketergantungan | Hasil yang harus dapat didemokan |
-|---|---|---|---|
-| **Frontend** | 1. `/booking/{helper_id}`: pilih lansia, kategori, jadwal, ringkasan harga fix, dan alasan batas waktu. 2. Keluarga: daftar/detail kunjungan, timeline status, cancel/reschedule UI. 3. Helper: job board, detail tugas, accept, check-in, dan form laporan dasar. 4. Koordinator: antrean approval kondisi khusus. 5. Form laporan memuat foto, catatan, lima indikator Health Snapshot, Cerita Hari Ini. 6. Buat komponen status tunggal untuk semua role agar label/aksi konsisten. 7. Integrasikan error `409` saat task telah diambil Helper lain. | Kontrak `tasks`, daftar status, dan endpoint accept tersedia Hari 2. | Dua browser dapat mencoba mengambil task yang sama; hanya satu mendapat sukses. Keluarga melihat laporan yang dikirim Helper. |
-| **Backend** | 1. Migration `tasks`, `task_evidence`, `health_snapshots`, `ratings`, `notifications` dasar. 2. Buat state machine server-side dan RPC/transaction: create, accept atomik, approve Koordinator, start, submit evidence, cancel, reschedule. 3. Simpan `expires_at` saat booking; buat scheduled job/route internal untuk membatalkan task kedaluwarsa. 4. Terapkan aturan approval probation, Helper pertama, vakum, riwayat sanksi, dan kategori berisiko tinggi. 5. Terapkan validasi reschedule, limit dua kali, serta kontrol cancel sebelum `dikerjakan`. 6. Buat query laporan/Health Snapshot per lansia. 7. Tulis test untuk transisi ilegal dan concurrency accept. | Data Helper verified, kategori, lansia dari Sprint 1. | State hanya berubah lewat transisi yang sah; user yang bukan pemilik task tidak dapat cancel/reschedule; task kadaluarsa tidak dapat diambil. |
-| **Integrasi & QA** | 1. Hari 2: booking → accept untuk Helper terpercaya. 2. Hari 5: jalankan golden path dan satu path probation yang menunggu approval Koordinator. 3. Uji tanggal same-day vs H-1, task expired, dua Helper accept bersamaan, dan submit laporan. | Semua endpoint tugas. | Satu skrip demo 4–5 menit sudah dapat memperlihatkan pembeda kepercayaan komunitas dan Health Snapshot, walau pembayaran masih Demo Ledger. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Ketergantungan                                                        | Hasil yang harus dapat didemokan                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | 1.`/booking/{helper_id}`: pilih lansia, kategori, jadwal, ringkasan harga fix, dan alasan batas waktu. 2. Keluarga: daftar/detail kunjungan, timeline status, cancel/reschedule UI. 3. Helper: job board, detail tugas, accept, check-in, dan form laporan dasar. 4. Koordinator: antrean approval kondisi khusus. 5. Form laporan memuat foto, catatan, lima indikator Health Snapshot, Cerita Hari Ini. 6. Buat komponen status tunggal untuk semua role agar label/aksi konsisten. 7. Integrasikan error `409` saat task telah diambil Helper lain.                                                                                                                                | Kontrak`tasks`, daftar status, dan endpoint accept tersedia Hari 2. | Dua browser dapat mencoba mengambil task yang sama; hanya satu mendapat sukses. Keluarga melihat laporan yang dikirim Helper.                 |
+| **Backend**        | 1. Migration`tasks`, `task_evidence`, `health_snapshots`, `ratings`, `notifications` dasar. 2. Buat state machine server-side dan RPC/transaction: create, accept atomik, approve Koordinator, start, submit evidence, cancel, reschedule. 3. Simpan `expires_at` saat booking; buat scheduled job/route internal untuk membatalkan task kedaluwarsa. 4. Terapkan aturan approval probation, Helper pertama, vakum, riwayat sanksi, dan kategori berisiko tinggi. 5. Terapkan validasi reschedule, limit dua kali, serta kontrol cancel sebelum `dikerjakan`. 6. Buat query laporan/Health Snapshot per lansia. 7. Tulis test untuk transisi ilegal dan concurrency accept. | Data Helper verified, kategori, lansia dari Sprint 1.                 | State hanya berubah lewat transisi yang sah; user yang bukan pemilik task tidak dapat cancel/reschedule; task kadaluarsa tidak dapat diambil. |
+| **Integrasi & QA** | 1. Hari 2: booking → accept untuk Helper terpercaya. 2. Hari 5: jalankan golden path dan satu path probation yang menunggu approval Koordinator. 3. Uji tanggal same-day vs H-1, task expired, dua Helper accept bersamaan, dan submit laporan.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Semua endpoint tugas.                                                 | Satu skrip demo 4–5 menit sudah dapat memperlihatkan pembeda kepercayaan komunitas dan Health Snapshot, walau pembayaran masih Demo Ledger.  |
 
 **Quality gate Sprint 2:** tidak ada status task yang diubah langsung dari client; race condition accept punya test; laporan hanya dapat dibuat oleh Helper yang ditugaskan dan hanya sekali per task.
 
@@ -1486,14 +1509,14 @@ Ketentuan tambahan:
 
 #### Sprint 3 — Pembayaran Demo yang Konsisten, Trust & Safety, dan Komunikasi
 
-**Tanggal:** 18–24 Agustus 2026  
+**Tanggal:** 18–24 Agustus 2026
 **Tujuan:** menyambungkan konsekuensi bisnis alur inti tanpa mempertaruhkan demo pada gateway pihak ketiga.
 
-| Area | Tugas detail | Ketergantungan | Hasil yang harus dapat didemokan |
-|---|---|---|---|
-| **Frontend** | 1. `/pembayaran/{task_id}`: bayar dengan Saldo Demo, status dana ditahan, konfirmasi selesai, refund/kompensasi. 2. Detail tugas: ajukan/approve/reject Layanan Tambahan. 3. Keluarga: form laporan formal; Helper mendapat status `under_review` dan tidak bisa menerima task baru. 4. Chat per task dan inbox sederhana; notifikasi in-app. 5. Tombol SOS Helper: dialog konfirmasi, `tel:`, status alert, dan acknowledge UI untuk Keluarga/Koordinator. 6. Tampilkan alasan aksi dinonaktifkan, bukan hanya tombol abu-abu. | Payment contract dan notification events tersedia Hari 2. | Keluarga membayar dari saldo dummy; setelah selesai saldo terbagi 90/7/3. Dua laporan mengubah Helper menjadi `under_review`. |
-| **Backend** | 1. Implementasikan `DemoWalletProvider` dan ledger immutable: hold, release 90/7/3, kompensasi cancel 50/50, refund, dan audit event. 2. Implementasikan `task_extra_services` secara transaksional; task pause sampai Keluarga memutuskan. 3. Tambahkan `reports`, trigger database 2 laporan aktif → `under_review`, dan endpoint review Koordinator/Admin. 4. Implementasikan `messages`, `emergency_alerts`, event notifikasi, serta Realtime minimal untuk chat/notifikasi. 5. Buat scheduled job auto-release versi demo. 6. Lakukan *spike* Midtrans sandbox paling lama dua hari, di branch terisolasi. Hanya merge bila create payment + signature webhook terbukti. 7. Jika spike gagal, hidupkan feature flag `PAYMENT_PROVIDER=demo` dan lanjutkan tanpa menunda alur lain. | State machine dan task selesai dari Sprint 2. | Ledger tidak pernah menghasilkan saldo negatif/dobel; cancel dan release tidak bisa dipanggil dua kali; webhook yang signature-nya salah ditolak. |
-| **Integrasi & QA** | 1. Hari 2: Demo Ledger end-to-end. 2. Hari 5: extra service, report 2x, alert SOS, dan notifikasi. 3. Simulasikan network/API error saat pembayaran dan pastikan UI tidak menampilkan dana “cair” sebelum server sukses. 4. Putuskan final: Midtrans dipakai atau tidak, lalu hapus UI yang menyesatkan. | Semua event payment/report. | Jalur pembayaran demo stabil dan transparan; tidak ada klaim gateway produksi jika yang dipakai adalah Saldo Demo. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Ketergantungan                                            | Hasil yang harus dapat didemokan                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | 1.`/pembayaran/{task_id}`: bayar dengan Saldo Demo, status dana ditahan, konfirmasi selesai, refund/kompensasi. 2. Detail tugas: ajukan/approve/reject Layanan Tambahan. 3. Keluarga: form laporan formal; Helper mendapat status `under_review` dan tidak bisa menerima task baru. 4. Chat per task dan inbox sederhana; notifikasi in-app. 5. Tombol SOS Helper: dialog konfirmasi, `tel:`, status alert, dan acknowledge UI untuk Keluarga/Koordinator. 6. Tampilkan alasan aksi dinonaktifkan, bukan hanya tombol abu-abu.                                                                                                                                                                                                                                                                    | Payment contract dan notification events tersedia Hari 2. | Keluarga membayar dari saldo dummy; setelah selesai saldo terbagi 90/7/3. Dua laporan mengubah Helper menjadi`under_review`.                    |
+| **Backend**        | 1. Implementasikan`DemoWalletProvider` dan ledger immutable: hold, release 90/7/3, kompensasi cancel 50/50, refund, dan audit event. 2. Implementasikan `task_extra_services` secara transaksional; task pause sampai Keluarga memutuskan. 3. Tambahkan `reports`, trigger database 2 laporan aktif → `under_review`, dan endpoint review Koordinator/Admin. 4. Implementasikan `messages`, `emergency_alerts`, event notifikasi, serta Realtime minimal untuk chat/notifikasi. 5. Buat scheduled job auto-release versi demo. 6. Lakukan *spike* Midtrans sandbox paling lama dua hari, di branch terisolasi. Hanya merge bila create payment + signature webhook terbukti. 7. Jika spike gagal, hidupkan feature flag `PAYMENT_PROVIDER=demo` dan lanjutkan tanpa menunda alur lain. | State machine dan task selesai dari Sprint 2.             | Ledger tidak pernah menghasilkan saldo negatif/dobel; cancel dan release tidak bisa dipanggil dua kali; webhook yang signature-nya salah ditolak. |
+| **Integrasi & QA** | 1. Hari 2: Demo Ledger end-to-end. 2. Hari 5: extra service, report 2x, alert SOS, dan notifikasi. 3. Simulasikan network/API error saat pembayaran dan pastikan UI tidak menampilkan dana “cair” sebelum server sukses. 4. Putuskan final: Midtrans dipakai atau tidak, lalu hapus UI yang menyesatkan.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Semua event payment/report.                               | Jalur pembayaran demo stabil dan transparan; tidak ada klaim gateway produksi jika yang dipakai adalah Saldo Demo.                                |
 
 **Quality gate Sprint 3:** semua perubahan saldo dibuat di server/transaction; user tidak dapat mengubah nominal dari browser; `under_review` benar-benar memblokir accept task; SMS tidak diklaim berjalan jika belum ada provider teruji.
 
@@ -1501,14 +1524,14 @@ Ketentuan tambahan:
 
 #### Sprint 4 — Wow Factor, Admin, Offline Draft, dan Kesiapan Demo
 
-**Tanggal:** 25–31 Agustus 2026  
+**Tanggal:** 25–31 Agustus 2026
 **Tujuan:** membuat **Riwayat Rangkul** menjadi momen demo yang diingat juri, menutup celah administrasi, lalu menstabilkan keamanan dan data seed.
 
-| Area | Tugas detail | Ketergantungan | Hasil yang harus dapat didemokan |
-|---|---|---|---|
-| **Frontend** | 1. `/lansia/{id}/riwayat`: timeline kunjungan, foto, Cerita Hari Ini, lima tren indikator, dan copy yang tegas bahwa ini bukan diagnosis medis. 2. Badge `Perlu Perhatian` bila aturan tren terpenuhi. 3. Panel Admin inti: user, kategori, Koordinator pending, Helper `under_review`, fallback, banding, demo wallet, audit log. 4. Koordinator: laporan, darurat, komisi ringkas; filter RW hanya bila P0 stabil. 5. Offline draft laporan memakai IndexedDB: simpan, edit, indikator pending sync, retry setelah online. 6. Rapikan empty/error state, mobile layout, aksesibilitas, dan skeleton loading. | Query riwayat/admin API selesai Hari 2; laporan format sudah stabil. | Juri dapat melihat empat kunjungan seed dan memahami tren lansia dalam kurang dari 30 detik; Helper dapat menyimpan draf ketika mode offline disimulasikan. |
-| **Backend** | 1. Query timeline/tren Health Snapshot dan fungsi rule-based untuk badge. 2. Implementasikan endpoint Admin/banding/audit yang ada di P0; setiap aksi sensitif menulis `audit_logs`. 3. Finalisasi trust tier: lima tugas bersih → `terpercaya`; laporan reset counter sesuai aturan. 4. Tambahkan idempotency pada upload/sinkronisasi evidence. 5. Tulis/cek scheduled job: expire, auto-release demo, dan reminder hanya bila benar-benar diperlukan. 6. Audit RLS per tabel dengan matriks role. 7. Finalisasi `npm run seed` untuk seluruh skenario demo dan endpoint reset lokal bila aman. | Task, report, payment, role policy dari Sprint 0–3. | Reset seed menghasilkan data yang konsisten; role yang tidak berwenang tidak dapat membaca dokumen, chat, Health Snapshot, atau audit log. |
-| **Integrasi & QA** | 1. Jalankan matriks alur untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin. 2. Lakukan dry run demo menggunakan database seed dari nol. 3. Buat daftar bug P0/P1; fitur P2 berhenti dikerjakan jika masih ada bug P0. 4. Freeze perubahan schema besar setelah Hari 5. | Semua workstream. | Demo dapat dijalankan ulang tanpa edit manual Supabase; Riwayat Rangkul dan mekanisme trust tampil konsisten. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ketergantungan                                                       | Hasil yang harus dapat didemokan                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | 1.`/lansia/{id}/riwayat`: timeline kunjungan, foto, Cerita Hari Ini, lima tren indikator, dan copy yang tegas bahwa ini bukan diagnosis medis. 2. Badge `Perlu Perhatian` bila aturan tren terpenuhi. 3. Panel Admin inti: user, kategori, Koordinator pending, Helper `under_review`, fallback, banding, demo wallet, audit log. 4. Koordinator: laporan, darurat, komisi ringkas; filter RW hanya bila P0 stabil. 5. Offline draft laporan memakai IndexedDB: simpan, edit, indikator pending sync, retry setelah online. 6. Rapikan empty/error state, mobile layout, aksesibilitas, dan skeleton loading. | Query riwayat/admin API selesai Hari 2; laporan format sudah stabil. | Juri dapat melihat empat kunjungan seed dan memahami tren lansia dalam kurang dari 30 detik; Helper dapat menyimpan draf ketika mode offline disimulasikan. |
+| **Backend**        | 1. Query timeline/tren Health Snapshot dan fungsi rule-based untuk badge. 2. Implementasikan endpoint Admin/banding/audit yang ada di P0; setiap aksi sensitif menulis`audit_logs`. 3. Finalisasi trust tier: lima tugas bersih → `terpercaya`; laporan reset counter sesuai aturan. 4. Tambahkan idempotency pada upload/sinkronisasi evidence. 5. Tulis/cek scheduled job: expire, auto-release demo, dan reminder hanya bila benar-benar diperlukan. 6. Audit RLS per tabel dengan matriks role. 7. Finalisasi `npm run seed` untuk seluruh skenario demo dan endpoint reset lokal bila aman.             | Task, report, payment, role policy dari Sprint 0–3.                 | Reset seed menghasilkan data yang konsisten; role yang tidak berwenang tidak dapat membaca dokumen, chat, Health Snapshot, atau audit log.                  |
+| **Integrasi & QA** | 1. Jalankan matriks alur untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin. 2. Lakukan dry run demo menggunakan database seed dari nol. 3. Buat daftar bug P0/P1; fitur P2 berhenti dikerjakan jika masih ada bug P0. 4. Freeze perubahan schema besar setelah Hari 5.                                                                                                                                                                                                                                                                                                                              | Semua workstream.                                                    | Demo dapat dijalankan ulang tanpa edit manual Supabase; Riwayat Rangkul dan mekanisme trust tampil konsisten.                                               |
 
 **Quality gate Sprint 4:** audit RLS lulus; tidak ada dokumen sensitif dalam bucket public; seed menghasilkan semua status penting; demo path dapat selesai tanpa Midtrans, SMS, atau data real.
 
@@ -1516,14 +1539,14 @@ Ketentuan tambahan:
 
 #### Sprint 5 — Hardening, Dokumentasi, dan Submission
 
-**Tanggal:** 1–6 September 2026  
+**Tanggal:** 1–6 September 2026
 **Tujuan:** berhenti menambah fitur. Fokus pada bukti bahwa Rangkul stabil, dapat dinilai, dan mudah dipahami juri.
 
-| Area | Tugas detail | Hasil yang harus selesai |
-|---|---|---|
-| **Frontend** | 1. Uji seluruh resolusi mobile/desktop dan alur role. 2. Perbaiki loading, error, empty, disabled state, dan copy. 3. Ambil screenshot README dan siapkan akun/link demo. 4. Rekam demo cadangan bila koneksi acara buruk. | Tidak ada halaman penting kosong/404; demo visual rapi; form tidak membingungkan. |
-| **Backend** | 1. Jalankan migration pada environment bersih. 2. Jalankan seed berkali-kali secara aman. 3. Uji RLS, API error, cron/job, dan fitur ledger. 4. Rotasi/review secret, cek webhook/feature flag, dan pastikan Supabase heartbeat hidup. 5. Verifikasi observability/log error dasar. | Migration, seed, build, dan CI lulus; environment demo tidak bergantung pada laptop developer. |
-| **Integrasi & QA** | 1. Dua kali dry run penuh: satu dengan internet normal, satu dengan mode demo wallet/offline mock. 2. Triase bug: hanya P0/P1 boleh diperbaiki; tidak ada fitur baru. 3. Selesaikan README sesuai template resmi, arsitektur, cara install, cara seed, akun demo, security note, dan limitasi produk. 4. Submit minimal 12 jam sebelum batas 6 September 23.59 WIB. | Link hosting, repository, README, video cadangan, dan skrip demo siap. |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                        | Hasil yang harus selesai                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Frontend**       | 1. Uji seluruh resolusi mobile/desktop dan alur role. 2. Perbaiki loading, error, empty, disabled state, dan copy. 3. Ambil screenshot README dan siapkan akun/link demo. 4. Rekam demo cadangan bila koneksi acara buruk.                                                                                                                                          | Tidak ada halaman penting kosong/404; demo visual rapi; form tidak membingungkan.              |
+| **Backend**        | 1. Jalankan migration pada environment bersih. 2. Jalankan seed berkali-kali secara aman. 3. Uji RLS, API error, cron/job, dan fitur ledger. 4. Rotasi/review secret, cek webhook/feature flag, dan pastikan Supabase heartbeat hidup. 5. Verifikasi observability/log error dasar.                                                                                 | Migration, seed, build, dan CI lulus; environment demo tidak bergantung pada laptop developer. |
+| **Integrasi & QA** | 1. Dua kali dry run penuh: satu dengan internet normal, satu dengan mode demo wallet/offline mock. 2. Triase bug: hanya P0/P1 boleh diperbaiki; tidak ada fitur baru. 3. Selesaikan README sesuai template resmi, arsitektur, cara install, cara seed, akun demo, security note, dan limitasi produk. 4. Submit minimal 12 jam sebelum batas 6 September 23.59 WIB. | Link hosting, repository, README, video cadangan, dan skrip demo siap.                         |
 
 **Quality gate Sprint 5:** tidak ada bug P0; build dari clone baru berhasil; jalur demo utama diuji dengan semua akun seed; submission tidak dilakukan pada menit terakhir.
 
@@ -1545,19 +1568,19 @@ Urutan ini harus dipatuhi. Jangan membangun chat atau panel Admin lengkap sebelu
 
 ### 14.6 Matriks Kepemilikan Fitur
 
-| Domain | FE owner | BE owner | Titik integrasi |
-|---|---:|---:|---|
-| Auth & role routing | Ya | Ya | login, redirect, middleware, RLS |
-| Lansia & dokumen | Ya | Ya | form upload, signed URL, ownership policy |
-| Helper/Koordinator verification | Ya | Ya | antrean, status, approval, audit log |
-| Katalog & radius | Ya | Ya | filter UI, query koordinat/radius |
-| Booking/state machine | Ya | Ya | action state, RPC atomik, error 409 |
-| Laporan & Riwayat Rangkul | Ya | Ya | form, upload, query tren, badge rule |
-| Payment Demo Ledger | Ya | Ya | payment state UI, transaction, audit |
-| Chat/notifikasi/SOS | Ya | Ya | Realtime subscription, event/policy |
-| Offline draft | Ya | Ya | IndexedDB, idempotency submit |
-| Admin/Koordinator panel | Ya | Ya | table/action UI, authorization/audit |
-| Seeder, test, demo | Pendukung | Pemilik utama | keduanya wajib dry run |
+| Domain                          |  FE owner |      BE owner | Titik integrasi                           |
+| ------------------------------- | --------: | ------------: | ----------------------------------------- |
+| Auth & role routing             |        Ya |            Ya | login, redirect, middleware, RLS          |
+| Lansia & dokumen                |        Ya |            Ya | form upload, signed URL, ownership policy |
+| Helper/Koordinator verification |        Ya |            Ya | antrean, status, approval, audit log      |
+| Katalog & radius                |        Ya |            Ya | filter UI, query koordinat/radius         |
+| Booking/state machine           |        Ya |            Ya | action state, RPC atomik, error 409       |
+| Laporan & Riwayat Rangkul       |        Ya |            Ya | form, upload, query tren, badge rule      |
+| Payment Demo Ledger             |        Ya |            Ya | payment state UI, transaction, audit      |
+| Chat/notifikasi/SOS             |        Ya |            Ya | Realtime subscription, event/policy       |
+| Offline draft                   |        Ya |            Ya | IndexedDB, idempotency submit             |
+| Admin/Koordinator panel         |        Ya |            Ya | table/action UI, authorization/audit      |
+| Seeder, test, demo              | Pendukung | Pemilik utama | keduanya wajib dry run                    |
 
 ### 14.7 Rencana Jika Tertinggal
 
@@ -1577,6 +1600,7 @@ Fitur yang **tidak boleh** dipotong karena merupakan argumen Rangkul di depan ju
 ### 14.8 Checklist Handover Antarsprint
 
 Sebelum sprint ditutup, owner FE dan BE mengisi checklist singkat berikut di issue/board:
+
 - [ ] Kontrak endpoint diperbarui jika ada perubahan request, response, status, atau role.
 - [ ] Migration sudah diterapkan di development dan dapat dijalankan ulang dari environment bersih.
 - [ ] Seed memuat data untuk happy path dan minimal satu error/edge case.
@@ -1589,11 +1613,11 @@ Sebelum sprint ditutup, owner FE dan BE mengisi checklist singkat berikut di iss
 
 ## 15. Ruang Lingkup MVP
 
-| Kategori | Item |
-|---|---|
-| Wajib ada (dinilai juri) | Auth 4 peran • Profil lansia + verifikasi identitas • Katalog & verifikasi Helper (radius layanan) • Kategori jasa fix price + Layanan Tambahan • Booking, model approval bertingkat, reschedule, kompensasi pembatalan, restriksi >2 pembatalan • Bukti kunjungan + Health Snapshot • Riwayat Rangkul (timeline + tren) • Rating + sistem laporan (2x → under_review) • Chat + inbox • Notifikasi terpusat (termasuk notifikasi pasif Koordinator) • Koordinator approve/reject Helper & booking kondisi khusus • Panel Admin (verifikasi Koordinator, fallback wilayah, banding) • Escrow Midtrans sandbox + fallback Saldo Demo • Tombol darurat • Offline draft laporan |
-| Jika waktu tersisa | Notifikasi SMS darurat • Jadwal kunjungan berkala (recurring) • Feedback sederhana dari lansia • Dashboard komisi Koordinator detail • Badge peringatan otomatis Riwayat Rangkul • Filter pengawasan RW |
-| Sengaja dipotong dari scope | Payment gateway produksi • Sistem asuransi/liabilitas formal • Ekspansi multi-kota • Algoritma matching/rekomendasi canggih • Fitur AI apa pun • Komunitas curhat terbuka (§3.12) |
+| Kategori                    | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Wajib ada (dinilai juri)    | Auth 4 peran • Profil lansia + verifikasi identitas • Katalog & verifikasi Helper (radius layanan) • Kategori jasa fix price + Layanan Tambahan • Booking, model approval bertingkat, reschedule, kompensasi pembatalan, restriksi >2 pembatalan • Bukti kunjungan + Health Snapshot • Riwayat Rangkul (timeline + tren) • Rating + sistem laporan (2x → under_review) • Chat + inbox • Notifikasi terpusat (termasuk notifikasi pasif Koordinator) • Koordinator approve/reject Helper & booking kondisi khusus • Panel Admin (verifikasi Koordinator, fallback wilayah, banding) • Escrow Midtrans sandbox + fallback Saldo Demo • Tombol darurat • Offline draft laporan |
+| Jika waktu tersisa          | Notifikasi SMS darurat • Jadwal kunjungan berkala (recurring) • Feedback sederhana dari lansia • Dashboard komisi Koordinator detail • Badge peringatan otomatis Riwayat Rangkul • Filter pengawasan RW                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Sengaja dipotong dari scope | Payment gateway produksi • Sistem asuransi/liabilitas formal • Ekspansi multi-kota • Algoritma matching/rekomendasi canggih • Fitur AI apa pun • Komunitas curhat terbuka (§3.12)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
@@ -1616,13 +1640,13 @@ Guidebook membedakan **Tema** ("Adaptive Innovation for a Future-Ready Digital S
 
 Guidebook (§4.2.A, §5.1) mewajibkan "Template README.md - ITECHNO CUP" resmi — wajib diunduh dari panitia sebelum menyusun README final.
 
-| Elemen README Wajib | Sumber di TDD |
-|---|---|
-| Penjelasan aplikasi | §1 |
-| Fitur utama | §4 FR + §15 MVP |
-| Teknologi digunakan | §2 |
-| Cara instalasi | *(tulis terpisah saat repo jalan: `npm install`, env variable, migrasi Supabase)* |
-| Cara penggunaan | *(snippet/screenshot per role, turunan dari §5)* |
+| Elemen README Wajib | Sumber di TDD                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Penjelasan aplikasi | §1                                                                                   |
+| Fitur utama         | §4 FR + §15 MVP                                                                     |
+| Teknologi digunakan | §2                                                                                   |
+| Cara instalasi      | *(tulis terpisah saat repo jalan: `npm install`, env variable, migrasi Supabase)* |
+| Cara penggunaan     | *(snippet/screenshot per role, turunan dari §5)*                                   |
 
 ### 17.3 Larangan template instan
 
@@ -1642,14 +1666,14 @@ Closing Ceremony disebut beda di dua bagian Guidebook (28 vs 29 September) — b
 
 ### 17.7 Mapping bobot penilaian
 
-| Aspek (Babak Penyisihan) | Bobot | Bagian TDD Terkait |
-|---|---|---|
-| Kesesuaian Tema & Subtema | 20% | §1, §17.1 |
-| Inovasi & Orisinalitas | 20% | §1.4, §3.12 (Riwayat Rangkul) |
-| Fungsionalitas Website | 20% | §4, §15 |
-| UI/UX & Responsivitas | 15% | §12, §13 |
-| Implementasi Teknologi | 15% | §2, §8 |
-| Dokumentasi & Repositori | 10% | §17.2 |
+| Aspek (Babak Penyisihan)  | Bobot | Bagian TDD Terkait              |
+| ------------------------- | ----- | ------------------------------- |
+| Kesesuaian Tema & Subtema | 20%   | §1, §17.1                     |
+| Inovasi & Orisinalitas    | 20%   | §1.4, §3.12 (Riwayat Rangkul) |
+| Fungsionalitas Website    | 20%   | §4, §15                       |
+| UI/UX & Responsivitas     | 15%   | §12, §13                      |
+| Implementasi Teknologi    | 15%   | §2, §8                        |
+| Dokumentasi & Repositori  | 10%   | §17.2                          |
 
 ---
 
@@ -1659,12 +1683,12 @@ Karena tim kemungkinan memakai Claude Code (atau agentic coding tool sejenis) un
 
 ### 18.1 Skill Pihak Ketiga yang Disarankan
 
-| Skill/Plugin | Fungsi | Kenapa Relevan untuk Rangkul |
-|---|---|---|
-| **Superpowers** | Plugin komunitas paling populer di ekosistem Claude Code, 14 skill: brainstorming, penulisan plan, TDD merah-hijau-refactor, debugging sistematis, code review, subagent-driven development. | State machine (§3.1), race condition (§3.2), model approval bertingkat (§3.3.2), dan logika pembayaran/kompensasi (§3.4/§3.8) adalah logika bisnis rawan bug — disiplin "plan dulu, test dulu, baru implementasi" cocok dipakai persis di bagian-bagian ini. |
-| **frontend-design** | Plugin resmi Anthropic. Memberi Claude "selera" desain frontend supaya tidak menghasilkan tampilan generik. | Langsung menunjang §13 & kriteria juri "UI/UX & Responsivitas" (15%, §17.7). |
-| **Taste Skill** | Skill komunitas — aturan konkret hierarki visual, spacing, tipografi, motion, responsivitas. | Dipasang berdampingan dengan frontend-design untuk konsistensi lintas 30+ halaman (§9). |
-| **Impeccable** | Skill review yang dijalankan setelah UI/fitur selesai dibangun untuk mengkritik dan memberi perbaikan kode konkret. | Cocok dipakai di akhir tiap sprint (§14) sebagai gerbang kualitas. |
+| Skill/Plugin              | Fungsi                                                                                                                                                                                       | Kenapa Relevan untuk Rangkul                                                                                                                                                                                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Superpowers**     | Plugin komunitas paling populer di ekosistem Claude Code, 14 skill: brainstorming, penulisan plan, TDD merah-hijau-refactor, debugging sistematis, code review, subagent-driven development. | State machine (§3.1), race condition (§3.2), model approval bertingkat (§3.3.2), dan logika pembayaran/kompensasi (§3.4/§3.8) adalah logika bisnis rawan bug — disiplin "plan dulu, test dulu, baru implementasi" cocok dipakai persis di bagian-bagian ini. |
+| **frontend-design** | Plugin resmi Anthropic. Memberi Claude "selera" desain frontend supaya tidak menghasilkan tampilan generik.                                                                                  | Langsung menunjang §13 & kriteria juri "UI/UX & Responsivitas" (15%, §17.7).                                                                                                                                                                                     |
+| **Taste Skill**     | Skill komunitas — aturan konkret hierarki visual, spacing, tipografi, motion, responsivitas.                                                                                                | Dipasang berdampingan dengan frontend-design untuk konsistensi lintas 30+ halaman (§9).                                                                                                                                                                           |
+| **Impeccable**      | Skill review yang dijalankan setelah UI/fitur selesai dibangun untuk mengkritik dan memberi perbaikan kode konkret.                                                                          | Cocok dipakai di akhir tiap sprint (§14) sebagai gerbang kualitas.                                                                                                                                                                                                |
 
 ### 18.2 Skill Kustom yang Sebaiknya Dibuat Sendiri
 
@@ -1685,30 +1709,37 @@ Ditaruh di `.claude/skills/<nama-skill>/SKILL.md`, supaya setiap kali Claude Cod
 Data awal yang wajib tersedia sebelum demo, supaya alur inti tidak bergantung pada rantai persetujuan bertingkat (Admin→Koordinator→Helper) yang paling rawan bug saat live demo.
 
 ### 19.1 Akun Admin
+
 - 1 akun Admin, dibuat manual langsung di Supabase (tidak lewat UI registrasi publik, FR-AUTH-06).
 
 ### 19.2 Koordinator Komunitas (seed, status `verified`)
+
 - Minimal **3 Koordinator tingkat RT** di 3 wilayah/RT berbeda (mewakili area demo utama).
 - Minimal **1 Koordinator tingkat RW** — didemokan sebagai fallback + contoh fitur filter pengawasan (§3.3.4).
 - Masing-masing dilengkapi `dokumen_url` dummy dan `diverifikasi_oleh` mengarah ke akun Admin seed.
 
 ### 19.3 Helper (seed, campuran status untuk demo lengkap)
+
 - **5 Helper `terpercaya`** (tugas_selesai_berturut ≥ 5) tersebar di 3 wilayah RT, radius layanan bervariasi (2–5 km) — untuk mendemokan transaksi otomatis tanpa approval.
 - **2 Helper `probation`** — untuk mendemokan alur approval eksplisit Koordinator (§3.3.2).
 - **1 Helper `under_review`** (2 laporan seed) — untuk mendemokan alur moderasi (§3.10).
 - **1 Helper `verified_by_admin_fallback = true`** — mendemokan skenario wilayah baru tanpa Koordinator aktif (§3.3.1).
 
 ### 19.4 Kategori Jasa
+
 - Seluruh 7 kategori final di §6, termasuk "Kontrol Kesehatan" ditandai `is_high_risk = true`.
 
 ### 19.5 Keluarga & Lansia
+
 - Minimal **4 akun Keluarga**, masing-masing dengan 1 profil lansia (dokumen identitas & hubungan keluarga dummy tapi wajib terisi, konsisten dengan §3.11).
 - Salah satu profil lansia diberi **riwayat Health Snapshot 4-5 kunjungan berturut dengan tren menurun** — supaya badge "Perlu Perhatian" (§3.12) bisa didemokan langsung tanpa harus submit laporan berkali-kali secara live.
 
 ### 19.6 Tugas (tasks) contoh
+
 - Beberapa tugas di tiap status (`diajukan`, `dikonfirmasi`, `dikerjakan`, `selesai`, `dibatalkan`) — supaya halaman riwayat & dashboard tiap role tidak kosong saat demo dimulai.
 
 ### 19.7 Cara Menjalankan
+
 - Skrip seed idealnya satu perintah (`npm run seed`), memakai Supabase service role key (hanya dijalankan lokal/CI, tidak pernah di-expose ke client), dijalankan ulang otomatis tiap kali environment demo di-reset.
 
 ---
