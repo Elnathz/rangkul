@@ -219,6 +219,8 @@ Jangan memakai `npm install` untuk quality gate karena dapat mengubah `package-l
 
 Workflow deploy juga membutuhkan secret GitHub Actions berikut pada environment `production` atau repository settings: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, dan `VERCEL_PROJECT_ID`. Jangan menaruh nilainya di source code atau file environment yang di-commit.
 
+Workflow `Supabase Heartbeat` memakai environment `production` dan membutuhkan `SUPABASE_PROJECT_ID` serta `SUPABASE_SERVICE_ROLE_KEY`. Project ref untuk environment demo berasal dari URL Supabase, sedangkan service role key hanya disimpan sebagai GitHub Actions secret dan tidak pernah ditulis ke source code.
+
 **Script yang belum ada di package.json, jangan berasumsi tersedia:**
 
 - `test` — tidak ada test framework terpasang sama sekali.
