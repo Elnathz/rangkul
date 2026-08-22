@@ -1,6 +1,6 @@
 import { TaskWithRelations } from '@/types/tasks';
 
-export const MOCK_TASKS: any[] = [
+export const MOCK_TASKS: unknown[] = [
   {
     id: 't1-1234',
     keluarga_id: 'fam1',

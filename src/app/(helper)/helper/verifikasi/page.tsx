@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,11 +11,25 @@ import RegionSelect from "@/components/ui/RegionSelect";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
 
+type KoordinatorOption = {
+  id: string;
+  wilayah: string;
+  tingkat: string;
+  ktp_url: string | null;
+  users: {
+    full_name: string | null;
+    phone: string | null;
+    provinsi: string | null;
+    kabupaten_kota: string | null;
+    kecamatan: string | null;
+    kelurahan: string | null;
+  } | null;
+};
+
 export default function HelperVerifikasiPage() {
   const router = useRouter();
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
-  const suratTugasInputRef = useRef<HTMLInputElement>(null);
   
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [rejectionPhoto, setRejectionPhoto] = useState<string | null>(null);
@@ -37,8 +50,7 @@ export default function HelperVerifikasiPage() {
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
-  const [suratTugasFileName, setSuratTugasFileName] = useState<string | null>(null);
-  const [koordinators, setKoordinators] = useState<any[]>([]);
+  const [koordinators, setKoordinators] = useState<KoordinatorOption[]>([]);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
@@ -91,7 +103,6 @@ export default function HelperVerifikasiPage() {
     radius_layanan_km: 1, // Minimum 1 KM
     ktp_url: "",
     foto_url: "",
-    surat_tugas_url: "",
     koordinator_id: "",
   });
 
@@ -128,7 +139,7 @@ export default function HelperVerifikasiPage() {
             }
           }
           // Format: "Kelurahan, Kecamatan, Kota, Provinsi | RT X/RW Y | Alamat"
-          let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+          const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
           let rt = "", rw = "", alamat = "";
           
           if (profile.wilayah_domisili) {
@@ -159,8 +170,6 @@ export default function HelperVerifikasiPage() {
             domisili_lng: profile.domisili_lng,
             radius_layanan_km: profile.radius_layanan_km || 1,
             ktp_url: profile.ktp_url || "",
-            // Provide empty default if surat_tugas_url doesn't exist on profile
-            surat_tugas_url: (profile as any).surat_tugas_url || "",
             koordinator_id: profile.koordinator_id || "",
             region,
             rt,
@@ -201,13 +210,13 @@ export default function HelperVerifikasiPage() {
           .eq('users.kecamatan', form.region.kecamatan)
           .eq('users.kelurahan', form.region.kelurahan);
           
-        if (data) setKoordinators(data);
+        if (data) setKoordinators(data as unknown as KoordinatorOption[]);
       };
       fetchKoords();
     } else {
-      setKoordinators([]);
+      queueMicrotask(() => setKoordinators([]));
     }
-  }, [form.region.kelurahan]);
+  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi]);
 
   // Helper to toggle by ID
   const toggleKategori = (catId: string) => {

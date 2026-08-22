@@ -1077,6 +1077,41 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["tasks"]["Row"]
       }
+      submit_task_evidence: {
+        Args: {
+          p_catatan_kondisi: string
+          p_client_submission_id: string
+          p_cerita_hari_ini: string | null
+          p_energi: number
+          p_foto_bukti_url: string
+          p_kualitas_tidur: number
+          p_mobilitas: number
+          p_mood: number
+          p_nafsu_makan: number
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
+      confirm_task_completion: {
+        Args: {
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
+      cancel_task: {
+        Args: {
+          p_cancellation_reason: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
+      reschedule_task: {
+        Args: {
+          p_jadwal_waktu: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
     }
     Enums: {
       account_status: "active" | "restricted" | "suspended"

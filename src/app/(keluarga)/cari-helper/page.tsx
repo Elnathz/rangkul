@@ -7,6 +7,33 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Search, MapPin, Star, Filter, Heart, ArrowUpDown, Info } from "lucide-react";
 
+type HelperCard = {
+  id: string;
+  name: string;
+  rating: number;
+  reviews: number;
+  category: string;
+  radius_layanan_km: number;
+  lat: number | null;
+  lng: number | null;
+  verified: boolean;
+  avatar: string;
+  bio: string;
+};
+
+type HelperProfileRecord = {
+  id: string;
+  bio: string | null;
+  rating_avg: number;
+  total_tugas_selesai: number;
+  radius_layanan_km: number;
+  domisili_lat: number | null;
+  domisili_lng: number | null;
+  status: string;
+  foto_wajah_url: string | null;
+  users: { full_name: string | null } | null;
+};
+
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Radius of the earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -27,7 +54,7 @@ export default function CariHelperPage() {
   const [sortBy, setSortBy] = useState("rekomendasi");
   const [selectedLansia, setSelectedLansia] = useState("");
   const [lansias, setLansias] = useState<{id: string, nama: string, alamat: string, lat: number | null, lng: number | null}[]>([]);
-  const [helpers, setHelpers] = useState<any[]>([]);
+  const [helpers, setHelpers] = useState<HelperCard[]>([]);
   const [loadingHelpers, setLoadingHelpers] = useState(true);
 
   useEffect(() => {
@@ -53,7 +80,7 @@ export default function CariHelperPage() {
       setLoadingHelpers(true);
       const supabase = createClient();
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('helper_profiles')
         .select(`
           id,
@@ -70,7 +97,7 @@ export default function CariHelperPage() {
         .eq('status', 'verified');
         
       if (data) {
-        const formatted = data.map((item: any) => ({
+        const formatted = (data as unknown as HelperProfileRecord[]).map((item) => ({
           id: item.id,
           name: item.users?.full_name || "Helper Rangkul",
           rating: item.rating_avg || 5.0,

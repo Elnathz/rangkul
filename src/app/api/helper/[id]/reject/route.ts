@@ -95,7 +95,7 @@ export async function PUT(
     const { error: updateError } = await adminSupabase
       .from('helper_profiles')
       .update({
-        status: 'rejected' as any,
+        status: 'rejected',
         suspend_reason: finalReason,
         updated_at: new Date().toISOString(),
       })

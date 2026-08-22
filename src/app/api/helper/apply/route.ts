@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { helperProfileSchema } from '@/lib/validations/helper';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import type { Database } from '@/types/database';
 
 // POST /api/helper/apply — Helper mendaftar untuk verifikasi
 export async function POST(request: Request) {
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
           koordinator_id: koordinator_id || null,
           status: 'pending_verification',
           tingkat_kepercayaan: 'probation',
-        } as any)
+        } as unknown as Database['public']['Tables']['helper_profiles']['Insert'])
         .select('id')
         .single();
         

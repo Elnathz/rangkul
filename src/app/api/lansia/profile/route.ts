@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { lansiaProfileSchema } from '@/lib/validations/lansia';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import type { Database } from '@/types/database';
 
 export async function POST(request: Request) {
   try {
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
         kelurahan,
         rt,
         rw,
-      } as any)
+      } as unknown as Database['public']['Tables']['lansia_profiles']['Insert'])
       .select('*')
       .single();
 

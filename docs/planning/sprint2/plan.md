@@ -137,3 +137,21 @@
 
 ### Testing
 - Tambah regresi `tests/koordinator-task-approval.test.mjs` untuk memastikan antrean tidak memakai mock dan endpoint approval memakai conditional update.
+
+## Progress Audit 22 Agustus 2026
+
+### Sudah berjalan
+
+- Papan tugas Helper, booking direct, conditional accept, check-in, approval Koordinator, direktori Helper, notifikasi in-app, extra service, dan detail task sudah memakai data database.
+- Laporan Helper sekarang mengunggah foto bukti, menyimpan lima skor Health Snapshot, Memory Capsule, catatan kondisi, dan `client_submission_id` melalui fungsi database atomic.
+- Daftar kunjungan Keluarga tidak lagi memakai `MOCK_TASKS`.
+- Keluarga dapat melihat foto bukti dan hasil Health Snapshot pada detail kunjungan.
+- Cancel dan reschedule sudah memiliki validasi server, alasan wajib, batas dua kali, serta aturan lead time tiga jam atau dua jam.
+- Demo migration mengarahkan Koordinator ke `mbahburgas` dan Helper ke `masburgas` di Semarang Selatan bila akun demo tersedia.
+- CI sekarang menjalankan lint, typecheck, test, dan build. Migration production menggunakan dry-run lalu protected environment manual approval.
+
+### Masih tertunda
+
+- Demo Ledger pembayaran, release 90/7/3, kompensasi cancel, dan auto-release tetap Sprint 3 sesuai TDD. Endpoint konfirmasi completion disiapkan sebagai kontrak, tetapi tidak boleh mengklaim dana cair sebelum payment provider tersedia.
+- Scheduled expiry task dan reminder H-1 belum memiliki job production. Validasi penerimaan tetap menolak task yang sudah lewat `expires_at`.
+- Offline draft IndexedDB, halaman Riwayat Rangkul penuh, grafik tren, rating, dan laporan formal tetap di luar golden path Sprint 2.

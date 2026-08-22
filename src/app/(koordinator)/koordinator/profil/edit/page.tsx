@@ -13,7 +13,6 @@ import RegionSelect from "@/components/ui/RegionSelect";
 
 export default function KoordinatorEditProfilPage() {
   const router = useRouter();
-  const supabase = createClient();
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
@@ -44,6 +43,7 @@ export default function KoordinatorEditProfilPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
@@ -59,7 +59,7 @@ export default function KoordinatorEditProfilPage() {
         .single();
 
       if (profile) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
+        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = "";
         
         if (profile.wilayah) {
@@ -98,7 +98,7 @@ export default function KoordinatorEditProfilPage() {
       }
     };
     fetchData();
-  }, [supabase, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,12 +6,20 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, User, Users, ShieldCheck, Edit } from "lucide-react";
+import type { Database } from "@/types/database";
+
+type FamilyProfile = Database["public"]["Tables"]["users"]["Row"] & {
+  email: string;
+  phone: string;
+  foto_url: string;
+};
+type LansiaProfile = Database["public"]["Tables"]["lansia_profiles"]["Row"];
 
 export default function KeluargaProfilPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-  const [lansias, setLansias] = useState<any[]>([]);
+  const [profile, setProfile] = useState<FamilyProfile | null>(null);
+  const [lansias, setLansias] = useState<LansiaProfile[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,7 +47,7 @@ export default function KeluargaProfilPage() {
       if (userProfile) {
         setProfile({
           ...userProfile,
-          email: user.email,
+          email: user.email ?? "",
           phone: user.user_metadata?.phone || "",
           foto_url: user.user_metadata?.avatar_url || "",
         });

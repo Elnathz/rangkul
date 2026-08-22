@@ -1,21 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import { Plus_Jakarta_Sans, Instrument_Sans } from "next/font/google";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  display: "swap",
-});
-
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Rangkul",
@@ -45,9 +30,11 @@ export default function RootLayout({
       lang="id"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${plusJakartaSans.variable} ${instrumentSans.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col font-body">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-body">
+        {children}
+      </body>
     </html>
   );
 }

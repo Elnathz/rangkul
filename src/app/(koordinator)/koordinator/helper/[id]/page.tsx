@@ -57,7 +57,7 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
     .eq('helper_id', helper.id);
   
   if (catData) {
-    categories = catData.map((c: any) => c.service_categories?.nama).filter(Boolean);
+    categories = catData.map((c) => c.service_categories?.nama).filter((name): name is string => Boolean(name));
   }
 
   // Pengelompokan Kategori

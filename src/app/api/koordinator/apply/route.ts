@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { koordinatorApplySchema } from '@/lib/validations/koordinator';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import type { Database } from '@/types/database';
 
 // POST /api/koordinator/apply — Koordinator mendaftar untuk diverifikasi Admin
 export async function POST(request: Request) {
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
           foto_url: foto_url || null,
           status: 'pending_verification',
           updated_at: new Date().toISOString(),
-        } as any)
+        } as unknown as Database['public']['Tables']['koordinator_profiles']['Update'])
         .eq('id', existing.id)
         .select('id')
         .single();
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
           ktp_url: ktp_url || null,
           foto_url: foto_url || null,
           status: 'pending_verification',
-        } as any)
+        } as unknown as Database['public']['Tables']['koordinator_profiles']['Insert'])
         .select('id')
         .single();
 

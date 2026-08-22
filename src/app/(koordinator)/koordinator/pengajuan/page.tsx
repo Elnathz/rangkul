@@ -134,8 +134,8 @@ export default function KoordinatorPengajuanPage() {
       }
       
       setSubmitted(true);
-    } catch (err: any) {
-      setErrorMsg(err.message);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat mengirim pengajuan.');
     } finally {
       setLoading(false);
     }

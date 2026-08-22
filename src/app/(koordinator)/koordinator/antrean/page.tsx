@@ -6,6 +6,15 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
 
+type PendingHelper = {
+  id: string;
+  wilayah_domisili: string;
+  status: string;
+  created_at: string;
+  koordinator_id: string | null;
+  users: { full_name: string | null } | { full_name: string | null }[] | null;
+};
+
 export default async function AntreanHelperPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +32,7 @@ export default async function AntreanHelperPage() {
 
   // Check if profile is incomplete
   const isProfileIncomplete = !koordinator?.wilayah;
-  let pendingHelpers: any[] = [];
+  let pendingHelpers: PendingHelper[] = [];
 
   if (!isProfileIncomplete) {
     // Fetch pending helpers assigned to this koordinator, or unassigned ones in their wilayah
@@ -46,7 +55,7 @@ export default async function AntreanHelperPage() {
     pendingHelpers = (helpers || []).filter(h => 
       h.koordinator_id === koordinator.id || 
       (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
-    );
+    ) as unknown as PendingHelper[];
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -132,7 +141,7 @@ export default async function AntreanHelperPage() {
                     </p>
                   </div>
                 ) : (
-                  pendingHelpers.map((helper: any) => {
+                  pendingHelpers.map((helper) => {
                     const nama = Array.isArray(helper.users) ? helper.users[0]?.full_name : helper.users?.full_name;
                     return (
                       <div key={helper.id} className="p-5 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all group bg-white">

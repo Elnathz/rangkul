@@ -6,6 +6,17 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, ActivityIcon, UserRound, Calendar, MapPin, UserCheck, Stethoscope } from "lucide-react";
 import Link from "next/link";
+import type { Database } from "@/types/database";
+
+type LansiaDb = Database["public"]["Tables"]["lansia_profiles"]["Row"] & {
+  umur?: number | null;
+  kondisi_medis?: string | null;
+  tingkat_mobilitas?: string | null;
+  kebutuhan_khusus?: string | null;
+  wilayah_domisili?: string | null;
+  domisili_lat?: number | null;
+  domisili_lng?: number | null;
+};
 
 type Lansia = {
   id: string;
@@ -45,11 +56,11 @@ export default function LansiaProfilPage() {
         .eq('keluarga_id', user.id)
         .single();
         
-      const data = dbData as any;
+      const data = dbData as unknown as LansiaDb | null;
         
       if (data) {
         // mock parsing
-        let region = null;
+        let region: Lansia["region"] = null;
         let rt = "", rw = "", alamat = data.alamat || "";
         
         if (data.wilayah_domisili) {
@@ -76,7 +87,7 @@ export default function LansiaProfilPage() {
         setLansia({
           id: data.id,
           nama: data.nama,
-          umur: data.umur,
+          umur: data.umur ?? 0,
           kondisi_medis: data.kondisi_medis || "-",
           tingkat_mobilitas: data.tingkat_mobilitas || "-",
           kebutuhan_khusus: data.kebutuhan_khusus || "-",
@@ -85,8 +96,8 @@ export default function LansiaProfilPage() {
           rt,
           rw,
           region,
-          domisili_lat: data.domisili_lat,
-          domisili_lng: data.domisili_lng
+          domisili_lat: data.domisili_lat ?? null,
+          domisili_lng: data.domisili_lng ?? null
         });
       }
       setLoading(false);

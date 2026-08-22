@@ -1,201 +1,528 @@
-# Rangkul: Platform Pendampingan Lansia Berbasis Komunitas
+# Rangkul
 
-Rangkul adalah platform pendampingan lansia (aging in place) berbasis komunitas yang menghubungkan lansia dengan Helper lokal terverifikasi oleh Koordinator RT/RW setempat. Rangkul memberikan ketenangan pikiran bagi keluarga perantau melalui pemantauan kondisi harian (Health Snapshot) dan riwayat kebersamaan lansia (Memory Capsule).
+<div align="center">
 
-Proyek ini dibangun untuk kompetisi ITechno Cup 2026 dengan memprioritaskan keamanan data berlapis, arsitektur backend yang tangguh, serta model kepercayaan hiperlokal.
+### Platform Pendampingan Lansia Berbasis Komunitas
 
----
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-merangkul.vercel.app-success?style=for-the-badge)](https://merangkul.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/Elnathz/rangkul)
+[![License](https://img.shields.io/badge/License-not%20set-lightgrey?style=for-the-badge)](#lisensi)
 
-## 1. Visi dan Model Bisnis Inti (TDD §3)
+**Submission for ITECHNO CUP 2026 - Web Development**
 
-### 1.1 Verifikasi Hiperlokal (Model SIM)
-- Helper diverifikasi langsung oleh Koordinator di RT/RW domisili aslinya (satu kali verifikasi awal).
-- Memiliki fallback bertingkat: Koordinator RT -> Koordinator RW -> Admin Platform (`verified_by_admin_fallback`).
-- Mencegah Helper menerima transaksi jika belum terverifikasi secara sah di wilayahnya.
+**By Lumpur Lapindo Blukutuk Blukutuk**
 
-### 1.2 State Machine Kunjungan dan Layanan
-- Kunjungan memiliki status transisi yang ketat: `diajukan` -> `menunggu_persetujuan_koordinator` -> `dikonfirmasi` -> `dikerjakan` -> `menunggu_persetujuan_keluarga` -> `selesai` / `dibatalkan`.
-- Memanfaatkan conditional update di tingkat database untuk mencegah race condition saat penerimaan tugas secara bersamaan oleh beberapa Helper.
+</div>
 
-### 1.3 Escrow Pembayaran dan Bagi Hasil
-- Menggunakan penahanan dana (escrow) terintegrasi Midtrans.
-- Skema bagi hasil saat tugas selesai: 90% Helper, 7% Platform, 3% Koordinator RT/RW (koordinator yang memverifikasi Helper).
-- Dukungan untuk "Layanan Tambahan" yang disetujui di tengah kunjungan yang akan menyesuaikan harga akhir pembayaran.
+Rangkul menghubungkan keluarga, lansia, Helper lokal, dan Koordinator RT/RW dalam satu alur pendampingan yang lebih dekat, terverifikasi, dan dapat dipantau. Platform ini dirancang untuk membantu keluarga yang tidak selalu dapat hadir langsung, sekaligus membuka pekerjaan pendampingan bagi warga sekitar melalui mekanisme komunitas yang bertanggung jawab.
 
-### 1.4 Transparansi dan Riwayat Rangkul
-- Health Snapshot: Pemantauan 5 indikator harian lansia (Energi, Mobilitas, Mood, Nafsu Makan, Kualitas Tidur) disertai cerita kunjungan dan foto bukti.
-- Sistem laporan dan proteksi otomatis (under review jika mengumpulkan 2 laporan).
+## Daftar Isi
 
----
+- [Tentang Proyek](#tentang-proyek)
+- [Fitur Unggulan](#fitur-unggulan)
+- [Demo dan Screenshot](#demo-dan-screenshot)
+- [Teknologi](#teknologi)
+- [Arsitektur Sistem](#arsitektur-sistem)
+- [Instalasi dan Setup](#instalasi-dan-setup)
+- [Penggunaan](#penggunaan)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Tim Pengembang](#tim-pengembang)
+- [Lisensi](#lisensi)
 
-## 2. Teknologi dan Arsitektur
+## Tentang Proyek
 
-- **Framework**: Next.js 16 (App Router, React 19, TypeScript 5)
-- **Backend & Database**: Supabase (PostgreSQL, Row Level Security, Auth Admin, Storage Bucket)
-- **Validasi Input**: Zod v4 (Validasi 4 lapis: Client -> Form -> Server API -> Database Constraint)
-- **Styling & UI**: TailwindCSS, Shadcn UI, Lucide Icons
-- **Keamanan**: Row Level Security (RLS) pada seluruh tabel data pribadi, Signed URL untuk dokumen sensitif (KTP/Identitas).
+### Latar Belakang
 
----
+Indonesia sedang memasuki fase masyarakat menua. Kementerian Kesehatan menyebutkan bahwa sekitar 12 persen atau 29 juta penduduk Indonesia merupakan lansia, dan proporsinya diproyeksikan meningkat hingga 20 persen pada 2045. Pada saat yang sama, data Survei Kesehatan Indonesia 2023 yang dirangkum Kementerian Kesehatan menunjukkan bahwa sebagian besar lansia masih mandiri, tetapi tetap ada kelompok yang membutuhkan bantuan ringan sampai total dalam aktivitas sehari-hari. Angka tersebut menunjukkan bahwa kebutuhan pendampingan lansia tidak hanya berkaitan dengan layanan medis, tetapi juga dengan kehadiran, perhatian, mobilitas, aktivitas harian, dan dukungan sosial.
 
-## 3. Struktur Direktori Utama
+Keluarga sering menjadi pihak pertama yang bertanggung jawab atas kebutuhan lansia. Namun, dalam praktiknya, anggota keluarga dapat tinggal di kota berbeda, memiliki jam kerja yang panjang, atau tidak dapat datang setiap kali lansia membutuhkan bantuan. Masalahnya bukan sekadar mencari seseorang untuk datang ke rumah. Keluarga juga perlu mengetahui siapa pendampingnya, apakah identitasnya dapat dipercaya, apakah ia benar-benar berada di sekitar lokasi lansia, dan apa yang terjadi selama kunjungan.
+
+Di sisi lain, warga yang memiliki waktu, kepedulian, dan kemampuan untuk mendampingi belum memiliki jalur kerja lokal yang terstruktur. Rekrutmen tanpa pengawasan dapat menimbulkan risiko bagi lansia dan keluarga. Sebaliknya, proses yang terlalu terpusat dapat mengabaikan pengetahuan warga setempat tentang lingkungan, domisili, dan reputasi seseorang.
+
+Badan Pusat Statistik menyediakan publikasi khusus tentang penduduk lanjut usia yang mencakup demografi, kesehatan, kondisi sosial, potensi ekonomi, serta akses terhadap perlindungan dan pemberdayaan. WHO juga menekankan bahwa penuaan penduduk membutuhkan sistem kesehatan dan perawatan jangka panjang yang lebih siap, termasuk layanan berbasis komunitas dan tingkat desa. Tantangan ini membutuhkan kolaborasi antara keluarga, warga lokal, dan struktur komunitas yang sudah dikenal masyarakat.
+
+Sumber data:
+
+- [Statistik Penduduk Lanjut Usia 2023, Badan Pusat Statistik](https://www.bps.go.id/id/publication/2023/12/29/5d308763ac29278dd5860fad/statisti)
+- [Hari Lanjut Usia Nasional, Kementerian Kesehatan RI](https://ayosehat.kemkes.go.id/hari-lanjut-usia-nasional)
+- [Ageing and health in South-East Asia, WHO](https://www.who.int/southeastasia/health-topics/ageing)
+- [WHO policy brief tentang pembiayaan long-term care di Indonesia](https://www.who.int/indonesia/news/detail/06-06-2024-who-policy-brief-cites-long-term-care-investment-lessons-from-indonesia)
+
+### Solusi yang Ditawarkan
+
+Rangkul menawarkan model pendampingan hiperlokal. Keluarga tetap menjadi pengambil keputusan utama, Helper menjadi pendamping yang menjalankan tugas, dan Koordinator RT/RW menjadi lapisan pengawasan komunitas. Pembagian ini membuat proses pendampingan tidak berhenti pada pencocokan profil dan pemesanan, tetapi memiliki pihak yang dapat memverifikasi dan menindaklanjuti aktivitas di lapangan.
+
+Alur solusi Rangkul bekerja sebagai berikut:
+
+1. Keluarga mendaftarkan profil lansia, alamat, catatan kondisi, kebutuhan layanan, serta jadwal kunjungan.
+2. Helper mendaftar menggunakan identitas dan domisili yang dapat diverifikasi. Helper yang belum terverifikasi tidak dapat menerima tugas secara bebas.
+3. Koordinator RT/RW memeriksa Helper di wilayahnya, termasuk dokumen, domisili, dan kelayakan untuk menjadi pendamping. Koordinator juga dapat menolak pengajuan dengan alasan dan bukti yang tercatat.
+4. Keluarga dapat mencari Helper berdasarkan wilayah dan radius layanan, atau melakukan booking direct kepada Helper tertentu.
+5. Tugas berisiko, tugas Helper probation, dan kondisi tertentu masuk ke antrean persetujuan Koordinator sebelum dapat berjalan.
+6. Koordinator memiliki direktori Helper terverifikasi dan dapat melihat status aktivitasnya, seperti siap menerima tugas, memiliki jadwal, atau sedang bertugas.
+7. Helper memperoleh akses ke pekerjaan pendampingan di sekitar domisilinya. Dengan demikian, sistem ini membuka peluang penghasilan lokal bagi warga RT/RW yang memenuhi syarat, bukan sekadar menjadi katalog relawan.
+8. Setelah tugas berjalan, keluarga memperoleh pembaruan status, sedangkan Helper dapat mengirim laporan kunjungan dan Health Snapshot. Data kesehatan diposisikan sebagai catatan pemantauan non-diagnostik, bukan pengganti pemeriksaan tenaga kesehatan.
+
+Model Koordinator adalah pembeda utama Rangkul. RT/RW tidak hanya menjadi pihak administratif, tetapi menjadi pengawas yang membantu menjaga kepercayaan lokal dan membuka lapangan kerja yang lebih aman bagi warga di wilayahnya. Setiap akses tetap dibatasi oleh role, wilayah, dan Row Level Security Supabase agar data lansia, dokumen identitas, dan catatan kunjungan tidak menjadi informasi publik.
+
+### Tujuan Proyek
+
+- **Tujuan utama**: Membuat pendampingan lansia jarak dekat yang dapat dipercaya, dapat dipantau, dan mudah digunakan oleh keluarga.
+- **Target pengguna**: Keluarga lansia, Helper lokal, Koordinator RT/RW, dan Admin platform.
+- **Value proposition**: Menggabungkan kebutuhan keluarga, peluang kerja warga, dan pengawasan komunitas dalam satu alur digital.
+- **Batasan layanan**: Rangkul berfokus pada pendampingan aktivitas harian dan dukungan sosial. Rangkul bukan layanan diagnosis atau pengganti tenaga medis.
+
+## Fitur Unggulan
+
+### Fitur Utama
+
+| Fitur | Deskripsi | Keunggulan |
+| --- | --- | --- |
+| **Verifikasi hiperlokal** | Koordinator RT/RW memeriksa Helper berdasarkan wilayah domisili dan dokumen identitas. | Kepercayaan dibangun dari struktur komunitas yang mengenal wilayahnya. |
+| **Job board berbasis radius** | Helper melihat tugas nyata di sekitar domisilinya dan menerima tugas melalui conditional update. | Mengurangi benturan penerimaan tugas dan memperluas akses kerja lokal. |
+| **Booking direct** | Keluarga dapat mengajukan tugas langsung kepada Helper tertentu. | Helper yang dituju memperoleh notifikasi dan dapat mengonfirmasi dari dashboardnya. |
+| **Approval bertingkat** | Tugas Helper probation, layanan berisiko, atau kondisi tertentu membutuhkan persetujuan Koordinator. | Keputusan penting tidak hanya bergantung pada satu pihak. |
+| **Direktori Helper Koordinator** | Koordinator melihat Helper terverifikasi beserta status aktivitas tugasnya. | Pengawasan tidak berhenti pada verifikasi awal. |
+| **State machine tugas** | Status tugas bergerak dari pengajuan sampai selesai melalui transisi yang terkontrol. | Mencegah tindakan ilegal dan konflik ketika beberapa pengguna berinteraksi bersamaan. |
+| **Health Snapshot dan Memory Capsule** | Helper dapat mengisi indikator kondisi lansia dan cerita singkat kunjungan. | Keluarga memperoleh konteks perkembangan lansia, bukan hanya status selesai. |
+
+### Fitur Tambahan
+
+- **Layanan Tambahan**: Helper dapat mengajukan biaya tambahan kepada keluarga, lalu keluarga menyetujui atau menolaknya sebelum harga final berubah.
+- **Notifikasi in-app**: Booking direct, perubahan tugas, dan informasi penting tampil di pusat notifikasi dengan indikator belum dibaca.
+- **Bukti dan alasan penolakan**: Penolakan Helper dapat disertai catatan dan lampiran agar keputusan transparan.
+- **Pratinjau dokumen dan foto**: Dokumen verifikasi dan foto lansia dapat dilihat melalui modal dengan kontrol zoom sesuai kewenangan pengguna.
+- **Address normalization**: Alamat ditampilkan secara terpisah berdasarkan RT/RW, kelurahan, kecamatan, kabupaten/kota, dan provinsi jika datanya tersedia.
+- **Audit dan RLS**: Data privat dibatasi oleh kebijakan akses Supabase dan tindakan sensitif dicatat untuk kebutuhan pelacakan.
+
+## Demo dan Screenshot
+
+### Live Demo
+
+[Kunjungi Rangkul Production](https://merangkul.vercel.app)
+
+Live production digunakan untuk mempresentasikan alur utama keluarga, Helper, Koordinator, dan Admin. Data demo yang dibutuhkan untuk pengembangan lokal berada di `supabase/seed.sql` dan migration demo terkait.
+
+### Screenshot Aplikasi
+
+Screenshot produk belum disimpan sebagai asset repository. Untuk melihat tampilan terbaru, gunakan [live demo Rangkul](https://merangkul.vercel.app). Screenshot dapat ditambahkan ke folder `docs/screenshots/` tanpa mengubah struktur dokumentasi ini.
+
+### Video Demo
+
+Video demo belum dipublikasikan. Bagian ini dipertahankan dari template ITECHNO CUP dan dapat diisi setelah video presentasi final tersedia.
+
+## Teknologi
+
+### Tech Stack
+
+#### Frontend
 
 ```text
-.
-├── docs/
-│   ├── TDD_Rangkul.md           # Sumber kebenaran teknis dan aturan bisnis (Wajib dibaca)
-│   ├── GUIDEBOOK_ITechno.md     # Ketentuan lomba ITechno Cup 2026
-│   └── planning/                # Perencanaan per sprint
+Framework    : Next.js 16 App Router, React 19, TypeScript 5
+UI Library   : Tailwind CSS 4, shadcn/ui, Radix UI, Lucide React
+Form         : React Hook Form
+Validation   : Zod 4
+Map          : React Leaflet, Leaflet GeoSearch
+```
+
+#### Backend
+
+```text
+Runtime      : Node.js
+Framework    : Next.js Route Handlers
+Database     : Supabase PostgreSQL
+Auth         : Supabase Auth
+Storage      : Supabase Storage
+Authorization: PostgreSQL Row Level Security
+```
+
+#### DevOps and Tools
+
+```text
+Deployment   : Vercel
+Database Ops : Supabase CLI
+CI/CD        : GitHub Actions
+Testing      : Node.js test runner dengan TypeScript stripping
+Quality      : ESLint, TypeScript compiler, Impeccable, Superpowers
+```
+
+### Alasan Pemilihan Teknologi
+
+| Teknologi | Alasan pemilihan |
+| --- | --- |
+| **Next.js** | Menyatukan halaman server, client interaction, dan Route Handlers dalam satu aplikasi yang mudah dideploy ke Vercel. |
+| **Supabase** | Menyediakan PostgreSQL, Auth, Storage, dan RLS untuk kebutuhan data privat serta workflow role-based. |
+| **TypeScript** | Membantu menjaga kontrak data antara halaman, API, validasi, dan database tetap terlihat saat pengembangan. |
+| **Zod** | Menyediakan validasi input yang konsisten di sisi client dan server. |
+| **Tailwind CSS dan shadcn/ui** | Mempercepat pembuatan UI yang responsif, konsisten, dan dapat diakses. |
+| **Leaflet** | Mendukung visualisasi lokasi dan radius layanan tanpa mengunci platform pada penyedia peta tertentu. |
+
+### Dependencies Utama
+
+```json
+{
+  "next": "16.2.12",
+  "react": "19.2.4",
+  "@supabase/ssr": "^0.12.4",
+  "@supabase/supabase-js": "^2.111.0",
+  "zod": "^4.4.3",
+  "react-hook-form": "^7.84.0",
+  "tailwindcss": "^4"
+}
+```
+
+## Arsitektur Sistem
+
+### System Architecture
+
+```mermaid
+flowchart LR
+    Keluarga[Keluarga] --> Web[Next.js App Router]
+    Helper[Helper] --> Web
+    Koordinator[Koordinator RT/RW] --> Web
+    Admin[Admin] --> Web
+
+    Web --> API[Next.js Route Handlers]
+    API --> Auth[Supabase Auth]
+    API --> DB[(Supabase PostgreSQL)]
+    API --> Storage[Supabase Storage]
+    DB --> RLS[Row Level Security]
+    Web --> Vercel[Vercel Production]
+```
+
+### Alur Kepercayaan dan Pekerjaan
+
+```mermaid
+flowchart TD
+    A[Helper mengajukan verifikasi] --> B[Koordinator RT/RW memeriksa domisili dan dokumen]
+    B -->|Disetujui| C[Helper verified]
+    B -->|Ditolak| D[Helper menerima alasan dan bukti penolakan]
+    C --> E[Helper melihat tugas dalam radius layanan]
+    E --> F[Helper menerima atau mengonfirmasi tugas]
+    F --> G{Perlu approval?}
+    G -->|Ya| H[Koordinator meninjau antrean approval]
+    G -->|Tidak| I[Tugas dikonfirmasi]
+    H -->|Setuju| I
+    I --> J[Helper memulai kunjungan]
+    J --> K[Helper mengirim laporan dan Health Snapshot]
+    K --> L[Keluarga meninjau hasil kunjungan]
+```
+
+### Database Schema
+
+```mermaid
+erDiagram
+    USERS ||--o| HELPER_PROFILES : memiliki
+    USERS ||--o| KOORDINATOR_PROFILES : memiliki
+    USERS ||--o{ LANSIA_PROFILES : mengelola
+    HELPER_PROFILES }o--|| KOORDINATOR_PROFILES : diverifikasi_oleh
+    LANSIA_PROFILES ||--o{ TASKS : menerima
+    HELPER_PROFILES ||--o{ TASKS : menjalankan
+    SERVICE_CATEGORIES ||--o{ TASKS : mengatur
+    TASKS ||--o{ NOTIFICATIONS : memicu
+    TASKS ||--o{ TASK_EVIDENCE : menghasilkan
+    TASK_EVIDENCE ||--o| HEALTH_SNAPSHOTS : mencatat
+```
+
+Skema aktual dan aturan bisnis lengkap berada di [`docs/TDD_Rangkul.md`](docs/TDD_Rangkul.md). Semua data privat harus melewati autentikasi, validasi, constraint database, dan RLS.
+
+### Folder Structure
+
+```text
+project-root/
 ├── src/
 │   ├── app/
-│   │   ├── api/                 # Next.js App Router API Handlers
-│   │   │   ├── admin/           # Endpoint Admin (Seed, Queue, Approve Koordinator)
-│   │   │   ├── auth/            # Auth API (Register, Login)
-│   │   │   ├── helper/          # Helper API (Apply, Profile, Queue, Approve/Reject)
-│   │   │   ├── helpers/         # Katalog Helper publik (Safe-privacy & Search)
-│   │   │   ├── koordinator/     # Koordinator API (Apply, Profile)
-│   │   │   ├── lansia/          # CRUD Lansia (Soft delete)
-│   │   │   ├── storage/         # Upload dokumen private
-│   │   │   └── users/           # Profile Management (GET & PUT /api/users/me)
-│   │   └── (publik)/            # Halaman Publik & Landing Page
-│   ├── lib/
-│   │   ├── api-response.ts      # Standarisasi respons dan error API
-│   │   ├── audit.ts             # Utility pencatatan Audit Logs
-│   │   ├── supabase/            # Client Supabase (Server, Client, Middleware)
-│   │   └── validations/         # Zod Schemas (Auth, Helper, Lansia, Storage, Koordinator)
-│   ├── middleware.ts            # Next.js Route Protection & Role Guard
-│   └── types/
-│       └── database.ts          # Supabase Database Types
-└── supabase/
-    ├── config.toml              # Konfigurasi Supabase CLI
-    └── migrations/              # Berkas migrasi database SQL terurut
+│   │   ├── (publik)/              # landing page dan halaman publik
+│   │   ├── (keluarga)/            # alur keluarga dan profil lansia
+│   │   ├── (helper)/              # verifikasi, job board, tugas, laporan
+│   │   ├── (koordinator)/         # dashboard, approval, directory Helper
+│   │   ├── (admin)/               # panel Admin
+│   │   └── api/                   # Route Handlers dan kontrak API
+│   ├── components/                # komponen UI dan alur role
+│   ├── lib/                       # Supabase client, validasi, state helper
+│   └── types/                     # generated database types
+├── docs/
+│   ├── TDD_Rangkul.md             # sumber kebenaran bisnis dan teknis
+│   └── planning/                  # rencana per sprint
+├── supabase/
+│   ├── migrations/                # migration SQL berurutan
+│   ├── seed.sql                   # data demo lokal
+│   └── config.toml                # konfigurasi Supabase CLI
+├── tests/                         # regresi kontrak dan state machine
+└── public/                        # asset publik
 ```
 
----
+## Instalasi dan Setup
 
-## 4. Skema Database Inti (TDD §6)
+### Prerequisites
 
-- `users`: Data akun utama termasuk peran otorisasi (`role`) dan alamat spesifik (kelurahan, rt, rw, kabupaten_kota, provinsi).
-- `lansia_profiles`: Data privat profil lansia yang didampingi (mendukung soft delete via `deleted_at`).
-- `helper_profiles`: Entitas Helper mencakup `bio`, `wilayah_domisili`, batas radius layanan, dan `koordinator_id` penanggung jawab.
-- `helper_service_categories`: Tabel relasi m-to-m antara Helper dengan layanan yang ditawarkannya.
-- `koordinator_profiles`: Data penanggung jawab teritorial RT/RW beserta `saldo_komisi`.
-- `service_categories`: Katalog layanan dasar sistem lengkap dengan `harga_dasar` dan tanda risiko (`is_high_risk`).
-- `tasks`: State machine entitas transaksi pendampingan. Menyimpan transisi status, koordinat check-in, dan harga akhir.
-- `payments`: Pencatatan transaksi escrow Midtrans dan simulasi saldo demo.
-- `audit_logs`: Pencatatan immutable untuk seluruh tindakan sensitif administratif seperti persetujuan dan penolakan akun.
+Pastikan tersedia:
 
-Seluruh tabel dengan data personal dilindungi secara ketat oleh Row Level Security (RLS) Supabase untuk menjamin privasi (TDD §8).
+- **Node.js** 20 atau lebih baru
+- **npm** 10 atau lebih baru
+- **Git**
+- **Supabase CLI**
+- **Docker Desktop** hanya jika ingin menjalankan Supabase secara lokal dengan `npx supabase start`
 
----
+### Langkah Instalasi
 
-## 5. Kontrak API Backend (TDD §7)
+#### 1. Clone Repository
 
-Seluruh route handler berada di `src/app/api/**` dan mewajibkan otorisasi yang divalidasi oleh `middleware.ts`.
+```bash
+git clone https://github.com/Elnathz/rangkul.git
+cd rangkul
+```
 
-### Autentikasi dan Profil Pengguna
-- `POST /api/auth/register` : Registrasi akun baru (Keluarga, Helper, Koordinator).
-- `POST /api/auth/login` : Autentikasi pengguna dan inisialisasi sesi.
-- `GET /api/users/me` : Mengambil data sesi pengguna yang sedang login.
-- `PUT /api/users/me` : Memperbarui detail profil pengguna.
+#### 2. Install Dependencies
 
-### Storage dan Dokumen Private
-- `POST /api/storage/upload` : Upload KTP/Surat Pengantar ke bucket private dan menghasilkan Signed URL sementara.
+```bash
+npm install
+```
 
-### Manajemen Lansia (Role Keluarga)
-- `GET /api/lansia` : Mengambil daftar lansia dalam pengelolaan satu akun Keluarga.
-- `POST /api/lansia` : Registrasi profil lansia baru.
-- `GET /api/lansia/[id]` : Detail spesifik satu profil lansia.
-- `PUT /api/lansia/[id]` : Pembaruan profil lansia.
-- `DELETE /api/lansia/[id]` : Menonaktifkan profil (Soft-delete).
+#### 3. Setup Environment Variables
 
-### Pendaftaran dan Verifikasi Helper
-- `POST /api/helper/apply` : Pendaftaran Helper beserta lampiran spesialisasi kategori layanannya.
-- `GET /api/helper/profile` : Mengecek status tahapan verifikasi Helper.
-- `GET /api/helper/queue` : (Role Koordinator) Mengambil antrean Helper di wilayah kewenangannya.
-- `PUT /api/helper/[id]/approve` : (Role Koordinator/Admin) Mengesahkan Helper dengan pencatatan audit.
-- `PUT /api/helper/[id]/reject` : Menolak pendaftaran Helper dengan alasan yang direkam pada audit.
+Salin `.env.example` menjadi `.env.local`, lalu isi kredensial project Supabase:
 
-### Pendaftaran dan Verifikasi Koordinator
-- `POST /api/koordinator/apply` : Pendaftaran inisiator Koordinator wilayah.
-- `GET /api/koordinator/profile` : Mengecek status verifikasi Koordinator dan saldo komisi.
-- `GET /api/admin/koordinator/queue` : (Role Admin) Menampilkan daftar Koordinator yang butuh pengesahan.
-- `PUT /api/admin/koordinator/[id]/approve` : Mengesahkan Koordinator.
-- `PUT /api/admin/koordinator/[id]/reject` : Menolak Koordinator.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
 
-### Katalog Helper Publik (Privasi Terjaga)
-- `GET /api/helpers` : Pencarian Helper berstatus aktif. Mendukung query parametrik (`q` atau `search`) untuk mencari berdasar nama, spesialisasi layanan, maupun bio. Parameter geografis dan kategori (`category_id`) juga didukung.
-- `GET /api/helpers/[id]` : Detail publik Helper tanpa mengekspos koordinat presisi atau dokumen KTP.
+# Hanya untuk operasi server atau script yang memang membutuhkan akses penuh.
+# Jangan pernah mengekspos service role key ke browser.
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
 
----
+#### 4. Setup Database
 
-## 6. Panduan Pengembangan Lokal
+Untuk Supabase lokal, Docker wajib aktif:
 
-### Kebutuhan Sistem
-- Node.js >= 20.x
-- npm >= 10.x
-- Supabase CLI
+```bash
+npx supabase start
+npx supabase db reset
+```
 
-### Menyiapkan Lingkungan Lokal
-1. Kloning repository dan install dependensi:
-   ```bash
-   git clone https://github.com/Elnathz/rangkul.git
-   cd rangkul
-   npm install
-   ```
+Untuk project Supabase remote tanpa Docker:
 
-2. Konfigurasi kredensial lokal pada `.env.local`:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   ```
+```bash
+npx supabase login
+npx supabase link --project-ref your-project-ref
+npx supabase db push --include-all
+```
 
-3. Jalankan Supabase lokal dan terapkan migrasi:
-   ```bash
-   npx supabase start
-   npx supabase db reset
-   ```
+Periksa histori migration remote sebelum memakai `--include-all`. Jangan menghapus route atau kolom hanya untuk menyembunyikan error schema. Perubahan schema harus dibuat melalui migration yang idempoten dan diuji.
 
-4. Jalankan Next.js development server:
-   ```bash
-   npm run dev
-   ```
+#### 5. Run Development Server
 
----
+```bash
+npm run dev
+```
 
-## 7. Aturan Commit dan Kontribusi Kode (Sesuai AGENTS.md)
+Aplikasi akan tersedia di `http://localhost:3000`.
 
-1. Tidak diperkenankan menulis kode tanpa membuat file perencanaan di `docs/planning/`.
-2. Seluruh histori commit wajib merujuk ke bab yang relevan pada TDD.
-3. Gunakan standar Conventional Commits tanpa emoji atau bahasa "AI slop".
-4. Satu commit mewakili satu perubahan logis.
+## Penggunaan
 
-### Format Standar Commit
+### Menjalankan Aplikasi
+
+```bash
+# Development mode
+npm run dev
+
+# Production build
+npm run build
+npm run start
+
+# Typecheck
+npx tsc --noEmit
+
+# Linting
+npm run lint
+
+# Test regresi yang tersedia saat ini
+$testFiles = Get-ChildItem -LiteralPath tests -Filter '*.test.mjs' | Select-Object -ExpandProperty FullName
+node --experimental-strip-types --test $testFiles
+```
+
+Project ini belum mendefinisikan script `npm run test` atau `npm run seed` di `package.json`. Test dijalankan dengan Node.js test runner seperti contoh di atas, sedangkan data demo dikendalikan melalui migration dan `supabase/seed.sql`.
+
+### User Guide
+
+#### Untuk Keluarga
+
+1. Registrasi atau login sebagai Keluarga.
+2. Tambahkan profil lansia, alamat, catatan kondisi, dan kebutuhan pendampingan.
+3. Cari Helper berdasarkan wilayah atau pilih Helper tertentu untuk booking direct.
+4. Tinjau status tugas, notifikasi, rincian harga, dan layanan tambahan.
+5. Setelah kunjungan, tinjau laporan dan catatan yang dikirim Helper.
+
+#### Untuk Helper
+
+1. Registrasi dan ajukan verifikasi dengan identitas, foto wajah, domisili, dan layanan yang tersedia.
+2. Tunggu pemeriksaan Koordinator wilayah.
+3. Setelah verified, lihat tugas yang berada dalam radius layanan.
+4. Konfirmasi booking direct atau ajukan diri pada tugas marketplace yang tersedia.
+5. Mulai tugas ketika status sudah memungkinkan, lalu kirim laporan kunjungan.
+
+#### Untuk Koordinator
+
+1. Ajukan akun Koordinator untuk wilayah RT/RW yang dikelola.
+2. Setelah disetujui Admin, buka antrean verifikasi Helper.
+3. Tinjau dokumen, domisili, dan kelengkapan Helper.
+4. Setujui atau tolak dengan alasan dan bukti yang jelas.
+5. Pantau direktori Helper terverifikasi dan status tugas aktif di wilayah.
+6. Tinjau antrean tugas yang membutuhkan approval Koordinator.
+
+#### Untuk Admin
+
+1. Kelola pengajuan Koordinator dan kategori layanan.
+2. Gunakan fallback verifikasi jika wilayah belum memiliki Koordinator aktif sesuai aturan TDD.
+3. Tinjau audit dan data yang membutuhkan tindakan administratif.
+
+## API Documentation
+
+### Base URL
+
 ```text
-<type>(<scope>): <subject huruf kecil imperatif>
-
-<body opsional, menjelaskan KENAPA perubahan dibuat>
-
-Refs: TDD §<nomor_bab_terkait>
+Development: http://localhost:3000/api
+Production:  https://merangkul.vercel.app/api
 ```
 
-### Taksonomi Scope yang Diizinkan
-- `auth` : autentikasi dan akun.
-- `lansia` : profil lansia.
-- `helper` : profil, trust tier, antrean Helper.
-- `koordinator` : verifikasi wilayah dan model approval.
-- `tasks` : state machine dan booking.
-- `payment` : escrow dan kompensasi.
-- `riwayat-rangkul` : health snapshot dan memory capsule.
-- `laporan` : sistem peringatan dan suspend.
-- `rls` : perbaikan kebijakan Supabase.
+### Endpoints
 
-Contoh Commit:
-```text
-feat(helper): tambah conditional update untuk penerimaan tugas
+#### Authentication and User Profile
 
-Mencegah dua Helper menerima tugas yang sama secara bersamaan.
-
-Refs: TDD §3.2, FR-TSK-02
+```http
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/users/me
+PUT  /api/users/me
 ```
+
+#### Lansia and Family
+
+```http
+GET    /api/lansia
+POST   /api/lansia
+GET    /api/lansia/:id
+PUT    /api/lansia/:id
+DELETE /api/lansia/:id
+```
+
+#### Helper and Verification
+
+```http
+POST /api/helper/apply
+GET  /api/helper/profile
+GET  /api/helper/queue
+PUT  /api/helper/:id/approve
+PUT  /api/helper/:id/reject
+GET  /api/helpers
+GET  /api/helpers/:id
+POST /api/storage/upload
+```
+
+#### Koordinator and Approval
+
+```http
+POST  /api/koordinator/apply
+GET   /api/koordinator/profile
+GET   /api/koordinator/helpers
+PATCH /api/tasks/:id/koordinator-approve
+GET   /api/admin/koordinator/queue
+PUT   /api/admin/koordinator/:id/approve
+PUT   /api/admin/koordinator/:id/reject
+```
+
+#### Booking and Tasks
+
+```http
+POST  /api/booking/task
+PATCH /api/tasks/:id/accept
+PATCH /api/tasks/:id/start
+POST  /api/tasks/:id/extra-service
+PATCH /api/tasks/:id/extra-service/:eid
+```
+
+#### Notifications
+
+```http
+GET   /api/notifications
+PATCH /api/notifications/:id/read
+```
+
+### Example Request
+
+```javascript
+const response = await fetch('/api/booking/task', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    lansia_id: 'uuid-lansia',
+    helper_id: 'uuid-helper-opsional',
+    service_category_id: 'uuid-kategori',
+    jadwal_waktu: '2026-08-23T08:00:00.000Z',
+    catatan: 'Tolong bantu mengingatkan jadwal minum obat pagi.'
+  })
+});
+
+const result = await response.json();
+```
+
+Format response dan aturan role lengkap dirujuk dari [`docs/TDD_Rangkul.md`](docs/TDD_Rangkul.md), [`docs/api/booking.md`](docs/api/booking.md), dan dokumentasi API lain di folder [`docs/api`](docs/api).
+
+## Testing
+
+### Running Tests
+
+```bash
+# Typecheck
+npx tsc --noEmit
+
+# Semua test kontrak dan state machine
+$testFiles = Get-ChildItem -LiteralPath tests -Filter '*.test.mjs' | Select-Object -ExpandProperty FullName
+node --experimental-strip-types --test $testFiles
+
+# Lint
+npm run lint
+
+# Production build
+npm run build
+```
+
+### Test Coverage
+
+Repository saat ini belum memasang reporter coverage khusus. Regresi yang tersedia mencakup 36 test untuk:
+
+- state machine penerimaan dan mulai tugas Helper;
+- job board berbasis data nyata dan booking direct;
+- approval Koordinator dan aktivitas Helper;
+- upload dokumen verifikasi dan image preview;
+- layanan tambahan dan pembayaran demo;
+- notifikasi, RLS contract, alamat wilayah, dan data seed.
+
+Coverage line, branch, dan function dapat ditambahkan ketika test runner dengan coverage reporter ditetapkan oleh tim.
+
+## Tim Pengembang
+
+| Nama | Peran | GitHub |
+| --- | --- | --- |
+| **Farros Rifantiarno Ramadhani** | Project Lead dan Fullstack Developer | [@Elnathz](https://github.com/Elnathz) |
+| **Mervin Fauzhan Atkly** | Frontend Developer | [@mervinfa](https://github.com/mervinfa) |
+
+## Lisensi
+
+Lisensi open source belum ditetapkan dalam repository ini. Sebelum digunakan di luar kebutuhan kompetisi, tambahkan file `LICENSE` dan sepakati lisensi proyek bersama seluruh anggota tim.
+
+## Referensi Proyek
+
+- [TDD Rangkul](docs/TDD_Rangkul.md)
+- [Guidebook ITECHNO CUP](docs/GUIDEBOOK_ITechno.md)
+- [Rencana Sprint](docs/planning)
+- [Dokumentasi API](docs/api)
+- [Template README ITECHNO CUP](Template%20README.md%20-%20ITECHNO%20CUP.md)
+
+<div align="center">
+
+**Made by Lumpur Lapindo Blukutuk Blukutuk for ITECHNO CUP 2026**
+
+</div>

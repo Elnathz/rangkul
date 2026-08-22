@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { serviceCategorySchema } from '@/lib/validations/admin';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
 
-async function checkAdminAuth(supabase: any) {
+type AppSupabaseClient = SupabaseClient<Database>;
+
+async function checkAdminAuth(supabase: AppSupabaseClient) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     throw new Error('unauthorized');
@@ -27,9 +31,10 @@ export async function GET(
     const supabase = await createClient();
     try {
       await checkAdminAuth(supabase);
-    } catch (e: any) {
-      if (e.message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
-      if (e.message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
+      if (message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
     }
 
     const { id } = await params;
@@ -58,9 +63,10 @@ export async function PUT(
     const supabase = await createClient();
     try {
       await checkAdminAuth(supabase);
-    } catch (e: any) {
-      if (e.message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
-      if (e.message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
+      if (message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
     }
 
     const body = await request.json();
@@ -108,9 +114,10 @@ export async function DELETE(
     const supabase = await createClient();
     try {
       await checkAdminAuth(supabase);
-    } catch (e: any) {
-      if (e.message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
-      if (e.message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message === 'unauthorized') return createApiError('unauthorized', 'Anda harus login', 401);
+      if (message === 'forbidden') return createApiError('forbidden', 'Akses ditolak', 403);
     }
 
     const { id } = await params;
