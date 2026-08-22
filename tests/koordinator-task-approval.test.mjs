@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import path from "node:path";
-
-const root = new URL("..", import.meta.url).pathname;
 
 const queuePage = fs.readFileSync(new URL("../src/app/(koordinator)/koordinator/antrean-persetujuan/page.tsx", import.meta.url), "utf8");
 const approvalCard = fs.readFileSync(new URL("../src/components/koordinator/ApprovalTaskCard.tsx", import.meta.url), "utf8");
 const approvalRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/koordinator-approve/route.ts", import.meta.url), "utf8");
 const visibilityMigration = fs.readFileSync(new URL("../supabase/migrations/20260821120000_add_koordinator_helper_visibility.sql", import.meta.url), "utf8");
-const queueRlsMigration = fs.readFileSync(new URL("../supabase/migrations/20260821160001_fix_koordinator_task_queue_rls.sql", import.meta.url), "utf8");
+const queueRlsMigration = fs.readFileSync(new URL("../supabase/migrations/20260821161000_fix_koordinator_task_queue_rls.sql", import.meta.url), "utf8");
 const demoDataMigration = fs.readFileSync(new URL("../supabase/migrations/20260821170000_seed_demo_data.sql", import.meta.url), "utf8");
 
 test("antrean Koordinator membaca task waiting dari database", () => {

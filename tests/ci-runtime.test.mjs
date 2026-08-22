@@ -34,3 +34,13 @@ test("CI dan deployment memakai runtime yang mendukung TypeScript stripping", ()
     assert.doesNotMatch(renderSection, /const supabase = createClient\(\);/);
   }
 });
+
+test("semua migration Supabase memiliki versi yang unik", () => {
+  const migrationDirectory = path.join(root, "supabase/migrations");
+  const migrationFiles = fs
+    .readdirSync(migrationDirectory)
+    .filter((fileName) => fileName.endsWith(".sql"));
+  const versions = migrationFiles.map((fileName) => fileName.split("_", 1)[0]);
+
+  assert.equal(new Set(versions).size, versions.length);
+});

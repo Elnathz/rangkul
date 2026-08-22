@@ -8,13 +8,25 @@ on:
 jobs:
   heartbeat:
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
+      - name: Validate Supabase heartbeat secrets
+        run: |
+          missing=""
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then missing="$missing SUPABASE_PROJECT_ID"; fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then missing="$missing SUPABASE_SERVICE_ROLE_KEY"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::Missing GitHub Actions secrets:$missing"
+            echo "Add the missing secrets to the production environment or repository settings."
+            exit 1
+          fi
+
       - name: Check Supabase health
         run: |
           curl --fail --silent --show-error \
             "https://${SUPABASE_PROJECT_ID}.supabase.co/auth/v1/health" \
             -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
-        env:
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

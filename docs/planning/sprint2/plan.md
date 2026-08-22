@@ -133,7 +133,7 @@
 ### Breakdown File
 - Replace `src/app/(koordinator)/koordinator/antrean-persetujuan/page.tsx` agar membaca task nyata dari Supabase dan memiliki loading, error, empty, serta success state.
 - Create `src/app/api/tasks/[id]/koordinator-approve/route.ts` untuk transisi atomik ke `dikonfirmasi`.
-- Create `supabase/migrations/20260821160000_fix_koordinator_task_queue_rls.sql` dengan policy SELECT relasi lansia dan UPDATE scoped. Migration dibuat terpisah karena migration visibility sebelumnya sudah dapat tercatat di remote.
+- Create `supabase/migrations/20260821161000_fix_koordinator_task_queue_rls.sql` dengan policy SELECT relasi lansia dan UPDATE scoped. Migration dibuat terpisah karena migration visibility sebelumnya sudah dapat tercatat di remote.
 
 ### Testing
 - Tambah regresi `tests/koordinator-task-approval.test.mjs` untuk memastikan antrean tidak memakai mock dan endpoint approval memakai conditional update.
