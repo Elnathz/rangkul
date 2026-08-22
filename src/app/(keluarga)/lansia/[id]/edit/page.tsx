@@ -11,6 +11,7 @@ import { Loader2, AlertCircle, MapPin, Heart, ArrowLeft, UserRound, Stethoscope 
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import Link from "next/link";
+import { ImageCropperModal } from "@/components/ui/ImageCropperModal";
 
 export default function LansiaEditProfilPage() {
   const params = useParams();
@@ -41,6 +42,9 @@ export default function LansiaEditProfilPage() {
 
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  
+  const [cropModalSrc, setCropModalSrc] = useState<string | null>(null);
+  const [croppedFile, setCroppedFile] = useState<File | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -63,43 +67,29 @@ export default function LansiaEditProfilPage() {
 
       if (data) {
         let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = data.alamat || "";
+        let rt = "", rw = "", baseAlamat = data.alamat || "";
         
-        if (data.wilayah_domisili) {
-          const parts = data.wilayah_domisili.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
-          } else {
-             alamat = data.wilayah_domisili;
-          }
+        const rtrwMatch = baseAlamat.match(/(.*),\s*RT\s*(\d+)\/RW\s*(\d+)(.*)/i);
+        if (rtrwMatch) {
+            baseAlamat = (rtrwMatch[1] + rtrwMatch[4]).trim();
+            rt = rtrwMatch[2];
+            rw = rtrwMatch[3];
         }
 
         setForm(prev => ({
           ...prev,
           nama: data.nama || "",
           umur: data.umur?.toString() || "",
-          kondisi_medis: data.kondisi_medis || "",
+          kondisi_medis: data.catatan_kondisi || "",
           tingkat_mobilitas: data.tingkat_mobilitas || "",
           kebutuhan_khusus: data.kebutuhan_khusus || "",
           foto_url: data.foto_url || "",
-          alamat,
+          alamat: baseAlamat,
           rt,
           rw,
           region,
-          domisili_lat: data.domisili_lat,
-          domisili_lng: data.domisili_lng,
+          domisili_lat: data.lat || 0,
+          domisili_lng: data.lng || 0,
         }));
       }
       setFetching(false);
@@ -123,7 +113,7 @@ export default function LansiaEditProfilPage() {
       if (!user) throw new Error("Not logged in");
 
       let finalFotoUrl = form.foto_url;
-      const file = fotoInputRef.current?.files?.[0];
+      const file = croppedFile || fotoInputRef.current?.files?.[0];
       
       if (file) {
         const fileExt = file.name.split('.').pop();
@@ -156,8 +146,11 @@ export default function LansiaEditProfilPage() {
         .from('lansia_profiles')
         .update({
           nama: form.nama,
+          umur: parseInt(form.umur),
           alamat: fullAlamat,
           catatan_kondisi: form.kondisi_medis,
+          tingkat_mobilitas: form.tingkat_mobilitas,
+          kebutuhan_khusus: form.kebutuhan_khusus,
           foto_url: finalFotoUrl,
           lat: form.domisili_lat,
           lng: form.domisili_lng,
@@ -273,8 +266,11 @@ export default function LansiaEditProfilPage() {
                           e.target.value = '';
                           return;
                         }
-                        setForm({ ...form, foto_url: URL.createObjectURL(file) });
+                        const reader = new FileReader();
+                        reader.onload = () => setCropModalSrc(reader.result as string);
+                        reader.readAsDataURL(file);
                         setFotoFileName(file.name);
+                        e.target.value = '';
                       }
                     }}
                   />
@@ -422,6 +418,22 @@ export default function LansiaEditProfilPage() {
           </div>
         </form>
       </div>
+
+      {cropModalSrc && (
+        <ImageCropperModal
+          imageSrc={cropModalSrc}
+          aspectRatio={4/3}
+          onCropComplete={(file) => {
+            setCroppedFile(file);
+            setForm({ ...form, foto_url: URL.createObjectURL(file) });
+            setCropModalSrc(null);
+          }}
+          onCancel={() => {
+            setCropModalSrc(null);
+            setFotoFileName(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -177,10 +177,45 @@ export default function HelperEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      // In a real app, this would call Supabase to update auth.users, public.users, helper_profiles, and helper_service_categories
-      // Since we are mocking the backend, we simulate a successful update delay.
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const authData = { full_name: form.username, phone: form.phone };
+      if (form.password) {
+        const { error: authError } = await supabase.auth.updateUser({ password: form.password, data: authData });
+        if (authError) throw authError;
+      } else {
+        const { error: authError } = await supabase.auth.updateUser({ data: authData });
+        if (authError) throw authError;
+      }
+
+      const { error: userError } = await supabase.from('users').update({
+        full_name: form.username,
+        phone: form.phone,
+      }).eq('id', user.id);
+      if (userError) throw userError;
+
+      let wilayahString = "";
+      if (form.region.kelurahan) {
+         wilayahString = `${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi} | RT ${form.rt || "-"}/RW ${form.rw || "-"} | ${form.alamat}`;
+      } else {
+         wilayahString = form.alamat;
+      }
+
+      if (helperProfileId) {
+        const { error: helperError } = await supabase.from('helper_profiles').update({
+          wilayah_domisili: wilayahString,
+          domisili_lat: form.domisili_lat,
+          domisili_lng: form.domisili_lng,
+        }).eq('id', helperProfileId);
+        if (helperError) throw helperError;
+
+        await supabase.from('helper_service_categories').delete().eq('helper_id', helperProfileId);
+        if (kategoriIds.length > 0) {
+          const inserts = kategoriIds.map(cid => ({ helper_id: helperProfileId, service_category_id: cid }));
+          await supabase.from('helper_service_categories').insert(inserts);
+        }
+      }
       
       showToast("Profil berhasil diperbarui!", "success");
       setTimeout(() => router.push("/helper/dashboard"), 2000);

@@ -452,6 +452,9 @@ export type Database = {
           lng: number | null
           nama: string
           updated_at: string
+          umur: number | null
+          tingkat_mobilitas: string | null
+          kebutuhan_khusus: string | null
         }
         Insert: {
           alamat: string
@@ -468,6 +471,9 @@ export type Database = {
           lng?: number | null
           nama: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Update: {
           alamat?: string
@@ -484,6 +490,9 @@ export type Database = {
           lng?: number | null
           nama?: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Relationships: [
           {

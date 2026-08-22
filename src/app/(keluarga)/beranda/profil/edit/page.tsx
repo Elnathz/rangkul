@@ -57,7 +57,7 @@ export default function KeluargaEditProfilPage() {
       
       const { data: profile } = await supabase
         .from('users')
-        .select('id, alamat_detail')
+        .select('*')
         .eq('id', user.id)
         .single();
 
@@ -73,39 +73,20 @@ export default function KeluargaEditProfilPage() {
       }
 
       if (profile) {
-        let region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = "";
-        
-        if (profile.alamat_detail) {
-          const parts = profile.alamat_detail.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
-          } else {
-             alamat = profile.alamat_detail;
-          }
-        }
-
         setForm(prev => ({
           ...prev,
           username: name,
           phone: phone,
           foto_url: foto,
-          alamat,
-          rt,
-          rw,
-          region,
+          alamat: profile.alamat_detail || "",
+          rt: profile.rt?.toString() || "",
+          rw: profile.rw?.toString() || "",
+          region: {
+            provinsi: profile.provinsi || "",
+            kota: profile.kabupaten_kota || "",
+            kecamatan: profile.kecamatan || "",
+            kelurahan: profile.kelurahan || ""
+          },
           domisili_lat: null,
           domisili_lng: null,
         }));
@@ -126,8 +107,31 @@ export default function KeluargaEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const authData = { full_name: form.username, phone: form.phone };
+      if (form.password) {
+        const { error: authError } = await supabase.auth.updateUser({ password: form.password, data: authData });
+        if (authError) throw authError;
+      } else {
+        const { error: authError } = await supabase.auth.updateUser({ data: authData });
+        if (authError) throw authError;
+      }
+
+      const { error: userError } = await supabase.from('users').update({
+        full_name: form.username,
+        phone: form.phone,
+        alamat_detail: form.alamat,
+        rt: form.rt ? parseInt(form.rt) : null,
+        rw: form.rw ? parseInt(form.rw) : null,
+        kelurahan: form.region.kelurahan,
+        kecamatan: form.region.kecamatan,
+        kabupaten_kota: form.region.kota,
+        provinsi: form.region.provinsi,
+      }).eq('id', user.id);
+      
+      if (userError) throw userError;
       
       showToast("Profil berhasil diperbarui!", "success");
       setTimeout(() => router.push("/beranda"), 2000);

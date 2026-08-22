@@ -112,9 +112,35 @@ export default function KoordinatorEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      // In a real app, this would call Supabase to update auth.users, public.users, and koordinator_profiles
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const authData = { full_name: form.username, phone: form.phone };
+      if (form.password) {
+        const { error: authError } = await supabase.auth.updateUser({ password: form.password, data: authData });
+        if (authError) throw authError;
+      } else {
+        const { error: authError } = await supabase.auth.updateUser({ data: authData });
+        if (authError) throw authError;
+      }
+
+      const { error: userError } = await supabase.from('users').update({
+        full_name: form.username,
+        phone: form.phone,
+      }).eq('id', user.id);
+      if (userError) throw userError;
+
+      let wilayahString = "";
+      if (form.region.kelurahan) {
+         wilayahString = `${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi} | RT ${form.rt || "-"}/RW ${form.rw || "-"} | ${form.alamat}`;
+      } else {
+         wilayahString = form.alamat;
+      }
+
+      const { error: koordError } = await supabase.from('koordinator_profiles').update({
+        wilayah: wilayahString,
+      }).eq('user_id', user.id);
+      if (koordError) throw koordError;
       
       showToast("Profil berhasil diperbarui!", "success");
       setTimeout(() => router.push("/koordinator/dashboard"), 2000);

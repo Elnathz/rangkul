@@ -234,11 +234,26 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                   <h2 className="text-lg font-black text-slate-950">Rincian pembayaran</h2>
                 </div>
                 <div className="mt-4 space-y-3 text-sm">
-                  <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {Number(task.harga_dasar).toLocaleString("id-ID")}</span></div>
-                  {task.harga_final > task.harga_dasar && <div className="flex items-center justify-between gap-4 text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">Rp {(Number(task.harga_final) - Number(task.harga_dasar)).toLocaleString("id-ID")}</span></div>}
-                  <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total saat ini</span><span className="text-xl text-[#0D47A1]">Rp {Number(task.harga_final).toLocaleString("id-ID")}</span></div>
+                  {(() => {
+                    const basePrice = Number(task.harga_dasar) || 0;
+                    const finalPrice = Number(task.harga_final) || basePrice;
+                    const extraTimePrice = finalPrice > basePrice ? finalPrice - basePrice : 0;
+                    const serviceFee = 2500;
+                    const subtotal = finalPrice + serviceFee;
+                    const tax = Math.round(subtotal * 0.11);
+                    const total = subtotal + tax;
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {basePrice.toLocaleString("id-ID")}</span></div>
+                        {extraTimePrice > 0 && <div className="flex items-center justify-between gap-4 text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">Rp {extraTimePrice.toLocaleString("id-ID")}</span></div>}
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Biaya Layanan Aplikasi</span><span className="font-semibold text-slate-900">Rp {serviceFee.toLocaleString("id-ID")}</span></div>
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>PPN (11%)</span><span className="font-semibold text-slate-900">Rp {tax.toLocaleString("id-ID")}</span></div>
+                        <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total Pembayaran</span><span className="text-xl text-[#0D47A1]">Rp {total.toLocaleString("id-ID")}</span></div>
+                      </>
+                    );
+                  })()}
                 </div>
-                <p className="mt-4 text-xs leading-relaxed text-slate-500">Biaya aplikasi, pajak, dan status pembayaran ditampilkan setelah kontrak pembayaran mengembalikan nominal tersebut.</p>
 
                 {/* Tip Helper Section */}
                 {task.status === "selesai" && (
