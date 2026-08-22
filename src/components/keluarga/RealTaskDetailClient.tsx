@@ -5,6 +5,9 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPinned, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
 import { ExtraServiceApprovalCard } from "@/components/keluarga/ExtraServiceApprovalCard";
 import { TaskScheduleActions } from "@/components/keluarga/TaskScheduleActions";
 import { LansiaPhotoPreview } from "@/components/helper/LansiaPhotoPreview";
@@ -114,7 +117,25 @@ function HelperPhoto({ src, name }: { src: string | null; name: string }) {
 }
 
 export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDetail }) {
+  const router = useRouter();
   const [task, setTask] = React.useState(initialTask);
+  
+  React.useEffect(() => {
+    setTask(initialTask);
+  }, [initialTask]);
+
+  React.useEffect(() => {
+    // Gunakan interval polling 3 detik sebagai fallback yang lebih handal
+    // karena Supabase Realtime kadang gagal mengirim event jika RLS policy menggunakan JOIN/EXISTS.
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+      
+    return () => {
+      clearInterval(interval);
+    }
+  }, [router]);
+
   const [evidenceOpen, setEvidenceOpen] = React.useState(false);
   const [tipAmount, setTipAmount] = React.useState("");
   const [isSubmittingTip, setIsSubmittingTip] = React.useState(false);
@@ -346,7 +367,7 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                     {task.helper && <p className="mt-1 text-xs text-slate-500">Rating {Number(task.helper.rating_avg).toFixed(1)} · {task.helper.total_tugas_selesai} tugas selesai</p>}
                   </div>
                 </div>
-                {helperName && <Link href="/beranda/pesan" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>}
+                {helperName && <Link href={`/beranda/pesan/${task.helper?.user_id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>}
               </section>
               {task.status === "selesai" && task.evidence && (
                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
