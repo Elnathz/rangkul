@@ -217,6 +217,8 @@ npm run build
 
 Jangan memakai `npm install` untuk quality gate karena dapat mengubah `package-lock.json`. Pastikan dependency font, icon, dan asset yang dibutuhkan build tersedia di `package.json` dan lockfile. Hindari dependency build-time yang membutuhkan akses jaringan eksternal, termasuk `next/font/google`; gunakan package font lokal bila font harus selalu tersedia di Vercel. Project ini membutuhkan Node.js 22.6 atau lebih baru karena test memakai `--experimental-strip-types`. Jika `npm run build` gagal, commit dan push harus dihentikan sampai error diperbaiki.
 
+Workflow deploy juga membutuhkan secret GitHub Actions berikut pada environment `production` atau repository settings: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, dan `VERCEL_PROJECT_ID`. Jangan menaruh nilainya di source code atau file environment yang di-commit.
+
 **Script yang belum ada di package.json, jangan berasumsi tersedia:**
 
 - `test` — tidak ada test framework terpasang sama sekali.
