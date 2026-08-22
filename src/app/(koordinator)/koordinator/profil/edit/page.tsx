@@ -13,6 +13,7 @@ import RegionSelect from "@/components/ui/RegionSelect";
 
 export default function KoordinatorEditProfilPage() {
   const router = useRouter();
+  const [supabase] = useState(() => createClient());
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
