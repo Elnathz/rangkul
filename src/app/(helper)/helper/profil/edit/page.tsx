@@ -11,8 +11,9 @@ import { Loader2, AlertCircle, MapPin, User, List, Phone, ShieldCheck, X } from 
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import { parseRegionAddress } from "@/lib/region-address";
+import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 
-type ServiceCategory = { id: string; nama: string; tingkat: "ringan" | "sedang" | "berat" };
+type ServiceCategory = ServiceCategoryRow & { parentName: string | null };
 type RegionValue = { provinsi: string; kota: string; kecamatan: string; kelurahan: string };
 
 export default function HelperEditProfilPage() {
@@ -117,8 +118,8 @@ export default function HelperEditProfilPage() {
 
       }
 
-      const { data: allCats } = await supabase.from('service_categories').select('id, nama, tingkat').eq('is_active', true);
-      const nextCategories = (allCats ?? []) as ServiceCategory[];
+      const { data: allCats } = await supabase.from('service_categories').select('id, nama, tingkat, parent_id, is_active');
+      const nextCategories = getSelectableServiceCategories((allCats ?? []) as unknown as ServiceCategoryRow[]);
       setDbCategories(nextCategories);
       if (profile) {
         const { data: selectedCats } = await supabase.from('helper_service_categories').select('service_category_id').eq('helper_id', profile.id);
@@ -403,40 +404,31 @@ export default function HelperEditProfilPage() {
                    ))}
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                <div className="space-y-4 mb-2">
                   {(() => {
                     const activeTier = tiers.find(t => t.id === catTab);
                     if (!activeTier) return null;
                     const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
-                    
-                    return filteredDbCats.slice(0, 4).map(cat => {
-                      const isSelected = kategoriIds.includes(cat.id);
-                      return (
-                        <label 
-                          key={cat.id} 
-                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                            isSelected 
-                              ? 'bg-blue-50/50 border-[#0D47A1]' 
-                              : 'bg-white border-gray-200 hover:border-blue-200'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded flex justify-center items-center shrink-0 border transition-colors ${
-                            isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                          }`}>
-                            {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                          </div>
-                          <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                            {cat.nama}
-                          </span>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            onChange={() => toggleKategori(cat.id)}
-                            className="hidden" 
-                          />
-                        </label>
-                      );
-                    });
+
+                    return groupSelectableServiceCategories(filteredDbCats.slice(0, 4)).map((group) => (
+                      <section key={group.key} className="space-y-2">
+                        {group.parentName && <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{group.parentName}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px]">Parent</span></div>}
+                        <div className={group.parentName ? "space-y-2 border-l-2 border-blue-100 pl-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                          {group.items.map((cat) => {
+                            const isSelected = kategoriIds.includes(cat.id);
+                            return (
+                              <label key={cat.id} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
+                                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                  {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                                <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ));
                   })()}
                 </div>
 
@@ -600,28 +592,26 @@ export default function HelperEditProfilPage() {
                         <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] text-red-500" onClick={() => deselectAllInTab(modalActiveTab)}>Hapus Semua</Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {filteredDbCats.map(cat => {
-                        const isSelected = kategoriIds.includes(cat.id);
-                        return (
-                          <label 
-                            key={cat.id} 
-                            className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                              isSelected ? 'bg-blue-50/50 border-[#0D47A1]' : 'bg-white border-gray-200 hover:border-blue-200 shadow-sm'
-                            }`}
-                          >
-                            <div className={`mt-0.5 w-5 h-5 rounded flex justify-center items-center shrink-0 border transition-colors ${
-                              isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                            }`}>
-                              {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                            </div>
-                            <span className={`text-sm font-semibold leading-snug ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                              {cat.nama}
-                            </span>
-                            <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
-                          </label>
-                        );
-                      })}
+                    <div className="space-y-5">
+                      {groupSelectableServiceCategories(filteredDbCats).map((group) => (
+                        <section key={group.key} className="space-y-2">
+                          {group.parentName && <div className="flex items-center gap-2 border-b border-slate-200 pb-2"><h4 className="text-sm font-bold text-slate-900">{group.parentName}</h4><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Parent</span></div>}
+                          <div className={group.parentName ? "grid grid-cols-1 gap-3 border-l-2 border-blue-100 pl-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                            {group.items.map((cat) => {
+                              const isSelected = kategoriIds.includes(cat.id);
+                              return (
+                                <label key={cat.id} className={`flex items-start gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white shadow-sm hover:border-blue-200'}`}>
+                                  <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                    {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                  </div>
+                                  <span className={`text-sm font-semibold leading-snug ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                                  <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      ))}
                     </div>
                   </div>
                 );

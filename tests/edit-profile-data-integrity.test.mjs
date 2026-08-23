@@ -6,7 +6,7 @@ const read = (path) => fs.readFileSync(path, "utf8");
 
 test("edit Helper mengambil kategori aktif beserta tingkat dari database", () => {
   const source = read("src/app/(helper)/helper/profil/edit/page.tsx");
-  assert.match(source, /select\(['"]id, nama, tingkat['"]\)/);
+  assert.match(source, /select\(['"]id, nama, tingkat, parent_id, is_active['"]\)/);
   assert.doesNotMatch(source, /catNames:/);
   assert.match(source, /c\.tingkat === activeTier\.id/);
   assert.match(source, /helper\/profile/);
