@@ -1131,6 +1131,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_account_status: {
+        Args: {
+          next_status: Database["public"]["Enums"]["account_status"]
+          target_user_id: string
+        }
+        Returns: Database["public"]["Tables"]["users"]["Row"]
+      }
       create_extra_service: {
         Args: {
           p_biaya: number

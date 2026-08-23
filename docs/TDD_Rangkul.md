@@ -543,6 +543,8 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 | FR-ADM-07 | Top-up saldo dummy ke akun Keluarga (fallback demo)                                    | Should    |
 | FR-ADM-08 | Menjadi verifikator fallback untuk Helper di wilayah tanpa Koordinator aktif (§3.3.1) | Must      |
 | FR-ADM-09 | Meninjau Helper`under_review` (2 laporan terkumpul) dan memutuskan tindak lanjut     | Must      |
+| FR-ADM-10 | Menambahkan akun pengguna dari panel Admin dengan role non-admin dan kredensial Auth Supabase | Should    |
+| FR-ADM-11 | Mengubah profil dasar pengguna dari panel Admin tanpa mengubah role atau email | Should    |
 
 ### 4.13 Banding
 
@@ -1085,6 +1087,8 @@ PATCH  /api/admin/appeals/:id      (admin setujui/tolak)
 ```
 GET    /api/admin/stats
 GET    /api/admin/users
+POST   /api/admin/users                    (buat akun non-admin melalui Supabase Auth)
+PATCH  /api/admin/users/:id                (ubah profil dasar dan status akun)
 DELETE /api/admin/users/:id
 GET    /api/admin/koordinator/pengajuan
 PATCH  /api/admin/koordinator/:id/status   (approve/reject dokumen, §3.3)

@@ -80,3 +80,16 @@ Perubahan tambahan yang ikut masuk dalam Sprint 3:
 - Test kontrak harga dinamis dan filter katalog dari data database.
 - Test payload tambah dan edit lansia terhadap validasi server dan schema migration.
 - Jalankan quality gate penuh setelah konflik selesai: lint, typecheck, test, dan build.
+
+## Tambahan Panel Admin CRUD
+
+Scope tambahan ini menghidupkan panel Admin inti sesuai TDD §4.12, §6, §7, dan §9:
+
+- Dashboard membaca statistik, task, laporan, dan audit log dari database.
+- Pengguna membaca data nyata dengan tabs Semua, Keluarga, Helper, Koordinator, dan Admin.
+- Helper membaca profil nyata dan menyediakan suspend serta verifikasi fallback Admin.
+- Kategori menyediakan CRUD nyata untuk harga, durasi, risiko, tingkat, parent, dan radius.
+- Aksi sensitif memakai audit log dan operasi penghapusan akun memakai Supabase Auth Admin API.
+- Semua halaman wajib mobile-first sesuai `AGENTS.md`.
+
+File utama, endpoint, migration, dan pendekatan test dirinci di `docs/superpowers/plans/2026-08-23-admin-panel-crud.md`.

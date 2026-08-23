@@ -1,72 +1,22 @@
-﻿import React from 'react';
+"use client";
 
-import { ShieldCheck, Search, AlertCircle, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FormEvent, useEffect, useState } from "react";
+import { AlertTriangle, Check, MapPin, Search, ShieldCheck, UserRound, X } from "lucide-react";
+import { AdminLoadingRows, AdminModal, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
+import { adminHelperUpdateSchema } from "@/lib/validations/admin-helpers";
+
+type Helper = { id: string; user_id: string; bio: string | null; wilayah_domisili: string; radius_layanan_km: number; verified_by_admin_fallback: boolean; status: string; tingkat_kepercayaan: string; suspend_reason: string | null; rating_avg: number; total_tugas_selesai: number; user?: { id: string; full_name: string; email: string; phone: string | null; username: string; account_status: string } | null };
+
+const filters = [{ value: "all", label: "Semua" }, { value: "pending_verification", label: "Menunggu" }, { value: "verified", label: "Terverifikasi" }, { value: "under_review", label: "Dalam review" }, { value: "suspended", label: "Ditangguhkan" }];
 
 export default function AdminHelpersPage() {
-  const users = [
-    { id: 'HLP-1002', name: 'Siti Aminah', role: 'Helper', status: 'Verified', wilayah: 'Kec. Beji' },
-    { id: 'HLP-1003', name: 'Rina Sulastri', role: 'Helper', status: 'Under_Review', wilayah: 'Kec. Pancoran Mas' },
-  ];
+  const [helpers, setHelpers] = useState<Helper[]>([]); const [status, setStatus] = useState("all"); const [search, setSearch] = useState(""); const [page, setPage] = useState(1); const [total, setTotal] = useState(0); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [suspendTarget, setSuspendTarget] = useState<Helper | null>(null); const [reason, setReason] = useState(""); const [saving, setSaving] = useState(false); const pageSize = 20;
+  const loadHelpers = async () => { setLoading(true); try { const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) }); if (status !== "all") params.set("status", status); if (search.trim()) params.set("q", search.trim()); const response = await fetch(`/api/admin/helpers?${params}`, { cache: "no-store" }); const payload = await response.json(); if (!response.ok) throw new Error(payload.message ?? "Data Helper gagal dimuat"); setHelpers(payload.data ?? []); setTotal(payload.total ?? 0); } catch (value) { setError(value instanceof Error ? value.message : "Data Helper gagal dimuat"); } finally { setLoading(false); } };
+  useEffect(() => { const timer = window.setTimeout(() => { void loadHelpers(); }, 0); return () => window.clearTimeout(timer); }, [status, search, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mutate = async (helper: Helper, body: Record<string, unknown>) => { const validation = adminHelperUpdateSchema.safeParse(body); if (!validation.success) { setError(validation.error.issues[0]?.message ?? "Data Helper tidak valid"); return; } setSaving(true); setError(""); const response = await fetch(`/api/admin/helpers/${helper.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(validation.data) }); const payload = await response.json(); if (!response.ok) setError(payload.message ?? "Perubahan Helper gagal"); else { setNotice("Status Helper berhasil diperbarui."); setSuspendTarget(null); await loadHelpers(); } setSaving(false); };
+  const suspend = async (event: FormEvent) => { event.preventDefault(); if (!suspendTarget) return; await mutate(suspendTarget, { status: "suspended", suspend_reason: reason }); };
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-             <Users className="w-6 h-6 text-[#0D47A1]" /> Direktori Helper
-          </h1>
-          <p className="text-gray-500 mt-1">Pantau seluruh pendaftar Helper dan status verifikasi mereka lintas wilayah.</p>
-        </div>
-        <div className="flex gap-2">
-           <div className="relative">
-             <Search className="w-4 h-4 absolute left-3 top-3.5 text-gray-400" />
-             <input type="text" placeholder="Cari nama atau ID..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-full md:w-64" />
-           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left font-sans text-sm">
-           <thead className="bg-[#F5F8FC] border-b border-gray-100">
-             <tr>
-               <th className="px-6 py-4 font-bold text-gray-700">Nama Helper</th>
-               <th className="px-6 py-4 font-bold text-gray-700">Pangkalan (Wilayah)</th>
-               <th className="px-6 py-4 font-bold text-gray-700">Status Lolos</th>
-               <th className="px-6 py-4 font-bold text-gray-700 text-right">Aksi Audit</th>
-             </tr>
-           </thead>
-           <tbody className="divide-y divide-gray-100">
-             {users.map(user => (
-               <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {user.name}
-                    <span className="block text-gray-400 font-mono text-xs mt-1">{user.id}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md font-medium text-xs">{user.wilayah}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {user.status === 'Under_Review' ? (
-                      <span className="text-orange-600 bg-orange-50 flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs w-max">
-                        <AlertCircle className="w-3.5 h-3.5" /> {user.status}
-                      </span>
-                    ) : (
-                      <span className="text-[#0D47A1] bg-blue-50 flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs w-max">
-                        <ShieldCheck className="w-3.5 h-3.5" /> {user.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-[#0D47A1]">
-                       Buka Profil
-                    </Button>
-                  </td>
-               </tr>
-             ))}
-           </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  return <div className="mx-auto max-w-7xl space-y-5"><header><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Trust & safety</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Helper</h1><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">Tinjau status verifikasi, wilayah layanan, dan tindakan pengawasan Helper dari data profil nyata.</p></header>{notice ? <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><Check className="h-4 w-4" />{notice}<button type="button" onClick={() => setNotice("")} className="ml-auto" aria-label="Tutup notifikasi"><X className="h-4 w-4" /></button></div> : null}{error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{error}</div> : null}<section className="space-y-3 rounded-2xl border border-blue-100 bg-white/75 p-3 shadow-sm backdrop-blur-sm sm:p-4"><div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Filter status Helper">{filters.map((filter) => <button key={filter.value} type="button" onClick={() => { setStatus(filter.value); setPage(1); }} className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-semibold ${status === filter.value ? "bg-blue-700 text-white" : "text-slate-600 hover:bg-blue-50 hover:text-blue-800"}`}>{filter.label}</button>)}</div><label className="relative block"><span className="sr-only">Cari Helper</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Cari wilayah domisili" className="min-h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" /></label></section><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 sm:px-6">{total.toLocaleString("id-ID")} Helper ditemukan</div>{loading ? <AdminLoadingRows columns={4} /> : helpers.length === 0 ? <div className="px-4 py-14 text-center text-sm text-slate-500"><UserRound className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-semibold text-slate-800">Tidak ada Helper pada filter ini.</p></div> : <><div className="hidden overflow-x-auto md:block"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-6 py-3 font-bold">Helper</th><th className="px-6 py-3 font-bold">Wilayah</th><th className="px-6 py-3 font-bold">Kepercayaan</th><th className="px-6 py-3 font-bold">Status</th><th className="px-6 py-3 text-right font-bold">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{helpers.map((helper) => <tr key={helper.id} className="hover:bg-slate-50/80"><td className="px-6 py-4"><p className="font-semibold text-slate-950">{helper.user?.full_name ?? "Profil tanpa nama"}</p><p className="mt-1 text-xs text-slate-500">{helper.user?.email ?? helper.user_id}</p></td><td className="px-6 py-4"><p className="flex items-center gap-1.5 font-semibold text-slate-800"><MapPin className="h-3.5 w-3.5 text-blue-700" />{helper.wilayah_domisili || "Belum diisi"}</p><p className="mt-1 text-xs text-slate-500">Radius {helper.radius_layanan_km} km</p></td><td className="px-6 py-4"><span className="capitalize text-slate-700">{helper.tingkat_kepercayaan}</span><p className="mt-1 text-xs text-slate-500">{helper.total_tugas_selesai} tugas selesai</p></td><td className="px-6 py-4"><AdminStatusBadge status={helper.status} />{helper.verified_by_admin_fallback ? <p className="mt-1 text-[11px] font-semibold text-blue-700">Fallback Admin</p> : null}</td><td className="px-6 py-4"><HelperActions helper={helper} onSuspend={() => { setSuspendTarget(helper); setReason(helper.suspend_reason ?? ""); }} onFallback={() => void mutate(helper, { assign_fallback: true })} saving={saving} /></td></tr>)}</tbody></table></div><div className="divide-y divide-slate-100 md:hidden">{helpers.map((helper) => <article key={helper.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><UserRound className="h-5 w-5" /></span><div className="min-w-0"><p className="truncate font-semibold text-slate-950">{helper.user?.full_name ?? "Profil tanpa nama"}</p><p className="truncate text-xs text-slate-500">{helper.user?.email ?? helper.user_id}</p></div></div><AdminStatusBadge status={helper.status} /></div><p className="flex items-center gap-1.5 text-sm text-slate-600"><MapPin className="h-4 w-4 text-blue-700" />{helper.wilayah_domisili || "Belum diisi"} · {helper.radius_layanan_km} km</p><HelperActions helper={helper} onSuspend={() => { setSuspendTarget(helper); setReason(helper.suspend_reason ?? ""); }} onFallback={() => void mutate(helper, { assign_fallback: true })} saving={saving} /></article>)}</div></>}</section><div className="flex justify-end gap-2"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold disabled:opacity-40">Sebelumnya</button><button type="button" disabled={page * pageSize >= total || loading} onClick={() => setPage((value) => value + 1)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold disabled:opacity-40">Berikutnya</button></div>{suspendTarget ? <AdminModal title="Tangguhkan Helper" description="Tindakan ini memengaruhi kemampuan Helper menerima tugas baru." onClose={() => setSuspendTarget(null)}><form onSubmit={suspend} className="space-y-4"><label className="block space-y-1.5"><span className="text-xs font-bold text-slate-700">Alasan penangguhan</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} required minLength={5} rows={4} className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" /></label><div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => setSuspendTarget(null)} className="min-h-11 rounded-lg border border-slate-200 px-4 text-sm font-semibold">Batal</button><button type="submit" disabled={saving} className="min-h-11 rounded-lg bg-red-700 px-4 text-sm font-bold text-white disabled:opacity-50">{saving ? "Menyimpan..." : "Tangguhkan Helper"}</button></div></form></AdminModal> : null}</div>;
 }
+
+function HelperActions({ helper, onSuspend, onFallback, saving }: { helper: Helper; onSuspend: () => void; onFallback: () => void; saving: boolean }) { return <div className="flex flex-wrap gap-2"><button type="button" onClick={onSuspend} disabled={saving || helper.status === "suspended"} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-700 disabled:opacity-40"><AlertTriangle className="h-3.5 w-3.5" /> Tangguhkan</button><button type="button" onClick={onFallback} disabled={saving || helper.verified_by_admin_fallback} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-blue-200 px-3 text-xs font-bold text-blue-700 disabled:opacity-40"><ShieldCheck className="h-3.5 w-3.5" /> {helper.verified_by_admin_fallback ? "Fallback aktif" : "Jadikan fallback"}</button></div>; }
