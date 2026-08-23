@@ -1,147 +1,600 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import type { Database } from '@/types/database';
+
+type DemoRole = Database['public']['Enums']['user_role'];
+
+type DemoUser = {
+  email: string;
+  username: string;
+  full_name: string;
+  role: DemoRole;
+  phone: string;
+  alamat_detail: string | null;
+  rt: number | null;
+  rw: number | null;
+  kelurahan: string | null;
+  kecamatan: string | null;
+  kabupaten_kota: string | null;
+  provinsi: string | null;
+};
+
+const DEMO_PASSWORD = 'Rangkul2026*';
+const DEMO_LOCATION = {
+  kelurahan: 'Pleburan',
+  kecamatan: 'Semarang Selatan',
+  kabupaten_kota: 'Kota Semarang',
+  provinsi: 'Jawa Tengah',
+} as const;
+
+const demoUsers = [
+  {
+    email: 'demokeluarga@rangkul.id',
+    username: 'demo_keluarga1',
+    full_name: 'Keluarga Demo Satu',
+    role: 'keluarga',
+    phone: '081234567801',
+    alamat_detail: 'Jl. Pleburan Barat No. 10',
+    rt: 2,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokeluarga2@rangkul.id',
+    username: 'demo_keluarga2',
+    full_name: 'Keluarga Demo Dua',
+    role: 'keluarga',
+    phone: '081234567802',
+    alamat_detail: 'Jl. Pleburan Barat No. 11',
+    rt: 3,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokeluarga3@rangkul.id',
+    username: 'demo_keluarga3',
+    full_name: 'Keluarga Demo Tiga',
+    role: 'keluarga',
+    phone: '081234567803',
+    alamat_detail: 'Jl. Pleburan Timur No. 12',
+    rt: 4,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokeluarga4@rangkul.id',
+    username: 'demo_keluarga4',
+    full_name: 'Keluarga Demo Empat',
+    role: 'keluarga',
+    phone: '081234567804',
+    alamat_detail: 'Jl. Pleburan Timur No. 13',
+    rt: 5,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokoordinator@rangkul.id',
+    username: 'mbahburgas',
+    full_name: 'Mbah Burgas',
+    role: 'koordinator',
+    phone: '081234567811',
+    alamat_detail: null,
+    rt: null,
+    rw: null,
+    kelurahan: null,
+    kecamatan: null,
+    kabupaten_kota: null,
+    provinsi: null,
+  },
+  {
+    email: 'demohelper@rangkul.id',
+    username: 'masburgas',
+    full_name: 'Mas Burgas',
+    role: 'helper',
+    phone: '081234567821',
+    alamat_detail: null,
+    rt: null,
+    rw: null,
+    kelurahan: null,
+    kecamatan: null,
+    kabupaten_kota: null,
+    provinsi: null,
+  },
+  {
+    email: 'demokoordinator2@rangkul.id',
+    username: 'demo_koord_rt2',
+    full_name: 'Koordinator Demo RT Dua',
+    role: 'koordinator',
+    phone: '081234567812',
+    alamat_detail: 'Jl. Pleburan Barat No. 20',
+    rt: 2,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokoordinator3@rangkul.id',
+    username: 'demo_koord_rt3',
+    full_name: 'Koordinator Demo RT Tiga',
+    role: 'koordinator',
+    phone: '081234567813',
+    alamat_detail: 'Jl. Pleburan Barat No. 21',
+    rt: 3,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demokoordinator4@rangkul.id',
+    username: 'demo_koord_rw',
+    full_name: 'Koordinator Demo RW',
+    role: 'koordinator',
+    phone: '081234567814',
+    alamat_detail: 'Jl. Pleburan Barat No. 22',
+    rt: 4,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper2@rangkul.id',
+    username: 'demo_helper_t2',
+    full_name: 'Helper Demo Terpercaya Dua',
+    role: 'helper',
+    phone: '081234567822',
+    alamat_detail: 'Jl. Pleburan Barat No. 30',
+    rt: 2,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper3@rangkul.id',
+    username: 'demo_helper_t3',
+    full_name: 'Helper Demo Terpercaya Tiga',
+    role: 'helper',
+    phone: '081234567823',
+    alamat_detail: 'Jl. Pleburan Barat No. 31',
+    rt: 3,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper4@rangkul.id',
+    username: 'demo_helper_t4',
+    full_name: 'Helper Demo Terpercaya Empat',
+    role: 'helper',
+    phone: '081234567824',
+    alamat_detail: 'Jl. Pleburan Barat No. 32',
+    rt: 4,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper5@rangkul.id',
+    username: 'demo_helper_t5',
+    full_name: 'Helper Demo Fallback Admin',
+    role: 'helper',
+    phone: '081234567825',
+    alamat_detail: 'Jl. Pleburan Barat No. 33',
+    rt: 5,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper6@rangkul.id',
+    username: 'demo_helper_p1',
+    full_name: 'Helper Demo Probation Satu',
+    role: 'helper',
+    phone: '081234567826',
+    alamat_detail: 'Jl. Pleburan Timur No. 34',
+    rt: 2,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper7@rangkul.id',
+    username: 'demo_helper_p2',
+    full_name: 'Helper Demo Probation Dua',
+    role: 'helper',
+    phone: '081234567827',
+    alamat_detail: 'Jl. Pleburan Timur No. 35',
+    rt: 3,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demohelper8@rangkul.id',
+    username: 'demo_helper_review',
+    full_name: 'Helper Demo Under Review',
+    role: 'helper',
+    phone: '081234567828',
+    alamat_detail: 'Jl. Pleburan Timur No. 36',
+    rt: 4,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+  {
+    email: 'demoadmin@rangkul.id',
+    username: 'demo_admin',
+    full_name: 'Admin Demo Rangkul',
+    role: 'admin',
+    phone: '081234567899',
+    alamat_detail: 'Jl. Pleburan Tengah No. 99',
+    rt: 9,
+    rw: 5,
+    ...DEMO_LOCATION,
+  },
+] satisfies DemoUser[];
+
+type CoordinatorProfileSeed = {
+  username: string;
+  wilayah: string;
+  tingkat: Database['public']['Enums']['koordinator_tingkat'];
+  status: Database['public']['Enums']['koordinator_status'];
+  dokumen_url: string | null;
+  domisili_lat: number;
+  domisili_lng: number;
+  diverifikasi_oleh: 'demo_admin' | null;
+  diverifikasi_at: 'now' | null;
+};
+
+const coordinatorProfiles: CoordinatorProfileSeed[] = [
+  {
+    username: 'mbahburgas',
+    wilayah: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    tingkat: 'rt',
+    status: 'pending_verification',
+    dokumen_url: null,
+    domisili_lat: -7.0051,
+    domisili_lng: 110.4381,
+    diverifikasi_oleh: null,
+    diverifikasi_at: null,
+  },
+  {
+    username: 'demo_koord_rt2',
+    wilayah: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    tingkat: 'rt',
+    status: 'verified',
+    dokumen_url: 'demo://koordinator-rt2',
+    domisili_lat: -7.0048,
+    domisili_lng: 110.4378,
+    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_at: 'now',
+  },
+  {
+    username: 'demo_koord_rt3',
+    wilayah: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    tingkat: 'rt',
+    status: 'verified',
+    dokumen_url: 'demo://koordinator-rt3',
+    domisili_lat: -7.0051,
+    domisili_lng: 110.4381,
+    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_at: 'now',
+  },
+  {
+    username: 'demo_koord_rw',
+    wilayah: 'RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    tingkat: 'rw',
+    status: 'verified',
+    dokumen_url: 'demo://koordinator-rw',
+    domisili_lat: -7.005,
+    domisili_lng: 110.438,
+    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_at: 'now',
+  },
+];
+
+const helperProfiles = [
+  {
+    username: 'masburgas',
+    bio: 'Helper demo utama Mas Burgas.',
+    wilayah_domisili: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0051,
+    domisili_lng: 110.4381,
+    is_available: false,
+    radius_layanan_km: 5,
+    koordinator_username: 'mbahburgas',
+    verified_by_admin_fallback: false,
+    status: 'pending_verification',
+    tingkat_kepercayaan: 'probation',
+    tugas_selesai_berturut: 0,
+    total_tugas_selesai: 0,
+  },
+  {
+    username: 'demo_helper_t2',
+    bio: 'Helper terpercaya wilayah RT 02.',
+    wilayah_domisili: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0041,
+    domisili_lng: 110.4371,
+    is_available: true,
+    radius_layanan_km: 2,
+    koordinator_username: 'demo_koord_rt2',
+    verified_by_admin_fallback: false,
+    status: 'verified',
+    tingkat_kepercayaan: 'terpercaya',
+    tugas_selesai_berturut: 7,
+    total_tugas_selesai: 7,
+  },
+  {
+    username: 'demo_helper_t3',
+    bio: 'Helper terpercaya wilayah RT 03.',
+    wilayah_domisili: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0052,
+    domisili_lng: 110.4382,
+    is_available: true,
+    radius_layanan_km: 3,
+    koordinator_username: 'demo_koord_rt3',
+    verified_by_admin_fallback: false,
+    status: 'verified',
+    tingkat_kepercayaan: 'terpercaya',
+    tugas_selesai_berturut: 6,
+    total_tugas_selesai: 6,
+  },
+  {
+    username: 'demo_helper_t4',
+    bio: 'Helper terpercaya wilayah RT 04.',
+    wilayah_domisili: 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0062,
+    domisili_lng: 110.4392,
+    is_available: true,
+    radius_layanan_km: 4,
+    koordinator_username: 'demo_koord_rt3',
+    verified_by_admin_fallback: false,
+    status: 'verified',
+    tingkat_kepercayaan: 'terpercaya',
+    tugas_selesai_berturut: 8,
+    total_tugas_selesai: 8,
+  },
+  {
+    username: 'demo_helper_t5',
+    bio: 'Helper verified dengan fallback Admin untuk wilayah baru.',
+    wilayah_domisili: 'RT 06 / RW 06, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0072,
+    domisili_lng: 110.4402,
+    is_available: true,
+    radius_layanan_km: 5,
+    koordinator_username: null,
+    verified_by_admin_fallback: true,
+    status: 'verified',
+    tingkat_kepercayaan: 'terpercaya',
+    tugas_selesai_berturut: 5,
+    total_tugas_selesai: 5,
+  },
+  {
+    username: 'demo_helper_p1',
+    bio: 'Helper baru yang masih probation.',
+    wilayah_domisili: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0043,
+    domisili_lng: 110.4373,
+    is_available: true,
+    radius_layanan_km: 2,
+    koordinator_username: 'demo_koord_rt2',
+    verified_by_admin_fallback: false,
+    status: 'verified',
+    tingkat_kepercayaan: 'probation',
+    tugas_selesai_berturut: 1,
+    total_tugas_selesai: 1,
+  },
+  {
+    username: 'demo_helper_p2',
+    bio: 'Helper baru probation untuk demo approval.',
+    wilayah_domisili: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0053,
+    domisili_lng: 110.4383,
+    is_available: true,
+    radius_layanan_km: 3,
+    koordinator_username: 'demo_koord_rt3',
+    verified_by_admin_fallback: false,
+    status: 'verified',
+    tingkat_kepercayaan: 'probation',
+    tugas_selesai_berturut: 0,
+    total_tugas_selesai: 0,
+  },
+  {
+    username: 'demo_helper_review',
+    bio: 'Helper dengan dua laporan aktif untuk demo moderasi.',
+    wilayah_domisili: 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
+    domisili_lat: -7.0063,
+    domisili_lng: 110.4393,
+    is_available: false,
+    radius_layanan_km: 4,
+    koordinator_username: 'demo_koord_rt3',
+    verified_by_admin_fallback: false,
+    status: 'under_review',
+    tingkat_kepercayaan: 'probation',
+    tugas_selesai_berturut: 0,
+    total_tugas_selesai: 0,
+  },
+] as const;
+
+type SupabaseAdmin = Awaited<ReturnType<typeof createAdminClient>>;
+
+async function ensureAuthUser(
+  supabaseAdmin: SupabaseAdmin,
+  demo: DemoUser,
+  existingUsers: Awaited<ReturnType<SupabaseAdmin['auth']['admin']['listUsers']>>['data']['users'],
+) {
+  const existingUser = existingUsers.find(
+    (user) =>
+      user.email?.toLowerCase() === demo.email.toLowerCase() ||
+      user.user_metadata?.username?.toLowerCase() === demo.username.toLowerCase(),
+  );
+
+  if (existingUser) {
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+      email: demo.email,
+      password: DEMO_PASSWORD,
+      phone: demo.phone,
+      email_confirm: true,
+      phone_confirm: true,
+      user_metadata: {
+        full_name: demo.full_name,
+        role: demo.role,
+        username: demo.username,
+      },
+    });
+
+    if (error || !data.user) {
+      throw error ?? new Error(`Auth user ${demo.email} tidak mengembalikan data setelah update`);
+    }
+
+    return { user: data.user, action: 'updated' as const };
+  }
+
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email: demo.email,
+    password: DEMO_PASSWORD,
+    phone: demo.phone,
+    email_confirm: true,
+    phone_confirm: true,
+    user_metadata: {
+      full_name: demo.full_name,
+      role: demo.role,
+      username: demo.username,
+    },
+  });
+
+  if (error || !data.user) {
+    throw error ?? new Error(`Auth user ${demo.email} tidak berhasil dibuat`);
+  }
+
+  return { user: data.user, action: 'created' as const };
+}
 
 export async function GET() {
   try {
     const supabaseAdmin = await createAdminClient();
+    const { data: authUsersData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
 
-    const demoUsers = [
-      {
-        email: 'demo_keluarga@rangkul.id',
-        username: 'demo_keluarga',
-        full_name: 'Keluarga Demo',
-        role: 'keluarga' as const,
-        phone: '081234567890',
-      },
-      {
-        email: 'demo_helper@rangkul.id',
-        username: 'demo_helper',
-        full_name: 'Helper Demo',
-        role: 'helper' as const,
-        phone: '082345678901',
-      },
-      {
-        email: 'demo_koordinator@rangkul.id',
-        username: 'demo_koordinator',
-        full_name: 'Koordinator Demo',
-        role: 'koordinator' as const,
-        phone: '083456789012',
-      },
-      {
-        email: 'demo_admin@rangkul.id',
-        username: 'demo_admin',
-        full_name: 'Admin Demo Rangkul',
-        role: 'admin' as const,
-        phone: '084567890123',
-      },
-    ];
+    if (authUsersError) {
+      throw authUsersError;
+    }
 
-    const password = 'RangkulDemo2026!';
-    const results = [];
-
-    // Fetch existing auth users list
-    const { data: authUsersData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const existingList = authUsersData?.users || [];
+    const existingUsers = [...(authUsersData.users ?? [])];
+    const userIdsByUsername = new Map<string, string>();
+    const results: Array<{ email: string; username: string; action: string; id: string }> = [];
 
     for (const demo of demoUsers) {
-      let targetUser = existingList.find(u => u.email?.toLowerCase() === demo.email.toLowerCase());
+      const { user, action } = await ensureAuthUser(supabaseAdmin, demo, existingUsers);
+      existingUsers.push(user);
+      userIdsByUsername.set(demo.username, user.id);
 
-      if (targetUser) {
-        // Update existing auth user password and email confirmation
-        const { data: updated, error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
-          targetUser.id,
-          {
-            password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: demo.full_name,
-              role: demo.role,
-              username: demo.username,
-            },
-          }
-        );
-
-        if (updateErr) {
-          results.push({ email: demo.email, action: 'update', success: false, error: updateErr.message });
-        } else {
-          results.push({ email: demo.email, action: 'update', success: true, id: updated.user.id });
-          targetUser = updated.user;
-        }
-      } else {
-        const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      const { error: profileError } = await supabaseAdmin.from('users').upsert(
+        {
+          id: user.id,
           email: demo.email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            full_name: demo.full_name,
-            role: demo.role,
-            username: demo.username,
-          },
-        });
-
-        if (createErr) {
-          if (createErr.message.includes('already been registered')) {
-            // Find existing user ID from public.users
-            const { data: existingProfile } = await supabaseAdmin
-              .from('users')
-              .select('id')
-              .eq('email', demo.email.toLowerCase())
-              .maybeSingle();
-
-            if (existingProfile?.id) {
-              const { data: updated } = await supabaseAdmin.auth.admin.updateUserById(existingProfile.id, {
-                password,
-                email_confirm: true,
-                user_metadata: {
-                  full_name: demo.full_name,
-                  role: demo.role,
-                  username: demo.username,
-                },
-              });
-              if (updated?.user) {
-                targetUser = updated.user;
-                results.push({ email: demo.email, action: 'update_existing', success: true, id: targetUser.id });
-              } else {
-                results.push({ email: demo.email, action: 'exists', success: true, id: existingProfile.id });
-              }
-            } else {
-              results.push({ email: demo.email, action: 'create', success: false, error: createErr.message });
-            }
-          } else {
-            results.push({ email: demo.email, action: 'create', success: false, error: createErr.message });
-          }
-        } else if (created?.user) {
-          targetUser = created.user;
-          results.push({ email: demo.email, action: 'create', success: true, id: created.user.id });
-        }
-      }
-
-      // Upsert into public.users table
-      if (targetUser) {
-        await supabaseAdmin.from('users').upsert({
-          id: targetUser.id,
-          email: demo.email.toLowerCase(),
-          username: demo.username.toLowerCase(),
+          username: demo.username,
           full_name: demo.full_name,
           role: demo.role,
           phone: demo.phone,
+          alamat_detail: demo.alamat_detail,
+          rt: demo.rt,
+          rw: demo.rw,
+          kelurahan: demo.kelurahan,
+          kecamatan: demo.kecamatan,
+          kabupaten_kota: demo.kabupaten_kota,
+          provinsi: demo.provinsi,
           account_status: 'active',
           updated_at: new Date().toISOString(),
-        });
+        },
+        { onConflict: 'id' },
+      );
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      results.push({ email: demo.email, username: demo.username, action, id: user.id });
+    }
+
+    const adminId = userIdsByUsername.get('demo_admin');
+    if (!adminId) {
+      throw new Error('Akun admin demo tidak ditemukan setelah proses Auth selesai');
+    }
+
+    const coordinatorProfileIds = new Map<string, string>();
+    const profileTimestamp = new Date().toISOString();
+
+    for (const profile of coordinatorProfiles) {
+      const userId = userIdsByUsername.get(profile.username);
+      if (!userId) {
+        throw new Error(`Akun Koordinator ${profile.username} tidak ditemukan`);
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('koordinator_profiles')
+        .upsert(
+          {
+            user_id: userId,
+            wilayah: profile.wilayah,
+            tingkat: profile.tingkat,
+            status: profile.status,
+            dokumen_url: profile.dokumen_url,
+            domisili_lat: profile.domisili_lat,
+            domisili_lng: profile.domisili_lng,
+            diverifikasi_oleh: profile.diverifikasi_oleh === 'demo_admin' ? adminId : null,
+            diverifikasi_at: profile.diverifikasi_at === 'now' ? profileTimestamp : null,
+            updated_at: profileTimestamp,
+          },
+          { onConflict: 'user_id' },
+        )
+        .select('id')
+        .single();
+
+      if (error || !data) {
+        throw error ?? new Error(`Profil Koordinator ${profile.username} tidak berhasil disimpan`);
+      }
+
+      coordinatorProfileIds.set(profile.username, data.id);
+    }
+
+    for (const profile of helperProfiles) {
+      const userId = userIdsByUsername.get(profile.username);
+      if (!userId) {
+        throw new Error(`Akun Helper ${profile.username} tidak ditemukan`);
+      }
+
+      const coordinatorId = profile.koordinator_username
+        ? coordinatorProfileIds.get(profile.koordinator_username)
+        : null;
+
+      const { error } = await supabaseAdmin.from('helper_profiles').upsert(
+        {
+          user_id: userId,
+          bio: profile.bio,
+          wilayah_domisili: profile.wilayah_domisili,
+          domisili_lat: profile.domisili_lat,
+          domisili_lng: profile.domisili_lng,
+          is_available: profile.is_available,
+          radius_layanan_km: profile.radius_layanan_km,
+          koordinator_id: coordinatorId ?? null,
+          verified_by_admin_fallback: profile.verified_by_admin_fallback,
+          status: profile.status,
+          tingkat_kepercayaan: profile.tingkat_kepercayaan,
+          tugas_selesai_berturut: profile.tugas_selesai_berturut,
+          total_tugas_selesai: profile.total_tugas_selesai,
+          updated_at: profileTimestamp,
+        },
+        { onConflict: 'user_id' },
+      );
+
+      if (error) {
+        throw error;
       }
     }
 
     return NextResponse.json({
       success: true,
       message: 'Demo accounts seeded successfully via Supabase Auth Admin API',
-      password,
-      accounts: demoUsers.map((u) => ({ username: u.username, email: u.email, role: u.role })),
+      password: DEMO_PASSWORD,
+      accounts: demoUsers.map(({ username, email, role }) => ({ username, email, role })),
       results,
     });
   } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
+      { success: false, error: error instanceof Error ? error.message : 'Gagal menjalankan seed akun demo' },
+      { status: 500 },
     );
   }
 }

@@ -427,7 +427,10 @@ export type Database = {
           created_at: string
           diverifikasi_at: string | null
           diverifikasi_oleh: string | null
+          domisili_lat: number | null
+          domisili_lng: number | null
           dokumen_url: string | null
+          foto_url: string | null
           ktp_url: string | null
           id: string
           saldo_komisi: number
@@ -441,7 +444,10 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          domisili_lat?: number | null
+          domisili_lng?: number | null
           dokumen_url?: string | null
+          foto_url?: string | null
           ktp_url?: string | null
           id?: string
           saldo_komisi?: number
@@ -455,7 +461,10 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          domisili_lat?: number | null
+          domisili_lng?: number | null
           dokumen_url?: string | null
+          foto_url?: string | null
           ktp_url?: string | null
           id?: string
           saldo_komisi?: number
