@@ -112,14 +112,24 @@ export default function KoordinatorEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      // In a real app, this would call Supabase to update auth.users, public.users, and koordinator_profiles
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      showToast("Profil berhasil diperbarui!", "success");
-      setTimeout(() => router.push("/koordinator/dashboard"), 2000);
-    } catch {
-      showToast("Terjadi kesalahan.");
+      const wilayah = [
+        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
+        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
+        form.alamat,
+      ].filter(Boolean).join(" | ");
+      const userResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah }) });
+      const userBody = await userResponse.json().catch(() => null) as { message?: string } | null;
+      if (!userResponse.ok) throw new Error(userBody?.message || "Data akun gagal diperbarui");
+      const profileResponse = await fetch("/api/koordinator/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah }) });
+      const profileBody = await profileResponse.json().catch(() => null) as { message?: string } | null;
+      if (!profileResponse.ok) throw new Error(profileBody?.message || "Wilayah koordinator gagal diperbarui");
+      if (form.password) {
+        const { error } = await createClient().auth.updateUser({ password: form.password });
+        if (error) throw new Error(error.message);
+      }
+      router.push("/koordinator/dashboard");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
     }
   };

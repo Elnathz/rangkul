@@ -8,12 +8,12 @@ const detailPage = fs.readFileSync(new URL("../src/app/(helper)/tugas/[id]/page.
 
 test("seeder memiliki task marketplace dengan data relasi dan jadwal nyata", () => {
   assert.match(seed, /INSERT INTO public\.tasks \(/);
-  assert.match(seed, /'f1000000-0000-0000-0000-000000000001'/);
+  assert.match(seed, /gen_random_uuid\(\)/);
   assert.match(seed, /'diajukan'/);
-  assert.match(seed, /'Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah \| RT 03\/RW 05 \| Jl\. Pleburan Barat No\. 12'/);
+  assert.match(seed, /Jl\. Pleburan Barat No\. 12/);
   assert.match(seed, /NOW\(\) \+ INTERVAL '1 day'/);
   assert.match(seed, /NOW\(\) \+ INTERVAL '1 hour'/);
-  assert.match(seed, /'c0000001-0000-0000-0000-000000000001'/);
+  assert.match(seed, /Menemani Mengobrol \(singkat\)/);
 });
 
 test("job board dan detail tidak memakai mock atau gambar random", () => {

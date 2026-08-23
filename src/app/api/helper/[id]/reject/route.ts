@@ -118,3 +118,5 @@ export async function PUT(
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
 }
+
+export const POST = PUT;

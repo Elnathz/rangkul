@@ -70,7 +70,7 @@ export async function GET() {
       .from('helper_profiles')
       .select(`
         id, status, tingkat_kepercayaan, is_available, wilayah_domisili,
-        rating_avg, total_tugas_selesai, created_at, foto_url, foto_wajah_url,
+        rating_avg, total_tugas_selesai, created_at, foto_wajah_url,
         users!inner ( id, full_name )
       `)
       .eq('koordinator_id', koordinator.id)
@@ -118,7 +118,7 @@ export async function GET() {
         tingkat_kepercayaan: helper.tingkat_kepercayaan,
         is_available: helper.is_available,
         wilayah_domisili: helper.wilayah_domisili,
-        foto_url: helper.foto_wajah_url || helper.foto_url || null,
+        foto_url: helper.foto_wajah_url || null,
         rating_avg: Number(helper.rating_avg ?? 0),
         total_tugas_selesai: helper.total_tugas_selesai,
         status_aktivitas: getHelperActivityStatus(activeTask, helper.is_available),

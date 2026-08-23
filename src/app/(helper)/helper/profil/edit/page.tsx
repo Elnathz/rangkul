@@ -35,7 +35,6 @@ export default function HelperEditProfilPage() {
 
   const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
-  const [helperProfileId, setHelperProfileId] = useState<string | null>(null);
   
   const [catTab, setCatTab] = useState<string>("ringan");
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,6 +42,7 @@ export default function HelperEditProfilPage() {
 
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
 
   const tiers = [
     {
@@ -87,29 +87,27 @@ export default function HelperEditProfilPage() {
         .single();
 
       if (profile) {
-        setHelperProfileId(profile.id);
-        
         const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
         let rt = "", rw = "", alamat = "";
         
         if (profile.wilayah_domisili) {
           const parts = profile.wilayah_domisili.split(' | ');
           if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
+            const adminParts = parts[0].split(', ');
+            if (adminParts.length >= 4) {
+              region.kelurahan = adminParts[0];
+              region.kecamatan = adminParts[1];
+              region.kota = adminParts[2];
+              region.provinsi = adminParts[3];
+            }
+            const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
+            if (rtrw) {
+              rt = rtrw[1];
+              rw = rtrw[2];
+            }
+            alamat = parts[2];
           } else {
-             alamat = profile.wilayah_domisili;
+            alamat = profile.wilayah_domisili;
           }
         }
 
@@ -177,15 +175,28 @@ export default function HelperEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      // In a real app, this would call Supabase to update auth.users, public.users, helper_profiles, and helper_service_categories
-      // Since we are mocking the backend, we simulate a successful update delay.
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      showToast("Profil berhasil diperbarui!", "success");
+      if (fotoFile) {
+        const uploadData = new FormData();
+        uploadData.append("file", fotoFile);
+        uploadData.append("docType", "foto_helper");
+        const uploadResponse = await fetch("/api/storage/upload", { method: "POST", body: uploadData });
+        const uploaded = await uploadResponse.json();
+        if (!uploadResponse.ok || !uploaded.url) throw new Error(uploaded.message || "Gagal mengunggah foto profil");
+
+        const photoResponse = await fetch("/api/helpers/profile/photo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ foto_wajah_url: uploaded.url }),
+        });
+        const photoResult = await photoResponse.json();
+        if (!photoResponse.ok) throw new Error(photoResult.message || "Gagal mengirim foto untuk verifikasi");
+        showToast("Foto baru dikirim dan menunggu verifikasi Koordinator.", "success");
+      } else {
+        showToast("Tidak ada foto baru yang dikirim.", "success");
+      }
       setTimeout(() => router.push("/helper/dashboard"), 2000);
-    } catch {
-      showToast("Terjadi kesalahan.");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
     }
   };
@@ -278,6 +289,7 @@ export default function HelperEditProfilPage() {
                         }
                         setForm({ ...form, foto_url: URL.createObjectURL(file) });
                         setFotoFileName(file.name);
+                        setFotoFile(file);
                       }
                     }}
                   />

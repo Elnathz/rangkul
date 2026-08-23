@@ -1,340 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Search, MapPin, Star, Filter, Heart, ArrowUpDown, Info } from "lucide-react";
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ArrowUpDown, Filter, Heart, Loader2, MapPin, Search, ShieldCheck } from 'lucide-react';
 
-type HelperCard = {
-  id: string;
-  name: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  radius_layanan_km: number;
-  lat: number | null;
-  lng: number | null;
-  verified: boolean;
-  avatar: string;
-  bio: string;
-};
+type Lansia = { id: string; nama: string; alamat: string; lat: number | null; lng: number | null };
+type Category = { id: string; nama: string; tingkat: string; harga_dasar: number; is_high_risk: boolean };
+type Helper = { id: string; bio: string | null; rating_avg: number; total_tugas_selesai: number; radius_layanan_km: number; jarak_km: number | null; foto_url: string | null; users: { full_name: string | null } | null; kategori: Category[] };
 
-type HelperProfileRecord = {
-  id: string;
-  bio: string | null;
-  rating_avg: number;
-  total_tugas_selesai: number;
-  radius_layanan_km: number;
-  domisili_lat: number | null;
-  domisili_lng: number | null;
-  status: string;
-  foto_wajah_url: string | null;
-  users: { full_name: string | null } | null;
-};
-
-function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-// Fetch from DB instead of using MOCK_HELPERS
+const fallbackPhoto = '/images/helpers/orang1.jpeg';
 
 export default function CariHelperPage() {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("Semua");
-  const [sortBy, setSortBy] = useState("rekomendasi");
-  const [selectedLansia, setSelectedLansia] = useState("");
-  const [lansias, setLansias] = useState<{id: string, nama: string, alamat: string, lat: number | null, lng: number | null}[]>([]);
-  const [helpers, setHelpers] = useState<HelperCard[]>([]);
-  const [loadingHelpers, setLoadingHelpers] = useState(true);
+  const [lansias, setLansias] = useState<Lansia[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
+  const [selectedLansia, setSelectedLansia] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [tingkat, setTingkat] = useState('');
+  const [radius, setRadius] = useState(5);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('rekomendasi');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLansias = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('lansia_profiles')
-          .select('id, nama, alamat, lat, lng')
-          .eq('keluarga_id', user.id);
-        
-        if (data) {
-          setLansias(data);
-        }
-      }
-    };
-    fetchLansias();
+    Promise.all([
+      fetch('/api/lansia').then((response) => response.json()),
+      fetch('/api/categories').then((response) => response.json()),
+    ]).then(([lansiaData, categoryData]) => {
+      setLansias(lansiaData.profiles ?? []);
+      setCategories(categoryData.categories ?? []);
+    }).catch(() => setError('Filter katalog tidak dapat dimuat.'));
   }, []);
 
+  const selected = lansias.find((item) => item.id === selectedLansia);
   useEffect(() => {
-    const fetchHelpers = async () => {
-      setLoadingHelpers(true);
-      const supabase = createClient();
-      
-      const { data } = await supabase
-        .from('helper_profiles')
-        .select(`
-          id,
-          bio,
-          rating_avg,
-          total_tugas_selesai,
-          radius_layanan_km,
-          domisili_lat,
-          domisili_lng,
-          status,
-          foto_wajah_url,
-          users ( full_name )
-        `)
-        .eq('status', 'verified');
-        
-      if (data) {
-        const formatted = (data as unknown as HelperProfileRecord[]).map((item) => ({
-          id: item.id,
-          name: item.users?.full_name || "Helper Rangkul",
-          rating: item.rating_avg || 5.0,
-          reviews: item.total_tugas_selesai || 0,
-          category: "Layanan Umum", 
-          radius_layanan_km: item.radius_layanan_km || 0,
-          lat: item.domisili_lat,
-          lng: item.domisili_lng,
-          verified: item.status === 'verified',
-          avatar: item.foto_wajah_url || "/images/helpers/helper-placeholder.jpg",
-          bio: item.bio || "Siap membantu merawat lansia dengan sepenuh hati.",
-        }));
-        setHelpers(formatted);
+    async function loadHelpers() {
+      const params = new URLSearchParams({ radius_km: String(radius) });
+      if (search.trim()) params.set('q', search.trim());
+      if (categoryId) params.set('category_id', categoryId);
+      if (tingkat) params.set('tingkat', tingkat);
+      if (selected?.lat !== null && selected?.lng !== null && selected?.lat !== undefined && selected?.lng !== undefined) {
+        params.set('lat', String(selected.lat));
+        params.set('lng', String(selected.lng));
       }
-      setLoadingHelpers(false);
-    };
-    
-    fetchHelpers();
-  }, []);
-
-  const getReferenceCoords = () => {
-    if (selectedLansia) {
-      const l = lansias.find(l => l.id === selectedLansia);
-      if (l && l.lat && l.lng) return { lat: l.lat, lng: l.lng };
-    } else if (lansias.length > 0 && lansias[0].lat && lansias[0].lng) {
-      return { lat: lansias[0].lat, lng: lansias[0].lng };
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/helpers?${params.toString()}`);
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.message || 'Katalog Helper tidak dapat dimuat.');
+        setHelpers(body.helpers ?? []);
+        setError(null);
+      } catch (reason: unknown) {
+        setError(reason instanceof Error ? reason.message : 'Katalog Helper tidak dapat dimuat.');
+      } finally {
+        setLoading(false);
+      }
     }
-    return null;
-  };
 
-  const refCoords = getReferenceCoords();
+    void loadHelpers();
+  }, [categoryId, radius, search, selected?.lat, selected?.lng, tingkat]);
 
-  const filteredHelpers = helpers.map(h => {
-    let distVal = 999;
-    if (refCoords && h.lat && h.lng) {
-      distVal = getDistanceFromLatLonInKm(refCoords.lat, refCoords.lng, h.lat, h.lng);
-    }
-    return { ...h, distanceVal: distVal };
-  }).filter((h) => {
-    const matchSearch = h.name.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = category === "Semua" || h.category.includes(category);
-    return matchSearch && matchCategory;
-  }).sort((a, b) => {
-    if (sortBy === "rating") return b.rating - a.rating;
-    if (sortBy === "jarak") return a.distanceVal - b.distanceVal;
-    
-    if (a.distanceVal !== b.distanceVal) return a.distanceVal - b.distanceVal;
-    return b.rating - a.rating;
-  });
+  const sortedHelpers = useMemo(() => [...helpers].sort((a, b) => sort === 'rating' ? b.rating_avg - a.rating_avg : (a.jarak_km ?? 999) - (b.jarak_km ?? 999)), [helpers, sort]);
 
-  return (
-    <div className="min-h-[100dvh] bg-[#F8FAFC]">
-      <div className="bg-brand-gradient text-white pt-12 pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-        <div className="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto px-6 md:px-8 relative z-10 pl-6 md:pl-10">
-          <h1 className="text-3xl sm:text-4xl font-display font-extrabold mb-3 tracking-tight">Cari Helper Terbaik di Sekitarmu</h1>
-          <p className="text-blue-100 max-w-lg mb-8 leading-relaxed text-sm sm:text-base">
-            Pilih pendamping tersertifikasi oleh pengurus komunitas. Semua Helper di bawah terhubung dalam layanan jangkauan terdekat Anda.
-          </p>
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl p-4 flex gap-4 text-sm items-start max-w-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-[#90CAF9]"></div>
-            <Info size={24} className="text-[#90CAF9] shrink-0 mt-0.5" />
-            <p className="text-blue-50 leading-relaxed font-medium">
-              <strong className="text-white">Info Verifikasi:</strong> Helper yang telah diverifikasi di 1 RT dapat mengambil dan mengerjakan tugas dari RT atau wilayah kelurahan lain selama masih dalam jangkauan radius pelayanannya!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 md:px-8 -mt-8 relative z-10 grid lg:grid-cols-[280px_1fr] gap-8 pb-20">
-        <aside className="bg-white border text-slate-800 border-slate-200 rounded-2xl p-6 shadow-sm h-fit sticky top-10">
-          <div className="flex items-center gap-2 mb-6">
-            <Filter size={20} />
-            <h2 className="font-bold text-lg">Filter Pencarian</h2>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Pilih Lansia</Label>
-              <select 
-                className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1] transition-all text-sm font-medium mb-1 cursor-pointer"
-                value={selectedLansia}
-                onChange={(e) => setSelectedLansia(e.target.value)}
-              >
-                <option value="">Semua Lansia (Umum)</option>
-                {lansias.map(l => (
-                  <option key={l.id} value={l.id}>{l.nama}</option>
-                ))}
-              </select>
-              {selectedLansia && lansias.find(l => l.id === selectedLansia)?.alamat && (
-                <div className="mt-3 p-3 bg-blue-50/60 rounded-xl border border-blue-100/60 flex gap-2 items-start shadow-sm">
-                  <MapPin className="w-4 h-4 text-[#0D47A1] shrink-0 mt-0.5" />
-                  <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                    {lansias.find(l => l.id === selectedLansia)?.alamat}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Kategori Layanan</Label>
-              <div className="space-y-2">
-                {["Semua", "Layanan Kunjungan", "Teman Ngobrol", "Bantuan Kedaruratan"].map((cat) => (
-                  <label key={cat} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2 transition-colors">
-                    <input 
-                      type="radio" 
-                      name="cat" 
-                      className="w-4 h-4 text-blue-600" 
-                      checked={category === cat}
-                      onChange={() => setCategory(cat)}
-                    />
-                    <span className="text-sm font-medium text-slate-700">{cat}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Radius Maksimal</Label>
-              <input type="range" className="w-full accent-blue-600" min="1" max="15" defaultValue="5" />
-              <div className="flex justify-between text-xs font-medium text-slate-400 mt-1">
-                <span>1 km</span>
-                <span>15 km</span>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <div className="space-y-6">
-          {/* Search & Sort Bar */}
-          <div className="bg-white border text-slate-800 border-slate-200 rounded-2xl p-2 pl-4 flex flex-col sm:flex-row items-center gap-4 shadow-sm">
-            <div className="flex items-center flex-1 w-full gap-2 text-slate-400">
-              <Search size={20} />
-              <input 
-                type="text" 
-                placeholder="Deskripsikan nama atau spesialisasi helper..."
-                className="w-full bg-transparent border-0 focus:ring-0 text-slate-700 placeholder:text-slate-400 h-10 outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pl-2 pr-2">
-              <ArrowUpDown size={16} className="text-slate-400" />
-              <select 
-                className="bg-transparent text-sm font-semibold text-slate-700 border-0 outline-none cursor-pointer p-0 pr-6 ring-0"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="rekomendasi">Rekomendasi</option>
-                <option value="rating">Rating Tertinggi</option>
-                <option value="jarak">Jarak Terdekat</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Grid Cards */}
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredHelpers.map((h) => (
-              <div key={h.id} className="bg-white text-slate-800 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
-                <div className="relative w-full aspect-[5/4] bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] overflow-hidden shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={h.avatar}
-                    alt={`Foto ${h.name}`}
-                    className="w-full h-full object-cover object-top"
-                  />
-                  <button className="absolute top-3 right-3 text-white hover:text-red-500 drop-shadow-md transition-colors w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm">
-                    <Heart size={18} />
-                  </button>
-                  <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/90 text-green-700 border border-green-200 backdrop-blur-sm">
-                   Tersertifikasi
-                  </span>
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  
-                  <div className="mb-2">
-                    <h3 className="font-display font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {h.name}
-                      {h.verified && (
-                        <span className="inline-block align-middle ml-1" title="Terverifikasi RT/RW">
-                          <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        </span>
-                      )}
-                    </h3>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mb-4">
-                    <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded">
-                      <Star size={14} className="fill-amber-500" />
-                      <span>{h.rating} ({h.reviews})</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} className="text-blue-500 shrink-0" />
-                      <span className="text-sm font-semibold text-slate-700">{h.distanceVal === 999 ? "Jarak ?" : `${h.distanceVal.toFixed(1)} km`}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-slate-600 line-clamp-2 h-10 leading-relaxed mb-4">
-                    {h.bio}
-                  </p>
-
-                  <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-full mt-auto w-fit">
-                    {h.category}
-                  </span>
-                </div>
-                
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 block">Tarif Layanan</span>
-                    <span className="font-bold text-slate-900">Rp 50.000 <span className="font-normal text-xs text-slate-500">/ 2 jam</span></span>
-                  </div>
-                  <Link href={`/booking/${h.id}`}>
-                    <Button size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg font-semibold select-none">
-                      Tanya Ketersediaan
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {loadingHelpers ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-slate-500 font-medium">Memuat daftar Helper...</span>
-            </div>
-          ) : filteredHelpers.length === 0 ? (
-            <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl">
-              <h3 className="font-bold text-slate-500 text-lg">Tidak ada Helper yang ditemukan</h3>
-              <p className="text-sm text-slate-400 mt-2">Coba ganti kata kunci atau ubah filter pencarian Anda.</p>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="min-h-screen bg-[#F8FAFC] pb-20"><header className="bg-gradient-to-br from-[#0D47A1] to-[#1976D2] px-6 py-12 text-white"><div className="mx-auto max-w-7xl"><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-100">Marketplace Rangkul</p><h1 className="mt-3 text-3xl font-black sm:text-4xl">Cari Helper di sekitar lansia</h1><p className="mt-3 max-w-2xl text-blue-100">Kategori, jarak, dan harga berasal dari data layanan yang sudah diverifikasi.</p></div></header><div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[280px_1fr]"><aside className="h-fit space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6"><div className="flex items-center gap-2"><Filter className="h-5 w-5 text-[#0D47A1]" /><h2 className="font-bold text-slate-900">Filter pencarian</h2></div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih lansia<select value={selectedLansia} onChange={(event) => setSelectedLansia(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-800"><option value="">Semua lokasi</option>{lansias.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label><fieldset><legend className="text-xs font-bold uppercase tracking-wider text-slate-500">Tingkat layanan</legend><div className="mt-2 space-y-2">{['', 'ringan', 'sedang', 'berat'].map((item) => <label key={item || 'semua'} className="flex items-center gap-2 text-sm text-slate-700"><input type="radio" checked={tingkat === item} onChange={() => setTingkat(item)} />{item || 'Semua tingkat'}</label>)}</div></fieldset><label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Radius maksimal: {radius} km<input type="range" min="1" max="15" value={radius} onChange={(event) => setRadius(Number(event.target.value))} className="mt-3 w-full accent-blue-600" /></label><label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Kategori layanan<select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-800"><option value="">Semua kategori</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label></aside><section className="space-y-6"><div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row"><div className="flex flex-1 items-center gap-2 px-2"><Search className="h-5 w-5 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama atau layanan Helper" className="h-10 w-full outline-none" /></div><div className="flex items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><ArrowUpDown className="h-4 w-4 text-slate-400" /><select value={sort} onChange={(event) => setSort(event.target.value)} className="bg-transparent text-sm font-bold text-slate-700 outline-none"><option value="rekomendasi">Rekomendasi</option><option value="rating">Rating tertinggi</option><option value="jarak">Jarak terdekat</option></select></div></div>{error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}{loading ? <div className="flex min-h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#0D47A1]" /></div> : sortedHelpers.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">Tidak ada Helper yang sesuai dengan filter ini.</div> : <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{sortedHelpers.map((helper) => <article key={helper.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="relative aspect-[5/4] bg-blue-100"><img src={helper.foto_url || fallbackPhoto} alt={`Foto ${helper.users?.full_name || 'Helper'}`} className="h-full w-full object-cover" /><span className="absolute left-3 top-3 rounded-full border border-emerald-200 bg-white/95 px-2.5 py-1 text-[10px] font-bold text-emerald-700"><ShieldCheck className="mr-1 inline h-3 w-3" />Terverifikasi</span><button type="button" className="absolute right-3 top-3 rounded-full bg-black/20 p-2 text-white"><Heart className="h-4 w-4" /></button></div><div className="space-y-4 p-4"><div><h2 className="font-black text-slate-900">{helper.users?.full_name || 'Helper Rangkul'}</h2><p className="mt-1 text-xs text-slate-500"><span className="font-bold text-amber-600">★ {Number(helper.rating_avg || 0).toFixed(1)}</span> · {helper.total_tugas_selesai} tugas selesai · <MapPin className="inline h-3 w-3" /> {helper.jarak_km !== null ? `${helper.jarak_km} km` : 'Jarak belum tersedia'}</p></div><p className="line-clamp-2 text-sm text-slate-600">{helper.bio || 'Siap membantu mendampingi lansia.'}</p><div className="flex flex-wrap gap-1.5">{helper.kategori.slice(0, 3).map((item) => <span key={item.id} className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">{item.nama}</span>)}</div><div className="flex items-center justify-between border-t border-slate-100 pt-3"><div><p className="text-[10px] text-slate-500">Mulai dari</p><p className="font-black text-slate-900">Rp {Number(helper.kategori[0]?.harga_dasar || 0).toLocaleString('id-ID')}</p></div><Link href={`/booking/${helper.id}`} className="rounded-xl bg-[#0D47A1] px-3 py-2 text-xs font-bold text-white">Tanya ketersediaan</Link></div></div></article>)}</div>}</section></div></main>;
 }

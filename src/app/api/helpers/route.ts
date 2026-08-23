@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import { distanceInKm } from '@/lib/geo';
 
 // GET /api/helpers — Katalog helper verified dengan filter radius dan kategori
 // Query params: lat (float), lng (float), radius_km (float, default 10), category_id (uuid)
@@ -18,6 +19,7 @@ export async function GET(request: Request) {
     const lngParam = searchParams.get('lng');
     const radiusParam = searchParams.get('radius_km') ?? '10';
     const categoryId = searchParams.get('category_id');
+    const tingkat = searchParams.get('tingkat');
 
     const lat = latParam ? parseFloat(latParam) : null;
     const lng = lngParam ? parseFloat(lngParam) : null;
@@ -31,12 +33,12 @@ export async function GET(request: Request) {
       .from('helper_profiles')
       // KTP url dan koordinat exact domisili tidak dibuka ke katalog publik
       .select(`
-        id, bio, wilayah_domisili, radius_layanan_km,
+        id, bio, wilayah_domisili, radius_layanan_km, domisili_lat, domisili_lng, foto_wajah_url,
         is_available, rating_avg, total_tugas_selesai,
         tingkat_kepercayaan, verified_by_admin_fallback,
         users!inner ( id, full_name ),
         helper_service_categories (
-          service_categories ( id, nama, estimasi_durasi_menit, harga_dasar )
+          service_categories ( id, nama, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, jarak_min_km, jarak_max_km )
         )
       `)
       .eq('status', 'verified')
@@ -53,7 +55,12 @@ export async function GET(request: Request) {
       return createApiError('server_error', error.message, 500);
     }
 
-    let filtered = helpers ?? [];
+    let filtered = (helpers ?? []).map((helper) => ({
+      ...helper,
+      jarak_km: lat !== null && lng !== null && helper.domisili_lat !== null && helper.domisili_lng !== null
+        ? Number(distanceInKm(lat, lng, helper.domisili_lat, helper.domisili_lng).toFixed(2))
+        : null,
+    }));
 
     // Filter pencarian nama helper, nama jasa/layanan, atau bio jika parameter `q` / `search` diberikan
     if (searchQuery && searchQuery.trim()) {
@@ -68,12 +75,14 @@ export async function GET(request: Request) {
       });
     }
 
-    if (lat !== null && lng !== null) {
-      filtered = filtered.filter((h) => {
-        if (!h.radius_layanan_km) return false;
-        return true;
-      });
-    }
+    if (lat !== null && lng !== null) filtered = filtered.filter((h) => h.jarak_km !== null && h.jarak_km <= Math.min(radiusKm, Number(h.radius_layanan_km)));
+    if (tingkat) filtered = filtered.filter((h) => h.helper_service_categories?.some((c) => c.service_categories?.tingkat === tingkat));
+
+    filtered = filtered.map((helper) => ({
+      ...helper,
+      foto_url: helper.foto_wajah_url ?? null,
+      kategori: helper.helper_service_categories?.map((item) => item.service_categories).filter(Boolean) ?? [],
+    }));
 
     return apiResponse(
       {
