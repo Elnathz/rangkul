@@ -247,3 +247,5 @@ Migrasi berupa file SQL bertimestamp di `supabase/migrations/` (skema awal dan s
 - Validasi input 4 lapis: Zod client, Zod server, constraint database, RLS (TDD §2).
 - Jangan menambah state atau field baru ke luar yang sudah didefinisikan TDD §6 tanpa mengupdate dokumen itu dulu.
 - **PENTING**: "jangan apa apa tu hapus routes lah, tambah di db/alter table kek kalo emang gaada di db". Jika terjadi error tipe data karena kolom tidak ada di database, prioritaskan membuat migrasi/alter table dan me-regenerate types (`src/types/database.ts`), BUKAN dengan menghapus payload dari route API secara sepihak.
+
+- **CI/CD & Workflows**: Pastikan untuk memeriksa .github/workflows dan melakukan pengecekan CI saat melakukan validasi (termasuk mengecek status CI).

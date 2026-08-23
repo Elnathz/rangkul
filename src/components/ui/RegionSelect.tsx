@@ -33,9 +33,66 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
   useEffect(() => {
     fetch(`${API_BASE}/provinces.json`)
       .then((res) => res.json())
-      .then((data) => setProvinces(data))
+      .then((data) => {
+        setProvinces(data);
+      })
       .catch((err) => console.error("Error fetching provinces", err));
   }, []);
+
+  // Effect for handling initialRegion
+  useEffect(() => {
+    if (initialRegion && initialRegion.provinsi && provinces.length > 0 && !selectedProv) {
+      const initializeRegion = async () => {
+        // Find province (case insensitive)
+        const prov = provinces.find(p => p.name.toUpperCase() === initialRegion.provinsi.toUpperCase());
+        if (prov) {
+          setSelectedProv(prov);
+          try {
+            const cityRes = await fetch(`${API_BASE}/regencies/${prov.id}.json`);
+            const cityData = await cityRes.json();
+            setCities(cityData);
+
+            if (initialRegion.kota) {
+              // Usually the API prefix is "KABUPATEN " or "KOTA "
+              // We'll try a flexible match
+              const targetCity = initialRegion.kota.toUpperCase();
+              const city = cityData.find((c: Region) => c.name.toUpperCase() === targetCity || c.name.toUpperCase().includes(targetCity) || targetCity.includes(c.name.toUpperCase()));
+
+              if (city) {
+                setSelectedCity(city);
+                const distRes = await fetch(`${API_BASE}/districts/${city.id}.json`);
+                const distData = await distRes.json();
+                setDistricts(distData);
+
+                if (initialRegion.kecamatan) {
+                  const targetDist = initialRegion.kecamatan.toUpperCase();
+                  const dist = distData.find((d: Region) => d.name.toUpperCase() === targetDist);
+                  if (dist) {
+                    setSelectedDist(dist);
+                    const villRes = await fetch(`${API_BASE}/villages/${dist.id}.json`);
+                    const villData = await villRes.json();
+                    setVillages(villData);
+
+                    if (initialRegion.kelurahan) {
+                      const targetVill = initialRegion.kelurahan.toUpperCase();
+                      const vill = villData.find((v: Region) => v.name.toUpperCase() === targetVill);
+                      if (vill) {
+                        setSelectedVill(vill);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error initializing region", err);
+          }
+        }
+      };
+      initializeRegion();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRegion, provinces]);
 
   const triggerChange = (prov: Region | null, city: Region | null, dist: Region | null, vill: Region | null, coords?: { lat: number; lng: number; address?: string }) => {
     onRegionChange({
@@ -47,9 +104,9 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
   };
 
   const updateGeocodeAndTrigger = async (
-    prov: Region | null, 
-    city: Region | null, 
-    dist: Region | null, 
+    prov: Region | null,
+    city: Region | null,
+    dist: Region | null,
     vill: Region | null
   ) => {
     const parts = [];
@@ -57,23 +114,23 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
     if (dist) parts.push(dist.name);
     if (city) parts.push(city.name);
     if (prov) parts.push(prov.name);
-    
+
     let geocoded = null;
     while (parts.length > 0) {
       try {
         const query = [...parts, "Indonesia"].join(", ");
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        
+
         if (data && data.length > 0) {
           geocoded = data[0];
           break;
         }
       } catch (err) {
         console.error("Geocoding fetch error:", err);
-        break; 
+        break;
       }
-      parts.shift(); 
+      parts.shift();
     }
 
     triggerChange(prov, city, dist, vill, geocoded ? {
@@ -92,10 +149,10 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
     setCities([]);
     setDistricts([]);
     setVillages([]);
-    
+
     // Fire background geocode
     updateGeocodeAndTrigger(prov, null, null, null);
-    
+
     if (prov) {
       try {
         const res = await fetch(`${API_BASE}/regencies/${prov.id}.json`);
@@ -114,7 +171,7 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
     setSelectedVill(null);
     setDistricts([]);
     setVillages([]);
-    
+
     updateGeocodeAndTrigger(selectedProv, city, null, null);
 
     if (city) {
@@ -133,7 +190,7 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
     setSelectedDist(dist);
     setSelectedVill(null);
     setVillages([]);
-    
+
     updateGeocodeAndTrigger(selectedProv, selectedCity, dist, null);
 
     if (dist) {
@@ -162,7 +219,7 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
           {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
-      
+
       <div className="space-y-1.5">
         <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kota/Kabupaten {required && <span className="text-red-500">*</span>}</Label>
         <select required={required} disabled={!selectedProv} className="flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1] disabled:opacity-50 disabled:bg-slate-100" value={selectedCity?.id || ""} onChange={handleCityChange}>
@@ -170,7 +227,7 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
           {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
-      
+
       <div className="space-y-1.5">
         <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kecamatan {required && <span className="text-red-500">*</span>}</Label>
         <select required={required} disabled={!selectedCity} className="flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1] disabled:opacity-50 disabled:bg-slate-100" value={selectedDist?.id || ""} onChange={handleDistChange}>
@@ -178,7 +235,7 @@ export default function RegionSelect({ onRegionChange, initialRegion, required =
           {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
-      
+
       <div className="space-y-1.5">
         <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kelurahan/Desa {required && <span className="text-red-500">*</span>}</Label>
         <select required={required} disabled={!selectedDist} className="flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1] disabled:opacity-50 disabled:bg-slate-100" value={selectedVill?.id || ""} onChange={handleVillChange}>

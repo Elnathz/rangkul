@@ -677,8 +677,11 @@ flowchart TD
 | id                            | uuid, PK              |                         |
 | keluarga_id                   | uuid, FK users        |                         |
 | nama, alamat                  | text                  |                         |
+| umur                          | int                   |                         |
 | lat, lng                      | numeric               |                         |
 | catatan_kondisi               | text                  |                         |
+| tingkat_mobilitas             | text                  |                         |
+| kebutuhan_khusus              | text                  |                         |
 | dokumen_identitas_lansia_url  | text                  | Bucket private (§3.11) |
 | dokumen_hubungan_keluarga_url | text                  | Bucket private (§3.11) |
 | deleted_at                    | timestamptz, nullable | Soft delete             |

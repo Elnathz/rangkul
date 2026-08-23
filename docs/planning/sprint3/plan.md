@@ -65,3 +65,18 @@ NEXT_PUBLIC_SITE_URL=https://merangkul.vercel.app
 ```
 
 Secret hanya disimpan pada `.env.local` dan environment Vercel. Tidak ditulis ke repository.
+
+## Tambahan Integrasi Harga dan Profil Lansia
+
+Perubahan tambahan yang ikut masuk dalam Sprint 3:
+
+- Katalog Cari Helper membaca kategori layanan dari API dan menampilkan harga dasar dari data `service_categories`, bukan daftar kategori atau nominal hardcode.
+- Filter katalog mengirim kategori, tingkat layanan, radius, pencarian, dan koordinat lansia ke server supaya hasil tetap mengikuti aturan radius dan verifikasi Helper.
+- Form tambah dan edit profil lansia diselaraskan dengan field `umur`, `tingkat_mobilitas`, dan `kebutuhan_khusus` serta format alamat canonical pada API.
+- Migration, tipe database, dan validasi lansia harus tetap dijalankan bersama agar form tidak mengirim payload yang tidak ada di schema.
+
+## Testing Tambahan
+
+- Test kontrak harga dinamis dan filter katalog dari data database.
+- Test payload tambah dan edit lansia terhadap validasi server dan schema migration.
+- Jalankan quality gate penuh setelah konflik selesai: lint, typecheck, test, dan build.
