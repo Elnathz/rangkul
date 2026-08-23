@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const extraServiceRequestSchema = z.object({
   nama_layanan: z.string().trim().min(3, "Nama layanan minimal 3 karakter").max(120, "Nama layanan terlalu panjang"),
-  biaya: z.coerce.number().finite("Biaya harus berupa angka").positive("Biaya harus lebih dari nol"),
+  biaya: z.coerce.number().finite("Biaya harus berupa angka").min(1000, "Biaya minimal Rp1.000"),
 });
 
 export const extraServiceDecisionSchema = z.object({

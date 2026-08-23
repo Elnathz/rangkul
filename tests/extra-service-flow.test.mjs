@@ -5,18 +5,27 @@ import test from "node:test";
 const requestSchema = fs.readFileSync(new URL("../src/lib/validations/extra-service.ts", import.meta.url), "utf8");
 const requestRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/extra-service/route.ts", import.meta.url), "utf8");
 const decisionRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/extra-service/[eid]/route.ts", import.meta.url), "utf8");
-const migration = fs.readFileSync(new URL("../supabase/migrations/20260822120000_extra_service_atomic_flow.sql", import.meta.url), "utf8");
+const migration = fs.readFileSync(new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url), "utf8");
+const minimumFeeMigration = migration;
 const helperPage = fs.readFileSync(new URL("../src/app/(helper)/tugas/[id]/page.tsx", import.meta.url), "utf8");
+const helperForm = fs.readFileSync(new URL("../src/components/helper/ExtraServiceRequestForm.tsx", import.meta.url), "utf8");
 const familyPage = fs.readFileSync(new URL("../src/app/(keluarga)/kunjungan/[id]/page.tsx", import.meta.url), "utf8");
 const familyClient = fs.readFileSync(new URL("../src/components/keluarga/RealTaskDetailClient.tsx", import.meta.url), "utf8");
 
 test("layanan tambahan memiliki validasi dan route nyata", () => {
   assert.match(requestSchema, /nama_layanan/);
   assert.match(requestSchema, /biaya/);
+  assert.match(requestSchema, /biaya:.*min\(1000/);
   assert.match(requestRoute, /export async function POST/);
   assert.match(requestRoute, /create_extra_service/);
   assert.match(migration, /dikerjakan/);
   assert.match(requestRoute, /menunggu_persetujuan_keluarga/);
+});
+
+test("biaya tambahan minimal seribu rupiah di semua lapisan", () => {
+  assert.match(helperForm, /min="1000"/);
+  assert.match(minimumFeeMigration, /p_biaya\s*<\s*1000/);
+  assert.match(minimumFeeMigration, /CHECK \(biaya >= 1000\)/);
 });
 
 test("keputusan keluarga memakai conditional atomic RPC", () => {
@@ -30,6 +39,8 @@ test("keputusan keluarga memakai conditional atomic RPC", () => {
 
 test("UI Helper dan Keluarga tidak lagi memakai mock extra service", () => {
   assert.match(helperPage, /ExtraServiceRequestForm/);
+  assert.match(helperForm, /type="number"[\s\S]*step="1"/);
+  assert.doesNotMatch(helperForm, /step="1000"/);
   assert.match(helperPage, /task_extra_services/);
   assert.doesNotMatch(familyPage, /MOCK_TASKS/);
   assert.match(familyClient, /ExtraServiceApprovalCard/);
