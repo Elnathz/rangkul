@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function HelperChatRoomPage({ params }: { params: Promise<{ userId: string }> }) {
+export default async function KoordinatorChatRoomPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -38,7 +38,7 @@ export default async function HelperChatRoomPage({ params }: { params: Promise<{
         photo: null,
       }}
       initialMessages={messages}
-      basePath="/helper/pesan"
+      basePath="/koordinator/pesan"
     />
   );
 }

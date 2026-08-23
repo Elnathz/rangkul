@@ -67,10 +67,10 @@ export function ChatRoomClient({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-h-[800px] bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full w-full">
       {/* Header */}
-      <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-center gap-3 shrink-0">
-        <Link href={basePath} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+      <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-center gap-3 shrink-0 sticky top-0 z-10">
+        <Link href={basePath} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="relative shrink-0">
@@ -89,7 +89,7 @@ export function ChatRoomClient({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }} ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-slate-500">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">

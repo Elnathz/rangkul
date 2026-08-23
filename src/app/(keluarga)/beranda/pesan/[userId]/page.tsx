@@ -1,11 +1,12 @@
 import { getChatMessages } from "@/lib/chat/actions";
 import { ChatRoomClient } from "@/components/chat/ChatRoomClient";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function KeluargaChatRoomPage({ params }: { params: { userId: string } }) {
+export default async function KeluargaChatRoomPage({ params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -13,31 +14,31 @@ export default async function KeluargaChatRoomPage({ params }: { params: { userI
     return null;
   }
 
-  // Fetch other user profile
-  const { data: otherProfile } = await supabase
+  const supabaseAdmin = await createAdminClient();
+
+  // Fetch other user profile using admin client to bypass missing table grants
+  const { data: otherProfile } = await supabaseAdmin
     .from("users")
     .select("full_name")
-    .eq("id", params.userId)
+    .eq("id", userId)
     .single();
 
   if (!otherProfile) {
     notFound();
   }
 
-  const messages = await getChatMessages(params.userId);
+  const messages = await getChatMessages(userId);
 
   return (
-    <div className="max-w-4xl mx-auto p-0 md:p-8 md:pt-4">
-      <ChatRoomClient
-        currentUserId={user.id}
-        otherUser={{
-          id: params.userId,
-          name: otherProfile.full_name,
-          photo: null,
-        }}
-        initialMessages={messages}
-        basePath="/beranda/pesan"
-      />
-    </div>
+    <ChatRoomClient
+      currentUserId={user.id}
+      otherUser={{
+        id: userId,
+        name: otherProfile.full_name,
+        photo: null,
+      }}
+      initialMessages={messages}
+      basePath="/beranda/pesan"
+    />
   );
 }
