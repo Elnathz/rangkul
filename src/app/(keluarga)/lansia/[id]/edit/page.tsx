@@ -24,6 +24,7 @@ export default function LansiaEditProfilPage() {
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
 
   const [activeTab, setActiveTab] = useState<'biodata' | 'kondisi' | 'alamat'>('biodata');
+  const initialSnapshot = useRef<string | null>(null);
 
   const [form, setForm] = useState({
     nama: "",
@@ -54,15 +55,11 @@ export default function LansiaEditProfilPage() {
   useEffect(() => {
     const fetchData = async () => {
       setFetching(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push('/login');
-
-      const { data: dbData } = await supabase
-        .from('lansia_profiles')
-        .select('*')
-        .eq('id', id)
-        .eq('keluarga_id', user.id)
-        .single();
+      const response = await fetch(`/api/lansia/${id}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => null) as { profile?: { nama?: string; umur?: number; catatan_kondisi?: string; tingkat_mobilitas?: string; kebutuhan_khusus?: string; foto_url?: string; alamat?: string; lat?: number | null; lng?: number | null }; message?: string } | null;
+      if (response.status === 401) return router.push('/login');
+      if (!response.ok) throw new Error(payload?.message || 'Profil lansia gagal dimuat');
+      const dbData = payload?.profile;
       const data = dbData as { nama?: string; umur?: number; catatan_kondisi?: string; tingkat_mobilitas?: string; kebutuhan_khusus?: string; foto_url?: string; alamat?: string; lat?: number; lng?: number } | null;
 
       if (data) {
@@ -111,9 +108,23 @@ export default function LansiaEditProfilPage() {
           rt,
           rw,
           region,
-          domisili_lat: data.lat || 0,
-          domisili_lng: data.lng || 0,
+          domisili_lat: data.lat ?? null,
+          domisili_lng: data.lng ?? null,
         }));
+        initialSnapshot.current = JSON.stringify({
+          nama: data.nama || "",
+          umur: data.umur?.toString() || "",
+          kondisi_medis: data.catatan_kondisi || "",
+          tingkat_mobilitas: data.tingkat_mobilitas || "",
+          kebutuhan_khusus: data.kebutuhan_khusus || "",
+          foto_url: data.foto_url || "",
+          alamat: baseAlamat,
+          rt,
+          rw,
+          region,
+          domisili_lat: data.lat ?? null,
+          domisili_lng: data.lng ?? null,
+        });
       }
       setFetching(false);
     };
@@ -127,6 +138,13 @@ export default function LansiaEditProfilPage() {
 
     if (!form.nama || !form.umur || !form.tingkat_mobilitas) {
       showToast("Mohon lengkapi nama, umur, dan tingkat mobilitas.");
+      setLoading(false);
+      return;
+    }
+
+    const currentSnapshot = JSON.stringify(form);
+    if (initialSnapshot.current === currentSnapshot && !croppedFile && !fotoInputRef.current?.files?.[0]) {
+      showToast("Tidak ada perubahan.", "success");
       setLoading(false);
       return;
     }
@@ -165,24 +183,20 @@ export default function LansiaEditProfilPage() {
          fullAlamat += `, ${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi}`;
       }
 
-      const { error: updateError } = await supabase
-        .from('lansia_profiles')
-        .update({
-          nama: form.nama,
-          umur: parseInt(form.umur),
-          alamat: fullAlamat,
-          catatan_kondisi: form.kondisi_medis,
-          tingkat_mobilitas: form.tingkat_mobilitas,
-          kebutuhan_khusus: form.kebutuhan_khusus,
-          foto_url: finalFotoUrl,
-          lat: form.domisili_lat,
-          lng: form.domisili_lng,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('keluarga_id', user.id);
-
-      if (updateError) throw updateError;
+      const payload: Record<string, unknown> = {
+        nama: form.nama,
+        umur: parseInt(form.umur, 10),
+        alamat: fullAlamat,
+        catatan_kondisi: form.kondisi_medis,
+        tingkat_mobilitas: form.tingkat_mobilitas,
+        kebutuhan_khusus: form.kebutuhan_khusus,
+        foto_url: finalFotoUrl,
+      };
+      if (form.domisili_lat !== null) payload.lat = form.domisili_lat;
+      if (form.domisili_lng !== null) payload.lng = form.domisili_lng;
+      const updateResponse = await fetch(`/api/lansia/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const updateBody = await updateResponse.json().catch(() => null) as { message?: string } | null;
+      if (!updateResponse.ok) throw new Error(updateBody?.message || 'Profil lansia gagal diperbarui');
 
       showToast("Profil lansia berhasil diperbarui!", "success");
       setTimeout(() => router.push(`/lansia/${id}`), 2000);

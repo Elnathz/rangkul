@@ -22,3 +22,15 @@ test("alamat wilayah dipecah dalam urutan administratif yang benar", () => {
     "Jawa Tengah",
   ]);
 });
+
+test("alamat seed lama dengan label administratif juga bisa dipakai ulang di form edit", () => {
+  assert.deepEqual(parseRegionAddress("RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah"), {
+    kelurahan: "Pleburan",
+    kecamatan: "Semarang Selatan",
+    kotaKabupaten: "Kota Semarang",
+    provinsi: "Jawa Tengah",
+    rt: "03",
+    rw: "05",
+    detail: "",
+  });
+});
