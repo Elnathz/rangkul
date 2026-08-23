@@ -78,10 +78,10 @@ export default function Navbar() {
       if (data.user) {
         const role = data.user.user_metadata?.role;
         if (role === 'helper') {
-          const { data: prof } = await supabase.from('helper_profiles').select('id, foto_url').eq('user_id', data.user.id).single();
+          const { data: prof } = await supabase.from('helper_profiles').select('id, foto_wajah_url').eq('user_id', data.user.id).single();
           if (prof) {
             setIsVerified(true);
-            if (prof.foto_url) setAvatarUrl(prof.foto_url);
+            if (prof.foto_wajah_url) setAvatarUrl(prof.foto_wajah_url);
           } else {
             setIsVerified(false);
           }

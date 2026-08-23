@@ -129,13 +129,25 @@ export default function KeluargaEditProfilPage() {
     }
 
     try {
-      // MOCKUP API UPDATE
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      showToast("Profil berhasil diperbarui!", "success");
-      setTimeout(() => router.push("/beranda"), 2000);
-    } catch {
-      showToast("Terjadi kesalahan.");
+      const alamat_detail = [
+        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
+        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
+        form.alamat,
+      ].filter(Boolean).join(" | ");
+      const response = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail }),
+      });
+      const body = await response.json().catch(() => null) as { message?: string } | null;
+      if (!response.ok) throw new Error(body?.message || "Profil gagal diperbarui");
+      if (form.password) {
+        const { error } = await createClient().auth.updateUser({ password: form.password });
+        if (error) throw new Error(error.message);
+      }
+      router.push("/beranda");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
     }
   };

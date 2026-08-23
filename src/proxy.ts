@@ -1,10 +1,17 @@
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+import { isPublicRoute } from '@/lib/supabase/proxy-routing';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { Database } from '@/types/database';
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
+
   // Update session first
   const supabaseResponse = await updateSession(request);
   
@@ -48,8 +55,6 @@ export async function proxy(request: NextRequest) {
     '/helper',
     '/keluarga',
   ];
-  
-  const pathname = request.nextUrl.pathname;
   
   // API Route Checks
   const isAdminApiRoute = pathname.startsWith('/api/admin');
