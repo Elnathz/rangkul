@@ -293,7 +293,6 @@ export type Database = {
           created_at: string
           domisili_lat: number | null
           domisili_lng: number | null
-          foto_url: string | null
           foto_wajah_url: string | null
           id: string
           is_available: boolean
@@ -317,7 +316,6 @@ export type Database = {
           created_at?: string
           domisili_lat?: number | null
           domisili_lng?: number | null
-          foto_url?: string | null
           foto_wajah_url?: string | null
           id?: string
           is_available?: boolean
@@ -371,6 +369,54 @@ export type Database = {
             foreignKeyName: "helper_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      helper_photo_change_requests: {
+        Row: {
+          alasan: string | null
+          diajukan_at: string
+          ditinjau_at: string | null
+          ditinjau_oleh: string | null
+          foto_wajah_url: string
+          helper_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          alasan?: string | null
+          diajukan_at?: string
+          ditinjau_at?: string | null
+          ditinjau_oleh?: string | null
+          foto_wajah_url: string
+          helper_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          alasan?: string | null
+          diajukan_at?: string
+          ditinjau_at?: string | null
+          ditinjau_oleh?: string | null
+          foto_wajah_url?: string
+          helper_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helper_photo_change_requests_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_photo_change_requests_ditinjau_oleh_fkey"
+            columns: ["ditinjau_oleh"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -589,11 +635,16 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          gateway_ref: string | null
           held_at: string | null
+          helper_share: number
           id: string
+          jumlah_total: number
+          koordinator_share: number
           midtrans_order_id: string | null
           midtrans_snap_token: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
           released_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           task_id: string
@@ -602,11 +653,16 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          gateway_ref?: string | null
           held_at?: string | null
+          helper_share?: number
           id?: string
+          jumlah_total: number
+          koordinator_share?: number
           midtrans_order_id?: string | null
           midtrans_snap_token?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          platform_fee?: number
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           task_id: string
@@ -615,11 +671,16 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          gateway_ref?: string | null
           held_at?: string | null
+          helper_share?: number
           id?: string
+          jumlah_total?: number
+          koordinator_share?: number
           midtrans_order_id?: string | null
           midtrans_snap_token?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          platform_fee?: number
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           task_id?: string
@@ -1060,6 +1121,43 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["task_extra_services"]["Row"]
       }
+      create_midtrans_payment: {
+        Args: {
+          p_amount: number
+          p_order_id: string
+          p_snap_token: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      settle_midtrans_payment: {
+        Args: {
+          p_gateway_ref: string
+          p_order_id: string
+          p_payload: Json
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      release_task_payment: {
+        Args: { p_task_id: string }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      refund_midtrans_payment: {
+        Args: {
+          p_gateway_ref: string | null
+          p_payload: Json
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      cancel_task_with_compensation: {
+        Args: {
+          p_cancellation_reason: string
+          p_refund_payload: Json
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
       decide_extra_service: {
         Args: {
           p_decision: string
@@ -1137,6 +1235,7 @@ export type Database = {
         | "held_escrow"
         | "released"
         | "refunded"
+        | "disputed"
         | "dibatalkan_kompensasi"
       report_status: "menunggu" | "ditindak" | "selesai"
       task_status:
@@ -1321,6 +1420,7 @@ export const Constants = {
         "held_escrow",
         "released",
         "refunded",
+        "disputed",
         "dibatalkan_kompensasi",
       ],
       report_status: ["menunggu", "ditindak", "selesai"],

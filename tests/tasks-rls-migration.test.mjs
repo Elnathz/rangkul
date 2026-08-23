@@ -3,14 +3,14 @@ import fs from "node:fs";
 import test from "node:test";
 
 const migration = fs.readFileSync(
-  new URL("../supabase/migrations/20260821162000_tasks_rls.sql", import.meta.url),
+  new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url),
   "utf8",
 );
 
-test("task RLS migration aman dijalankan ulang ketika policy sudah ada", () => {
+test("baseline membangun policy task setelah schema public dibersihkan", () => {
   const policies = [
-    ["Keluarga can insert own tasks", "public.tasks"],
-    ["Keluarga can select own tasks", "public.tasks"],
+    ["Keluarga can create own tasks", "public.tasks"],
+    ["Keluarga can read own tasks", "public.tasks"],
     ["Keluarga can update own tasks", "public.tasks"],
     ["Keluarga can insert extra services", "public.task_extra_services"],
     ["Keluarga can select extra services", "public.task_extra_services"],
@@ -21,9 +21,8 @@ test("task RLS migration aman dijalankan ulang ketika policy sudah ada", () => {
     const escapedTable = tableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     assert.match(
       migration,
-      new RegExp(
-        `DROP POLICY IF EXISTS "${escapedName}" ON ${escapedTable};[\\s\\S]*CREATE POLICY "${escapedName}"`,
-      ),
+      new RegExp(`CREATE POLICY "${escapedName}" ON ${escapedTable}`),
     );
   }
+  assert.match(migration, /DROP SCHEMA IF EXISTS public CASCADE/);
 });
