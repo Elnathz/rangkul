@@ -30,7 +30,7 @@ const DEMO_LOCATION = {
 const demoUsers = [
   {
     email: 'demokeluarga@rangkul.id',
-    username: 'demo_keluarga1',
+    username: 'demokeluarga',
     full_name: 'Keluarga Demo Satu',
     role: 'keluarga',
     phone: '081234567801',
@@ -41,7 +41,7 @@ const demoUsers = [
   },
   {
     email: 'demokeluarga2@rangkul.id',
-    username: 'demo_keluarga2',
+    username: 'demokeluarga2',
     full_name: 'Keluarga Demo Dua',
     role: 'keluarga',
     phone: '081234567802',
@@ -52,7 +52,7 @@ const demoUsers = [
   },
   {
     email: 'demokeluarga3@rangkul.id',
-    username: 'demo_keluarga3',
+    username: 'demokeluarga3',
     full_name: 'Keluarga Demo Tiga',
     role: 'keluarga',
     phone: '081234567803',
@@ -63,7 +63,7 @@ const demoUsers = [
   },
   {
     email: 'demokeluarga4@rangkul.id',
-    username: 'demo_keluarga4',
+    username: 'demokeluarga4',
     full_name: 'Keluarga Demo Empat',
     role: 'keluarga',
     phone: '081234567804',
@@ -73,7 +73,7 @@ const demoUsers = [
     ...DEMO_LOCATION,
   },
   {
-    email: 'demokoordinator@rangkul.id',
+    email: 'mbahburgas@gmail.com',
     username: 'mbahburgas',
     full_name: 'Mbah Burgas',
     role: 'koordinator',
@@ -87,7 +87,7 @@ const demoUsers = [
     provinsi: null,
   },
   {
-    email: 'demohelper@rangkul.id',
+    email: 'masburgas@gmail.com',
     username: 'masburgas',
     full_name: 'Mas Burgas',
     role: 'helper',
@@ -102,7 +102,7 @@ const demoUsers = [
   },
   {
     email: 'demokoordinator2@rangkul.id',
-    username: 'demo_koord_rt2',
+    username: 'demokoordinator2',
     full_name: 'Koordinator Demo RT Dua',
     role: 'koordinator',
     phone: '081234567812',
@@ -113,7 +113,7 @@ const demoUsers = [
   },
   {
     email: 'demokoordinator3@rangkul.id',
-    username: 'demo_koord_rt3',
+    username: 'demokoordinator3',
     full_name: 'Koordinator Demo RT Tiga',
     role: 'koordinator',
     phone: '081234567813',
@@ -124,7 +124,7 @@ const demoUsers = [
   },
   {
     email: 'demokoordinator4@rangkul.id',
-    username: 'demo_koord_rw',
+    username: 'demokoordinator4',
     full_name: 'Koordinator Demo RW',
     role: 'koordinator',
     phone: '081234567814',
@@ -135,7 +135,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper2@rangkul.id',
-    username: 'demo_helper_t2',
+    username: 'demohelper2',
     full_name: 'Helper Demo Terpercaya Dua',
     role: 'helper',
     phone: '081234567822',
@@ -146,7 +146,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper3@rangkul.id',
-    username: 'demo_helper_t3',
+    username: 'demohelper3',
     full_name: 'Helper Demo Terpercaya Tiga',
     role: 'helper',
     phone: '081234567823',
@@ -157,7 +157,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper4@rangkul.id',
-    username: 'demo_helper_t4',
+    username: 'demohelper4',
     full_name: 'Helper Demo Terpercaya Empat',
     role: 'helper',
     phone: '081234567824',
@@ -168,7 +168,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper5@rangkul.id',
-    username: 'demo_helper_t5',
+    username: 'demohelper5',
     full_name: 'Helper Demo Fallback Admin',
     role: 'helper',
     phone: '081234567825',
@@ -179,7 +179,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper6@rangkul.id',
-    username: 'demo_helper_p1',
+    username: 'demohelper6',
     full_name: 'Helper Demo Probation Satu',
     role: 'helper',
     phone: '081234567826',
@@ -190,7 +190,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper7@rangkul.id',
-    username: 'demo_helper_p2',
+    username: 'demohelper7',
     full_name: 'Helper Demo Probation Dua',
     role: 'helper',
     phone: '081234567827',
@@ -201,7 +201,7 @@ const demoUsers = [
   },
   {
     email: 'demohelper8@rangkul.id',
-    username: 'demo_helper_review',
+    username: 'demohelper8',
     full_name: 'Helper Demo Under Review',
     role: 'helper',
     phone: '081234567828',
@@ -212,7 +212,7 @@ const demoUsers = [
   },
   {
     email: 'demoadmin@rangkul.id',
-    username: 'demo_admin',
+    username: 'demoadmin',
     full_name: 'Admin Demo Rangkul',
     role: 'admin',
     phone: '081234567899',
@@ -231,7 +231,7 @@ type CoordinatorProfileSeed = {
   dokumen_url: string | null;
   domisili_lat: number;
   domisili_lng: number;
-  diverifikasi_oleh: 'demo_admin' | null;
+  diverifikasi_oleh: 'demoadmin' | null;
   diverifikasi_at: 'now' | null;
 };
 
@@ -248,36 +248,36 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     diverifikasi_at: null,
   },
   {
-    username: 'demo_koord_rt2',
+    username: 'demokoordinator2',
     wilayah: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     tingkat: 'rt',
     status: 'verified',
     dokumen_url: 'demo://koordinator-rt2',
     domisili_lat: -7.0048,
     domisili_lng: 110.4378,
-    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
   },
   {
-    username: 'demo_koord_rt3',
+    username: 'demokoordinator3',
     wilayah: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     tingkat: 'rt',
     status: 'verified',
     dokumen_url: 'demo://koordinator-rt3',
     domisili_lat: -7.0051,
     domisili_lng: 110.4381,
-    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
   },
   {
-    username: 'demo_koord_rw',
+    username: 'demokoordinator4',
     wilayah: 'RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     tingkat: 'rw',
     status: 'verified',
     dokumen_url: 'demo://koordinator-rw',
     domisili_lat: -7.005,
     domisili_lng: 110.438,
-    diverifikasi_oleh: 'demo_admin',
+    diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
   },
 ];
@@ -299,14 +299,14 @@ const helperProfiles = [
     total_tugas_selesai: 0,
   },
   {
-    username: 'demo_helper_t2',
+    username: 'demohelper2',
     bio: 'Helper terpercaya wilayah RT 02.',
     wilayah_domisili: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0041,
     domisili_lng: 110.4371,
     is_available: true,
     radius_layanan_km: 2,
-    koordinator_username: 'demo_koord_rt2',
+    koordinator_username: 'demokoordinator2',
     verified_by_admin_fallback: false,
     status: 'verified',
     tingkat_kepercayaan: 'terpercaya',
@@ -314,14 +314,14 @@ const helperProfiles = [
     total_tugas_selesai: 7,
   },
   {
-    username: 'demo_helper_t3',
+    username: 'demohelper3',
     bio: 'Helper terpercaya wilayah RT 03.',
     wilayah_domisili: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0052,
     domisili_lng: 110.4382,
     is_available: true,
     radius_layanan_km: 3,
-    koordinator_username: 'demo_koord_rt3',
+    koordinator_username: 'demokoordinator3',
     verified_by_admin_fallback: false,
     status: 'verified',
     tingkat_kepercayaan: 'terpercaya',
@@ -329,14 +329,14 @@ const helperProfiles = [
     total_tugas_selesai: 6,
   },
   {
-    username: 'demo_helper_t4',
+    username: 'demohelper4',
     bio: 'Helper terpercaya wilayah RT 04.',
     wilayah_domisili: 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0062,
     domisili_lng: 110.4392,
     is_available: true,
     radius_layanan_km: 4,
-    koordinator_username: 'demo_koord_rt3',
+    koordinator_username: 'demokoordinator3',
     verified_by_admin_fallback: false,
     status: 'verified',
     tingkat_kepercayaan: 'terpercaya',
@@ -344,7 +344,7 @@ const helperProfiles = [
     total_tugas_selesai: 8,
   },
   {
-    username: 'demo_helper_t5',
+    username: 'demohelper5',
     bio: 'Helper verified dengan fallback Admin untuk wilayah baru.',
     wilayah_domisili: 'RT 06 / RW 06, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0072,
@@ -359,14 +359,14 @@ const helperProfiles = [
     total_tugas_selesai: 5,
   },
   {
-    username: 'demo_helper_p1',
+    username: 'demohelper6',
     bio: 'Helper baru yang masih probation.',
     wilayah_domisili: 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0043,
     domisili_lng: 110.4373,
     is_available: true,
     radius_layanan_km: 2,
-    koordinator_username: 'demo_koord_rt2',
+    koordinator_username: 'demokoordinator2',
     verified_by_admin_fallback: false,
     status: 'verified',
     tingkat_kepercayaan: 'probation',
@@ -374,14 +374,14 @@ const helperProfiles = [
     total_tugas_selesai: 1,
   },
   {
-    username: 'demo_helper_p2',
+    username: 'demohelper7',
     bio: 'Helper baru probation untuk demo approval.',
     wilayah_domisili: 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0053,
     domisili_lng: 110.4383,
     is_available: true,
     radius_layanan_km: 3,
-    koordinator_username: 'demo_koord_rt3',
+    koordinator_username: 'demokoordinator3',
     verified_by_admin_fallback: false,
     status: 'verified',
     tingkat_kepercayaan: 'probation',
@@ -389,14 +389,14 @@ const helperProfiles = [
     total_tugas_selesai: 0,
   },
   {
-    username: 'demo_helper_review',
+    username: 'demohelper8',
     bio: 'Helper dengan dua laporan aktif untuk demo moderasi.',
     wilayah_domisili: 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah',
     domisili_lat: -7.0063,
     domisili_lng: 110.4393,
     is_available: false,
     radius_layanan_km: 4,
-    koordinator_username: 'demo_koord_rt3',
+    koordinator_username: 'demokoordinator3',
     verified_by_admin_fallback: false,
     status: 'under_review',
     tingkat_kepercayaan: 'probation',
@@ -407,16 +407,26 @@ const helperProfiles = [
 
 type SupabaseAdmin = Awaited<ReturnType<typeof createAdminClient>>;
 
+function toAuthPhone(phone: string) {
+  if (!/^08\d{8,12}$/.test(phone)) {
+    throw new Error(`Nomor demo ${phone} harus memakai format 08 dan 10 sampai 14 digit`);
+  }
+
+  return `+62${phone.slice(1)}`;
+}
+
 async function ensureAuthUser(
   supabaseAdmin: SupabaseAdmin,
   demo: DemoUser,
   existingUserId?: string,
 ) {
+  const authPhone = toAuthPhone(demo.phone);
+
   if (existingUserId) {
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(existingUserId, {
       email: demo.email,
       password: DEMO_PASSWORD,
-      phone: demo.phone,
+      phone: authPhone,
       email_confirm: true,
       phone_confirm: true,
       user_metadata: {
@@ -436,7 +446,7 @@ async function ensureAuthUser(
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: demo.email,
     password: DEMO_PASSWORD,
-    phone: demo.phone,
+    phone: authPhone,
     email_confirm: true,
     phone_confirm: true,
     user_metadata: {
@@ -507,7 +517,7 @@ export async function GET() {
       results.push({ email: demo.email, username: demo.username, action, id: user.id });
     }
 
-    const adminId = userIdsByUsername.get('demo_admin');
+    const adminId = userIdsByUsername.get('demoadmin');
     if (!adminId) {
       throw new Error('Akun admin demo tidak ditemukan setelah proses Auth selesai');
     }
@@ -532,7 +542,7 @@ export async function GET() {
             dokumen_url: profile.dokumen_url,
             domisili_lat: profile.domisili_lat,
             domisili_lng: profile.domisili_lng,
-            diverifikasi_oleh: profile.diverifikasi_oleh === 'demo_admin' ? adminId : null,
+            diverifikasi_oleh: profile.diverifikasi_oleh === 'demoadmin' ? adminId : null,
             diverifikasi_at: profile.diverifikasi_at === 'now' ? profileTimestamp : null,
             updated_at: profileTimestamp,
           },

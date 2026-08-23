@@ -6,8 +6,8 @@ const route = await readFile("src/app/api/admin/seed-demo-users/route.ts", "utf8
 
 test("route memakai akun demo dengan email utama tanpa underscore", () => {
   assert.match(route, /demokeluarga@rangkul\.id/);
-  assert.match(route, /demohelper@rangkul\.id/);
-  assert.match(route, /demokoordinator@rangkul\.id/);
+  assert.match(route, /mbahburgas@gmail\.com/);
+  assert.match(route, /masburgas@gmail\.com/);
   assert.doesNotMatch(route, /demo_keluarga@rangkul\.id/);
   assert.doesNotMatch(route, /demo_helper@rangkul\.id/);
   assert.doesNotMatch(route, /demo_koordinator@rangkul\.id/);
@@ -19,11 +19,11 @@ test("route memiliki matrix akun demo dan password yang sama", () => {
     "demokeluarga2@rangkul.id",
     "demokeluarga3@rangkul.id",
     "demokeluarga4@rangkul.id",
-    "demokoordinator@rangkul.id",
+    "mbahburgas@gmail.com",
     "demokoordinator2@rangkul.id",
     "demokoordinator3@rangkul.id",
     "demokoordinator4@rangkul.id",
-    "demohelper@rangkul.id",
+    "masburgas@gmail.com",
     "demohelper2@rangkul.id",
     "demohelper3@rangkul.id",
     "demohelper4@rangkul.id",
@@ -43,8 +43,35 @@ test("route memiliki matrix akun demo dan password yang sama", () => {
   assert.doesNotMatch(route, /auth\.admin\.listUsers/);
 });
 
+test("route memakai username demo tanpa underscore", () => {
+  for (const username of [
+    "demokeluarga",
+    "demokeluarga2",
+    "demokeluarga3",
+    "demokeluarga4",
+    "demokoordinator2",
+    "demokoordinator3",
+    "demokoordinator4",
+    "demohelper2",
+    "demohelper3",
+    "demohelper4",
+    "demohelper5",
+    "demohelper6",
+    "demohelper7",
+    "demohelper8",
+    "demoadmin",
+  ]) {
+    assert.match(route, new RegExp(`username: '${username}'`));
+  }
+
+  assert.doesNotMatch(route, /demo_(keluarga|helper|koord|admin)/);
+});
+
 test("route mengisi nomor dan alamat rinci, kecuali dua akun Burgas", () => {
   assert.match(route, /phone: '08\d+'/);
+  assert.match(route, /const authPhone = toAuthPhone\(demo\.phone\)/);
+  assert.match(route, /phone: authPhone/);
+  assert.match(route, /return `\+62\$\{phone\.slice\(1\)\}`/);
   assert.match(route, /alamat_detail/);
   assert.match(route, /rt:/);
   assert.match(route, /rw:/);
