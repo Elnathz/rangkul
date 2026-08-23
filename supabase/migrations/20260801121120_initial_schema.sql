@@ -1675,3 +1675,16 @@ GRANT SELECT, INSERT ON public.messages TO authenticated;
 GRANT UPDATE (read_at) ON public.messages TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.reports TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.emergency_alerts TO authenticated;
+
+-- Supabase service_role bypasses RLS, but it still needs table privileges.
+-- The baseline recreates public, so restore these grants explicitly.
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO service_role;

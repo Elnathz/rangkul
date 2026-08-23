@@ -410,16 +410,10 @@ type SupabaseAdmin = Awaited<ReturnType<typeof createAdminClient>>;
 async function ensureAuthUser(
   supabaseAdmin: SupabaseAdmin,
   demo: DemoUser,
-  existingUsers: Awaited<ReturnType<SupabaseAdmin['auth']['admin']['listUsers']>>['data']['users'],
+  existingUserId?: string,
 ) {
-  const existingUser = existingUsers.find(
-    (user) =>
-      user.email?.toLowerCase() === demo.email.toLowerCase() ||
-      user.user_metadata?.username?.toLowerCase() === demo.username.toLowerCase(),
-  );
-
-  if (existingUser) {
-    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+  if (existingUserId) {
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(existingUserId, {
       email: demo.email,
       password: DEMO_PASSWORD,
       phone: demo.phone,
@@ -462,22 +456,27 @@ async function ensureAuthUser(
 export async function GET() {
   try {
     const supabaseAdmin = await createAdminClient();
-    const { data: authUsersData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
+    const { data: existingProfiles, error: existingProfilesError } = await supabaseAdmin
+      .from('users')
+      .select('id, email, username')
+      .in('email', demoUsers.map((demo) => demo.email));
 
-    if (authUsersError) {
-      throw authUsersError;
+    if (existingProfilesError) {
+      throw existingProfilesError;
     }
 
-    const existingUsers = [...(authUsersData.users ?? [])];
+    const existingUserIdsByEmail = new Map(
+      (existingProfiles ?? []).map((profile) => [profile.email.toLowerCase(), profile.id]),
+    );
     const userIdsByUsername = new Map<string, string>();
     const results: Array<{ email: string; username: string; action: string; id: string }> = [];
 
     for (const demo of demoUsers) {
-      const { user, action } = await ensureAuthUser(supabaseAdmin, demo, existingUsers);
-      existingUsers.push(user);
+      const { user, action } = await ensureAuthUser(
+        supabaseAdmin,
+        demo,
+        existingUserIdsByEmail.get(demo.email.toLowerCase()),
+      );
       userIdsByUsername.set(demo.username, user.id);
 
       const { error: profileError } = await supabaseAdmin.from('users').upsert(

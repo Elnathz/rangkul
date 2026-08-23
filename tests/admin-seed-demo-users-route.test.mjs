@@ -39,6 +39,8 @@ test("route memiliki matrix akun demo dan password yang sama", () => {
   assert.match(route, /Rangkul2026\*/);
   assert.match(route, /auth\.admin\.createUser/);
   assert.match(route, /auth\.admin\.updateUserById/);
+  assert.match(route, /\.from\('users'\)/);
+  assert.doesNotMatch(route, /auth\.admin\.listUsers/);
 });
 
 test("route mengisi nomor dan alamat rinci, kecuali dua akun Burgas", () => {
