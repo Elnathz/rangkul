@@ -1,10 +1,15 @@
--- Enable INSERT for messages
-CREATE POLICY "Users can insert own messages" ON public.messages
-    FOR INSERT WITH CHECK (auth.uid() = sender_id);
-
--- Enable UPDATE for messages (only to update read_at)
-CREATE POLICY "Users can update received messages" ON public.messages
-    FOR UPDATE USING (auth.uid() = receiver_id);
-
--- Add messages to realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+-- Message policies already exist in the initial schema with task-scoped checks.
+-- Keep this migration focused on Realtime so it does not duplicate or weaken them.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+          AND schemaname = 'public'
+          AND tablename = 'messages'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+    END IF;
+END;
+$$;
