@@ -36,6 +36,17 @@ Kalau suatu tugas membutuhkan perubahan kontrak backend, agent boleh mengerjakan
 
 **Lokasi kode frontend:** halaman di `src/app/**` (kecuali `api/`), komponen di `src/components/`, hooks di `src/hooks/`, utils UI di `src/lib/utils.ts`.
 
+### Wajib: Mobile-First
+
+Semua UI wajib dirancang dan diimplementasikan mobile-first. Tampilan desktop adalah peningkatan bertahap melalui breakpoint, bukan sumber layout utama.
+
+- Mulai dari viewport 375px dan pastikan tidak ada horizontal overflow.
+- Uji minimal pada 375px, 768px, 1024px, dan 1440px sebelum fitur dianggap selesai.
+- Tabel data wajib memiliki strategi mobile yang jelas, seperti kolom prioritas, kartu ringkas, atau scroll horizontal yang terkontrol.
+- Tabs, filter, form, modal, dropdown, loading state, empty state, dan error state wajib tetap dapat digunakan dengan sentuhan dan keyboard.
+- Target sentuh interaktif minimal 44x44px, label tidak boleh hanya bergantung pada placeholder, dan fokus keyboard harus terlihat.
+- Jangan menyembunyikan aksi penting hanya pada hover atau membuat desktop layout yang dipaksa mengecil di layar mobile.
+
 ## 2. Wajib: Rencana Sebelum Implementasi
 
 **Tidak boleh langsung menulis kode untuk pekerjaan sprint apa pun tanpa file rencana lebih dulu.**
