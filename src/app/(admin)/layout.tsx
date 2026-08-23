@@ -126,7 +126,7 @@ export default function AdminLayout({
         {mobileOpen ? <><button type="button" className="fixed inset-0 z-40 bg-slate-950/20" onClick={() => setMobileOpen(false)} aria-label="Tutup navigasi" /><aside className="fixed inset-y-0 left-0 z-50 flex w-[min(19rem,86vw)] flex-col border-r border-border bg-white pt-16 shadow-xl"><nav className="flex-1 gap-1 overflow-y-auto p-3">{navItems.map(({ href, label, icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${pathname === href ? "bg-blue-50 text-[#0D47A1]" : "text-muted-foreground hover:bg-[#F5F8FC] hover:text-foreground"}`}><span className="shrink-0 text-[#0D47A1]">{icon}</span>{label}</Link>)}</nav><div className="border-t border-border p-3"><Link href="/" onClick={() => setMobileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted-foreground">Kembali ke Beranda</Link></div></aside></> : null}
       </div>
       {/* Sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-white md:flex">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-white md:flex">
         <div className="h-16 flex items-center px-5 border-b border-border">
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
             <Image 
