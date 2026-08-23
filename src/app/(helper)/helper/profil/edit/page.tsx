@@ -10,6 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle, MapPin, User, List, Phone, ShieldCheck, X } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { parseRegionAddress } from "@/lib/region-address";
+
+type ServiceCategory = { id: string; nama: string; tingkat: "ringan" | "sedang" | "berat" };
+type RegionValue = { provinsi: string; kota: string; kecamatan: string; kelurahan: string };
 
 export default function HelperEditProfilPage() {
   const router = useRouter();
@@ -33,8 +37,9 @@ export default function HelperEditProfilPage() {
     domisili_lng: null as number | null,
   });
 
-  const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
+  const [dbCategories, setDbCategories] = useState<ServiceCategory[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
+  const initialSnapshot = useRef<string | null>(null);
   
   const [catTab, setCatTab] = useState<string>("ringan");
   const [modalOpen, setModalOpen] = useState(false);
@@ -44,26 +49,31 @@ export default function HelperEditProfilPage() {
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
 
-  const tiers = [
+  const tiers: { id: ServiceCategory["tingkat"]; title: string; desc: string }[] = [
     {
       id: "ringan",
       title: "Ringan",
-      desc: "Aktivitas harian ringan & non-medis.",
-      catNames: ["Pengingat Obat", "Menemani Mengobrol (singkat)", "Bantuan Teknologi (singkat)", "Bersih-bersih Ringan", "Antar Obat (dekat, ≤1 km)"]
+      desc: "Aktivitas harian ringan dan non-medis."
     },
     {
       id: "sedang",
       title: "Sedang",
-      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
-      catNames: ["Menemani Mengobrol (lama)", "Bantuan Teknologi (lama)", "Antar Obat (sedang, 1–3 km)", "Belanja Kebutuhan (standar)"]
+      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri."
     },
     {
       id: "berat",
       title: "Berat",
-      desc: "Perawatan khusus dan penanganan medis dasar.",
-      catNames: ["Antar Obat (jauh, >3 km)", "Bersih-bersih Menyeluruh", "Kontrol Kesehatan (antar ke faskes)", "Belanja Kebutuhan (besar/jauh)"]
+      desc: "Perawatan khusus dan penanganan medis dasar."
     }
   ];
+
+  const getSnapshot = (nextForm = form, nextKategoriIds = kategoriIds) => JSON.stringify({
+    ...nextForm,
+    foto_url: "",
+    password: "",
+    confirmPassword: "",
+    kategoriIds: [...nextKategoriIds].sort(),
+  });
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -76,68 +86,62 @@ export default function HelperEditProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      // Set username
-      const name = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || "";
-      const phone = user.user_metadata?.phone || "";
-      
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('full_name, username, phone, alamat_detail')
+        .eq('id', user.id)
+        .maybeSingle();
       const { data: profile } = await supabase
         .from('helper_profiles')
-        .select('id, wilayah_domisili, domisili_lat, domisili_lng')
+        .select('id, wilayah_domisili, domisili_lat, domisili_lng, foto_wajah_url')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
-        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = "";
-        
-        if (profile.wilayah_domisili) {
-          const parts = profile.wilayah_domisili.split(' | ');
-          if (parts.length >= 3) {
-            const adminParts = parts[0].split(', ');
-            if (adminParts.length >= 4) {
-              region.kelurahan = adminParts[0];
-              region.kecamatan = adminParts[1];
-              region.kota = adminParts[2];
-              region.provinsi = adminParts[3];
-            }
-            const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-            if (rtrw) {
-              rt = rtrw[1];
-              rw = rtrw[2];
-            }
-            alamat = parts[2];
-          } else {
-            alamat = profile.wilayah_domisili;
-          }
-        }
-
-        setForm(prev => ({
-          ...prev,
-          username: name,
-          phone: phone,
-          alamat,
-          rt,
-          rw,
+        const parsed = parseRegionAddress(profile.wilayah_domisili);
+        const region: RegionValue = { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan };
+        const nextForm = {
+          ...form,
+          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+          foto_url: profile.foto_wajah_url || "",
+          alamat: parsed.detail,
+          rt: parsed.rt,
+          rw: parsed.rw,
           region,
           domisili_lat: profile.domisili_lat,
           domisili_lng: profile.domisili_lng,
-        }));
+        };
 
-        const { data: cats } = await supabase
-          .from('helper_service_categories')
-          .select('service_category_id')
-          .eq('helper_id', profile.id);
-          
-        if (cats) {
-          setKategoriIds(cats.map(c => c.service_category_id));
-        }
+        setForm(nextForm);
+
       }
 
-      const { data: allCats } = await supabase.from('service_categories').select('id, nama').eq('is_active', true);
-      if (allCats) setDbCategories(allCats);
+      const { data: allCats } = await supabase.from('service_categories').select('id, nama, tingkat').eq('is_active', true);
+      const nextCategories = (allCats ?? []) as ServiceCategory[];
+      setDbCategories(nextCategories);
+      if (profile) {
+        const { data: selectedCats } = await supabase.from('helper_service_categories').select('service_category_id').eq('helper_id', profile.id);
+        const nextIds = selectedCats?.map((category) => category.service_category_id) ?? [];
+        setKategoriIds(nextIds);
+        const parsed = parseRegionAddress(profile.wilayah_domisili);
+        const nextForm = {
+          ...form,
+          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+          foto_url: profile.foto_wajah_url || "",
+          alamat: parsed.detail,
+          rt: parsed.rt,
+          rw: parsed.rw,
+          region: { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan },
+          domisili_lat: profile.domisili_lat,
+          domisili_lng: profile.domisili_lng,
+        };
+        initialSnapshot.current = getSnapshot(nextForm, nextIds);
+      }
     };
     fetchData();
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleKategori = (catId: string) => {
     setKategoriIds(prev => prev.includes(catId) ? prev.filter(k => k !== catId) : [...prev, catId]);
@@ -146,14 +150,14 @@ export default function HelperEditProfilPage() {
   const selectAllInTab = (tabId: string) => {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
-    const idsToAdd = dbCategories.filter(c => tier.catNames.includes(c.nama)).map(c => c.id);
+    const idsToAdd = dbCategories.filter(c => c.tingkat === tier.id).map(c => c.id);
     setKategoriIds(prev => Array.from(new Set([...prev, ...idsToAdd])));
   };
 
   const deselectAllInTab = (tabId: string) => {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
-    const idsToRemove = dbCategories.filter(c => tier.catNames.includes(c.nama)).map(c => c.id);
+    const idsToRemove = dbCategories.filter(c => c.tingkat === tier.id).map(c => c.id);
     setKategoriIds(prev => prev.filter(id => !idsToRemove.includes(id)));
   };
 
@@ -174,7 +178,36 @@ export default function HelperEditProfilPage() {
       return;
     }
 
+    const dataChanged = initialSnapshot.current !== getSnapshot();
+    if (!dataChanged && !fotoFile && !form.password) {
+      showToast("Tidak ada perubahan.", "success");
+      setLoading(false);
+      return;
+    }
+
     try {
+      const wilayah_domisili = [
+        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
+        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
+        form.alamat,
+      ].filter(Boolean).join(" | ");
+      const currentFormSnapshot = initialSnapshot.current ? JSON.parse(initialSnapshot.current) as { username: string; phone: string; alamat: string; rt: string; rw: string; region: RegionValue; domisili_lat: number | null; domisili_lng: number | null; kategoriIds: string[] } : null;
+      const accountChanged = !currentFormSnapshot || JSON.stringify({ username: form.username, phone: form.phone, alamat: form.alamat, rt: form.rt, rw: form.rw, region: form.region }) !== JSON.stringify({ username: currentFormSnapshot.username, phone: currentFormSnapshot.phone, alamat: currentFormSnapshot.alamat, rt: currentFormSnapshot.rt, rw: currentFormSnapshot.rw, region: currentFormSnapshot.region });
+      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
+      if (accountChanged) {
+        const accountResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah_domisili, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
+        const accountResult = await accountResponse.json();
+        if (!accountResponse.ok) throw new Error(accountResult.message || "Data akun gagal diperbarui");
+      }
+      if (helperChanged) {
+        const profileResponse = await fetch("/api/helper/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategori_ids: kategoriIds }) });
+        const profileResult = await profileResponse.json();
+        if (!profileResponse.ok) throw new Error(profileResult.message || "Data operasional gagal diperbarui");
+      }
+      if (form.password) {
+        const { error } = await createClient().auth.updateUser({ password: form.password });
+        if (error) throw new Error(error.message);
+      }
       if (fotoFile) {
         const uploadData = new FormData();
         uploadData.append("file", fotoFile);
@@ -191,8 +224,6 @@ export default function HelperEditProfilPage() {
         const photoResult = await photoResponse.json();
         if (!photoResponse.ok) throw new Error(photoResult.message || "Gagal mengirim foto untuk verifikasi");
         showToast("Foto baru dikirim dan menunggu verifikasi Koordinator.", "success");
-      } else {
-        showToast("Tidak ada foto baru yang dikirim.", "success");
       }
       setTimeout(() => router.push("/helper/dashboard"), 2000);
     } catch (error: unknown) {
@@ -376,7 +407,7 @@ export default function HelperEditProfilPage() {
                   {(() => {
                     const activeTier = tiers.find(t => t.id === catTab);
                     if (!activeTier) return null;
-                    const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
+                    const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
                     
                     return filteredDbCats.slice(0, 4).map(cat => {
                       const isSelected = kategoriIds.includes(cat.id);
@@ -420,7 +451,7 @@ export default function HelperEditProfilPage() {
                   >
                     {(() => {
                       const activeTier = tiers.find(t => t.id === catTab);
-                      const filteredCount = activeTier ? dbCategories.filter(c => activeTier.catNames.includes(c.nama)).length : 0;
+                      const filteredCount = activeTier ? dbCategories.filter(c => c.tingkat === activeTier.id).length : 0;
                       const rem = Math.max(0, filteredCount - 4);
                       return `Tampilkan Semua Kategori ${activeTier?.title} (+${rem} lainnya)`;
                     })()}
@@ -558,7 +589,7 @@ export default function HelperEditProfilPage() {
               {(() => {
                 const activeTier = tiers.find(t => t.id === modalActiveTab);
                 if (!activeTier) return null;
-                const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
+                const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
                 
                 return (
                   <div className="space-y-4">

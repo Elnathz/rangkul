@@ -945,6 +945,8 @@ DELETE /api/lansia/:id            (soft delete)
 
 ```
 POST   /api/helpers/apply         (sertakan wilayah_domisili + radius_layanan_km)
+GET    /api/helper/profile        (Helper melihat profil dan kategori layanan sendiri)
+PATCH  /api/helper/profile        (Helper memperbarui data operasional dan kategori aktif; perubahan wilayah kembali pending_verification)
 GET    /api/helpers?wilayah=&kategori=&radius=
 GET    /api/helpers/:id
 PATCH  /api/helpers/:id/status    (koordinator: verify/reject/suspend)

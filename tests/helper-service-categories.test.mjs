@@ -8,4 +8,6 @@ test("verifikasi Helper mengelompokkan semua kategori aktif berdasarkan tingkat 
   assert.match(helperSource, /select\(['"]id, nama, tingkat['"]\)/);
   assert.match(helperSource, /c\.tingkat === activeTier\.id/);
   assert.doesNotMatch(helperSource, /catNames:/);
+  assert.match(helperSource, /\{dbCategories\.length\} layanan aktif tersedia/);
+  assert.match(helperSource, /Kategori induk/);
 });

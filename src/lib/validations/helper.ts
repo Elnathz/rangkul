@@ -20,6 +20,15 @@ export const helperProfileSchema = z.object({
   koordinator_id: z.string().uuid('ID Koordinator tidak valid').nullable().optional(),
 });
 
+export const helperProfileUpdateSchema = z.object({
+  bio: z.string().max(500, 'Bio maksimal 500 karakter').nullable().optional(),
+  wilayah_domisili: z.string().min(3, 'Wilayah domisili wajib diisi minimal 3 karakter').optional(),
+  domisili_lat: z.number().finite().nullable().optional(),
+  domisili_lng: z.number().finite().nullable().optional(),
+  radius_layanan_km: z.number().min(1, 'Radius minimal 1 km').max(25, 'Radius maksimal 25 km').optional(),
+  kategori_ids: z.array(z.string().uuid('ID kategori tidak valid')).min(1, 'Pilih minimal 1 kategori layanan').optional(),
+});
+
 export type HelperProfileInput = z.infer<typeof helperProfileSchema>;
 
 export const helperApproveSchema = z.object({

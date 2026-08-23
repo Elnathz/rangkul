@@ -634,6 +634,9 @@ export default function HelperVerifikasiPage() {
                 Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
               </Label>
               <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
+              <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm leading-6 text-blue-900">
+                <span className="font-semibold">{dbCategories.length} layanan aktif tersedia.</span> Kategori induk nonaktif hanya digunakan untuk pengelompokan katalog dan tidak dapat dipilih sebagai layanan.
+              </p>
 
               {/* Preview Tabs */}
               <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
