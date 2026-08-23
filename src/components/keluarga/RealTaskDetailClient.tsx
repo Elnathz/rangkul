@@ -46,7 +46,6 @@ export type RealTaskDetail = {
   };
   helper: {
     id: string;
-    foto_url: string | null;
     foto_wajah_url: string | null;
     rating_avg: number;
     total_tugas_selesai: number;
@@ -324,7 +323,7 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
               </section>
               <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3">
-                  {helperName ? <HelperPhoto src={task.helper?.foto_wajah_url || task.helper?.foto_url || null} name={helperName} /> : <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50 text-[#0D47A1]"><UserRound className="h-8 w-8" aria-hidden="true" /></div>}
+                  {helperName ? <HelperPhoto src={task.helper?.foto_wajah_url || null} name={helperName} /> : <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50 text-[#0D47A1]"><UserRound className="h-8 w-8" aria-hidden="true" /></div>}
                   <div className="min-w-0">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Helper</p>
                     <h2 className="mt-1 truncate text-lg font-black text-slate-950">{helperName || "Belum ditugaskan"}</h2>
@@ -336,7 +335,15 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
               {task.status === "selesai" && task.evidence && (
                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
                   <p className="text-sm font-bold text-slate-900">Laporan kunjungan sudah diterima</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">Kunjungan sudah berstatus selesai. Konfirmasi pembayaran dan pencairan Demo Ledger akan tersedia pada alur pembayaran Sprint 3.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">Periksa pembayaran untuk menyelesaikan pencairan dana melalui Midtrans Sandbox.</p>
+                  <Link href={`/pembayaran/${task.id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0D47A1] px-4 text-sm font-bold text-white transition hover:bg-[#083578]">Buka pembayaran</Link>
+                </section>
+              )}
+              {["dikonfirmasi", "dikerjakan"].includes(task.status) && (
+                <section className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
+                  <p className="text-sm font-bold text-slate-900">Pembayaran belum selesai</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">Bayar melalui Midtrans Sandbox agar status transaksi tercatat sebelum kunjungan berlanjut.</p>
+                  <Link href={`/pembayaran/${task.id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0D47A1] px-4 text-sm font-bold text-white transition hover:bg-[#083578]">Buka pembayaran</Link>
                 </section>
               )}
             </aside>

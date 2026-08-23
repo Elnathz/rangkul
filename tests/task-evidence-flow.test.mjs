@@ -4,8 +4,9 @@ import test from "node:test";
 
 const evidenceRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/evidence/route.ts", import.meta.url), "utf8");
 const evidenceSchema = fs.readFileSync(new URL("../src/lib/validations/task-evidence.ts", import.meta.url), "utf8");
-const evidenceMigration = fs.readFileSync(new URL("../supabase/migrations/20260822130000_task_evidence_atomic_flow.sql", import.meta.url), "utf8");
+const evidenceMigration = fs.readFileSync(new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url), "utf8");
 const helperReport = fs.readFileSync(new URL("../src/app/(helper)/tugas/[id]/lapor/page.tsx", import.meta.url), "utf8");
+const helperTaskDetail = fs.readFileSync(new URL("../src/app/(helper)/tugas/[id]/page.tsx", import.meta.url), "utf8");
 const familyList = fs.readFileSync(new URL("../src/app/(keluarga)/kunjungan/page.tsx", import.meta.url), "utf8");
 const familyDetail = fs.readFileSync(new URL("../src/components/keluarga/RealTaskDetailClient.tsx", import.meta.url), "utf8");
 const familyDetailPage = fs.readFileSync(new URL("../src/app/(keluarga)/kunjungan/[id]/page.tsx", import.meta.url), "utf8");
@@ -33,16 +34,22 @@ test("UI laporan Helper tidak lagi memakai mock atau simulasi timeout", () => {
   assert.match(helperReport, /api\/tasks\/\$\{taskId\}\/evidence/);
 });
 
+test("detail task Helper memakai URL laporan tanpa route group", () => {
+  assert.match(helperTaskDetail, /href=\{`\/tugas\/\$\{rawTask\.id\}\/lapor`\}/);
+  assert.doesNotMatch(helperTaskDetail, /href=\{`\/helper\/tugas\/\$\{rawTask\.id\}\/lapor`\}/);
+});
+
 test("daftar kunjungan keluarga membaca task nyata dan detail menampilkan hasil laporan", () => {
   assert.doesNotMatch(familyList, /MOCK_TASKS/);
   assert.match(familyList, /from\(["']tasks["']\)/);
   assert.match(familyDetailPage, /task_evidence/);
   assert.match(familyDetailPage, /health_snapshots/);
-  assert.match(confirmRoute, /confirm_task_completion/);
+  assert.match(confirmRoute, /release_task_payment/);
+  assert.match(confirmRoute, /status: "released"/);
 });
 
 test("migration demo mengarahkan Helper ke akun masburgas", () => {
-  const demoMigration = fs.readFileSync(new URL("../supabase/migrations/20260822110000_align_demo_to_mbahburgas.sql", import.meta.url), "utf8");
+  const demoMigration = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
   assert.match(demoMigration, /LOWER\(u\.username\) = 'masburgas'/);
   assert.match(demoMigration, /Semarang Selatan/);
 });

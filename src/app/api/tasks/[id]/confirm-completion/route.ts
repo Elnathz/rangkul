@@ -25,20 +25,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("forbidden", "Hanya Keluarga yang dapat mengonfirmasi tugas", 403);
     }
 
-    const { data: task, error: confirmError } = await supabase.rpc("confirm_task_completion", {
-      p_task_id: taskId,
-    });
-
-    if (confirmError) {
-      const isConflict = confirmError.code === "P0001";
-      return createApiError(
-        isConflict ? "conflict" : "server_error",
-        isConflict ? confirmError.message : "Tugas belum dapat dikonfirmasi",
-        isConflict ? 409 : 500,
-      );
+    const { data: payment, error: releaseError } = await supabase.rpc("release_task_payment", { p_task_id: taskId });
+    if (releaseError) {
+      return createApiError(releaseError.code === "P0001" ? "conflict" : "server_error", releaseError.message, releaseError.code === "P0001" ? 409 : 500);
     }
-
-    return apiResponse({ message: "Kunjungan sudah berstatus selesai. Release pembayaran menunggu Demo Ledger.", task, status: "selesai" });
+    return apiResponse({ message: "Kunjungan selesai dan pembayaran dicairkan", task: null, payment, status: "released" });
   } catch (error: unknown) {
     return createApiError(
       "server_error",

@@ -35,7 +35,7 @@ export default async function KunjunganDetailPage({ params }: PageProps) {
 
   const { data: task, error: taskError } = await supabase
       .from("tasks")
-    .select("id, status, keluarga_id, lansia_id, jadwal_waktu, harga_dasar, harga_final, catatan, lansia_profiles!inner ( nama, alamat, lat, lng, foto_url, catatan_kondisi ), service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, is_high_risk ), helper_profiles ( id, foto_url, foto_wajah_url, rating_avg, total_tugas_selesai, users!inner ( full_name ) ), task_evidence ( foto_bukti_url, catatan_kondisi, created_at ), health_snapshots ( energi, mobilitas, mood, nafsu_makan, kualitas_tidur, cerita_hari_ini, created_at )")
+    .select("id, status, keluarga_id, lansia_id, jadwal_waktu, harga_dasar, harga_final, catatan, lansia_profiles!inner ( nama, alamat, lat, lng, foto_url, catatan_kondisi ), service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, is_high_risk ), helper_profiles ( id, foto_wajah_url, rating_avg, total_tugas_selesai, users!inner ( full_name ) ), task_evidence ( foto_bukti_url, catatan_kondisi, created_at ), health_snapshots ( energi, mobilitas, mood, nafsu_makan, kualitas_tidur, cerita_hari_ini, created_at )")
     .eq("id", id)
     .eq("keluarga_id", user.id)
     .maybeSingle();

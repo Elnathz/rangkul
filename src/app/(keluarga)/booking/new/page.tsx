@@ -1,87 +1,52 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, User, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+type Lansia = { id: string; nama: string; alamat: string };
+type Category = { id: string; nama: string; tingkat: string; harga_dasar: number; jarak_min_km: number | null; jarak_max_km: number | null };
 
 export default function BookingNewPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [lansias, setLansias] = useState<Lansia[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [form, setForm] = useState({ lansia_id: "", service_category_id: "", jadwal_waktu: "", catatan: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    // Simulate booking API call
-    setTimeout(() => {
-      setLoading(false);
-      router.push('/beranda');
-    }, 1000);
+  useEffect(() => {
+    Promise.all([fetch("/api/lansia"), fetch("/api/categories")]).then(async ([lansiaResponse, categoryResponse]) => {
+      const lansiaBody = await lansiaResponse.json();
+      const categoryBody = await categoryResponse.json();
+      if (!lansiaResponse.ok || !categoryResponse.ok) throw new Error("Data booking tidak dapat dimuat");
+      const nextLansias = (lansiaBody.profiles || []) as Lansia[];
+      const nextCategories = (categoryBody.categories || []) as Category[];
+      setLansias(nextLansias);
+      setCategories(nextCategories);
+      setForm((current) => ({ ...current, lansia_id: nextLansias[0]?.id || "", service_category_id: nextCategories[0]?.id || "" }));
+    }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Data booking tidak dapat dimuat")).finally(() => setLoading(false));
+  }, []);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, jadwal_waktu: new Date(form.jadwal_waktu).toISOString() }) });
+      const body = await response.json().catch(() => null) as { task?: { id: string }; message?: string } | null;
+      if (!response.ok || !body?.task) throw new Error(body?.message || "Permintaan booking gagal dibuat");
+      router.push(`/kunjungan/${body.task.id}`);
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : "Permintaan booking gagal dibuat");
+      setSaving(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F5F8FC] py-8 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild className="rounded-full">
-            <Link href="/beranda">
-              <ChevronLeft className="w-5 h-5" />
-              Kembali
-            </Link>
-          </Button>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Buat Pesanan Pendampingan</h1>
-        </div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Memuat pilihan booking...</div>;
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            
-            {/* Step 1: Lansia Selection */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">1. Pilih Lansia</h2>
-              <div className="border border-blue-200 bg-blue-50/50 p-4 rounded-xl flex items-center justify-between cursor-pointer ring-2 ring-blue-500 ring-offset-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">Opa Budi Hartanto</p>
-                    <p className="text-xs text-gray-500">Kakek - Mobilitas Terbatas</p>
-                  </div>
-                </div>
-                <CheckCircle2 className="text-blue-600 w-5 h-5" />
-              </div>
-            </div>
-
-            {/* Step 2: Waktu */}
-            <div className="space-y-3 pt-2">
-              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">2. Tentukan Tanggal & Jam</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Pilih Tanggal</label>
-                  <input type="date" required className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Jam Kedatangan</label>
-                  <input type="time" required className="w-full flex h-11 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0D47A1]/50 focus-visible:border-[#0D47A1]" />
-                </div>
-              </div>
-            </div>
-
-            {/* Rekap Biaya */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-3 mt-8">
-              <h3 className="font-bold text-gray-900">Validasi Pemesanan</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Tugas akan berstatus <span className="font-bold text-[#0D47A1]">DIAJUKAN</span> dan mencari Helper tersedia di radius 5 KM (Kec. Beji, Depok). Platform Fee sebesar 7% otomatis dipotong dari dompet pesanan saat pesanan SELESAI.
-              </p>
-            </div>
-
-            <Button type="submit" disabled={loading} className="w-full h-12 bg-brand-gradient text-white rounded-xl font-bold shadow-md hover:opacity-90">
-              {loading ? "Memproses Pemesanan..." : "Buat Permintaan"}
-            </Button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 sm:px-6"><div className="mx-auto max-w-2xl space-y-6"><Link href="/cari-helper" className="inline-flex items-center gap-2 text-sm font-bold text-[#0D47A1]"><ChevronLeft className="h-4 w-4" />Cari Helper</Link><div><h1 className="text-3xl font-black text-slate-900">Buat permintaan pendampingan</h1><p className="mt-2 text-sm text-slate-600">Pilih lansia, kategori aktif, dan jadwal. Nominal akhir dihitung server.</p></div>{error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}<form onSubmit={submit} className="space-y-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm"><label className="block text-sm font-bold text-slate-800">Lansia<select required value={form.lansia_id} onChange={(event) => setForm({ ...form, lansia_id: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal"><option value="">Pilih lansia</option>{lansias.map((item) => <option key={item.id} value={item.id}>{item.nama} · {item.alamat}</option>)}</select></label><label className="block text-sm font-bold text-slate-800">Kategori layanan<select required value={form.service_category_id} onChange={(event) => setForm({ ...form, service_category_id: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal"><option value="">Pilih kategori</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.nama} · {item.tingkat} · Rp {Number(item.harga_dasar).toLocaleString("id-ID")}</option>)}</select></label><label className="block text-sm font-bold text-slate-800">Jadwal<input required type="datetime-local" value={form.jadwal_waktu} onChange={(event) => setForm({ ...form, jadwal_waktu: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" /></label><label className="block text-sm font-bold text-slate-800">Catatan keluarga<textarea value={form.catatan} onChange={(event) => setForm({ ...form, catatan: event.target.value })} maxLength={1000} rows={4} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" placeholder="Kebutuhan khusus lansia atau detail lokasi" /></label><p className="rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">Kategori berbasis jarak seperti Antar Obat wajib dibuat dari halaman Cari Helper agar Helper dan koordinat lansia dapat diverifikasi server.</p><Button type="submit" disabled={saving || !form.lansia_id || !form.service_category_id} className="w-full bg-[#0D47A1]">{saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Buat permintaan"}</Button></form></div></main>;
 }
