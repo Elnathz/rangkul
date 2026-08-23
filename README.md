@@ -102,7 +102,7 @@ Model Koordinator adalah pembeda utama Rangkul. RT/RW tidak hanya menjadi pihak 
 
 [Kunjungi Rangkul Production](https://merangkul.vercel.app)
 
-Live production digunakan untuk mempresentasikan alur utama keluarga, Helper, Koordinator, dan Admin. Data demo yang dibutuhkan untuk pengembangan lokal berada di `supabase/seed.sql` dan migration demo terkait.
+Live production digunakan untuk mempresentasikan alur utama keluarga, Helper, Koordinator, dan Admin. Schema aplikasi berada di satu baseline `supabase/migrations/20260801121120_initial_schema.sql`, sedangkan data demo idempoten berada di `supabase/seed.sql` dan dijalankan lewat `npm run seed`.
 
 ### Screenshot Aplikasi
 
@@ -246,8 +246,8 @@ project-root/
 │   ├── TDD_Rangkul.md             # sumber kebenaran bisnis dan teknis
 │   └── planning/                  # rencana per sprint
 ├── supabase/
-│   ├── migrations/                # migration SQL berurutan
-│   ├── seed.sql                   # data demo lokal
+│   ├── migrations/                # satu baseline schema final
+│   ├── seed.sql                   # seed demo idempoten
 │   └── config.toml                # konfigurasi Supabase CLI
 ├── tests/                         # regresi kontrak dan state machine
 └── public/                        # asset publik
@@ -302,6 +302,8 @@ npx supabase start
 npx supabase db reset
 ```
 
+Perintah seed lokal dapat dijalankan dengan `npm run seed`. Untuk project Cloud gunakan `npm run seed:cloud` setelah project di-link. Script mengecek migration yang belum diterapkan, lalu menjalankan `supabase db push` tanpa reset database. Migration yang sudah tercatat dilewati.
+
 Untuk project Supabase remote tanpa Docker:
 
 ```bash
@@ -309,6 +311,8 @@ npx supabase login
 npx supabase link --project-ref your-project-ref
 npx supabase db push --include-all
 ```
+
+Untuk menerapkan migration baru ke project remote yang sudah di-link, jalankan `npx supabase db push --linked`. Perintah ini tidak menjalankan reset database.
 
 Periksa histori migration remote sebelum memakai `--include-all`. Jangan menghapus route atau kolom hanya untuk menyembunyikan error schema. Perubahan schema harus dibuat melalui migration yang idempoten dan diuji.
 
@@ -343,7 +347,7 @@ $testFiles = Get-ChildItem -LiteralPath tests -Filter '*.test.mjs' | Select-Obje
 node --experimental-strip-types --test $testFiles
 ```
 
-Project ini belum mendefinisikan script `npm run test` atau `npm run seed` di `package.json`. Test dijalankan dengan Node.js test runner seperti contoh di atas, sedangkan data demo dikendalikan melalui migration dan `supabase/seed.sql`.
+Test dijalankan dengan Node.js test runner melalui `npm run test`. Data demo lokal dapat di-reset melalui `npm run seed`, sedangkan migration demo juga disiapkan agar environment remote dapat menerima matriks data tanpa menjalankan reset lokal.
 
 ### User Guide
 
@@ -481,6 +485,14 @@ npx tsc --noEmit
 # Semua test kontrak dan state machine
 $testFiles = Get-ChildItem -LiteralPath tests -Filter '*.test.mjs' | Select-Object -ExpandProperty FullName
 node --experimental-strip-types --test $testFiles
+
+# Test RLS dua akun keluarga, jika Supabase lokal dan credential demo tersedia
+$env:RUN_SUPABASE_INTEGRATION = "1"
+$env:RLS_TEST_FAMILY_A_EMAIL = "..."
+$env:RLS_TEST_FAMILY_A_PASSWORD = "..."
+$env:RLS_TEST_FAMILY_B_EMAIL = "..."
+$env:RLS_TEST_FAMILY_B_PASSWORD = "..."
+npm run test -- tests/rls-integration.test.mjs
 
 # Lint
 npm run lint

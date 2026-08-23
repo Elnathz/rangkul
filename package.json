@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"tests/*.test.mjs\""
+    "test": "node --experimental-strip-types --test \"tests/*.test.mjs\"",
+    "seed": "node scripts/seed.mjs",
+    "seed:cloud": "node scripts/seed.mjs --linked"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

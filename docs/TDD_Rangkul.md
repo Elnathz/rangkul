@@ -1,5 +1,7 @@
 # Technical Design Document — Rangkul
 
+> **Amendment 23 Agustus 2026, Sprint 3:** Implementasi pembayaran memakai Midtrans Sandbox sebagai provider nyata. Checkout dibuat server-side, webhook settlement wajib memvalidasi signature SHA-512, dan pembagian 90/7/3 dilakukan oleh RPC database setelah konfirmasi selesai. `held_escrow` adalah status settlement internal Rangkul, bukan klaim bahwa Rangkul menjadi penyelenggara escrow berizin. Saldo dummy dan endpoint `charge-dummy` tidak menjadi bagian dari implementasi Sprint 3.
+
 **Platform Pendampingan Lansia Berbasis Kepercayaan Komunitas**
 
 ITechno Cup 2026 — Kategori Web Development (Mahasiswa)
@@ -278,6 +280,8 @@ Setiap kategori jasa (`service_categories`, daftar final §6) punya `harga_dasar
 **Kategori berisiko tinggi**: "Kontrol Kesehatan (antar ke faskes)" ditandai `is_high_risk = true` — selalu butuh approval Koordinator (§3.3.2) apa pun tingkat kepercayaan Helper.
 
 **Layanan Tambahan (extra service)** — kalau di lapangan ternyata dibutuhkan lebih dari kesepakatan awal (mis. rumah lebih berantakan dari dugaan, perlu beli obat tambahan), Helper **mengajukan** via `POST /api/tasks/:id/extra-service` (nama item + biaya tambahan) — task berstatus `menunggu_persetujuan_keluarga`, Helper **tidak melanjutkan** sampai Keluarga approve. Keluarga tetap pemegang kendali penuh atas harga akhir, tidak pernah dikagetkan di akhir.
+
+Biaya layanan tambahan minimal Rp1.000.
 
 #### 3.4.2 Alur Pembayaran
 
@@ -686,6 +690,7 @@ flowchart TD
 | id                              | uuid, PK                                |                                                                            |
 | user_id                         | uuid, FK users                          |                                                                            |
 | ktp_url, bio                    | text                                    |                                                                            |
+| foto_wajah_url                  | text, nullable                         | Satu-satunya foto profil Helper yang sudah diverifikasi Koordinator        |
 | wilayah_domisili                | text                                    | RT/RW tempat diverifikasi                                                  |
 | radius_layanan_km               | numeric                                 | Jangkauan pengambilan tugas (§3.3.1)                                      |
 | koordinator_id                  | uuid, FK koordinator_profiles, nullable |                                                                            |
@@ -696,6 +701,18 @@ flowchart TD
 | suspend_reason                  | text, nullable                          |                                                                            |
 | rating_avg, total_tugas_selesai | numeric, int                            |                                                                            |
 | saldo_tersedia                  | numeric                                 |                                                                            |
+
+### `helper_photo_change_requests`
+
+| Kolom                           | Tipe                                    | Keterangan                                                                 |
+| ------------------------------- | --------------------------------------- | -------------------------------------------------------------------------- |
+| id                              | uuid, PK                                |                                                                            |
+| helper_id                       | uuid, FK helper_profiles                | Helper yang mengajukan perubahan foto                                      |
+| foto_wajah_url                  | text                                    | Foto baru yang menunggu pemeriksaan                                       |
+| status                          | text                                    | `pending` / `approved` / `rejected`                                      |
+| diajukan_at, ditinjau_at        | timestamptz                             | Waktu pengajuan dan pemeriksaan                                           |
+| ditinjau_oleh                   | uuid, FK users, nullable                | Koordinator yang memproses pengajuan                                      |
+| alasan                          | text, nullable                          | Catatan keputusan                                                         |
 
 ### `koordinator_profiles`
 
@@ -1727,7 +1744,7 @@ Data awal yang wajib tersedia sebelum demo, supaya alur inti tidak bergantung pa
 
 ### 19.4 Kategori Jasa
 
-- Seluruh 7 kategori final di §6, termasuk "Kontrol Kesehatan" ditandai `is_high_risk = true`.
+- Seluruh 13 kategori leaf aktif dikelompokkan ke tingkat `ringan`, `sedang`, dan `berat`. "Kontrol Kesehatan (antar ke faskes)" ditandai `is_high_risk = true`.
 
 ### 19.5 Keluarga & Lansia
 

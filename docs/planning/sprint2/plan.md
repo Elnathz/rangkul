@@ -1,5 +1,9 @@
 # Sprint 2: Alur Kunjungan Inti dan Riwayat Data Dasar (Frontend) — Implementation Plan
 
+## Completion Pass 2026-08-22
+
+Gap Sprint 2 yang ditutup pada pass ini: expiry task terjadwal, konsistensi status evidence, dan regression coverage untuk state machine. Payment, offline draft, rating, laporan formal, dan Riwayat Rangkul penuh tetap deferred sesuai TDD §14.5.
+
 **Goal:** Menyelesaikan antarmuka pengguna (UI) dan alur interaksi sisi client untuk pemesanan (booking), penerimaan tugas oleh Helper, check-in, dan form pelaporan (termasuk Health Snapshot). Backend diasumsikan akan dikerjakan oleh rekan tim (atau menggunakan mock/kontrak API terlebih dahulu).
 
 ## Scope
@@ -155,3 +159,32 @@
 - Demo Ledger pembayaran, release 90/7/3, kompensasi cancel, dan auto-release tetap Sprint 3 sesuai TDD. Endpoint konfirmasi completion disiapkan sebagai kontrak, tetapi tidak boleh mengklaim dana cair sebelum payment provider tersedia.
 - Scheduled expiry task dan reminder H-1 belum memiliki job production. Validasi penerimaan tetap menolak task yang sudah lewat `expires_at`.
 - Offline draft IndexedDB, halaman Riwayat Rangkul penuh, grafik tren, rating, dan laporan formal tetap di luar golden path Sprint 2.
+
+## Consolidation Pass: Sprint 0-2 Completion
+
+### Scope
+
+- Riwayat Rangkul: timeline kunjungan selesai, Health Snapshot, Memory Capsule, tren rule-based, dan akses berbasis relasi Keluarga.
+- Seed demo: foto lokal, UUID Supabase non-manual, idempotensi, matriks Helper/Keluarga/Koordinator, dan 13 kategori leaf dalam 3 tingkat.
+- Katalog Helper: kategori dari database, filter radius server, band jarak untuk layanan perjalanan, dan harga dasar dari server.
+- API: route canonical sesuai kontrak TDD dengan alias route lama yang tetap kompatibel.
+- Foto Helper: satu foto profil terverifikasi berbasis `foto_wajah_url`; foto baru dari edit profil menunggu approval Koordinator.
+
+### Database Changes
+
+- Tambah tabel pengajuan perubahan foto Helper dengan RLS scoped ke Helper pemilik dan Koordinator wilayahnya.
+- Backfill `helper_profiles.foto_wajah_url` dari `foto_url`, lalu hapus `helper_profiles.foto_url` melalui migration terpisah.
+- Regenerasi `src/types/database.ts` setelah schema berubah.
+
+### API Endpoints
+
+- `GET /api/lansia/:id/riwayat`
+- `GET /api/categories`
+- `GET /api/helpers`, `GET /api/helpers/:id`, `POST /api/helpers/apply`, `PATCH /api/helpers/:id/status`
+- Alias lama tetap tersedia untuk booking dan approval Helper.
+- Endpoint perubahan foto Helper mengembalikan status `pending`, `approved`, atau `rejected` dan memakai conditional update saat approval.
+
+### Testing
+
+- Test tren Riwayat Rangkul, akses relasi Keluarga, katalog radius/kategori/jarak, server-side price, seed idempotency, route alias, dan lifecycle foto Helper.
+- Jalankan `npm run lint`, `npm run typecheck`, `npm run test`, dan `npm run build` setelah perubahan terakhir.
