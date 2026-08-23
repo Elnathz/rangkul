@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export type InboxItem = {
@@ -49,8 +49,11 @@ export async function getInbox(): Promise<InboxItem[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
+  const supabaseAdmin = await createAdminClient();
+
   // Fetch recent messages where user is sender or receiver
-  const { data: messages, error } = await supabase
+  // Use admin client to bypass missing table grants on public.users
+  const { data: messages, error } = await supabaseAdmin
     .from("messages")
     .select(`
       *,
@@ -104,7 +107,10 @@ export async function getChatMessages(otherUserId: string): Promise<ChatMessage[
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const supabaseAdmin = await createAdminClient();
+
+  // Use admin client to bypass missing table grants on public.users
+  const { data, error } = await supabaseAdmin
     .from("messages")
     .select(`
       *,
@@ -123,7 +129,9 @@ export async function sendMessage(receiverId: string, message: string, taskId?: 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const supabaseAdmin = await createAdminClient();
+
+  const { data, error } = await supabaseAdmin
     .from("messages")
     .insert({
       sender_id: user.id,
@@ -138,6 +146,7 @@ export async function sendMessage(receiverId: string, message: string, taskId?: 
 
   revalidatePath("/(keluarga)/beranda/pesan", "layout");
   revalidatePath("/(helper)/helper/pesan", "layout");
+  revalidatePath("/(koordinator)/koordinator/pesan", "layout");
   return data;
 }
 
@@ -146,10 +155,70 @@ export async function markMessagesAsRead(senderId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
+  const supabaseAdmin = await createAdminClient();
+
+  await supabaseAdmin
     .from("messages")
     .update({ read_at: new Date().toISOString() })
     .eq("sender_id", senderId)
     .eq("receiver_id", user.id)
     .is("read_at", null);
+}
+
+export async function searchUsersToChat(searchQuery: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const supabaseAdmin = await createAdminClient();
+
+  // Search users by name or role, excluding current user
+  const { data, error } = await supabaseAdmin
+    .from("users")
+    .select("id, full_name, role, kelurahan")
+    .neq("id", user.id)
+    .ilike("full_name", `%${searchQuery}%`)
+    .limit(10);
+
+  if (error) {
+    console.error("Error searching users:", error);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getSuggestedUsersToChat() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const supabaseAdmin = await createAdminClient();
+
+  // Get current user's kelurahan
+  const { data: currentUser } = await supabaseAdmin
+    .from("users")
+    .select("kelurahan")
+    .eq("id", user.id)
+    .single();
+
+  const kelurahan = currentUser?.kelurahan;
+
+  let query = supabaseAdmin
+    .from("users")
+    .select("id, full_name, role, kelurahan")
+    .neq("id", user.id);
+
+  if (kelurahan) {
+    query = query.eq("kelurahan", kelurahan);
+  }
+
+  const { data, error } = await query.limit(15);
+
+  if (error) {
+    console.error("Error getting suggested users:", error);
+    return [];
+  }
+
+  return data;
 }

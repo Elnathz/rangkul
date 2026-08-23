@@ -61,7 +61,30 @@ export async function PUT(
       const kelurahanKoord = wilayahKoordFull.split('|')[0].trim();
       const kelurahanHelper = wilayahHelperFull.split('|')[0].trim();
 
-      if (kelurahanKoord !== kelurahanHelper && !wilayahHelperFull.includes(wilayahKoordFull) && !wilayahKoordFull.includes(wilayahHelperFull)) {
+      // Extract raw names by removing common prefixes to allow matching between 'Kelurahan Pleburan' and 'PLEBURAN'
+      const normalizeRegion = (str: string) => {
+        return str
+          .replace(/kelurahan/g, '')
+          .replace(/desa/g, '')
+          .replace(/kecamatan/g, '')
+          .replace(/kota/g, '')
+          .replace(/kabupaten/g, '')
+          .replace(/provinsi/g, '')
+          .replace(/rt\s*\d+\s*\/?\s*rw\s*\d+/g, '') // remove RT/RW
+          .replace(/[^a-z0-9]/g, '') // remove punctuation and spaces
+          .trim();
+      };
+
+      const normKoord = normalizeRegion(kelurahanKoord);
+      const normHelper = normalizeRegion(kelurahanHelper);
+
+      // Check if one contains the other (e.g. 'pleburansemarangselatan' vs 'pleburansemarangselatan')
+      if (
+        kelurahanKoord !== kelurahanHelper && 
+        !wilayahHelperFull.includes(wilayahKoordFull) && 
+        !wilayahKoordFull.includes(wilayahHelperFull) &&
+        (!normKoord || !normHelper || (!normKoord.includes(normHelper) && !normHelper.includes(normKoord)))
+      ) {
         return createApiError(
           'forbidden',
           'Anda hanya dapat menolak helper yang berdomisili di kelurahan/wilayah Anda',

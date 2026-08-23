@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-export default function HelperPesanPage() {
+export default function KoordinatorPesanPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-[#f0f2f5] h-full p-8 text-center">
       <div className="w-32 h-32 mb-6 opacity-20">
@@ -10,7 +10,7 @@ export default function HelperPesanPage() {
       </div>
       <h2 className="text-2xl font-light text-slate-700 mb-2">Rangkul Web</h2>
       <p className="text-slate-500 max-w-sm">
-        Pilih pesan dari daftar di sebelah kiri untuk mulai mengobrol dengan Keluarga.
+        Pilih pesan dari daftar di sebelah kiri untuk mulai mengobrol.
       </p>
     </div>
   );

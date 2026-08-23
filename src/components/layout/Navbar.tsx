@@ -175,6 +175,7 @@ export default function Navbar() {
       { href: "/koordinator/antrean", label: "Antrean Helper" },
       { href: "/koordinator/helper", label: "Helper Terverifikasi" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
+      { href: "/koordinator/pesan", label: "Pesan" },
       ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
   }

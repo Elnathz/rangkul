@@ -1,27 +1,17 @@
-import { getInbox } from "@/lib/chat/actions";
-import { InboxList } from "@/components/chat/InboxList";
-import { MessageSquare } from "lucide-react";
-
 export const dynamic = "force-dynamic";
 
-export default async function KeluargaPesanPage() {
-  const inbox = await getInbox();
-
+export default function KeluargaPesanPage() {
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-[#0D47A1] text-white rounded-xl shadow-sm">
-          <MessageSquare className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Kotak Masuk</h1>
-          <p className="text-slate-500">Percakapan Anda dengan Helper</p>
-        </div>
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#f0f2f5] h-full p-8 text-center">
+      <div className="w-32 h-32 mb-6 opacity-20">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-slate-800">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
       </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <InboxList inbox={inbox} basePath="/beranda/pesan" />
-      </div>
+      <h2 className="text-2xl font-light text-slate-700 mb-2">Rangkul Web</h2>
+      <p className="text-slate-500 max-w-sm">
+        Pilih pesan dari daftar di sebelah kiri untuk mulai mengobrol dengan Helper.
+      </p>
     </div>
   );
 }
