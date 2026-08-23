@@ -17,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (profile?.role !== 'admin') return createApiError('forbidden', 'Hanya Admin yang dapat menangguhkan Helper', 403);
     const { id } = await params;
     const admin = await createAdminClient();
-    const { data, error } = await admin.from('helper_profiles').update({ status: 'suspended', suspend_reason: typeof body.alasan === 'string' ? body.alasan : 'Ditangguhkan oleh Admin', updated_at: new Date().toISOString() }).eq('id', id).eq('status', 'verified').select('id, status').maybeSingle();
+    const { data, error } = await admin.from('helper_profiles').update({ status: 'suspended', suspend_reason: typeof body.alasan === 'string' ? body.alasan : 'Ditangguhkan oleh Admin', verified_by_admin_fallback: false, updated_at: new Date().toISOString() }).eq('id', id).eq('status', 'verified').select('id, status').maybeSingle();
     if (error) return createApiError('server_error', error.message, 500);
     if (!data) return createApiError('conflict', 'Helper tidak ditemukan atau statusnya sudah berubah', 409);
     return apiResponse({ message: 'Helper berhasil ditangguhkan', helper: data }, 200);

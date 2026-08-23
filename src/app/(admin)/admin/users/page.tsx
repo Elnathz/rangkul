@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Check, Edit3, Plus, Search, ShieldAlert, Trash2, UserRound, X } from "lucide-react";
 import { AdminLoadingRows, AdminModal, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { createAdminUserSchema, updateAdminUserSchema } from "@/lib/validations/admin-users";
@@ -26,6 +26,7 @@ export default function AdminUsersPage() {
   const [selected, setSelected] = useState<User | null>(null);
   const [form, setForm] = useState<UserForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const editSnapshot = useRef<string | null>(null);
   const pageSize = 20;
 
   const loadUsers = async () => {
@@ -44,8 +45,8 @@ export default function AdminUsersPage() {
 
   useEffect(() => { const timer = window.setTimeout(() => { void loadUsers(); }, 0); return () => window.clearTimeout(timer); }, [role, status, search, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const openCreate = () => { setSelected(null); setForm(emptyForm); setModal("create"); setError(""); };
-  const openEdit = (user: User) => { setSelected(user); setForm({ ...emptyForm, email: user.email, full_name: user.full_name, username: user.username, phone: user.phone?.replace(/^\+62/, "0") ?? "", account_status: user.account_status, rt: user.rt?.toString() ?? "", rw: user.rw?.toString() ?? "", kelurahan: user.kelurahan ?? "", kecamatan: user.kecamatan ?? "", kabupaten_kota: user.kabupaten_kota ?? "", provinsi: user.provinsi ?? "" }); setModal("edit"); setError(""); };
+  const openCreate = () => { setSelected(null); setForm(emptyForm); editSnapshot.current = null; setModal("create"); setError(""); };
+  const openEdit = (user: User) => { setSelected(user); const nextForm = { ...emptyForm, email: user.email, full_name: user.full_name, username: user.username, phone: user.phone?.replace(/^\+62/, "0") ?? "", account_status: user.account_status, rt: user.rt?.toString() ?? "", rw: user.rw?.toString() ?? "", kelurahan: user.kelurahan ?? "", kecamatan: user.kecamatan ?? "", kabupaten_kota: user.kabupaten_kota ?? "", provinsi: user.provinsi ?? "" }; setForm(nextForm); editSnapshot.current = JSON.stringify({ full_name: nextForm.full_name, username: nextForm.username, phone: nextForm.phone || null, account_status: nextForm.account_status, rt: Number(nextForm.rt) || null, rw: Number(nextForm.rw) || null, kelurahan: nextForm.kelurahan || null, kecamatan: nextForm.kecamatan || null, kabupaten_kota: nextForm.kabupaten_kota || null, provinsi: nextForm.provinsi || null }); setModal("edit"); setError(""); };
   const changeField = (field: keyof UserForm, value: string) => setForm((current) => ({ ...current, [field]: value }));
 
   const saveUser = async (event: FormEvent<HTMLFormElement>) => {
@@ -54,6 +55,7 @@ export default function AdminUsersPage() {
     const body = isCreate ? { email: form.email, password: form.password, full_name: form.full_name, username: form.username, phone: form.phone || undefined, role: form.role } : { full_name: form.full_name, username: form.username, phone: form.phone || null, account_status: form.account_status, rt: form.rt ? Number(form.rt) : null, rw: form.rw ? Number(form.rw) : null, kelurahan: form.kelurahan || null, kecamatan: form.kecamatan || null, kabupaten_kota: form.kabupaten_kota || null, provinsi: form.provinsi || null };
     const validation = isCreate ? createAdminUserSchema.safeParse(body) : updateAdminUserSchema.safeParse(body);
     if (!validation.success) { setError(validation.error.issues[0]?.message ?? "Data pengguna tidak valid"); setSaving(false); return; }
+    if (!isCreate && editSnapshot.current === JSON.stringify(body)) { setNotice("Tidak ada perubahan."); setModal(null); setSaving(false); return; }
     try {
       const response = await fetch(isCreate ? "/api/admin/users" : `/api/admin/users/${selected?.id}`, { method: isCreate ? "POST" : "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const payload = await response.json();

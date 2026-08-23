@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Check, Edit3, FolderTree, Plus, Trash2, X } from "lucide-react";
 import { AdminLoadingRows, AdminModal, formatRupiah } from "@/components/admin/AdminPrimitives";
 import { serviceCategorySchema } from "@/lib/validations/admin";
@@ -22,6 +22,7 @@ export default function AdminCategoriesPage() {
   const [selected, setSelected] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const editSnapshot = useRef<string | null>(null);
 
   const loadCategories = async () => {
     setLoading(true);
@@ -44,8 +45,8 @@ export default function AdminCategoriesPage() {
   }, []);
 
   const visibleCategories = filterTingkat === "semua" ? categories : categories.filter((category) => category.tingkat === filterTingkat);
-  const openCreate = () => { setSelected(null); setForm(emptyForm); setModal("create"); setError(""); };
-  const openEdit = (category: Category) => { setSelected(category); setForm({ nama: category.nama, deskripsi: category.deskripsi, estimasi_durasi_menit: String(category.estimasi_durasi_menit), harga_dasar: String(category.harga_dasar), is_high_risk: category.is_high_risk, is_active: category.is_active, tingkat: category.tingkat, parent_id: category.parent_id ?? "", jarak_min_km: category.jarak_min_km?.toString() ?? "", jarak_max_km: category.jarak_max_km?.toString() ?? "" }); setModal("edit"); setError(""); };
+  const openCreate = () => { setSelected(null); setForm(emptyForm); editSnapshot.current = null; setModal("create"); setError(""); };
+  const openEdit = (category: Category) => { setSelected(category); const nextForm = { nama: category.nama, deskripsi: category.deskripsi, estimasi_durasi_menit: String(category.estimasi_durasi_menit), harga_dasar: String(category.harga_dasar), is_high_risk: category.is_high_risk, is_active: category.is_active, tingkat: category.tingkat, parent_id: category.parent_id ?? "", jarak_min_km: category.jarak_min_km?.toString() ?? "", jarak_max_km: category.jarak_max_km?.toString() ?? "" }; setForm(nextForm); editSnapshot.current = JSON.stringify({ nama: nextForm.nama, deskripsi: nextForm.deskripsi, estimasi_durasi_menit: Number(nextForm.estimasi_durasi_menit), harga_dasar: Number(nextForm.harga_dasar), is_high_risk: nextForm.is_high_risk, is_active: nextForm.is_active, tingkat: nextForm.tingkat, parent_id: nextForm.parent_id || null, jarak_min_km: nextForm.jarak_min_km ? Number(nextForm.jarak_min_km) : null, jarak_max_km: nextForm.jarak_max_km ? Number(nextForm.jarak_max_km) : null }); setModal("edit"); setError(""); };
   const setField = (field: keyof CategoryForm, value: string | boolean) => setForm((current) => ({ ...current, [field]: value }));
 
   const save = async (event: FormEvent) => {
@@ -55,6 +56,7 @@ export default function AdminCategoriesPage() {
     const body = { nama: form.nama, deskripsi: form.deskripsi, estimasi_durasi_menit: Number(form.estimasi_durasi_menit), harga_dasar: Number(form.harga_dasar), is_high_risk: form.is_high_risk, is_active: form.is_active, tingkat: form.tingkat, parent_id: form.parent_id || null, jarak_min_km: form.jarak_min_km ? Number(form.jarak_min_km) : null, jarak_max_km: form.jarak_max_km ? Number(form.jarak_max_km) : null };
     const validation = serviceCategorySchema.safeParse(body);
     if (!validation.success) { setError(validation.error.issues[0]?.message ?? "Data kategori tidak valid"); setSaving(false); return; }
+    if (modal === "edit" && editSnapshot.current === JSON.stringify(body)) { setNotice("Tidak ada perubahan."); setModal(null); setSaving(false); return; }
     try {
       const response = await fetch(modal === "create" ? "/api/admin/service-categories" : `/api/admin/service-categories/${selected?.id}`, { method: modal === "create" ? "POST" : "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const payload = await response.json();

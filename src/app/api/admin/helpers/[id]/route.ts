@@ -21,7 +21,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (input.status) {
       if (!helperStatuses.has(input.status)) return createApiError("validation_error", "Status Helper tidak valid", 422);
       updates.status = input.status as Database["public"]["Enums"]["helper_status"];
-      if (input.status === "suspended") updates.suspend_reason = input.suspend_reason?.trim() || "Ditangguhkan oleh Admin";
+      if (input.status === "suspended") {
+        updates.suspend_reason = input.suspend_reason?.trim() || "Ditangguhkan oleh Admin";
+        updates.verified_by_admin_fallback = false;
+      }
     }
     if (input.assign_fallback === true) {
       updates.status = "verified";

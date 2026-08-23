@@ -16,7 +16,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const admin = await createAdminClient();
     const { data, error } = await admin
       .from("helper_profiles")
-      .update({ status: "suspended", suspend_reason: reason, updated_at: new Date().toISOString() })
+      .update({ status: "suspended", suspend_reason: reason, verified_by_admin_fallback: false, updated_at: new Date().toISOString() })
       .eq("id", id)
       .neq("status", "suspended")
       .select("id, status, suspend_reason, updated_at")
