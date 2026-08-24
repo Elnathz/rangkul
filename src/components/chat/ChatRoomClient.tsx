@@ -7,6 +7,7 @@ import { id as localeId } from "date-fns/locale";
 import { Send, ArrowLeft } from "lucide-react";
 import { markMessagesAsRead, sendMessage, type ChatMessage } from "@/lib/chat/actions";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export function ChatRoomClient({
   currentUserId,
@@ -26,11 +27,35 @@ export function ChatRoomClient({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [router]);
+    const supabase = createClient();
+    
+    const channel = supabase
+      .channel('chat-room')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          // We ideally filter by task_id or receiver_id, but supabase free tier doesn't allow complex OR filters in realtime easily
+          // We will just refresh the router if the message involves currentUserId and otherUser.id
+        },
+        (payload) => {
+          const newMsg = payload.new;
+          if (
+            (newMsg.sender_id === currentUserId && newMsg.receiver_id === otherUser.id) ||
+            (newMsg.sender_id === otherUser.id && newMsg.receiver_id === currentUserId)
+          ) {
+            router.refresh();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router, currentUserId, otherUser.id]);
 
   useEffect(() => {
     const unreadFromOther = messages.some((m) => m.sender_id === otherUser.id && !m.read_at);

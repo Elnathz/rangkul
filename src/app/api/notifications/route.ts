@@ -32,9 +32,40 @@ export async function GET(request: Request) {
       return createApiError("server_error", "Notifikasi belum dapat dimuat", 500);
     }
 
+    const badges: Record<string, number> = {};
+    const role = user.user_metadata?.role;
+
+    // Fetch unread messages for all roles
+    const { count: unreadMsgs } = await supabase.from('messages').select('id', { count: 'exact', head: true }).eq('receiver_id', user.id).is('read_at', null);
+    
+    if (role === 'helper') {
+      const { count } = await supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('helper_id', user.id).eq('status', 'diajukan');
+      if (count) badges['/tugas'] = count;
+      if (unreadMsgs) badges['/helper/pesan'] = unreadMsgs;
+    } else if (role === 'koordinator') {
+      if (unreadMsgs) badges['/koordinator/pesan'] = unreadMsgs;
+      
+      const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', user.id).maybeSingle();
+      if (prof) {
+        const { count: antrean } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('koordinator_id', prof.id).eq('status', 'pending_verification');
+        if (antrean) badges['/koordinator/antrean'] = antrean;
+      }
+      const { count: laporan } = await supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'menunggu');
+      if (laporan) badges['/koordinator/laporan'] = laporan;
+    } else if (role === 'admin') {
+      const { count: laporan } = await supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'menunggu');
+      if (laporan) badges['/admin/reports'] = laporan;
+      
+      const { count: helpers } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending_verification');
+      if (helpers) badges['/admin/helpers'] = helpers;
+    } else if (role === 'keluarga') {
+      if (unreadMsgs) badges['/beranda/pesan'] = unreadMsgs;
+    }
+
     return apiResponse({
       notifications: notifications || [],
       unread_count: unreadCount || 0,
+      badges,
     });
   } catch (error: unknown) {
     return createApiError(

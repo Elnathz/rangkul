@@ -357,7 +357,12 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                     {task.helper && <p className="mt-1 text-xs text-slate-500">Rating {Number(task.helper.rating_avg).toFixed(1)} · {task.helper.total_tugas_selesai} tugas selesai</p>}
                   </div>
                 </div>
-                {helperName && <Link href={`/beranda/pesan/${task.helper?.user_id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>}
+                {helperName && (
+                  <div className="mt-4 space-y-3">
+                    <Link href={`/beranda/pesan/${task.helper?.user_id}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>
+                    <Link href={`/kunjungan/${task.id}/laporkan`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-600 transition hover:border-red-300 hover:bg-red-50">Laporkan Helper</Link>
+                  </div>
+                )}
               </section>
               {task.status === "selesai" && task.evidence && (
                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">

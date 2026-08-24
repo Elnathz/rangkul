@@ -99,10 +99,10 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Produces: satu keputusan tertulis bahwa Sprint 3 memakai Midtrans Sandbox dan tidak mengimplementasikan `charge-dummy`.
 - Produces: daftar deferred yang jelas untuk Demo Ledger, saldo dummy, `charge-dummy`, dan halaman Admin demo wallet. Auto-release tetap berada di Sprint 3 karena FR-PAY-03 berstatus Must.
 
-- [ ] Tandai bagian TDD lama yang masih menjadikan Demo Ledger sebagai payment core.
-- [ ] Selaraskan endpoint payment dan hasil demo dengan amendment Sprint 3.
-- [ ] Tulis acceptance criteria yang dapat diverifikasi: checkout, webhook valid, webhook invalid, split, refund, laporan dua kali, chat task-scoped, notifikasi, dan SOS acknowledge.
-- [ ] Review ulang perubahan dokumentasi sebelum menyentuh schema agar tidak membangun dua provider yang bertentangan.
+- [x] Tandai bagian TDD lama yang masih menjadikan Demo Ledger sebagai payment core.
+- [x] Selaraskan endpoint payment dan hasil demo dengan amendment Sprint 3.
+- [x] Tulis acceptance criteria yang dapat diverifikasi: checkout, webhook valid, webhook invalid, split, refund, laporan dua kali, chat task-scoped, notifikasi, dan SOS acknowledge.
+- [x] Review ulang perubahan dokumentasi sebelum menyentuh schema agar tidak membangun dua provider yang bertentangan.
 
 ### Task 2: Kunci idempotency checkout dan settlement payment
 
@@ -119,13 +119,13 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: `payments.task_id`, `payments.jumlah_total`, `payments.midtrans_order_id`, dan RPC payment yang sudah ada.
 - Produces: satu checkout aktif per task, settlement idempotent, dan penolakan nominal webhook yang tidak sama dengan snapshot server.
 
-- [ ] Tambahkan constraint atau RPC persiapan payment yang membuat row `pending` sebelum provider dipanggil dan mengunci task/payment berdasarkan `task_id`.
-- [ ] Gunakan order ID deterministik atau idempotency key yang dapat dipakai ulang untuk retry task yang sama.
-- [ ] Jika payment sudah `pending` dengan token valid, kembalikan checkout yang sama tanpa request baru ke Midtrans.
-- [ ] Di webhook, validasi `order_id`, `status_code`, `gross_amount`, signature, status transaction, dan payment snapshot sebelum memanggil settlement RPC.
-- [ ] Buat settlement RPC yang aman dipanggil berulang. Panggilan kedua mengembalikan payment final tanpa menulis split atau saldo kedua kali.
-- [ ] Catat event webhook yang relevan di `transaction_logs` tanpa menyimpan secret atau data sensitif.
-- [ ] Uji nominal berbeda, signature salah, order tidak dikenal, webhook dua kali, dan dua charge paralel.
+- [x] Tambahkan constraint atau RPC persiapan payment yang membuat row `pending` sebelum provider dipanggil dan mengunci task/payment berdasarkan `task_id`.
+- [x] Gunakan order ID deterministik atau idempotency key yang dapat dipakai ulang untuk retry task yang sama.
+- [x] Jika payment sudah `pending` dengan token valid, kembalikan checkout yang sama tanpa request baru ke Midtrans.
+- [x] Di webhook, validasi `order_id`, `status_code`, `gross_amount`, signature, status transaction, dan payment snapshot sebelum memanggil settlement RPC.
+- [x] Buat settlement RPC yang aman dipanggil berulang. Panggilan kedua mengembalikan payment final tanpa menulis split atau saldo kedua kali.
+- [x] Catat event webhook yang relevan di `transaction_logs` tanpa menyimpan secret atau data sensitif.
+- [x] Uji nominal berbeda, signature salah, order tidak dikenal, webhook dua kali, dan dua charge paralel.
 
 ### Task 3: Tutup refund, kompensasi, dan auto-release
 
@@ -140,13 +140,13 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: `cancel_task_with_compensation`, `release_task_payment`, `refund_midtrans_payment`, dan `expire_pending_tasks`.
 - Produces: lifecycle payment yang dapat dipulihkan ketika provider dan database selesai pada waktu berbeda.
 
-- [ ] Samakan HTTP method cancel dengan TDD `PATCH /api/tasks/:id/cancel`; pertahankan alias hanya jika ada alasan kompatibilitas yang terdokumentasi.
-- [ ] Tambahkan state atau idempotency marker untuk intent refund agar retry tidak mengirim refund kedua.
-- [ ] Pastikan otorisasi RPC refund menerima Admin yang memang diizinkan route, atau ubah route agar memanggil service role melalui server yang sudah melakukan `requireAdmin`.
-- [ ] Jangan menganggap refund gateway sukses sebagai payment database final sebelum hasil gateway dan update database tercatat.
-- [ ] Tambahkan RPC service role untuk auto-release payment held yang sudah melewati 3x24 jam sesuai rule TDD, dengan conditional update dan log event `released`.
-- [ ] Panggil RPC auto-release dari heartbeat dengan secret service role dan tangani hasil nol row sebagai kondisi normal.
-- [ ] Uji cancel dua kali, refund dua kali, release dua kali, cancel versus release bersamaan, dan provider timeout setelah database mencatat intent.
+- [x] Samakan HTTP method cancel dengan TDD `PATCH /api/tasks/:id/cancel`; pertahankan alias hanya jika ada alasan kompatibilitas yang terdokumentasi.
+- [x] Tambahkan state atau idempotency marker untuk intent refund agar retry tidak mengirim refund kedua.
+- [x] Pastikan otorisasi RPC refund menerima Admin yang memang diizinkan route, atau ubah route agar memanggil service role melalui server yang sudah melakukan `requireAdmin`.
+- [x] Jangan menganggap refund gateway sukses sebagai payment database final sebelum hasil gateway dan update database tercatat.
+- [x] Tambahkan RPC service role untuk auto-release payment held yang sudah melewati 3x24 jam sesuai rule TDD, dengan conditional update dan log event `released`.
+- [x] Panggil RPC auto-release dari heartbeat dengan secret service role dan tangani hasil nol row sebagai kondisi normal.
+- [x] Uji cancel dua kali, refund dua kali, release dua kali, cancel versus release bersamaan, dan provider timeout setelah database mencatat intent.
 
 ### Task 4: Selesaikan review report dan status `under_review`
 
@@ -164,12 +164,12 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: `GET /api/reports`, `PATCH /api/reports/:id`, status Helper, dan RLS region-scoped.
 - Produces: reviewer dapat melihat, menindak, melepas review, atau mensuspend dengan alasan dan audit log.
 
-- [ ] Buat kartu report dengan status `menunggu`, `ditindak`, `selesai`, alasan, task terkait yang aman, dan waktu.
-- [ ] Koordinator hanya melihat Helper yang terikat pada wilayahnya. Admin melihat seluruh report melalui endpoint Admin yang eksplisit.
-- [ ] Pisahkan keputusan report dari status final Helper. `under_review` tetap berarti sedang ditinjau, bukan terbukti bersalah.
-- [ ] Tambahkan aksi review dengan alasan wajib untuk melepas `under_review` atau mengeskalasi ke `suspended`.
-- [ ] Catat actor, keputusan, alasan, Helper, dan report di `audit_logs`.
-- [ ] Tambahkan test dua report dari keluarga berbeda, rating satu bintang tanpa suspend, Helper under review gagal accept dengan 403, dan reviewer lintas wilayah gagal membaca atau mengubah report.
+- [x] Buat kartu report dengan status `menunggu`, `ditindak`, `selesai`, alasan, task terkait yang aman, dan waktu.
+- [x] Koordinator hanya melihat Helper yang terikat pada wilayahnya. Admin melihat seluruh report melalui endpoint Admin yang eksplisit.
+- [x] Pisahkan keputusan report dari status final Helper. `under_review` tetap berarti sedang ditinjau, bukan terbukti bersalah.
+- [x] Tambahkan aksi review dengan alasan wajib untuk melepas `under_review` atau mengeskalasi ke `suspended`.
+- [x] Catat actor, keputusan, alasan, Helper, dan report di `audit_logs`.
+- [x] Tambahkan test dua report dari keluarga berbeda, rating satu bintang tanpa suspend, Helper under review gagal accept dengan 403, dan reviewer lintas wilayah gagal membaca atau mengubah report.
 
 ### Task 5: Jadikan chat task-scoped dan konsisten dengan RLS
 
@@ -189,13 +189,13 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: `GET /api/messages/conversations`, `GET /api/messages/:task_id`, `POST /api/messages`, dan `PATCH /api/messages/:id/read`.
 - Produces: inbox berisi task, room hanya memuat peserta task, dan read receipt yang tidak memakai service role dari browser path.
 
-- [ ] Hapus ketergantungan inbox pada pencarian user bebas dan `sendMessage` tanpa `taskId`.
-- [ ] Perbaiki semua query yang membedakan `tasks.helper_id` dari `helper_profiles.user_id`.
-- [ ] Pastikan route dan RLS menolak keluarga, Helper, Koordinator, atau Admin yang bukan peserta atau relasi yang diizinkan.
-- [ ] Tampilkan `task_id` atau ringkasan task pada setiap conversation agar konteks tidak hilang.
-- [ ] Ganti polling 3 detik dengan Supabase Realtime subscription pada task scope dan unsubscribe ketika room ditutup.
-- [ ] Tampilkan forbidden, empty, loading, dan retry state yang berbeda.
-- [ ] Uji silang task, task tanpa helper, read receipt milik user lain, dan pengiriman pesan tanpa task.
+- [x] Hapus ketergantungan inbox pada pencarian user bebas dan `sendMessage` tanpa `taskId`.
+- [x] Perbaiki semua query yang membedakan `tasks.helper_id` dari `helper_profiles.user_id`.
+- [x] Pastikan route dan RLS menolak keluarga, Helper, Koordinator, atau Admin yang bukan peserta atau relasi yang diizinkan.
+- [x] Tampilkan `task_id` atau ringkasan task pada setiap conversation agar konteks tidak hilang.
+- [x] Ganti polling 3 detik dengan Supabase Realtime subscription pada task scope dan unsubscribe ketika room ditutup.
+- [x] Tampilkan forbidden, empty, loading, dan retry state yang berbeda.
+- [x] Uji silang task, task tanpa helper, read receipt milik user lain, dan pengiriman pesan tanpa task.
 
 ### Task 6: Selesaikan notifikasi dan SOS reviewer UI
 
@@ -213,13 +213,13 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: notifications API, emergency API, dan RLS emergency contacts.
 - Produces: alert aktif dapat dibaca dan di-acknowledge oleh pihak yang tepat, tanpa klaim SMS yang belum diuji.
 
-- [ ] Buat daftar alert aktif untuk Koordinator berdasarkan wilayah dan untuk Keluarga berdasarkan task.
-- [ ] Tambahkan acknowledge action dengan conditional update `status = active` dan refresh setelah 409.
-- [ ] Tampilkan status `active`, `acknowledged`, dan `resolved` sesuai response server.
-- [ ] Tambahkan notification event matrix untuk task, payment, message, emergency, dan `koordinator_info`.
-- [ ] Kirim notifikasi payment settlement kepada Keluarga, Helper, dan Koordinator jika TDD mengharuskannya pada event tersebut.
-- [ ] Ganti fetch sekali pada halaman notifikasi dengan Realtime subscription atau refresh berbasis event yang terdokumentasi.
-- [ ] Pertahankan copy bahwa SOS mengirim in-app dan membuka `tel:112`; jangan menulis SMS aktif tanpa provider teruji.
+- [x] Buat daftar alert aktif untuk Koordinator berdasarkan wilayah dan untuk Keluarga berdasarkan task.
+- [x] Tambahkan acknowledge action dengan conditional update `status = active` dan refresh setelah 409.
+- [x] Tampilkan status `active`, `acknowledged`, dan `resolved` sesuai response server.
+- [x] Tambahkan notification event matrix untuk task, payment, message, emergency, dan `koordinator_info`.
+- [x] Kirim notifikasi payment settlement kepada Keluarga, Helper, dan Koordinator jika TDD mengharuskannya pada event tersebut.
+- [x] Ganti fetch sekali pada halaman notifikasi dengan Realtime subscription atau refresh berbasis event yang terdokumentasi.
+- [x] Pertahankan copy bahwa SOS mengirim in-app dan membuka `tel:112`; jangan menulis SMS aktif tanpa provider teruji.
 
 ### Task 7: Tambahkan smoke test dan evidence demo
 
@@ -234,23 +234,23 @@ Handoff tanpa contract dan hasil test tidak boleh dipakai sebagai dasar implemen
 - Consumes: seluruh endpoint Sprint 3, migration baseline, seed command, dan environment secret.
 - Produces: evidence yang dapat diulang untuk jalur demo tanpa menaruh secret di repository.
 
-- [ ] Jalankan `npm ci` memakai lockfile yang ada.
-- [ ] Jalankan test migration pada database Supabase lokal dari keadaan kosong.
-- [ ] Jalankan matrix role untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin.
-- [ ] Uji payment dengan Midtrans Sandbox menggunakan order demo yang tidak memakai data produksi.
-- [ ] Simpan hanya hasil status, timestamp, dan marker test. Jangan commit server key, signature payload sensitif, atau token checkout.
-- [ ] Verifikasi tiga ukuran mobile minimum, 375px, 768px, 1024px, dan 1440px, untuk payment, report, chat, notification, dan SOS.
-- [ ] Jalankan quality gate lengkap setelah perubahan terakhir dan catat hasilnya di audit.
+- [x] Jalankan `npm ci` memakai lockfile yang ada.
+- [x] Jalankan test migration pada database Supabase lokal dari keadaan kosong.
+- [x] Jalankan matrix role untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin.
+- [x] Uji payment dengan Midtrans Sandbox menggunakan order demo yang tidak memakai data produksi.
+- [x] Simpan hanya hasil status, timestamp, dan marker test. Jangan commit server key, signature payload sensitif, atau token checkout.
+- [x] Verifikasi tiga ukuran mobile minimum, 375px, 768px, 1024px, dan 1440px, untuk payment, report, chat, notification, dan SOS.
+- [x] Jalankan quality gate lengkap setelah perubahan terakhir dan catat hasilnya di audit.
 
 ## Definition of Done
 
-- [ ] Amendment dan bagian TDD terkait payment tidak saling bertentangan.
-- [ ] Charge, webhook, release, refund, dan cancel idempotent pada retry dan race.
-- [ ] Auto-release 3x24 jam memiliki RPC, heartbeat call, transaction log, dan test.
-- [ ] Dua report mengubah Helper menjadi `under_review`, accept task diblokir, dan reviewer dapat mengambil keputusan dengan audit log.
-- [ ] Chat UI memakai task scope, tidak mengandalkan `service_role` untuk bypass hubungan, dan memakai Realtime atau fallback yang terdokumentasi.
-- [ ] Notifikasi payment, report, task, message, dan emergency memiliki recipient dan read state yang dapat diverifikasi.
-- [ ] Helper dapat mengirim SOS, pihak yang sah dapat melihat alert, acknowledge, dan memahami statusnya.
-- [ ] Tidak ada halaman Sprint 3 P0 yang masih menampilkan placeholder.
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test`, dan `npm run build` lulus setelah perubahan terakhir.
-- [ ] Smoke test Supabase dan Midtrans memiliki evidence yang dapat diulang.
+- [x] Amendment dan bagian TDD terkait payment tidak saling bertentangan.
+- [x] Charge, webhook, release, refund, dan cancel idempotent pada retry dan race.
+- [x] Auto-release 3x24 jam memiliki RPC, heartbeat call, transaction log, dan test.
+- [x] Dua report mengubah Helper menjadi `under_review`, accept task diblokir, dan reviewer dapat mengambil keputusan dengan audit log.
+- [x] Chat UI memakai task scope, tidak mengandalkan `service_role` untuk bypass hubungan, dan memakai Realtime atau fallback yang terdokumentasi.
+- [x] Notifikasi payment, report, task, message, dan emergency memiliki recipient dan read state yang dapat diverifikasi.
+- [x] Helper dapat mengirim SOS, pihak yang sah dapat melihat alert, acknowledge, dan memahami statusnya.
+- [x] Tidak ada halaman Sprint 3 P0 yang masih menampilkan placeholder.
+- [x] `npm run lint`, `npm run typecheck`, `npm run test`, dan `npm run build` lulus setelah perubahan terakhir.
+- [x] Smoke test Supabase dan Midtrans memiliki evidence yang dapat diulang.
