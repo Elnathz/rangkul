@@ -79,7 +79,7 @@ export default function NotificationPageClient() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         channel = supabase
-          .channel('user-notifications')
+          .channel(`user-notifications-${Math.random().toString(36).substring(7)}`)
           .on(
             'postgres_changes',
             { 
