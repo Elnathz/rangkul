@@ -42,7 +42,7 @@ type TaskInfo = {
   service_category_id: string;
   keluarga_id: string;
   helper_id: string;
-  category?: { name: string } | { name: string }[] | null;
+  category?: { nama: string } | { nama: string }[] | null;
 };
 
 type InboxMessageRecord = {
@@ -72,7 +72,7 @@ export async function getInbox(): Promise<InboxItem[]> {
       receiver:receiver_id (id, full_name),
       task:tasks!inner (
         id, keluarga_id, helper_id,
-        category:service_categories (name)
+        category:service_categories (nama)
       )
     `)
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
@@ -101,7 +101,7 @@ export async function getInbox(): Promise<InboxItem[]> {
       
       inboxMap.set(msg.task_id, {
         taskId: msg.task_id,
-        taskTitle: category?.name || "Tugas Rangkul",
+        taskTitle: category?.nama || "Tugas Rangkul",
         otherUserId: otherUser.id,
         otherUserName: otherUser.full_name || "Pengguna Rangkul",
         otherUserPhoto: null,
