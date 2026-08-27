@@ -5,7 +5,7 @@ import { cancelTaskSchema } from "@/lib/validations/task-scheduling";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function PATCH(request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   try {
     const { id: taskId } = await context.params;
     const supabase = await createClient();

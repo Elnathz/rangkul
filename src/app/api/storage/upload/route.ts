@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     const { data: signedData, error: signedError } = await adminSupabase.storage
       .from('dokumen')
-      .createSignedUrl(filePath, 315360000); // 10 years expiration for DB storage
+      .createSignedUrl(filePath, 3600); // 1 hour expiration for security
 
     if (signedError || !signedData) {
       return createApiError('signed_url_failed', 'Gagal membuat signed URL', 500);
