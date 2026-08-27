@@ -6,9 +6,9 @@ DECLARE
     pol record;
 BEGIN
     -- 1. Hapus semua policy yang ada di tabel messages
-    FOR pol IN 
-        SELECT policyname 
-        FROM pg_policies 
+    FOR pol IN
+        SELECT policyname
+        FROM pg_policies
         WHERE tablename = 'messages' AND schemaname = 'public'
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS %I ON public.messages', pol.policyname);

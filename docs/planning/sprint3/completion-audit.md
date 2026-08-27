@@ -1,161 +1,197 @@
 # Audit Penyelesaian Sprint 3
 
-**Tanggal audit:** 24 Agustus 2026  
-**Branch:** `develop`  
-**Sumber kebenaran:** `docs/TDD_Rangkul.md`, terutama amendment Sprint 3 di baris 3, §3.4, §3.6, §3.8, §3.10, §4.6, §4.8, §4.9, §4.10, §6, §7, §8, §9, §14.4, §14.5, dan §16.  
-**Rencana yang diaudit:** `docs/planning/sprint3/plan.md`
+**Tanggal audit:** 27 Agustus 2026
+
+**Branch:** `dev-eln`
+
+**Commit yang diaudit:** `a3a183ae7255ef163a72f163c611b86635dccdbe`
+
+**Sumber kebenaran:** `docs/TDD_Rangkul.md`, khususnya amendment Sprint 3, §3.4, §3.6, §3.8, §3.10, §4.6, §4.8, §4.9, §4.10, §6, §7, §8, §9, §14.4, §14.5, dan §16.
+**Rencana yang diaudit:** `docs/planning/sprint3/plan.md` dan `docs/planning/sprint3/follow-up-plan.md`
 
 ## Kesimpulan langsung
 
-Sprint 3 belum selesai secara fungsional. Fondasi backend payment, layanan tambahan, laporan formal, notifikasi dasar, chat API, dan SOS sudah ada. Namun jalur demo yang dijanjikan belum utuh karena:
+Sprint 3 belum selesai secara fungsional dan belum boleh diberi sign-off Farros. PR #23 sudah menggabungkan `develop` ke `dev-eln`, tetapi merge tersebut mengosongkan `src/types/database.ts`. Akibatnya typecheck dan build gagal pada HEAD yang diaudit.
 
-1. Review laporan Koordinator/Admin dan acknowledge SOS belum memiliki UI. Halaman yang dibutuhkan masih placeholder.
-2. Chat yang aktif di UI memakai server action dengan `service_role`, percakapan bebas antar user, dan polling. Ini tidak sama dengan chat per task yang dibatasi TDD.
-3. Ada bug relasi ID pada REST chat. `tasks.helper_id` menyimpan ID `helper_profiles`, tetapi beberapa route membandingkannya langsung dengan ID user Auth.
-4. Payment belum aman untuk produksi demo berulang. Race pada charge, validasi nominal webhook, urutan refund Midtrans versus update database, dan auto-release belum ditutup.
-5. Tidak ada bukti smoke test terhadap Supabase nyata dan Midtrans Sandbox. Test yang lulus hampir seluruhnya berupa pemeriksaan source code statis.
+Fondasi payment, layanan tambahan, report, notifikasi, chat, SOS, seed, dan migration sudah ada. Namun evidence yang tersedia masih dominan berupa test source statis. Belum ada bukti yang cukup untuk menyatakan payment idempotent pada race, RLS berjalan pada database nyata, auto-release tersedia, refund dapat direkonsiliasi, atau seluruh event Sprint 3 dapat didemokan ulang.
 
-Build hijau tidak mengubah kesimpulan ini. Kondisi saat ini lebih tepat disebut **backend foundation selesai, integrasi E2E Sprint 3 belum selesai**.
+Status yang benar adalah **implementasi backend sebagian tersedia, tetapi integrasi dan evidence Sprint 3 belum selesai**.
 
-## Pembagian ownership yang disarankan
+## Ownership Farros
 
-Farros menjadi **accountable utama** Sprint 3. Mervin menjadi owner eksekusi frontend dan integrasi UI. Pembagian ini dibuat berdasarkan batas file supaya pekerjaan tidak saling menimpa.
+Farros memegang keputusan teknis dan bisnis, kontrak TDD, migration, RPC, RLS, route API, Midtrans, heartbeat, seed, audit log, integration test, final merge, dan sign-off. Bagian UI, mobile QA, accessibility, serta visual review tetap menjadi ownership Mervin.
+
+### Daftar blocker Farros
+
+| Prioritas | Area | Status | Blocker atau bukti yang wajib ditutup |
+| --- | --- | --- | --- |
+| P0 | Type contract | Terbuka | `src/types/database.ts` kosong. Regenerasi type database diperlukan sebelum typecheck dan build dapat dipercaya. |
+| P0 | Payment checkout | Sebagian | RPC intent tersedia, tetapi idempotency provider dan dua charge paralel belum diuji pada database nyata. |
+| P0 | Webhook | Sebagian | Signature diverifikasi, tetapi pencocokan `gross_amount`, order, snapshot nominal, dan pencatatan event non-settlement belum terbukti lengkap. |
+| P0 | Refund dan auto-release | Terbuka | Status `refunding` sudah ada, tetapi auto-release 3x24 jam belum memiliki RPC/job yang dipanggil heartbeat dan lifecycle provider-database belum diuji. |
+| P0 | Report review | Sebagian | Endpoint dan halaman review tersedia, tetapi mutation keputusan, alasan wajib, audit log, dan RLS lintas wilayah belum diuji terintegrasi. |
+| P0 | Chat task scope | Sebagian | REST path memakai task, tetapi server action masih memiliki risiko relasi `helper_profiles.id` dan `users.id`, serta inbox masih perlu dibuktikan bebas dari percakapan global. |
+| P0 | Notification dan SOS | Sebagian | Route SOS dan acknowledge tersedia, tetapi recipient matrix, RLS, status race, dan event settlement belum memiliki evidence runtime. |
+| P1 | Seed dan smoke test | Terbuka | Seed statis tersedia, tetapi reset database, payment marker, RLS matrix, Midtrans Sandbox, dan evidence CI belum lengkap. |
+| P1 | Dokumentasi TDD | Terbuka | Amendment Midtrans masih bertentangan dengan beberapa bagian TDD yang menyebut Demo Ledger dan `charge-dummy`. |
+
+## Pembagian ownership
 
 | Pemilik | Tanggung jawab |
 | --- | --- |
-| Farros | Keputusan teknis dan bisnis, TDD/plan/audit, migration, RPC, RLS, route API, Midtrans, heartbeat, seed, audit log, integration test, final merge, dan sign-off. |
+| Farros | TDD/plan/audit, migration, RPC, RLS, route API, Midtrans, heartbeat, seed, audit log, integration test, final merge, dan sign-off. |
 | Mervin | Halaman dan komponen frontend, integrasi endpoint, state loading/error/forbidden, Realtime client, mobile-first, accessibility, visual QA, dan demo walkthrough. |
 
 Aturan kerja:
 
 - Farros memiliki `docs/TDD_Rangkul.md`, `docs/planning/sprint3/**`, `supabase/migrations/**`, `supabase/seed.sql`, `scripts/**`, `src/app/api/**`, `src/lib/midtrans.ts`, `src/lib/audit.ts`, `src/lib/chat/actions.ts`, `src/types/database.ts`, `.github/workflows/**`, dan backend/integration test.
 - Mervin memiliki halaman di `src/app/**` selain `api`, komponen di `src/components/**`, utilitas UI, dan frontend/UI test.
-- Satu file tidak boleh diedit aktif oleh dua orang. Jika Mervin menemukan contract backend yang salah, ia menulis handoff untuk Farros. Jika Farros menemukan bug UI, ia menulis handoff untuk Mervin.
-- Farros menjadi penulis akhir `completion-audit.md` dan `follow-up-plan.md`. Mervin mengirim evidence UI dan review requirement, lalu Farros yang menggabungkannya.
-- Tidak ada mock permanen untuk menutupi API yang belum siap. UI menunggu contract Farros atau menggunakan response shape yang sudah dicatat di plan.
+- Satu file tidak boleh diedit aktif oleh dua orang. Contract backend yang salah menjadi handoff ke Farros. Bug UI menjadi handoff ke Mervin.
+- Farros menggabungkan evidence Mervin ke audit final, tetapi tidak boleh menganggap halaman UI selesai sebagai bukti backend atau RLS selesai.
+- Tidak ada mock permanen untuk menutupi API atau provider yang belum siap.
 
-Mapping gap ke owner:
+## Status quality gate pada HEAD
 
-| Gap | Owner | Reviewer |
+| Pemeriksaan | Hasil terbaru | Catatan |
 | --- | --- | --- |
-| Konflik TDD Midtrans versus Demo Ledger | Farros | Mervin |
-| Idempotency checkout, webhook, refund, auto-release | Farros | Mervin |
-| Report API, review state, audit, dan RLS | Farros | Mervin |
-| Halaman report Koordinator/Admin | Mervin | Farros |
-| Chat task-scoped, relasi ID, RLS, dan Realtime server | Farros | Mervin |
-| Chat inbox dan room UI | Mervin | Farros |
-| Notification event dan emergency API/RLS | Farros | Mervin |
-| Halaman notifikasi, SOS, acknowledge, dan status | Mervin | Farros |
-| Seed, smoke test Supabase, dan CI heartbeat | Farros | Mervin |
-| Mobile QA dan visual review | Mervin | Farros |
-
-Pola dependensinya adalah **Farros mengunci contract, Mervin mengonsumsi contract**. Jangan mengerjakan satu fitur dengan dua branch yang sama-sama mengubah API dan halaman tanpa checkpoint contract.
-
-## Status quality gate lokal
-
-| Pemeriksaan | Hasil | Catatan |
-| --- | --- | --- |
-| `npm.cmd run lint` | Lulus | 0 error, 44 warning. Warning mencakup `img` tidak teroptimasi dan unused variable. |
-| `npm.cmd run typecheck` | Lulus | Tidak ada error TypeScript. |
-| `npm.cmd run test` | Lulus sebagian | 117 lulus, 0 gagal, 1 `skipped`. Test dominan membaca isi file, bukan menjalankan route dan RLS pada database. |
-| `npm.cmd run build` | Lulus | 82 halaman berhasil dibuat. Halaman placeholder tetap ikut ter-build sebagai halaman valid. |
-| CI remote | Belum diverifikasi | Tidak ada pemeriksaan status workflow remote pada audit ini. |
-| Smoke test Midtrans | Belum ada bukti | Tidak ada create checkout, webhook settlement, refund, atau signature test terhadap Sandbox nyata. |
-| Smoke test Supabase/RLS | Belum lengkap | Test RLS terintegrasi masih `skipped`. |
+| `npm.cmd run test` | Lulus sebagian | 117 lulus, 0 gagal, 1 skipped. Test dominan memeriksa source dan migration, bukan runtime route/RLS. |
+| `npm.cmd run lint` | Lulus dengan warning | 0 error, 60 warning. Warning mencakup `img`, unused import/variable, dan unused parameter. |
+| `npm.cmd run typecheck` | Gagal | `src/types/database.ts` berukuran 0 byte dan bukan module. Ada juga parameter implicit `any` di route Helper. |
+| `npm.cmd run build` | Gagal | Kompilasi berhasil, tetapi proses typecheck berhenti pada import `Database` dari `src/types/database.ts`. |
+| CI remote | Gagal sebelum merge | Check `quality-checks` pada [PR #23](https://github.com/Elnathz/rangkul/pull/23) gagal. Tidak ada run baru untuk branch `dev-eln` pada pemeriksaan ini. |
+| Smoke test Supabase/RLS | Belum terbukti | Satu test RLS terintegrasi masih skipped ketika environment Supabase tidak tersedia. |
+| Smoke test Midtrans | Belum terbukti | Tidak ada bukti create checkout, settlement webhook, refund, atau signature test ke Sandbox nyata. |
 
 ## Matriks requirement Sprint 3
 
-| Area | Status | Bukti yang sudah ada | Yang belum dikerjakan atau belum terbukti | Prioritas |
+| Area | Status | Bukti yang tersedia | Gap Farros | Prioritas |
 | --- | --- | --- | --- | --- |
-| Payment checkout Midtrans | Sebagian selesai | `POST /api/payments/:task_id/charge`, status, webhook, dan refund tersedia. Checkout dibuat server-side. | Request charge bersamaan dapat membuat lebih dari satu order Midtrans sebelum row payment tersimpan. Tidak ada idempotency key atau lock sebelum memanggil provider. | P0 |
-| Signature webhook | Sebagian selesai | `src/lib/midtrans.ts` memakai SHA-512 dan webhook memvalidasi sebelum RPC settlement. | Webhook tidak memeriksa `gross_amount` terhadap `payments.jumlah_total`. Signature valid dengan nominal berbeda masih dapat masuk ke RPC. Status non-settlement tidak dicatat sebagai event payment. | P0 |
-| Settlement dan split 90/7/3 | Sebagian selesai | RPC `release_task_payment` menghitung split di database dan mengunci payment dengan `FOR UPDATE`. | Tidak ada test database yang membuktikan dua release bersamaan, saldo tidak dobel, dan pembulatan seluruh nominal. Notifikasi settlement belum dikirim ke Helper dan Koordinator sesuai event flow TDD. | P0 |
-| Auto-release 3x24 jam | Belum selesai | Heartbeat hanya memanggil `expire_pending_tasks`. | Tidak ada RPC/job yang mencari payment `held_escrow` yang melewati 3x24 jam lalu merilisnya. FR-PAY-03 masih terbuka. | P0 |
-| Refund dan kompensasi 50/50 | Berisiko | `cancel_task_with_compensation` dan route cancel sudah ada. | Route memanggil refund Midtrans lebih dulu, lalu baru RPC database. Jika RPC gagal setelah refund berhasil, status dan uang gateway dapat tidak sinkron. Route refund Admin juga memanggil RPC yang hanya mengizinkan keluarga pemilik atau `service_role`, sehingga jalur Admin berpotensi selalu gagal. | P0 |
-| Endpoint HTTP payment | Tidak konsisten | Route canonical `complete` dan alias `confirm-completion` tersedia. | TDD mendefinisikan cancel sebagai `PATCH`, tetapi implementasi route cancel hanya menyediakan `POST`. Kontrak dan client harus disamakan tanpa menghapus alias lama secara sembarangan. | P1 |
-| Layanan tambahan | Hampir selesai | Validasi minimal Rp1.000, RPC `create_extra_service`, RPC `decide_extra_service`, dan UI Helper/Keluarga tersedia. | Belum ada pengujian E2E yang membuktikan task benar-benar pause, harga final berubah sekali, dan pembayaran membaca harga final setelah keputusan. | P1 |
-| Laporan formal | Backend sebagian selesai | POST/GET/PATCH report, trigger dua laporan aktif menjadi `under_review`, dan pembatasan query Koordinator tersedia. | `/koordinator/laporan` dan `/admin/reports` masih placeholder. Tidak ada alur UI untuk menindak, melepas `under_review`, atau eskalasi suspend dengan alasan dan audit yang terlihat. | P0 |
-| Under review memblokir task | Sebagian selesai | Route accept memeriksa `helper.status !== verified`. | Belum ada test database dan E2E yang menghubungkan dua laporan, status Helper, lalu percobaan accept yang menghasilkan 403. | P1 |
-| Chat per task | Belum selesai secara kontrak | REST messages route, inbox, read receipt, dan komponen chat tersedia. | UI produksi memakai `src/lib/chat/actions.ts` dengan `service_role`, mencari user bebas, dan mengizinkan chat tanpa `task_id`. Ini melampaui relasi yang diizinkan TDD. REST GET task juga salah membandingkan `tasks.helper_id` dengan `user.id`, padahal `helper_id` adalah ID `helper_profiles`. | P0 |
-| Realtime chat/inbox | Belum selesai | Tabel messages sudah didaftarkan ke Realtime pada migration. | `ChatRoomClient` memakai `setInterval` dan `router.refresh()` setiap 3 detik, bukan subscription Realtime. Tidak ada bukti subscription bekerja atau unsubscribe bersih. | P1 |
-| Notifikasi in-app | Sebagian selesai | API list/read dan halaman `/notifikasi` memakai data database. Trigger booking dan insert notifikasi SOS tersedia. | Notification page fetch sekali dan tidak live. Settlement hanya memasukkan notifikasi ke Keluarga, bukan Helper dan Koordinator sesuai TDD. Tidak ada test event matrix untuk task, payment, message, emergency, dan koordinator info. | P1 |
-| SOS Helper | Backend dan dialog sebagian selesai | Helper dapat membuat alert saat task `dikerjakan`, memakai `tel:112`, dan alert disimpan sebagai active. | `/koordinator/darurat` masih placeholder. Tidak ada daftar alert aktif atau tombol acknowledge untuk Keluarga/Koordinator. Tidak ada jalur `resolved`, deduplikasi alert, atau audit log aksi SOS. SMS tidak boleh diklaim aktif karena provider belum diuji. | P0 |
-| Riwayat penghasilan Helper | Belum selesai | Kolom saldo dan split ada di database. | `/helper/penghasilan` masih placeholder. FR-PAY-05 memang Should, tetapi halaman ini tercantum dalam TDD dan dibutuhkan untuk menjelaskan hasil split pada demo. | P1 |
-| Komisi Koordinator | Belum selesai | RPC menambah `saldo_komisi` pada release normal. | `/koordinator/komisi` masih placeholder. FR-PAY-06 Should, tetapi tanpa halaman ini hasil 3% tidak dapat diverifikasi oleh juri. | P1 |
-| Panel Admin terkait Sprint 3 | Sebagian selesai | Dashboard, users, helpers, categories, dan audit API nyata sudah ada. | `/admin/reports`, `/admin/audit-logs`, dan `/admin/demo-wallet` masih placeholder. Demo wallet boleh ditunda karena amendment terbaru mengecualikannya dari implementasi Sprint 3, tetapi reports dan audit log tetap relevan untuk trust and safety. | P0 untuk reports, P1 lainnya |
-| Seed dan jalur demo | Belum terbukti | Seed memiliki dua report untuk skenario `under_review`, task lintas status, dan snapshot riwayat. | Tidak ada payment seed yang berstatus `held_escrow` atau `released`, tidak ada smoke path Midtrans, dan tidak ada seed event chat/SOS yang membuktikan semua halaman Sprint 3 tidak kosong. | P1 |
+| Payment checkout Midtrans | Sebagian selesai | Route charge dan migration `20260827180000_sprint3_payment_hardening.sql` tersedia. RPC membuat intent payment sebelum request provider. | Order ID masih memakai timestamp dan belum dibuktikan aman untuk retry serta dua request paralel. | P0 |
+| Signature webhook | Sebagian selesai | `src/lib/midtrans.ts` memakai SHA-512 dan webhook memeriksa signature sebelum settlement RPC. | Validasi `gross_amount` terhadap `payments.jumlah_total`, order snapshot, dan event non-settlement belum lengkap atau belum diuji. | P0 |
+| Settlement dan split 90/7/3 | Sebagian selesai | RPC baseline menghitung split di database dan memakai row lock. | Belum ada integration test dua release bersamaan, pembulatan nominal, saldo ganda, dan recipient notification. | P0 |
+| Auto-release 3x24 jam | Belum selesai | Heartbeat saat ini hanya memanggil `expire_pending_tasks`. | Belum ada RPC/job untuk payment `held_escrow` yang melewati 3x24 jam. | P0 |
+| Refund dan kompensasi 50/50 | Berisiko | Migration refund menambah status `refunding` serta fungsi prepare/confirm. | Urutan gateway dan database, retry provider, Admin authorization, dan rekonsiliasi kegagalan belum terbukti. | P0 |
+| Endpoint cancel | Tidak konsisten | Route cancel tersedia dan validasi alasan sudah ada. | TDD menetapkan `PATCH`, sedangkan route saat ini masih menyediakan `POST`. Kontrak harus diselaraskan tanpa menghapus alias secara sepihak. | P1 |
+| Layanan tambahan | Hampir selesai | Route, validasi minimal Rp1.000, RPC, dan test contract tersedia. | Belum ada E2E yang membuktikan task pause, harga final hanya berubah sekali, dan payment membaca harga final. | P1 |
+| Laporan formal | Backend sebagian | POST/GET/PATCH report, trigger dua laporan, serta halaman report Koordinator/Admin sudah tersedia setelah merge PR #23. | Review mutation, alasan wajib, audit log, scope wilayah, dan error race belum dibuktikan pada database nyata. | P0 |
+| Under review memblokir task | Sebagian | Route accept menolak Helper yang bukan `verified`; seed memiliki Helper `under_review`. | Belum ada integration test dua report lintas keluarga sampai accept menghasilkan 403. | P1 |
+| Chat per task | Sebagian | REST message route memakai `task_id`, validasi pesan, dan client authenticated. | `src/lib/chat/actions.ts` masih membandingkan `tasks.helper_id` langsung dengan user Auth pada beberapa path. Inbox juga perlu menolak message tanpa task. | P0 |
+| Realtime chat/inbox | Belum terbukti | Tabel messages terdaftar ke Realtime dan komponen chat tersedia. | Evidence subscription, unsubscribe, task channel, dan fallback yang terdokumentasi belum ada. | P1 |
+| Notifikasi in-app | Sebagian | API list/read dan trigger booking/SOS tersedia. | Recipient settlement Helper/Koordinator, event matrix lengkap, dan read-state runtime belum diuji. | P1 |
+| SOS Helper | Backend dan UI sebagian | Helper dapat membuat alert saat task `dikerjakan`; halaman Koordinator dan endpoint acknowledge tersedia. | Conditional update, RLS wilayah/task, status `resolved`, deduplikasi, dan audit log belum memiliki test terintegrasi. SMS tetap tidak boleh diklaim aktif. | P0 |
+| Seed dan jalur demo | Belum terbukti | `scripts/seed.mjs`, seed account matrix, report `under_review`, task status, dan snapshot tersedia. | Belum ada reset database bersih yang menghasilkan payment, message, notification, dan emergency marker yang dapat diuji ulang. | P1 |
 
 ## Temuan teknis paling berbahaya
 
-### 1. Charge Midtrans tidak atomik terhadap pembuatan payment
+### 1. Type database terhapus
 
-`src/app/api/payments/[task_id]/charge/route.ts` membaca payment yang ada, memanggil Midtrans, lalu baru menjalankan RPC `create_midtrans_payment`. Dua request paralel dapat sama-sama melihat payment kosong dan sama-sama membuat checkout. Upsert database tidak membatalkan order Midtrans yang sudah terlanjur dibuat.
+`src/types/database.ts` berukuran 0 byte pada HEAD. Banyak route, client Supabase, dan utilitas mengimpor `Database` dari file tersebut. Ini menyebabkan typecheck dan build gagal. Farros harus memulihkan atau meregenerasi type database dari schema migration sebelum status quality gate dapat disebut hijau.
 
-Perbaikan yang diperlukan:
+### 2. Payment belum memiliki evidence lifecycle penuh
 
-- Buat order ID deterministik per task atau gunakan idempotency key yang disimpan di database.
-- Kunci atau buat row `payments` pending sebelum memanggil provider.
-- Jika provider gagal, simpan error yang aman dan izinkan retry tanpa membuat transaksi ganda.
-- Tambahkan test concurrency atau minimal test database dengan dua request yang sama.
+Migration intent dan status refund sudah ditambahkan, tetapi keberadaan fungsi tidak membuktikan transaksi aman. Farros masih perlu membuktikan charge paralel, webhook nominal salah, settlement ganda, refund gateway yang berhasil saat update database gagal, dan auto-release 3x24 jam.
 
-### 2. Refund gateway dilakukan sebelum transaksi database
+### 3. Relasi ID chat masih rawan
 
-Route cancel memanggil `refundMidtrans`, kemudian memanggil `cancel_task_with_compensation`. Jika RPC gagal karena status task berubah atau race, Midtrans sudah menerima refund sementara database masih `held_escrow`.
+`tasks.helper_id` menyimpan ID `helper_profiles`, sedangkan peserta message memakai ID user Auth. Query server action yang membandingkan keduanya langsung dapat menolak Helper yang sah atau membuka scope yang salah. Semua path chat harus melalui resolusi `helper_profiles.user_id` dan policy task yang sama.
 
-Perbaikan yang diperlukan:
+### 4. Dokumentasi provider belum konsisten
 
-- Tetapkan satu state machine refund dengan status request yang idempotent.
-- Pastikan update task dan payment mencatat intent refund secara atomik sebelum memanggil gateway.
-- Simpan hasil gateway dan lakukan reconciliation bila provider berhasil tetapi callback database gagal.
-- Jangan mengandalkan Admin route yang memanggil RPC dengan policy hanya untuk keluarga.
+Amendment TDD memilih Midtrans Sandbox dan mengecualikan Demo Ledger dari implementasi Sprint 3. Namun §3.4, §7, §14.1, §14.4, §14.5, dan §15 masih memuat fallback Saldo Demo atau `charge-dummy`. Dokumen ini mencatat konflik tersebut sebagai blocker. Perubahannya berada di luar scope dua file ini.
 
-### 3. Jalur chat yang dipakai UI melewati batas RLS
+## Evidence yang harus dikumpulkan Farros
 
-`src/lib/chat/actions.ts` memakai `createAdminClient()` untuk inbox, detail chat, kirim pesan, dan read receipt. Ia juga menyediakan pencarian user umum dan `sendMessage` dengan `taskId` opsional. Ini membuat server action menjadi bypass terhadap RLS dan memungkinkan percakapan yang tidak terkait task.
-
-Perbaikan yang diperlukan:
-
-- Jadikan `task_id` wajib untuk alur chat Sprint 3.
-- Pakai client user biasa atau route server yang melakukan pengecekan peserta task secara eksplisit.
-- Pertahankan `helper_profiles.id` dan `users.id` sebagai dua ID berbeda dalam seluruh query.
-- Batasi UI keluarga dan Helper pada task yang mereka ikuti. Jangan memakai chat bebas antar role sebagai pengganti chat per task.
-
-### 4. Review trust and safety belum bisa didemokan
-
-Backend dapat menerima report dan mengubah status Helper melalui trigger, tetapi reviewer tidak punya halaman operasional. Halaman `/koordinator/laporan`, `/admin/reports`, dan `/koordinator/darurat` hanya menampilkan teks pengembangan. Artinya acceptance criteria Sprint 3 berhenti setelah data tersimpan, bukan setelah reviewer dapat mengambil keputusan.
-
-Perbaikan yang diperlukan:
-
-- Tampilkan antrean report berdasarkan scope wilayah untuk Koordinator dan semua report untuk Admin.
-- Tampilkan status `menunggu`, `ditindak`, dan `selesai`, alasan laporan, waktu, dan keputusan.
-- Sediakan keputusan eksplisit untuk melepas `under_review` atau mensuspend, dengan alasan wajib dan audit log.
-- Tampilkan alert SOS aktif, detail task yang aman, acknowledge, dan status terakhir.
-
-## Konflik dokumentasi yang wajib dibereskan
-
-Amendment TDD di baris 3 menetapkan Midtrans Sandbox sebagai provider Sprint 3 dan mengecualikan Demo Ledger, saldo dummy, serta `charge-dummy` dari Sprint 3. Implementasi saat ini mengikuti amendment tersebut.
-
-Namun isi TDD berikut masih menyatakan hal yang berbeda:
-
-- §3.4 masih menjadikan Saldo Dummy sebagai fallback.
-- §7 masih mencantumkan `POST /api/payments/:task_id/charge-dummy`.
-- §14.1 masih menyatakan `DemoWalletProvider` sebagai payment core wajib.
-- §14.4 Sprint 3 masih menjanjikan pembayaran dari saldo dummy.
-- §14.5 langkah E2E masih menyebut Demo Ledger.
-- §15 masih memasukkan escrow Midtrans dan fallback Saldo Demo bersamaan.
-
-Ini bukan sekadar masalah dokumentasi. Tim bisa mengerjakan dua provider yang saling bertentangan dan menghabiskan waktu pada jalur yang sudah dikecualikan. Sebelum mengerjakan Sprint 4, tetapkan satu keputusan dan selaraskan semua bagian TDD serta `docs/planning/sprint3/plan.md`. Rekomendasi audit ini adalah mempertahankan Midtrans Sandbox untuk Sprint 3, mencatat Demo Ledger sebagai fallback Sprint 4 atau scope terpisah, dan menghapus klaim fallback dari acceptance criteria Sprint 3.
-
-## Hal yang sudah cukup kuat
-
-- Harga booking dan `harga_final` dibaca dari database, bukan nominal otoritatif dari browser.
-- Webhook tidak mengubah status sebelum signature diverifikasi.
-- Split normal dilakukan oleh RPC database, bukan hitungan client.
-- Trigger report memakai dua laporan aktif, bukan rating rendah.
-- Route accept menolak Helper yang bukan `verified`, sehingga `under_review` tidak dapat menerima task baru.
-- Validasi layanan tambahan dan RLS dasar untuk payment, report, message, notification, serta emergency sudah memiliki struktur yang benar.
-- Build dan typecheck bersih. Tidak ada error lint, walaupun warning masih banyak.
+- Type database berhasil diregenerasi dan `npm.cmd run typecheck` serta `npm.cmd run build` lulus.
+- Migration Supabase berhasil dijalankan dari database kosong dan dapat diulang tanpa konflik.
+- Integration test membuktikan RLS role, conditional update, payment lock, refund retry, auto-release, report review, chat scope, notification recipient, dan SOS acknowledge.
+- Smoke test Midtrans Sandbox menyimpan hanya status, timestamp, dan marker aman tanpa secret, signature sensitif, atau token checkout.
+- CI remote pada commit final berstatus sukses.
+- Evidence UI dari Mervin diterima dan dipetakan ke contract backend, bukan menggantikan evidence backend.
 
 ## Batas audit
 
-Audit ini membaca source, migration, test, seed, dan workflow CI. Tidak menjalankan perubahan pada database remote, tidak mengirim transaksi ke Midtrans, dan tidak menganggap secret lokal sebagai bukti provider siap. Karena itu status “belum terbukti” tetap harus diperlakukan sebagai gap sampai ada evidence smoke test yang dapat diulang.
+Audit ini tidak menganggap file route, migration, atau test statis sebagai bukti runtime. Audit juga tidak mengubah TDD yang masih konflik, tidak mengklaim SMS aktif, dan tidak memberi sign-off sebelum typecheck, build, integration test, smoke test, serta CI final lulus.
+
+## Addendum: Status Scope Farros
+
+Addendum ini mempertahankan seluruh struktur audit dan ownership Mervin. Fokusnya hanya memperjelas pekerjaan Farros dan evidence terbaru.
+
+### Evidence runtime terbaru
+
+- Dev server berhasil menjalankan login Helper, `/helper/dashboard`, `/tugas`, dan `/notifikasi`.
+- `/helper/pesan` gagal pada query database dengan error `42703`: `service_categories.name` tidak ada. Schema memakai kolom `service_categories.nama`.
+- Lokasi blocker: `src/lib/chat/actions.ts`, jalur `getInbox`.
+- Status: blocker Farros untuk contract query chat. Belum boleh ditutup sebagai issue UI Mervin.
+
+### Keputusan scope
+
+- Implementasi backend tambahan tidak dianggap selesai hanya karena route atau migration terlihat tersedia.
+- Perubahan source backend yang sempat dibuat untuk menutup follow-up sudah dikembalikan, sehingga dokumen ini tidak menyamarkan status branch.
+- Farros perlu memperbaiki query `name` menjadi `nama`, lalu mengumpulkan smoke test chat task-scoped sebelum Task 5 dapat diberi status selesai.
+- Mervin tetap dilacak pada bagian UI, Realtime, accessibility, mobile QA, dan demo walkthrough. Tidak ada checklist Mervin yang dihapus atau dianggap selesai berdasarkan error backend ini.
+
+## Addendum 2: Hasil Perbaikan Chat
+
+- Query kategori pada `src/lib/chat/actions.ts` sudah diperbaiki agar memakai `service_categories.nama` sesuai schema.
+- Regression test `tests/chat-category-schema.test.mjs` membuktikan mismatch lama dapat ditangkap dan sekarang lulus.
+- Full test terbaru pada snapshot historis: 118 lulus, 0 gagal, 1 skipped.
+- Typecheck belum hijau karena `src/types/database.ts` masih kosong pada baseline branch. Ini tetap blocker Farros terpisah dari perbaikan query chat.
+- Browser smoke test `/helper/pesan` perlu diulang setelah type contract database dipulihkan. Perbaikan query saja belum cukup untuk memberi sign-off Sprint 3.
+
+## Addendum 3: Status Implementasi Farros
+
+Addendum ini mempertahankan audit awal dan tracking Mervin. Snapshot sebelumnya tetap berlaku sebagai histori, sedangkan evidence terbaru dicatat di sini.
+
+### Perubahan yang sudah dikerjakan
+
+- `src/types/database.ts` sudah dipulihkan dan diperbarui untuk enum `refunding` serta RPC payment, report, dan safety.
+- Payment intent dan Snap token sekarang memakai order ID deterministik per task. Settlement memeriksa status, order, nominal, dan signature sebelum mengubah payment menjadi `held_escrow`.
+- Refund diberi state `refunding`, kompensasi pembatalan dihitung 50%, dan auto-release 72 jam membagi 90/7/3 dengan row lock serta transaction log.
+- Report review memakai RPC dengan scope Admin atau Koordinator wilayah, alasan keputusan, dan audit log. Trigger tetap menghitung dua laporan aktif dan acceptance Helper `under_review` diblokir di database.
+- Chat server action memperbaiki relasi `helper_profiles.id` ke `helper_profiles.user_id`, mewajibkan task context, dan memperbaiki field kategori dari `name` ke `nama`.
+- SOS create dan acknowledge memakai RPC, alert aktif dideduplikasi per task, akses dibatasi berdasarkan task atau wilayah, dan notifikasi task/message dibuat oleh trigger database.
+- Seed menambahkan marker idempoten untuk payment held/released, chat task-scoped, notification, dan SOS.
+
+### Evidence lokal terbaru
+
+| Pemeriksaan | Hasil | Batas evidence |
+| --- | --- | --- |
+| `npm.cmd run typecheck` | Lulus | Type contract lokal sudah konsisten. |
+| `npm.cmd test` | 131 pass, 1 skipped, 0 failed | Test masih dominan source contract. Test RLS tetap skipped tanpa environment. |
+| `tests/sprint3-farros-follow-up-contract.test.mjs` | Lulus | Memastikan migration, route, seed, dan batas bypass service role tetap ada. |
+| Supabase migration reset | Belum dijalankan | Docker Desktop engine tidak tersedia pada environment ini. |
+| Midtrans Sandbox | Belum dijalankan | Credential dan checkout Sandbox nyata belum tersedia. |
+
+### Status audit saat ini
+
+Implementasi source Farros sudah diperluas dan typecheck serta test lokal sudah lulus. Sprint 3 tetap belum boleh diberi sign-off penuh karena lint, build, migration reset, integration RLS, smoke Midtrans, CI remote, dan evidence UI Mervin belum seluruhnya terkumpul. Ini status evidence yang belum lengkap, bukan klaim bahwa runtime production sudah terverifikasi.
+
+## Addendum 4: Quality Gate Lokal Terakhir
+
+Quality gate dijalankan ulang setelah perubahan terakhir dan pemasangan dependency dari lockfile.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm.cmd run lint` | Lulus tanpa error |
+| `npm.cmd run typecheck` | Lulus |
+| `npm.cmd test` | 131 pass, 1 skipped, 0 failed |
+| `npm.cmd run build` | Lulus sampai compile, TypeScript, dan static page generation |
+| `npx.cmd supabase db lint` | Terblokir karena Postgres lokal `127.0.0.1:54322` tidak aktif |
+
+Kesimpulan tetap sama: source contract Farros sudah terimplementasi dan quality gate lokal hijau, tetapi sign-off Sprint 3 belum sah sebelum migration reset, integration RLS, smoke Midtrans, CI remote, dan evidence UI Mervin tersedia.
+
+## Addendum 5: Smoke Test Midtrans Sandbox
+
+Provider Midtrans Sandbox berhasil diuji dengan credential dari `.env.local`. Request Snap API nyata menghasilkan token dan redirect URL untuk order `RANGKUL-INTEGRATION-20260827162652` dengan nominal Rp10.000. Tidak ada pembayaran atau settlement yang dilakukan. Pengecekan status setelah test mengembalikan `Transaction doesn't exist`, sehingga tidak ada transaksi pending yang tertinggal.
+
+Evidence ini membuktikan koneksi credential dan provider helper, bukan settlement route aplikasi. Webhook aplikasi tetap membutuhkan database Supabase aktif agar bisa diuji sampai RPC settlement dan notifikasi.
+
+## Addendum 6: Verifikasi Supabase Cloud
+
+- [x] Project Supabase cloud berhasil terdeteksi melalui `supabase migration list --linked`.
+- [x] Migrasi `20260827180000` sampai `20260827180005` berhasil tercatat di remote.
+- [x] Migrasi Sprint 4 yang sudah ada di workspace juga tercatat di remote sebagai `20260828090000`; Docker tidak dipakai untuk koneksi cloud.
+- [x] Seed cloud berhasil dijalankan ulang setelah seed diperbaiki agar tidak mengubah email akun yang sudah ada.
+- [x] Query read-only cloud menemukan 9 task demo, 2 payment demo, 1 pesan task-scoped, 1 alert SOS, 1 notifikasi SOS, dan 8 fungsi RPC Sprint 3.
+
+Status migration dan fixture cloud sekarang terbukti. Settlement webhook aplikasi, RLS lint, dan CI remote tetap membutuhkan verifikasi terpisah.

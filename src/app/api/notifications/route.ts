@@ -33,13 +33,17 @@ export async function GET(request: Request) {
     }
 
     const badges: Record<string, number> = {};
-    const role = user.user_metadata?.role;
+    const { data: userProfile } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle();
+    const role = userProfile?.role;
 
     // Fetch unread messages for all roles
-    const { count: unreadMsgs } = await supabase.from('messages').select('id', { count: 'exact', head: true }).eq('receiver_id', user.id).is('read_at', null);
+    const { count: unreadMsgs } = await supabase.from("messages").select("id", { count: "exact", head: true }).eq("receiver_id", user.id).is("read_at", null).not("task_id", "is", null);
     
     if (role === 'helper') {
-      const { count } = await supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('helper_id', user.id).eq('status', 'diajukan');
+      const { data: helperProfile } = await supabase.from("helper_profiles").select("id").eq("user_id", user.id).maybeSingle();
+      const { count } = helperProfile
+        ? await supabase.from("tasks").select("id", { count: "exact", head: true }).eq("helper_id", helperProfile.id).eq("status", "diajukan")
+        : { count: 0 };
       if (count) badges['/tugas'] = count;
       if (unreadMsgs) badges['/helper/pesan'] = unreadMsgs;
     } else if (role === 'koordinator') {

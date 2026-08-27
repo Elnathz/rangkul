@@ -47,6 +47,7 @@ DECLARE
   berat_category_id UUID;
   current_task_id UUID;
   existing_user_id UUID;
+  demo_password_hash TEXT := '$2b$10$FXHIF708OAcAkLVG5M4DZue2jZaOH25TzrzHPB14ooxRAc7XL2/72';
 BEGIN
   FOR user_data IN
     SELECT *
@@ -89,7 +90,7 @@ BEGIN
         '00000000-0000-0000-0000-000000000000',
         user_data.email_address,
         user_data.phone_value,
-        '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
+        demo_password_hash,
         NOW(),
         jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
         jsonb_build_object(
@@ -116,16 +117,26 @@ BEGIN
       LIMIT 1;
     END IF;
 
+    UPDATE auth.users
+    SET encrypted_password = demo_password_hash,
+        email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        updated_at = NOW()
+    WHERE LOWER(email) = LOWER(user_data.email_address)
+       OR LOWER(raw_user_meta_data ->> 'username') = LOWER(user_data.username_value)
+       OR id IN (
+         SELECT existing_public_user.id
+         FROM public.users existing_public_user
+         WHERE LOWER(existing_public_user.username) = LOWER(user_data.username_value)
+       );
+
     IF existing_user_id IS NOT NULL THEN
       UPDATE auth.users
-      SET email = user_data.email_address,
-          phone = user_data.phone_value,
+      SET phone = user_data.phone_value,
           updated_at = NOW()
       WHERE id = existing_user_id;
 
       UPDATE public.users
-      SET email = user_data.email_address,
-          phone = user_data.phone_value,
+      SET phone = user_data.phone_value,
           full_name = user_data.full_name_value,
           username = user_data.username_value,
           alamat_detail = user_data.alamat_detail_value,
@@ -149,7 +160,7 @@ BEGIN
       )
       VALUES (
         gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'demoadmin@rangkul.id', '081234567899',
-        '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6', NOW(),
+        demo_password_hash, NOW(),
         jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
         jsonb_build_object('full_name', 'Admin Demo Rangkul', 'role', 'admin', 'username', 'demo_admin'),
         'authenticated', 'authenticated', NOW(), NOW()
@@ -165,7 +176,11 @@ BEGIN
 
   IF admin_id IS NOT NULL THEN
     UPDATE auth.users
-    SET email = 'demoadmin@rangkul.id', phone = '081234567899', updated_at = NOW()
+    SET email = 'demoadmin@rangkul.id',
+        phone = '081234567899',
+        encrypted_password = demo_password_hash,
+        email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        updated_at = NOW()
     WHERE id = admin_id;
 
     UPDATE public.users
@@ -428,6 +443,155 @@ BEGIN
       is_available = FALSE,
       status = 'pending_verification',
       updated_at = NOW();
+  END IF;
+END;
+$$;
+
+-- Sprint 3: fixture pembayaran, chat, SOS, dan notifikasi dengan marker stabil.
+DO $$
+DECLARE
+  keluarga_id UUID;
+  helper_user_id UUID;
+  task_in_progress_id UUID;
+  task_completed_id UUID;
+  payment_held_id UUID;
+  payment_released_id UUID;
+  alert_id UUID;
+BEGIN
+  SELECT id INTO keluarga_id FROM public.users WHERE email = 'demokeluarga3@rangkul.id' LIMIT 1;
+  SELECT hp.user_id INTO helper_user_id
+  FROM public.helper_profiles hp
+  JOIN public.users u ON u.id = hp.user_id
+  WHERE u.email = 'demohelper3@rangkul.id'
+  LIMIT 1;
+
+  SELECT id INTO task_in_progress_id FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task dikerjakan' LIMIT 1;
+  SELECT id INTO task_completed_id FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task selesai' LIMIT 1;
+
+  IF task_in_progress_id IS NOT NULL AND keluarga_id IS NOT NULL AND helper_user_id IS NOT NULL THEN
+    INSERT INTO public.payments (
+      task_id, amount, jumlah_total, helper_share, platform_fee, koordinator_share,
+      status, payment_method, midtrans_order_id, held_at
+    )
+    SELECT task_in_progress_id, 50000, 50000, 45000, 1500, 3500,
+           'held_escrow', 'midtrans', 'DEMO-HOLD-' || replace(task_in_progress_id::text, '-', ''), NOW() - INTERVAL '1 hour'
+    WHERE NOT EXISTS (SELECT 1 FROM public.payments WHERE task_id = task_in_progress_id);
+
+    SELECT id INTO payment_held_id FROM public.payments WHERE task_id = task_in_progress_id;
+
+    IF payment_held_id IS NOT NULL THEN
+      INSERT INTO public.transaction_logs (payment_id, event_type, payload)
+      SELECT payment_held_id, 'held', jsonb_build_object('source', 'demo_seed', 'marker', '[DEMO_MATRIX] Payment held escrow')
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.transaction_logs
+        WHERE payment_id = payment_held_id AND payload ->> 'marker' = '[DEMO_MATRIX] Payment held escrow'
+      );
+
+      INSERT INTO public.messages (sender_id, receiver_id, task_id, message)
+      SELECT keluarga_id, helper_user_id, task_in_progress_id, '[DEMO_MATRIX] Pesan task scoped untuk kunjungan aktif.'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.messages
+        WHERE task_id = task_in_progress_id AND message = '[DEMO_MATRIX] Pesan task scoped untuk kunjungan aktif.'
+      );
+
+      INSERT INTO public.emergency_alerts (task_id, triggered_by, status)
+      SELECT task_in_progress_id, helper_user_id, 'active'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.emergency_alerts
+        WHERE task_id = task_in_progress_id AND status = 'active'
+      )
+      RETURNING id INTO alert_id;
+
+      IF alert_id IS NOT NULL THEN
+        INSERT INTO public.notifications (user_id, title, body, type)
+        SELECT keluarga_id, 'Sinyal darurat aktif', 'Fixture SOS aktif untuk task demo.', 'emergency'
+        WHERE NOT EXISTS (
+          SELECT 1 FROM public.notifications
+          WHERE user_id = keluarga_id AND body = 'Fixture SOS aktif untuk task demo.'
+        );
+      END IF;
+    END IF;
+  END IF;
+
+  IF task_completed_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.payments WHERE task_id = task_completed_id) THEN
+    INSERT INTO public.payments (
+      task_id, amount, jumlah_total, helper_share, platform_fee, koordinator_share,
+      status, payment_method, midtrans_order_id, held_at, released_at
+    )
+    VALUES (
+      task_completed_id, 70000, 70000, 63000, 2100, 4900,
+      'released', 'midtrans', 'DEMO-RELEASE-' || replace(task_completed_id::text, '-', ''), NOW() - INTERVAL '4 days', NOW() - INTERVAL '3 days'
+    )
+    RETURNING id INTO payment_released_id;
+
+    INSERT INTO public.transaction_logs (payment_id, event_type, payload)
+    VALUES (payment_released_id, 'released', jsonb_build_object('source', 'demo_seed', 'marker', '[DEMO_MATRIX] Payment released split 90 7 3'));
+  END IF;
+END;
+$$;
+
+-- Sprint 4: fixture banding dan saldo demo untuk jalur Admin tanpa payment gateway.
+DO $$
+DECLARE
+  admin_id UUID;
+  keluarga_id UUID;
+  demo_wallet_id UUID;
+  current_saldo NUMERIC;
+BEGIN
+  SELECT id INTO admin_id
+  FROM public.users
+  WHERE role = 'admin'
+  ORDER BY created_at
+  LIMIT 1;
+
+  SELECT id INTO keluarga_id
+  FROM public.users
+  WHERE email = 'demokeluarga4@rangkul.id'
+    AND role = 'keluarga'
+  LIMIT 1;
+
+  IF keluarga_id IS NULL THEN
+    SELECT id INTO keluarga_id
+    FROM public.users
+    WHERE role = 'keluarga'
+    ORDER BY created_at
+    LIMIT 1;
+  END IF;
+
+  IF admin_id IS NOT NULL AND keluarga_id IS NOT NULL THEN
+    INSERT INTO public.demo_wallets (user_id, saldo)
+    VALUES (keluarga_id, 200000)
+    ON CONFLICT (user_id) DO NOTHING;
+
+    SELECT id, saldo INTO demo_wallet_id, current_saldo
+    FROM public.demo_wallets
+    WHERE user_id = keluarga_id;
+
+    IF current_saldo = 0 THEN
+      UPDATE public.demo_wallets
+      SET saldo = 200000, updated_at = NOW()
+      WHERE id = demo_wallet_id;
+      current_saldo := 200000;
+    END IF;
+
+    INSERT INTO public.demo_wallet_ledger (wallet_id, user_id, amount, saldo_setelah, alasan, created_by)
+    SELECT demo_wallet_id, keluarga_id, 200000, current_saldo, '[DEMO_MATRIX] Top up wallet awal', admin_id
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM public.demo_wallet_ledger ledger_row
+      WHERE ledger_row.wallet_id = demo_wallet_id
+        AND ledger_row.alasan = '[DEMO_MATRIX] Top up wallet awal'
+    );
+
+    INSERT INTO public.appeals (user_id, alasan, status)
+    SELECT keluarga_id, '[DEMO_MATRIX] Banding akun restricted', 'menunggu'
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM public.appeals
+      WHERE user_id = keluarga_id
+        AND alasan = '[DEMO_MATRIX] Banding akun restricted'
+    );
+
   END IF;
 END;
 $$;
