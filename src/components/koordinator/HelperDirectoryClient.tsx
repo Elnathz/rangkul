@@ -139,21 +139,43 @@ export default function HelperDirectoryClient() {
 
   React.useEffect(() => {
     let active = true;
-    void fetchDirectoryData()
-      .then((payload) => {
+    let fetching = false;
+
+    const performFetch = async (isBackground = false) => {
+      if (fetching) return;
+      fetching = true;
+      try {
+        const payload = await fetchDirectoryData();
         if (!active) return;
         setDirectory(payload);
         setErrorMessage("");
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
+        if (!isBackground) setLoading(false);
+      } catch (error: unknown) {
         if (!active) return;
         setErrorMessage(error instanceof Error ? error.message : "Directory Helper gagal dimuat.");
-        setLoading(false);
-      });
+        if (!isBackground) setLoading(false);
+      } finally {
+        fetching = false;
+      }
+    };
+
+    void performFetch();
+
+    // 1. Polling every 30 seconds
+    const intervalId = setInterval(() => {
+      void performFetch(true);
+    }, 30000);
+
+    // 2. Refetch on focus
+    const onFocus = () => {
+      void performFetch(true);
+    };
+    window.addEventListener("focus", onFocus);
 
     return () => {
       active = false;
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
