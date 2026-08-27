@@ -297,8 +297,6 @@ Yang berhak menandai "selesai & dibayar" adalah Keluarga. Auto-release jika Kelu
 
 **Komisi Koordinator** dihitung dari transaksi yang berhasil diselesaikan di wilayahnya — bukan dari jumlah persetujuan Helper baru — supaya tidak ada insentif "asal setuju" yang melemahkan kualitas verifikasi.
 
-**Cadangan saat demo — Saldo Dummy:** Admin bisa top-up "saldo dummy" ke akun Keluarga tertentu lewat `/admin/demo-wallet` (tabel `demo_wallets`), khusus kebutuhan demo/judging. Jika Midtrans gagal/timeout, muncul opsi "Bayar dengan Saldo Demo" di `/pembayaran/{task_id}` — tetap melewati state machine escrow yang sama, hanya tidak memanggil API Midtrans. Didokumentasikan transparan sebagai "demo safety net", bukan metode pembayaran produksi.
-
 ### 3.5 Data Lansia — Soft Delete
 
 Saat Keluarga menghapus profil lansia, data pribadi disembunyikan (soft delete), namun riwayat transaksi teragregasi milik Helper tetap dipertahankan.
@@ -480,8 +478,8 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 | FR-PAY-04 | Setiap event pembayaran tercatat di`transaction_logs`                                         | Must      |
 | FR-PAY-05 | Helper lihat riwayat penghasilan & status pencairan                                             | Should    |
 | FR-PAY-06 | Koordinator lihat riwayat komisi per wilayah                                                    | Should    |
-| FR-PAY-07 | Admin dapat top-up saldo dummy ke akun Keluarga untuk kebutuhan demo/judging                    | Should    |
-| FR-PAY-08 | Sistem menyediakan jalur "Bayar dengan Saldo Demo" sebagai fallback saat Midtrans gagal/timeout | Should    |
+ Admin dapat top-up saldo dummy ke akun Keluarga untuk kebutuhan demo/judging                    | Should    |
+ Sistem menyediakan jalur "Bayar dengan Saldo Demo" sebagai fallback saat Midtrans gagal/timeout | Should    |
 | FR-PAY-09 | Pembatalan tugas DIKONFIRMASI dengan dana HELD_ESCROW otomatis split 50/50 (§3.8)              | Must      |
 
 ### 4.7 Bukti Kunjungan & Riwayat Rangkul
@@ -540,7 +538,7 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 | FR-ADM-04 | Kelola kategori jasa (termasuk tandai kategori berisiko tinggi)                        | Must      |
 | FR-ADM-05 | Lihat audit log seluruh aksi sensitif                                                  | Should    |
 | FR-ADM-06 | Review & verifikasi dokumen pengajuan Koordinator baru (approve/reject)                | Must      |
-| FR-ADM-07 | Top-up saldo dummy ke akun Keluarga (fallback demo)                                    | Should    |
+ Top-up saldo dummy ke akun Keluarga (fallback demo)                                    | Should    |
 | FR-ADM-08 | Menjadi verifikator fallback untuk Helper di wilayah tanpa Koordinator aktif (§3.3.1) | Must      |
 | FR-ADM-09 | Meninjau Helper`under_review` (2 laporan terkumpul) dan memutuskan tindak lanjut     | Must      |
 | FR-ADM-10 | Menambahkan akun pengguna dari panel Admin dengan role non-admin dan kredensial Auth Supabase | Should    |
@@ -652,7 +650,7 @@ flowchart TD
     A --> F[Review banding pembatalan Keluarga]
     A --> G[Suspend/hapus akun bermasalah]
     A --> H[Lihat audit log]
-    A --> I[Top-up saldo dummy - fallback demo]
+
     A --> J[Jadi verifikator fallback wilayah tanpa Koordinator - 3.3.1]
 ```
 
@@ -1024,7 +1022,7 @@ POST   /api/tasks/:id/rating               (§4.8 — sinyal kualitas saja)
 
 ```
 POST   /api/payments/:task_id/charge          (inisiasi Midtrans)
-POST   /api/payments/:task_id/charge-dummy    (fallback Saldo Demo)
+
 POST   /api/payments/webhook                  (callback Midtrans)
 GET    /api/payments/:task_id
 ```
@@ -1166,7 +1164,7 @@ flowchart LR
 | `/kunjungan`               | Riwayat status tugas.                                                          |
 | `/kunjungan/{id}`          | Detail: foto bukti, chat, reschedule, approve Layanan Tambahan, rating.        |
 | `/kunjungan/{id}/laporkan` | Laporkan Helper/kejadian bermasalah (§3.10).                                  |
-| `/pembayaran/{task_id}`    | Status escrow, opsi fallback Saldo Demo.                                       |
+| `/pembayaran/{task_id}`    | Status escrow.                                       |
 | `/pesan`                   | Inbox percakapan lintas tugas.                                                 |
 | `/banding`                 | Form banding jika akun`restricted` (§3.9).                                  |
 
@@ -1208,7 +1206,7 @@ flowchart LR
 | `/admin/categories`            | Kelola kategori jasa, harga dasar, status berisiko tinggi.                      |
 | `/admin/reports`               | Eskalasi laporan berat.                                                         |
 | `/admin/banding`               | Review banding pembatalan.                                                      |
-| `/admin/demo-wallet`           | Top-up saldo dummy.                                                             |
+ Top-up saldo dummy.                                                             |
 | `/admin/audit-logs`            | Audit log.                                                                      |
 
 ### Help Center
@@ -1281,7 +1279,7 @@ sequenceDiagram
 | RT tidak punya Koordinator aktif — onboarding wilayah baru | Sedang | Sedang         | RW sebagai fallback, Admin sebagai fallback terakhir (§3.3.1)                                                              |
 | Kebocoran data pribadi lansia                               | Tinggi | Rendah         | RLS ketat, akses terbatas, audit log                                                                                        |
 | Supabase auto-pause saat dinilai juri                       | Tinggi | Sedang         | Heartbeat GitHub Actions (§2.3)                                                                                            |
-| Midtrans sandbox gagal/limit saat demo                      | Sedang | Rendah         | Jalur cadangan Saldo Demo (§3.4)                                                                                           |
+ Sedang | Rendah         | Jalur cadangan Saldo Demo (§3.4)                                                                                           |
 | SOS dipicu iseng/disalahgunakan                             | Sedang | Rendah         | Log setiap trigger, review Koordinator                                                                                      |
 | Akun Keluarga dibuat bukan oleh kerabat lansia sungguhan    | Tinggi | Rendah         | Wajib unggah KTP lansia + bukti hubungan keluarga (§3.11)                                                                  |
 | Laporan dipakai tidak adil untuk menjatuhkan Helper         | Sedang | Rendah         | Butuh 2 laporan terkumpul (bukan 1 rating), status`under_review` tetap butuh review manual sebelum suspend penuh (§3.10) |
@@ -1355,13 +1353,12 @@ TDD ini memuat terlalu banyak fitur untuk dikerjakan paralel tanpa urutan yang k
 
 | Prioritas                                   | Harus benar-benar berjalan saat demo                                                                                                                                                                                                                                        | Tidak boleh menjadi blocker                                                           |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **P0 — alur pemenang**               | Auth 3 peran publik + Admin seed; profil lansia; verifikasi Helper/Koordinator; katalog Helper; booking; accept/approval; check-in; laporan + Health Snapshot; Riwayat Rangkul; Demo Ledger pembayaran; laporan formal 2x →`under_review`; panel Admin inti; seed reset. | Landing page kompleks, SMS, chat realtime, filter RW detail, dashboard komisi detail. |
+| **P0 — alur pemenang**               | Auth 3 peran publik + Admin seed; profil lansia; verifikasi Helper/Koordinator; katalog Helper; booking; accept/approval; check-in; laporan + Health Snapshot; Riwayat Rangkul; Midtrans sandbox; laporan formal 2x →`under_review`; panel Admin inti; seed reset. | Landing page kompleks, SMS, chat realtime, filter RW detail, dashboard komisi detail. |
 | **P1 — memperkuat demo**             | Layanan Tambahan; reschedule/cancel; notifikasi in-app; chat per tugas; SOS`tel:` + alert in-app; offline draft laporan.                                                                                                                                                  | Midtrans live/split/escrow, SMS, auto-release 3x24 jam di produksi.                   |
 | **P2 — hanya jika P0 dan P1 stabil** | Midtrans sandbox yang sudah diverifikasi, badge tren otomatis, filter pengawasan RW, inbox realtime penuh, Help Center lengkap.                                                                                                                                             | Fitur baru yang tidak muncul dalam skrip demo.                                        |
 
 **Keputusan teknis yang menghindari kegagalan demo:**
 
-~~1. **Payment core adalah Demo Ledger yang nyata dan teruji**, bukan Midtrans. Buat interface `PaymentProvider`; `DemoWalletProvider` adalah provider wajib untuk seluruh alur `pending → held_escrow → released/refunded`. `MidtransProvider` hanya *time-boxed spike* maksimal dua hari pada Sprint 3. Jika sandbox, webhook, atau skema split tidak terbukti berjalan dalam batas itu, feature flag Midtrans dimatikan dan demo tetap memakai Saldo Demo secara transparan. Jangan menjadikan klaim escrow gateway sebagai titik kegagalan proyek.~~ *(Dicabut berdasarkan Amendment 23 Agustus 2026, Sprint 3: Midtrans menjadi payment core utama).*
 2. **SOS MVP adalah `tel:` quick-dial dan notifikasi in-app persisten.** SMS dipindahkan ke P2 karena membutuhkan provider, biaya, dan pengujian nomor sungguhan. Ini menyelesaikan konflik antara FR-NOT-02 yang sekarang `Must` dan §15 yang menyebut SMS sebagai fitur jika waktu tersisa.
 3. **Autentikasi MVP menggunakan email + password.** Admin tidak mendaftar lewat UI; Admin selalu akun seed. Telepon/OTP hanya ditambahkan bila konfigurasi Supabase benar-benar siap, bukan dikerjakan paralel tanpa kebutuhan demo.
 4. **Radius layanan membutuhkan koordinat Helper.** Tambahkan `domisili_lat`, `domisili_lng`, dan `is_available` ke `helper_profiles`; tanpa itu katalog “dalam radius” pada §3.3.1 tidak bisa dihitung secara jujur.
@@ -1527,7 +1524,7 @@ Ketentuan tambahan:
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend**       | 1.`/booking/{helper_id}`: pilih lansia, kategori, jadwal, ringkasan harga fix, dan alasan batas waktu. 2. Keluarga: daftar/detail kunjungan, timeline status, cancel/reschedule UI. 3. Helper: job board, detail tugas, accept, check-in, dan form laporan dasar. 4. Koordinator: antrean approval kondisi khusus. 5. Form laporan memuat foto, catatan, lima indikator Health Snapshot, Cerita Hari Ini. 6. Buat komponen status tunggal untuk semua role agar label/aksi konsisten. 7. Integrasikan error `409` saat task telah diambil Helper lain.                                                                                                                                | Kontrak`tasks`, daftar status, dan endpoint accept tersedia Hari 2. | Dua browser dapat mencoba mengambil task yang sama; hanya satu mendapat sukses. Keluarga melihat laporan yang dikirim Helper.                 |
 | **Backend**        | 1. Migration`tasks`, `task_evidence`, `health_snapshots`, `ratings`, `notifications` dasar. 2. Buat state machine server-side dan RPC/transaction: create, accept atomik, approve Koordinator, start, submit evidence, cancel, reschedule. 3. Simpan `expires_at` saat booking; buat scheduled job/route internal untuk membatalkan task kedaluwarsa. 4. Terapkan aturan approval probation, Helper pertama, vakum, riwayat sanksi, dan kategori berisiko tinggi. 5. Terapkan validasi reschedule, limit dua kali, serta kontrol cancel sebelum `dikerjakan`. 6. Buat query laporan/Health Snapshot per lansia. 7. Tulis test untuk transisi ilegal dan concurrency accept. | Data Helper verified, kategori, lansia dari Sprint 1.                 | State hanya berubah lewat transisi yang sah; user yang bukan pemilik task tidak dapat cancel/reschedule; task kadaluarsa tidak dapat diambil. |
-| **Integrasi & QA** | 1. Hari 2: booking → accept untuk Helper terpercaya. 2. Hari 5: jalankan golden path dan satu path probation yang menunggu approval Koordinator. 3. Uji tanggal same-day vs H-1, task expired, dua Helper accept bersamaan, dan submit laporan.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Semua endpoint tugas.                                                 | Satu skrip demo 4–5 menit sudah dapat memperlihatkan pembeda kepercayaan komunitas dan Health Snapshot, walau pembayaran masih Demo Ledger.  |
+| **Integrasi & QA** | 1. Hari 2: booking → accept untuk Helper terpercaya. 2. Hari 5: jalankan golden path dan satu path probation yang menunggu approval Koordinator. 3. Uji tanggal same-day vs H-1, task expired, dua Helper accept bersamaan, dan submit laporan.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Semua endpoint tugas.                                                 | Satu skrip demo 4–5 menit sudah dapat memperlihatkan pembeda kepercayaan komunitas dan Health Snapshot, walau pembayaran memakai Midtrans Sandbox.  |
 
 **Quality gate Sprint 2:** tidak ada status task yang diubah langsung dari client; race condition accept punya test; laporan hanya dapat dibuat oleh Helper yang ditugaskan dan hanya sekali per task.
 
@@ -1540,9 +1537,9 @@ Ketentuan tambahan:
 
 | Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Ketergantungan                                            | Hasil yang harus dapat didemokan                                                                                                                  |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**       | 1.`/pembayaran/{task_id}`: bayar dengan Saldo Demo, status dana ditahan, konfirmasi selesai, refund/kompensasi. 2. Detail tugas: ajukan/approve/reject Layanan Tambahan. 3. Keluarga: form laporan formal; Helper mendapat status `under_review` dan tidak bisa menerima task baru. 4. Chat per task dan inbox sederhana; notifikasi in-app. 5. Tombol SOS Helper: dialog konfirmasi, `tel:`, status alert, dan acknowledge UI untuk Keluarga/Koordinator. 6. Tampilkan alasan aksi dinonaktifkan, bukan hanya tombol abu-abu.                                                                                                                                                                                                                                                                    | Payment contract dan notification events tersedia Hari 2. | Keluarga membayar dari saldo dummy; setelah selesai saldo terbagi 90/7/3. Dua laporan mengubah Helper menjadi`under_review`.                    |
-| **Backend**        | ~~1. Implementasikan`DemoWalletProvider` dan ledger immutable... 6. Lakukan *spike* Midtrans sandbox...~~ *(Dicabut berdasarkan Amendment 23 Agustus 2026: Midtrans Sandbox wajib diimplementasikan penuh).* | State machine dan task selesai dari Sprint 2.             | Ledger tidak pernah menghasilkan saldo negatif/dobel; cancel dan release tidak bisa dipanggil dua kali; webhook yang signature-nya salah ditolak. |
-| **Integrasi & QA** | 1. Hari 2: Demo Ledger end-to-end. 2. Hari 5: extra service, report 2x, alert SOS, dan notifikasi. 3. Simulasikan network/API error saat pembayaran dan pastikan UI tidak menampilkan dana “cair” sebelum server sukses. 4. Putuskan final: Midtrans dipakai atau tidak, lalu hapus UI yang menyesatkan.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Semua event payment/report.                               | Jalur pembayaran demo stabil dan transparan; tidak ada klaim gateway produksi jika yang dipakai adalah Saldo Demo.                                |
+| **Frontend**       | 1.`/pembayaran/{task_id}`: bayar dengan Midtrans, status dana ditahan, konfirmasi selesai, refund/kompensasi. 2. Detail tugas: ajukan/approve/reject Layanan Tambahan. 3. Keluarga: form laporan formal; Helper mendapat status `under_review` dan tidak bisa menerima task baru. 4. Chat per task dan inbox sederhana; notifikasi in-app. 5. Tombol SOS Helper: dialog konfirmasi, `tel:`, status alert, dan acknowledge UI untuk Keluarga/Koordinator. 6. Tampilkan alasan aksi dinonaktifkan, bukan hanya tombol abu-abu.                                                                                                                                                                                                                                                                    | Payment contract dan notification events tersedia Hari 2. | Keluarga membayar via Midtrans; setelah selesai saldo terbagi 90/7/3. Dua laporan mengubah Helper menjadi`under_review`.                    |
+| **Backend**        |  | State machine dan task selesai dari Sprint 2.             | Ledger tidak pernah menghasilkan saldo negatif/dobel; cancel dan release tidak bisa dipanggil dua kali; webhook yang signature-nya salah ditolak. |
+| **Integrasi & QA** | 1. Hari 2: Midtrans Sandbox end-to-end. 2. Hari 5: extra service, report 2x, alert SOS, dan notifikasi. 3. Simulasikan network/API error saat pembayaran dan pastikan UI tidak menampilkan dana “cair” sebelum server sukses. 4. Putuskan final: Midtrans dipakai atau tidak, lalu hapus UI yang menyesatkan.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Semua event payment/report.                               | Jalur pembayaran demo stabil dan transparan;                                 |
 
 **Quality gate Sprint 3:** semua perubahan saldo dibuat di server/transaction; user tidak dapat mengubah nominal dari browser; `under_review` benar-benar memblokir accept task; SMS tidak diklaim berjalan jika belum ada provider teruji.
 
@@ -1587,7 +1584,7 @@ Urutan ini harus dipatuhi. Jangan membangun chat atau panel Admin lengkap sebelu
 4. Keluarga melihat Helper verified → membuat booking
 5. Helper menerima task → approval bila perlu → check-in
 6. Helper mengirim laporan + Health Snapshot → Riwayat Rangkul diperbarui
-7. Keluarga membayar/menyelesaikan via Demo Ledger → pembagian saldo tercatat
+7. Keluarga membayar/menyelesaikan via Midtrans → pembagian saldo tercatat
 8. Keluarga melapor dua kali → Helper under_review → Admin/Koordinator meninjau
 9. Seed reset → jalur 1–8 dapat didemokan ulang
 ```
@@ -1602,7 +1599,7 @@ Urutan ini harus dipatuhi. Jangan membangun chat atau panel Admin lengkap sebelu
 | Katalog & radius                |        Ya |            Ya | filter UI, query koordinat/radius         |
 | Booking/state machine           |        Ya |            Ya | action state, RPC atomik, error 409       |
 | Laporan & Riwayat Rangkul       |        Ya |            Ya | form, upload, query tren, badge rule      |
-| Payment Demo Ledger             |        Ya |            Ya | payment state UI, transaction, audit      |
+| Payment Midtrans Sandbox             |        Ya |            Ya | payment state UI, transaction, audit      |
 | Chat/notifikasi/SOS             |        Ya |            Ya | Realtime subscription, event/policy       |
 | Offline draft                   |        Ya |            Ya | IndexedDB, idempotency submit             |
 | Admin/Koordinator panel         |        Ya |            Ya | table/action UI, authorization/audit      |
@@ -1615,7 +1612,7 @@ Jika akhir Sprint 2 alur booking sampai laporan **belum** tersambung, jangan men
 Urutan fitur yang boleh dipotong adalah:
 
 1. SMS darurat.
-2. ~~Midtrans sandbox bila Demo Ledger telah transparan dan stabil.~~ *(Dicabut: Midtrans Sandbox adalah target prioritas Sprint 3).*
+
 3. Inbox realtime penuh; pertahankan chat per task sederhana.
 4. Filter pengawasan RW detail dan dashboard komisi detail.
 5. Badge otomatis; timeline dan grafik Riwayat Rangkul tetap dipertahankan.
@@ -1641,7 +1638,7 @@ Sebelum sprint ditutup, owner FE dan BE mengisi checklist singkat berikut di iss
 
 | Kategori                    | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Wajib ada (dinilai juri)    | Auth 4 peran • Profil lansia + verifikasi identitas • Katalog & verifikasi Helper (radius layanan) • Kategori jasa fix price + Layanan Tambahan • Booking, model approval bertingkat, reschedule, kompensasi pembatalan, restriksi >2 pembatalan • Bukti kunjungan + Health Snapshot • Riwayat Rangkul (timeline + tren) • Rating + sistem laporan (2x → under_review) • Chat + inbox • Notifikasi terpusat (termasuk notifikasi pasif Koordinator) • Koordinator approve/reject Helper & booking kondisi khusus • Panel Admin (verifikasi Koordinator, fallback wilayah, banding) • Escrow Midtrans sandbox + fallback Saldo Demo • Tombol darurat • Offline draft laporan |
+| Wajib ada (dinilai juri)    | Auth 4 peran • Profil lansia + verifikasi identitas • Katalog & verifikasi Helper (radius layanan) • Kategori jasa fix price + Layanan Tambahan • Booking, model approval bertingkat, reschedule, kompensasi pembatalan, restriksi >2 pembatalan • Bukti kunjungan + Health Snapshot • Riwayat Rangkul (timeline + tren) • Rating + sistem laporan (2x → under_review) • Chat + inbox • Notifikasi terpusat (termasuk notifikasi pasif Koordinator) • Koordinator approve/reject Helper & booking kondisi khusus • Panel Admin (verifikasi Koordinator, fallback wilayah, banding) • Escrow Midtrans sandbox • Tombol darurat • Offline draft laporan |
 | Jika waktu tersisa          | Notifikasi SMS darurat • Jadwal kunjungan berkala (recurring) • Feedback sederhana dari lansia • Dashboard komisi Koordinator detail • Badge peringatan otomatis Riwayat Rangkul • Filter pengawasan RW                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Sengaja dipotong dari scope | Payment gateway produksi • Sistem asuransi/liabilitas formal • Ekspansi multi-kota • Algoritma matching/rekomendasi canggih • Fitur AI apa pun • Komunitas curhat terbuka (§3.12)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
@@ -1722,7 +1719,7 @@ Ditaruh di `.claude/skills/<nama-skill>/SKILL.md`, supaya setiap kali Claude Cod
 
 - **`rangkul-state-machine`** — status tugas (§3.1), conditional update anti-race-condition (§3.2), kapan tiap transisi status boleh terjadi.
 - **`rangkul-approval-model`** — model verifikasi orang vs approval bertingkat (§3.3.2–3.3.3), radius layanan (§3.3.1), kapan booking butuh persetujuan eksplisit vs otomatis.
-- **`rangkul-payment-rules`** — split 90/7/3 (§3.4.2), fix price + Layanan Tambahan (§3.4.1), kompensasi pembatalan 50/50 (§3.8), akumulasi pembatalan & restriksi (§3.9), kapan fallback Saldo Demo boleh dipakai.
+- **`rangkul-payment-rules`** — split 90/7/3 (§3.4.2), fix price + Layanan Tambahan (§3.4.1), kompensasi pembatalan 50/50 (§3.8), akumulasi pembatalan & restriksi (§3.9).
 - **`rangkul-trust-safety`** — trigger 2-laporan → under_review (§3.10), verifikasi dokumen Helper/Koordinator/identitas lansia (§3.3, §3.11).
 - **`rangkul-riwayat-rangkul`** — struktur Health Snapshot + Memory Capsule (§3.12), logika badge peringatan rule-based.
 - **`rangkul-rls-policy`** — template pola RLS Supabase konsisten per tipe tabel ("milik satu user" vs "per-wilayah Koordinator" vs "publik read-only").
@@ -1771,3 +1768,4 @@ Data awal yang wajib tersedia sebelum demo, supaya alur inti tidak bergantung pa
 ---
 
 *Dokumen ini adalah rancangan teknis dan dapat direvisi seiring pengembangan — terutama setelah Technical Meeting 16 Agustus 2026.*
+
