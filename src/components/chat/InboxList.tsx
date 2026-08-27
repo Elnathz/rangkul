@@ -9,6 +9,8 @@ import { Search, Plus, X, Users, MapPin } from "lucide-react";
 import Image from "next/image";
 
 export type InboxItem = {
+  taskId: string;
+  taskTitle: string;
   otherUserId: string;
   otherUserName: string;
   otherUserPhoto: string | null;
@@ -23,7 +25,8 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
   const [search, setSearch] = useState("");
 
   const filteredInbox = inbox.filter(item => 
-    item.otherUserName.toLowerCase().includes(search.toLowerCase())
+    item.otherUserName.toLowerCase().includes(search.toLowerCase()) || 
+    item.taskTitle.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -42,7 +45,7 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-colors"
-            placeholder="Cari pesan..."
+            placeholder="Cari pesan atau tugas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -59,12 +62,12 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
           <div className="divide-y divide-slate-100">
             {filteredInbox.map((item) => {
               const initials = item.otherUserName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
-              const isActive = pathname.includes(`${basePath}/${item.otherUserId}`);
+              const isActive = pathname.includes(`${basePath}/${item.taskId}`);
 
               return (
                 <Link
-                  key={item.otherUserId}
-                  href={`${basePath}/${item.otherUserId}`}
+                  key={item.taskId}
+                  href={`${basePath}/${item.taskId}`}
                   className={`flex items-center gap-4 p-4 transition-colors ${
                     isActive ? "bg-blue-50" : "hover:bg-slate-50 bg-white"
                   }`}
@@ -99,6 +102,9 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
                         {formatDistanceToNow(new Date(item.lastMessageAt), { addSuffix: true, locale: id })}
                       </span>
                     </div>
+                    <p className="text-[11px] text-[#0D47A1] font-semibold truncate mb-1">
+                      {item.taskTitle}
+                    </p>
                     <p className={`text-sm truncate ${item.unreadCount > 0 ? "text-slate-900 font-medium" : "text-slate-500"}`}>
                       {item.lastMessage}
                     </p>

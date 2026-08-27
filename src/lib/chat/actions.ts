@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export type InboxItem = {
+  taskId: string;
+  taskTitle: string;
   otherUserId: string;
   otherUserName: string;
   otherUserPhoto: string | null;
@@ -22,6 +24,7 @@ export type ChatMessage = {
   id: string;
   sender_id: string;
   receiver_id: string;
+  task_id: string;
   message: string;
   created_at: string;
   read_at: string | null;
@@ -34,14 +37,24 @@ type InboxParticipant = {
   full_name: string | null;
 };
 
+type TaskInfo = {
+  id: string;
+  service_category_id: string;
+  keluarga_id: string;
+  helper_id: string;
+  category?: { name: string } | { name: string }[] | null;
+};
+
 type InboxMessageRecord = {
   sender_id: string;
   receiver_id: string;
+  task_id: string;
   message: string;
   created_at: string;
   read_at: string | null;
   sender: InboxParticipant | InboxParticipant[] | null;
   receiver: InboxParticipant | InboxParticipant[] | null;
+  task: TaskInfo | TaskInfo[] | null;
 };
 
 export async function getInbox(): Promise<InboxItem[]> {
@@ -51,38 +64,44 @@ export async function getInbox(): Promise<InboxItem[]> {
 
   const supabaseClient = await createClient();
 
-  // Fetch recent messages where user is sender or receiver
-  // Use regular client so it respects RLS
   const { data: messages, error } = await supabaseClient
     .from("messages")
     .select(`
       *,
       sender:sender_id (id, full_name),
-      receiver:receiver_id (id, full_name)
+      receiver:receiver_id (id, full_name),
+      task:tasks!inner (
+        id, keluarga_id, helper_id,
+        category:service_categories (name)
+      )
     `)
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .not('task_id', 'is', null)
     .order("created_at", { ascending: false })
     .limit(500);
 
   if (error) throw error;
 
   const inboxMap = new Map<string, InboxItem>();
-
   const inboxMessages = (messages ?? []) as unknown as InboxMessageRecord[];
 
   inboxMessages.forEach((msg) => {
+    if (!msg.task_id) return;
+    
     const isSender = msg.sender_id === user.id;
-    // Need to handle if sender/receiver is an array because of foreign keys without one-to-one constraint.
-    // Usually it returns an array if foreign key is not strictly one-to-one, or single object if one-to-one.
     const sender = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
     const receiver = Array.isArray(msg.receiver) ? msg.receiver[0] : msg.receiver;
-
     const otherUser = isSender ? receiver : sender;
 
     if (!otherUser) return;
 
-    if (!inboxMap.has(otherUser.id)) {
-      inboxMap.set(otherUser.id, {
+    if (!inboxMap.has(msg.task_id)) {
+      const task = Array.isArray(msg.task) ? msg.task[0] : msg.task;
+      const category = task?.category ? (Array.isArray(task.category) ? task.category[0] : task.category) : null;
+      
+      inboxMap.set(msg.task_id, {
+        taskId: msg.task_id,
+        taskTitle: category?.name || "Tugas Rangkul",
         otherUserId: otherUser.id,
         otherUserName: otherUser.full_name || "Pengguna Rangkul",
         otherUserPhoto: null,
@@ -92,9 +111,8 @@ export async function getInbox(): Promise<InboxItem[]> {
       });
     }
 
-    // Increment unread count if we are the receiver and it's not read
     if (!isSender && !msg.read_at) {
-      const item = inboxMap.get(otherUser.id)!;
+      const item = inboxMap.get(msg.task_id)!;
       item.unreadCount++;
     }
   });
@@ -102,14 +120,31 @@ export async function getInbox(): Promise<InboxItem[]> {
   return Array.from(inboxMap.values());
 }
 
-export async function getChatMessages(otherUserId: string): Promise<ChatMessage[]> {
+export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
   const supabaseClient = await createClient();
 
-  // Use regular client so it respects RLS
+  const { data: task, error: taskError } = await supabaseClient
+    .from("tasks")
+    .select("keluarga_id, helper_id")
+    .eq("id", taskId)
+    .single();
+    
+  if (taskError || !task) throw new Error("Tugas tidak ditemukan");
+  
+  if (task.keluarga_id !== user.id && task.helper_id !== user.id) {
+    const { data: koordinator } = await supabaseClient
+      .from("koordinator_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    if (!koordinator) throw new Error("Anda tidak berhak melihat pesan ini");
+  }
+
   const { data, error } = await supabaseClient
     .from("messages")
     .select(`
@@ -117,26 +152,41 @@ export async function getChatMessages(otherUserId: string): Promise<ChatMessage[
       sender:sender_id (full_name),
       receiver:receiver_id (full_name)
     `)
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+    .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
   return (data ?? []) as unknown as ChatMessage[];
 }
 
-export async function sendMessage(receiverId: string, message: string, taskId?: string) {
+export async function sendMessage(taskId: string, message: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
   const supabaseClient = await createClient();
 
+  const { data: task, error: taskError } = await supabaseClient
+    .from("tasks")
+    .select("keluarga_id, helper_id")
+    .eq("id", taskId)
+    .single();
+
+  if (taskError || !task) throw new Error("Tugas tidak ditemukan");
+
+  if (task.keluarga_id !== user.id && task.helper_id !== user.id) {
+    throw new Error("Anda bukan partisipan tugas ini");
+  }
+  
+  const receiverId = user.id === task.keluarga_id ? task.helper_id : task.keluarga_id;
+  if (!receiverId) throw new Error("Tugas ini belum memiliki Helper");
+
   const { data, error } = await supabaseClient
     .from("messages")
     .insert({
       sender_id: user.id,
       receiver_id: receiverId,
-      task_id: taskId || null,
+      task_id: taskId,
       message,
     })
     .select()
@@ -150,7 +200,7 @@ export async function sendMessage(receiverId: string, message: string, taskId?: 
   return data;
 }
 
-export async function markMessagesAsRead(senderId: string) {
+export async function markMessagesAsRead(taskId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -160,65 +210,7 @@ export async function markMessagesAsRead(senderId: string) {
   await supabaseClient
     .from("messages")
     .update({ read_at: new Date().toISOString() })
-    .eq("sender_id", senderId)
+    .eq("task_id", taskId)
     .eq("receiver_id", user.id)
     .is("read_at", null);
-}
-
-export async function searchUsersToChat(searchQuery: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const supabaseClient = await createClient();
-
-  // Search users by name or role, excluding current user
-  const { data, error } = await supabaseClient
-    .from("users")
-    .select("id, full_name, role, kelurahan")
-    .neq("id", user.id)
-    .ilike("full_name", `%${searchQuery}%`)
-    .limit(10);
-
-  if (error) {
-    console.error("Error searching users:", error);
-    return [];
-  }
-
-  return data;
-}
-
-export async function getSuggestedUsersToChat() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const supabaseClient = await createClient();
-
-  // Get current user's kelurahan
-  const { data: currentUser } = await supabaseClient
-    .from("users")
-    .select("kelurahan")
-    .eq("id", user.id)
-    .single();
-
-  const kelurahan = currentUser?.kelurahan;
-
-  let query = supabaseClient
-    .from("users")
-    .select("id, full_name, role, kelurahan")
-    .neq("id", user.id);
-
-  if (kelurahan) {
-    query = query.eq("kelurahan", kelurahan);
-  }
-
-  const { data, error } = await query.limit(15);
-
-  if (error) {
-    console.error("Error getting suggested users:", error);
-    return [];
-  }
-
-  return data;
 }

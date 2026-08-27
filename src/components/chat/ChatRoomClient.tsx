@@ -12,11 +12,13 @@ import { createClient } from "@/lib/supabase/client";
 export function ChatRoomClient({
   currentUserId,
   otherUser,
+  taskId,
   initialMessages,
   basePath,
 }: {
   currentUserId: string;
   otherUser: { id: string; name: string; photo: string | null };
+  taskId: string;
   initialMessages: ChatMessage[];
   basePath: string;
 }) {
@@ -30,15 +32,14 @@ export function ChatRoomClient({
     const supabase = createClient();
     
     const channel = supabase
-      .channel('chat-room')
+      .channel(`chat-room-${taskId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          // We ideally filter by task_id or receiver_id, but supabase free tier doesn't allow complex OR filters in realtime easily
-          // We will just refresh the router if the message involves currentUserId and otherUser.id
+          filter: `task_id=eq.${taskId}`,
         },
         (payload) => {
           const newMsg = payload.new;
@@ -55,16 +56,16 @@ export function ChatRoomClient({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [router, currentUserId, otherUser.id]);
+  }, [router, currentUserId, otherUser.id, taskId]);
 
   useEffect(() => {
     const unreadFromOther = messages.some((m) => m.sender_id === otherUser.id && !m.read_at);
     if (unreadFromOther) {
-      markMessagesAsRead(otherUser.id).then(() => {
+      markMessagesAsRead(taskId).then(() => {
         router.refresh();
       });
     }
-  }, [messages, otherUser.id, router]);
+  }, [messages, otherUser.id, router, taskId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -81,7 +82,7 @@ export function ChatRoomClient({
     setNewMessage("");
 
     try {
-      await sendMessage(otherUser.id, tempMessage);
+      await sendMessage(taskId, tempMessage);
       router.refresh();
     } catch (error) {
       console.error("Failed to send message", error);
@@ -109,7 +110,7 @@ export function ChatRoomClient({
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-bold text-slate-900 truncate">{otherUser.name}</h2>
-          <p className="text-xs text-slate-500">Percakapan Pribadi</p>
+          <p className="text-xs text-slate-500">Percakapan Tugas</p>
         </div>
       </div>
 
