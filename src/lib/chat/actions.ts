@@ -42,8 +42,7 @@ type TaskInfo = {
   id: string;
   service_category_id: string;
   keluarga_id: string;
-  helper_id: string | null;
-  helper_profile?: { user_id: string } | { user_id: string }[] | null;
+  helper_id: string;
   category?: { nama: string } | { nama: string }[] | null;
 };
 

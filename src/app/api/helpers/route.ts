@@ -68,7 +68,8 @@ export async function GET(request: Request) {
       filtered = filtered.filter((h) => {
         const matchName = h.users?.full_name?.toLowerCase().includes(q);
         const matchBio = h.bio?.toLowerCase().includes(q);
-        const matchService = h.helper_service_categories?.some((c) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const matchService = (h.helper_service_categories as any[])?.some((c: any) =>
           c.service_categories?.nama?.toLowerCase().includes(q)
         );
         return Boolean(matchName || matchBio || matchService);
@@ -76,12 +77,14 @@ export async function GET(request: Request) {
     }
 
     if (lat !== null && lng !== null) filtered = filtered.filter((h) => h.jarak_km !== null && h.jarak_km <= Math.min(radiusKm, Number(h.radius_layanan_km)));
-    if (tingkat) filtered = filtered.filter((h) => h.helper_service_categories?.some((c) => c.service_categories?.tingkat === tingkat));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (tingkat) filtered = filtered.filter((h) => (h.helper_service_categories as any[])?.some((c: any) => c.service_categories?.tingkat === tingkat));
 
     filtered = filtered.map((helper) => ({
       ...helper,
       foto_url: helper.foto_wajah_url ?? null,
-      kategori: helper.helper_service_categories?.map((item) => item.service_categories).filter(Boolean) ?? [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      kategori: (helper.helper_service_categories as any[])?.map((item: any) => item.service_categories).filter(Boolean) ?? [],
     }));
 
     return apiResponse(

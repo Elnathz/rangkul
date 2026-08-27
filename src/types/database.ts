@@ -151,61 +151,6 @@ export type Database = {
           },
         ]
       }
-      demo_wallet_ledger: {
-        Row: {
-          id: string
-          wallet_id: string
-          user_id: string
-          amount: number
-          saldo_setelah: number
-          alasan: string
-          created_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          wallet_id: string
-          user_id: string
-          amount: number
-          saldo_setelah: number
-          alasan: string
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          wallet_id?: string
-          user_id?: string
-          amount?: number
-          saldo_setelah?: number
-          alasan?: string
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demo_wallet_ledger_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "demo_wallets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demo_wallet_ledger_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demo_wallet_ledger_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       helper_service_categories: {
         Row: {
           helper_id: string
@@ -562,6 +507,9 @@ export type Database = {
           lng: number | null
           nama: string
           updated_at: string
+          umur: number | null
+          tingkat_mobilitas: string | null
+          kebutuhan_khusus: string | null
         }
         Insert: {
           alamat: string
@@ -578,6 +526,9 @@ export type Database = {
           lng?: number | null
           nama: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Update: {
           alamat?: string
@@ -594,6 +545,9 @@ export type Database = {
           lng?: number | null
           nama?: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Relationships: [
           {
@@ -1201,21 +1155,6 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["payments"]["Row"]
       }
-      prepare_midtrans_payment_intent: {
-        Args: {
-          p_amount: number
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      save_midtrans_snap_token: {
-        Args: {
-          p_order_id: string
-          p_snap_token: string
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
       settle_midtrans_payment: {
         Args: {
           p_gateway_ref: string
@@ -1243,57 +1182,6 @@ export type Database = {
           p_task_id: string
         }
         Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      prepare_task_cancel_compensation: {
-        Args: {
-          p_cancellation_reason: string
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      confirm_task_cancel_compensation: {
-        Args: {
-          p_refund_payload: Json
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      prepare_midtrans_refund: {
-        Args: { p_task_id: string }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      confirm_midtrans_refund: {
-        Args: {
-          p_gateway_ref: string
-          p_payload: Json
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      auto_release_held_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      create_emergency_alert: {
-        Args: {
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["emergency_alerts"]["Row"]
-      }
-      acknowledge_emergency_alert: {
-        Args: {
-          p_alert_id: string
-        }
-        Returns: Database["public"]["Tables"]["emergency_alerts"]["Row"]
-      }
-      review_report: {
-        Args: {
-          p_decision_reason?: string | null
-          p_helper_status?: Database["public"]["Enums"]["helper_status"] | null
-          p_report_id: string
-          p_status: Database["public"]["Enums"]["report_status"]
-        }
-        Returns: Database["public"]["Tables"]["reports"]["Row"]
       }
       decide_extra_service: {
         Args: {
@@ -1331,28 +1219,41 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["tasks"]["Row"]
       }
+        confirm_task_cancel_compensation: {
+          Args: {
+            p_refund_payload: Json
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["tasks"]["Row"]
+        }
+        prepare_midtrans_payment_intent: {
+          Args: {
+            p_amount: number
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
+        prepare_task_cancel_compensation: {
+          Args: {
+            p_cancellation_reason: string
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
+        save_midtrans_snap_token: {
+          Args: {
+            p_order_id: string
+            p_snap_token: string
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
       reschedule_task: {
         Args: {
           p_jadwal_waktu: string
           p_task_id: string
         }
         Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      admin_topup_demo_wallet: {
-        Args: {
-          target_user_id: string
-          topup_amount: number
-          topup_reason: string
-        }
-        Returns: Database["public"]["Tables"]["demo_wallet_ledger"]["Row"]
-      }
-      admin_review_appeal: {
-        Args: {
-          appeal_id: string
-          next_status: Database["public"]["Enums"]["appeal_status"]
-          review_reason: string
-        }
-        Returns: Database["public"]["Tables"]["appeals"]["Row"]
       }
     }
     Enums: {
@@ -1387,7 +1288,6 @@ export type Database = {
         | "pending"
         | "held_escrow"
         | "released"
-        | "refunding"
         | "refunded"
         | "disputed"
         | "dibatalkan_kompensasi"
@@ -1573,7 +1473,6 @@ export const Constants = {
         "pending",
         "held_escrow",
         "released",
-        "refunding",
         "refunded",
         "disputed",
         "dibatalkan_kompensasi",
