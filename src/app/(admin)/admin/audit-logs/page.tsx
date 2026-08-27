@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ClipboardList, Loader2 } from "lucide-react";
+
+type AuditLog = { id: string; action: string; entity_type: string; entity_id: string | null; metadata: Record<string, unknown> | null; created_at: string; actor?: { full_name: string; email: string } | null };
+
 export default function AuditLogsPage() {
-  return (
-    <div className="p-4">
-      <h1>Halaman Audit Logs</h1>
-      <p>Dalam tahap pengembangan...</p>
-    </div>
-  );
+  const [logs, setLogs] = useState<AuditLog[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  useEffect(() => { fetch("/api/admin/audit-logs?pageSize=100", { cache: "no-store" }).then(async (response) => { const body = await response.json(); if (!response.ok) throw new Error(body.message ?? "Audit log gagal dimuat"); setLogs(body.data ?? []); }).catch((value) => setError(value instanceof Error ? value.message : "Audit log gagal dimuat")).finally(() => setLoading(false)); }, []);
+  return <div className="mx-auto max-w-6xl space-y-5"><header><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Jejak tindakan sensitif</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Audit Log</h1><p className="mt-1 text-sm leading-6 text-slate-500">Catatan perubahan akun, trust, banding, kategori, wallet, dan operasi Admin.</p></header>{error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{error}</div>}<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{loading ? <div className="flex items-center justify-center gap-2 p-16 text-sm text-slate-500"><Loader2 className="h-5 w-5 animate-spin" />Memuat audit log...</div> : logs.length === 0 ? <div className="p-16 text-center"><ClipboardList className="mx-auto h-9 w-9 text-slate-300" /><p className="mt-3 font-semibold text-slate-800">Belum ada audit log.</p><p className="mt-1 text-sm text-slate-500">Log muncul setelah aksi sensitif berhasil dilakukan.</p></div> : <div className="divide-y divide-slate-100">{logs.map((log) => <article key={log.id} className="grid gap-2 p-4 sm:grid-cols-[1fr_auto] sm:p-5"><div><p className="font-bold text-slate-950">{log.action}</p><p className="mt-1 text-sm text-slate-600">{log.entity_type}{log.entity_id ? ` · ${log.entity_id}` : ""}</p><p className="mt-1 text-xs text-slate-500">Oleh {log.actor?.full_name ?? "Sistem"} · {new Date(log.created_at).toLocaleString("id-ID")}</p></div>{log.metadata && <pre className="max-w-full overflow-x-auto rounded-lg bg-slate-50 p-3 text-[11px] text-slate-600 sm:max-w-sm">{JSON.stringify(log.metadata, null, 2)}</pre>}</article>)}</div>}</section></div>;
 }
