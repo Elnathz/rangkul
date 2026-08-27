@@ -97,18 +97,21 @@ function getMapUrl(lansia: RealTaskDetail["lansia"]) {
 
 function HelperPhoto({ src, name }: { src: string | null; name: string }) {
   const [open, setOpen] = React.useState(false);
+  const [hasError, setHasError] = React.useState(false);
   const initials = name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "H";
+  
+  const showImage = Boolean(src && src.trim() !== "" && !hasError);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => src && setOpen(true)}
-        disabled={!src}
+        onClick={() => showImage && setOpen(true)}
+        disabled={!showImage}
         className="group relative h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-blue-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
-        aria-label={src ? "Buka foto Helper " + name : "Foto Helper belum tersedia"}
+        aria-label={showImage ? "Buka foto Helper " + name : "Foto Helper belum tersedia"}
       >
-        {src ? <img src={src} alt={"Foto " + name} className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-black text-[#0D47A1]">{initials}</span>}
+        {showImage ? <img src={src as string} onError={() => setHasError(true)} alt={"Foto " + name} className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-black text-[#0D47A1]">{initials}</span>}
       </button>
       <ImagePreviewModal open={open} onOpenChange={setOpen} src={src} alt={"Foto " + name} title={"Foto Helper " + name} />
     </>
