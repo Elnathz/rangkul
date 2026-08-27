@@ -33,6 +33,7 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [snapReady, setSnapReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -51,16 +52,23 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
 
   useEffect(() => {
     const scriptId = "midtrans-snap-script";
-    if (!document.getElementById(scriptId) && process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY) {
+    const markSnapReady = () => setSnapReady(typeof window.snap?.pay === "function");
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) {
+      if (window.snap) markSnapReady();
+      existingScript.addEventListener("load", markSnapReady);
+    } else if (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY) {
       const script = document.createElement("script");
       script.id = scriptId;
       script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
       script.dataset.clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+      script.addEventListener("load", markSnapReady);
       document.body.appendChild(script);
     }
     // This effect synchronizes data fetched from the payment API into the page state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Data pembayaran tidak dapat dimuat")).finally(() => setLoading(false));
+    return () => existingScript?.removeEventListener("load", markSnapReady);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
@@ -118,7 +126,7 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
       <Link href={`/kunjungan/${taskId}`} className="mb-8 inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" />Kembali ke Kunjungan</Link>
       <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-900">Pembayaran Kunjungan</h1>
       <p className="mb-8 font-medium text-slate-500">Pembayaran diproses melalui Midtrans Sandbox. Status akhir hanya mengikuti webhook server.</p>
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0D47A1] to-blue-800 p-6 text-white shadow-xl"><Wallet className="absolute right-8 top-8 h-28 w-28 opacity-10" /><p className="relative text-sm text-blue-100">Total dari server</p><h2 className="relative mt-1 text-4xl font-black tabular-nums">{money(task.harga_final)}</h2><div className="relative mt-6 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm"><ShieldCheck className="h-4 w-4 text-green-300" />Midtrans Sandbox</div></div>
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0D47A1] to-blue-800 p-6 text-white shadow-xl"><Wallet className="absolute right-8 top-8 h-28 w-28 opacity-10" /><p className="relative text-sm text-blue-100">Total dari server</p><h2 className="relative mt-1 text-4xl font-black tabular-nums">{money(task.harga_final)}</h2><div className="relative mt-6 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm"><ShieldCheck className="h-4 w-4 text-green-300" />{snapReady ? "Midtrans Sandbox siap" : "Menyiapkan Midtrans Sandbox"}</div></div>
       <div className="mb-8 space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm"><h3 className="text-lg font-bold text-slate-900">Rincian Transaksi</h3><div className="flex justify-between text-sm text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">{money(task.harga_dasar)}</span></div>{task.harga_final !== task.harga_dasar && <div className="flex justify-between text-sm text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">{money(task.harga_final - task.harga_dasar)}</span></div>}<div className="flex justify-between border-t border-slate-100 pt-4 text-lg font-black text-slate-900"><span>Total bayar</span><span className="text-[#0D47A1]">{money(task.harga_final)}</span></div>{payment && <p className="text-sm text-slate-500">Status: <span className="font-bold text-slate-900">{payment.status}</span></p>}</div>
       {error && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {isHeld && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah diterima dan ditahan sampai Keluarga mengonfirmasi tugas selesai.</div>}

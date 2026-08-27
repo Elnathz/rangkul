@@ -40,3 +40,13 @@ jobs:
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             --data '{}'
+
+      - name: Auto-release held payments
+        run: |
+          curl --fail --silent --show-error \
+            -X POST \
+            "https://${SUPABASE_PROJECT_ID}.supabase.co/rest/v1/rpc/auto_release_held_payments" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{}'

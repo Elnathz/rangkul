@@ -26,6 +26,7 @@ export function verifyMidtransSignature(payload: {
     .createHash("sha512")
     .update(`${payload.order_id}${payload.status_code}${payload.gross_amount}${getMidtransServerKey()}`)
     .digest("hex");
+  if (expected.length !== signature.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
