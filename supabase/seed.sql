@@ -47,6 +47,7 @@ DECLARE
   berat_category_id UUID;
   current_task_id UUID;
   existing_user_id UUID;
+  demo_password_hash TEXT := '$2b$10$FXHIF708OAcAkLVG5M4DZue2jZaOH25TzrzHPB14ooxRAc7XL2/72';
 BEGIN
   FOR user_data IN
     SELECT *
@@ -89,7 +90,7 @@ BEGIN
         '00000000-0000-0000-0000-000000000000',
         user_data.email_address,
         user_data.phone_value,
-        '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6',
+        demo_password_hash,
         NOW(),
         jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
         jsonb_build_object(
@@ -115,6 +116,18 @@ BEGIN
       WHERE LOWER(username) = LOWER(user_data.username_value)
       LIMIT 1;
     END IF;
+
+    UPDATE auth.users
+    SET encrypted_password = demo_password_hash,
+        email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        updated_at = NOW()
+    WHERE LOWER(email) = LOWER(user_data.email_address)
+       OR LOWER(raw_user_meta_data ->> 'username') = LOWER(user_data.username_value)
+       OR id IN (
+         SELECT existing_public_user.id
+         FROM public.users existing_public_user
+         WHERE LOWER(existing_public_user.username) = LOWER(user_data.username_value)
+       );
 
     IF existing_user_id IS NOT NULL THEN
       UPDATE auth.users
@@ -147,7 +160,7 @@ BEGIN
       )
       VALUES (
         gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'demoadmin@rangkul.id', '081234567899',
-        '$2b$10$TAIlCBwQS8CoEWeVYg6G3.cknUg1KgyDRdlbdgmiDXjundKA4Zel6', NOW(),
+        demo_password_hash, NOW(),
         jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
         jsonb_build_object('full_name', 'Admin Demo Rangkul', 'role', 'admin', 'username', 'demo_admin'),
         'authenticated', 'authenticated', NOW(), NOW()
@@ -163,7 +176,11 @@ BEGIN
 
   IF admin_id IS NOT NULL THEN
     UPDATE auth.users
-    SET email = 'demoadmin@rangkul.id', phone = '081234567899', updated_at = NOW()
+    SET email = 'demoadmin@rangkul.id',
+        phone = '081234567899',
+        encrypted_password = demo_password_hash,
+        email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        updated_at = NOW()
     WHERE id = admin_id;
 
     UPDATE public.users
@@ -518,7 +535,7 @@ DO $$
 DECLARE
   admin_id UUID;
   keluarga_id UUID;
-  wallet_id UUID;
+  demo_wallet_id UUID;
   current_saldo NUMERIC;
 BEGIN
   SELECT id INTO admin_id
@@ -546,23 +563,23 @@ BEGIN
     VALUES (keluarga_id, 200000)
     ON CONFLICT (user_id) DO NOTHING;
 
-    SELECT id, saldo INTO wallet_id, current_saldo
+    SELECT id, saldo INTO demo_wallet_id, current_saldo
     FROM public.demo_wallets
     WHERE user_id = keluarga_id;
 
     IF current_saldo = 0 THEN
       UPDATE public.demo_wallets
       SET saldo = 200000, updated_at = NOW()
-      WHERE id = wallet_id;
+      WHERE id = demo_wallet_id;
       current_saldo := 200000;
     END IF;
 
     INSERT INTO public.demo_wallet_ledger (wallet_id, user_id, amount, saldo_setelah, alasan, created_by)
-    SELECT wallet_id, keluarga_id, 200000, current_saldo, '[DEMO_MATRIX] Top up wallet awal', admin_id
+    SELECT demo_wallet_id, keluarga_id, 200000, current_saldo, '[DEMO_MATRIX] Top up wallet awal', admin_id
     WHERE NOT EXISTS (
       SELECT 1
       FROM public.demo_wallet_ledger ledger_row
-      WHERE ledger_row.wallet_id = wallet_id
+      WHERE ledger_row.wallet_id = demo_wallet_id
         AND ledger_row.alasan = '[DEMO_MATRIX] Top up wallet awal'
     );
 
