@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useOfflineEvidence } from "@/hooks/use-offline-evidence";
+import type { OfflineEvidenceDraft } from "@/lib/offline/evidence-store";
 
 type TaskSummary = {
   id: string;
@@ -49,6 +51,35 @@ export default function LaporanHelperPage() {
   });
   const [feedback, setFeedback] = React.useState<{ title: string; description: string; tone: "danger" | "info" } | null>(null);
 
+  const syncDraft = React.useCallback(async (draft: OfflineEvidenceDraft) => {
+    const uploadForm = new FormData();
+    uploadForm.set("file", draft.photo);
+    uploadForm.set("docType", "foto_bukti");
+    const uploadResponse = await fetch("/api/storage/upload", { method: "POST", body: uploadForm });
+    const uploadPayload = await uploadResponse.json();
+    if (!uploadResponse.ok) throw new Error(uploadPayload.message || "Foto bukti belum dapat diunggah");
+
+    const reportResponse = await fetch(`/api/tasks/${taskId}/evidence`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        foto_bukti_url: uploadPayload.url,
+        catatan_kondisi: draft.catatan_kondisi,
+        skor_energi: draft.skor_energi,
+        skor_mobilitas: draft.skor_mobilitas,
+        skor_mood: draft.skor_mood,
+        skor_nafsu_makan: draft.skor_nafsu_makan,
+        skor_tidur: draft.skor_tidur,
+        cerita_hari_ini: draft.cerita_hari_ini,
+        client_submission_id: draft.client_submission_id,
+      }),
+    });
+    const reportPayload = await reportResponse.json();
+    if (!reportResponse.ok) throw new Error(reportPayload.message || "Laporan belum dapat disimpan");
+  }, [taskId]);
+
+  const { draft, isOnline, isLoading: isDraftLoading, syncError, save: saveDraft, sync } = useOfflineEvidence(taskId, syncDraft);
+
   React.useEffect(() => {
     let active = true;
     fetch(`/api/tasks/${taskId}`)
@@ -64,6 +95,22 @@ export default function LaporanHelperPage() {
     return () => { active = false; };
   }, [taskId]);
 
+  React.useEffect(() => {
+    if (!draft || isDraftLoading) return;
+    // Hydration ini membaca snapshot eksternal yang sudah selesai dimuat dari IndexedDB.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm({
+      catatan_kondisi: draft.catatan_kondisi,
+      skor_energi: draft.skor_energi,
+      skor_mobilitas: draft.skor_mobilitas,
+      skor_mood: draft.skor_mood,
+      skor_nafsu_makan: draft.skor_nafsu_makan,
+      skor_tidur: draft.skor_tidur,
+      cerita_hari_ini: draft.cerita_hari_ini,
+    });
+    setPhoto(new File([draft.photo], "bukti-kunjungan.jpg", { type: draft.photo.type || "image/jpeg" }));
+  }, [draft, isDraftLoading]);
+
   const updateScore = (key: ScoreKey, value: number) => setForm((current) => ({ ...current, [key]: value }));
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -73,28 +120,30 @@ export default function LaporanHelperPage() {
       return;
     }
 
+    const draftPayload = (): OfflineEvidenceDraft => ({
+      id: draft?.id ?? crypto.randomUUID(),
+      task_id: taskId,
+      client_submission_id: draft?.client_submission_id ?? crypto.randomUUID(),
+      photo,
+      ...form,
+      status: "pending_sync",
+      retry_count: draft?.retry_count ?? 0,
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (!navigator.onLine) {
+      await saveDraft(draftPayload());
+      setFeedback({ title: "Draf tersimpan", description: "Laporan disimpan di perangkat dan akan dikirim otomatis saat koneksi kembali.", tone: "info" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const uploadForm = new FormData();
-      uploadForm.set("file", photo);
-      uploadForm.set("docType", "foto_bukti");
-      const uploadResponse = await fetch("/api/storage/upload", { method: "POST", body: uploadForm });
-      const uploadPayload = await uploadResponse.json();
-      if (!uploadResponse.ok) throw new Error(uploadPayload.message || "Foto bukti belum dapat diunggah");
-
-      const reportResponse = await fetch(`/api/tasks/${taskId}/evidence`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          foto_bukti_url: uploadPayload.url,
-          ...form,
-          client_submission_id: crypto.randomUUID(),
-        }),
-      });
-      const reportPayload = await reportResponse.json();
-      if (!reportResponse.ok) throw new Error(reportPayload.message || "Laporan belum dapat disimpan");
+      await sync(draftPayload());
       router.push(`/tugas/${taskId}`);
     } catch (error: unknown) {
+      await saveDraft(draftPayload());
       setFeedback({ title: "Laporan belum terkirim", description: error instanceof Error ? error.message : "Periksa koneksi lalu coba lagi.", tone: "danger" });
     } finally {
       setIsSubmitting(false);
@@ -114,6 +163,11 @@ export default function LaporanHelperPage() {
   return (
     <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-3xl space-y-6">
+        <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${isOnline ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`} role="status">
+          {isOnline ? "Online. Laporan akan dikirim ke server." : "Offline. Laporan akan disimpan sebagai Pending Sync."}
+          {draft?.status === "failed" && <button type="button" className="ml-2 underline" onClick={() => void sync()}>Coba sinkronkan lagi</button>}
+          {syncError && <span className="mt-1 block text-xs font-normal">{syncError}</span>}
+        </div>
         <motion.div {...reveal} transition={{ duration: 0.35, ease: "easeOut" }} className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild className="rounded-full border border-slate-200 bg-white shadow-sm">
             <Link href={`/tugas/${taskId}`} aria-label="Kembali ke detail tugas"><ArrowLeft className="h-5 w-5" /></Link>

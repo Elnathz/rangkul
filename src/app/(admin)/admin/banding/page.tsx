@@ -1,17 +1,16 @@
-export default function Page() {
-  return (
-    <div>
-      <h1 className="font-display font-bold text-2xl text-foreground mb-2">
-        Banding
-      </h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Daftar permohonan banding dari pengguna yang akunnya ditangguhkan atau dinonaktifkan.
-      </p>
-      <div className="bg-white rounded-2xl border border-border p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Belum ada permohonan banding yang masuk.
-        </p>
-      </div>
-    </div>
-  );
+"use client";
+
+import { useEffect, useState } from "react";
+import { Check, FileText, Loader2, X } from "lucide-react";
+
+type Appeal = { id: string; alasan: string; status: "menunggu" | "disetujui" | "ditolak"; created_at: string; user?: { full_name: string; email: string; account_status: string } | null };
+
+export default function AdminBandingPage() {
+  const [appeals, setAppeals] = useState<Appeal[]>([]); const [selected, setSelected] = useState<Appeal | null>(null); const [reason, setReason] = useState(""); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  const load = async () => { setLoading(true); setError(""); try { const response = await fetch("/api/admin/appeals?status=menunggu", { cache: "no-store" }); const body = await response.json(); if (!response.ok) throw new Error(body.message ?? "Banding gagal dimuat"); setAppeals(body.data ?? []); } catch (value) { setError(value instanceof Error ? value.message : "Banding gagal dimuat"); } finally { setLoading(false); } };
+  // Loader ini memang mengubah state setelah request eksternal selesai.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void load(); }, []);
+  const review = async (status: "disetujui" | "ditolak") => { if (!selected) return; setSaving(true); setError(""); try { const response = await fetch(`/api/admin/appeals/${selected.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, alasan: reason }) }); const body = await response.json(); if (!response.ok) throw new Error(body.message ?? "Keputusan gagal disimpan"); setSelected(null); setReason(""); await load(); } catch (value) { setError(value instanceof Error ? value.message : "Keputusan gagal disimpan"); } finally { setSaving(false); } };
+  return <div className="mx-auto max-w-5xl space-y-5"><header><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Pemulihan akun</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Banding</h1><p className="mt-1 text-sm leading-6 text-slate-500">Tinjau permohonan Keluarga yang terkena pembatasan booking.</p></header>{error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{error}</div>}<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{loading ? <div className="flex items-center justify-center gap-2 px-4 py-16 text-sm text-slate-500"><Loader2 className="h-5 w-5 animate-spin" />Memuat banding...</div> : appeals.length === 0 ? <div className="px-4 py-16 text-center"><FileText className="mx-auto h-9 w-9 text-slate-300" /><p className="mt-3 font-semibold text-slate-800">Tidak ada banding yang menunggu.</p><p className="mt-1 text-sm text-slate-500">Permohonan baru akan muncul setelah Keluarga mengirim banding.</p></div> : <div className="divide-y divide-slate-100">{appeals.map((appeal) => <article key={appeal.id} className="space-y-4 p-4 sm:p-6"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-bold text-slate-950">{appeal.user?.full_name ?? "Pengguna"}</p><p className="text-xs text-slate-500">{appeal.user?.email ?? "Email tidak tersedia"} · {new Date(appeal.created_at).toLocaleString("id-ID")}</p></div><span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">Menunggu review</span></div><p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{appeal.alasan}</p><button type="button" onClick={() => setSelected(appeal)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700">Tinjau banding</button></article>)}</div>}</section>{selected && <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-4 sm:items-center"><section role="dialog" aria-modal="true" aria-labelledby="review-title" className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl sm:p-6"><div className="flex items-start justify-between gap-4"><div><h2 id="review-title" className="text-lg font-bold text-slate-950">Keputusan banding</h2><p className="mt-1 text-sm text-slate-500">Alasan keputusan wajib dicatat untuk audit.</p></div><button type="button" onClick={() => setSelected(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup dialog"><X className="h-5 w-5" /></button></div><textarea value={reason} onChange={(event) => setReason(event.target.value)} minLength={10} rows={5} placeholder="Jelaskan dasar keputusan..." className="mt-5 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" /><div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => void review("ditolak")} disabled={saving || reason.trim().length < 10} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 text-sm font-bold text-red-700 disabled:opacity-40"><X className="h-4 w-4" /> Tolak</button><button type="button" onClick={() => void review("disetujui")} disabled={saving || reason.trim().length < 10} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-bold text-white disabled:opacity-40"><Check className="h-4 w-4" /> Setujui</button></div></section></div>}</div>;
 }
