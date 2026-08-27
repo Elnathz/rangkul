@@ -16,9 +16,11 @@ export async function POST(request: Request, context: RouteContext) {
     const { data: payment } = await supabase.from("payments").select("id, task_id, amount, status, midtrans_order_id").eq("task_id", taskId).maybeSingle();
     const { data: task } = await supabase.from("tasks").select("id, status, keluarga_id").eq("id", taskId).maybeSingle();
     if (!task || !payment) return createApiError("not_found", "Pembayaran tidak ditemukan", 404);
-    if (task.status !== "dibatalkan" || payment.status !== "held_escrow" || !payment.midtrans_order_id) return createApiError("conflict", "Refund hanya tersedia untuk pembayaran held pada tugas yang dibatalkan", 409);
-    const refund = await refundMidtrans(payment.midtrans_order_id, Number(payment.amount), `refund-${payment.id}`);
-    const { data: updated, error } = await supabase.rpc("refund_midtrans_payment", { p_task_id: taskId, p_gateway_ref: payment.midtrans_order_id, p_payload: refund });
+    if (task.status !== "dibatalkan" || !["held_escrow", "refunding"].includes(payment.status) || !payment.midtrans_order_id) return createApiError("conflict", "Refund hanya tersedia untuk pembayaran held pada tugas yang dibatalkan", 409);
+    const { data: pendingPayment, error: prepareError } = await supabase.rpc("prepare_midtrans_refund", { p_task_id: taskId });
+    if (prepareError) return createApiError(prepareError.code === "P0001" ? "conflict" : "server_error", prepareError.message, prepareError.code === "P0001" ? 409 : 500);
+    const refund = await refundMidtrans(pendingPayment.midtrans_order_id!, Number(pendingPayment.amount), `refund-${pendingPayment.id}`);
+    const { data: updated, error } = await supabase.rpc("confirm_midtrans_refund", { p_task_id: taskId, p_gateway_ref: refund.order_id || pendingPayment.midtrans_order_id!, p_payload: refund });
     if (error) return createApiError("server_error", error.message, 500);
     return apiResponse({ message: "Refund Midtrans diajukan", payment: updated, refund });
   } catch (error: unknown) {

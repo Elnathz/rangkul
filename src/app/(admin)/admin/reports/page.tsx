@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { ReportListClient } from "@/components/reports/ReportListClient";
 import { Shield, ShieldAlert } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -30,10 +30,7 @@ export default async function AdminReportsPage() {
     );
   }
 
-  // Admin client untuk bypass RLS jika diperlukan, atau cukup pakai regular client karena Admin bisa lihat semua di backend
-  const adminClient = await createAdminClient();
-
-  const { data: reports } = await adminClient
+  const { data: reports } = await supabase
     .from("reports")
     .select(`
       id,

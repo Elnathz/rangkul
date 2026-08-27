@@ -5,7 +5,7 @@ import { cancelTaskSchema } from "@/lib/validations/task-scheduling";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(request: Request, context: RouteContext) {
+async function cancelTask(request: Request, context: RouteContext) {
   try {
     const { id: taskId } = await context.params;
     const supabase = await createClient();
@@ -20,7 +20,9 @@ export async function POST(request: Request, context: RouteContext) {
     const { data: taskForPayment } = await supabase.from("tasks").select("id, status, helper_id, harga_final").eq("id", taskId).eq("keluarga_id", user.id).maybeSingle();
     const { data: existingPayment } = await supabase.from("payments").select("id, amount, jumlah_total, status, midtrans_order_id").eq("task_id", taskId).maybeSingle();
 
-    if (taskForPayment?.status === "dikonfirmasi" && existingPayment?.status === "held_escrow" && existingPayment.midtrans_order_id) {
+    const hasCompensationIntent = (taskForPayment?.status === "dikonfirmasi" && existingPayment?.status === "held_escrow")
+      || (taskForPayment?.status === "dibatalkan" && existingPayment?.status === "refunding");
+    if (hasCompensationIntent && existingPayment?.midtrans_order_id) {
       // 1. Prepare refund intent in DB to lock the state
       const { data: pendingPayment, error: prepareError } = await supabase.rpc("prepare_task_cancel_compensation", {
         p_task_id: taskId,
@@ -57,3 +59,10 @@ export async function POST(request: Request, context: RouteContext) {
   }
 }
 
+export async function PATCH(request: Request, context: RouteContext) {
+  return cancelTask(request, context);
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  return cancelTask(request, context);
+}

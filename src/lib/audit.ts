@@ -15,7 +15,10 @@ type AuditAction =
   | 'helper_rejected'
   | 'helper_admin_fallback_approved'
   | 'koordinator_approved'
-  | 'koordinator_rejected';
+  | 'koordinator_rejected'
+  | 'resolve_appeal'
+  | 'submit_appeal'
+  | 'admin_demo_wallet_topup';
 
 export async function writeAuditLog({
   actor_id,

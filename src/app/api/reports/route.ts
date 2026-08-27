@@ -1,5 +1,5 @@
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { reportSchema } from "@/lib/validations/communication";
 
 export async function POST(request: Request) {
@@ -12,8 +12,7 @@ export async function POST(request: Request) {
   if (!relatedTask?.helper_id) return createApiError("forbidden", "Laporan hanya dapat dibuat untuk tugas milik Anda", 403);
   const { data: helper } = await supabase.from("helper_profiles").select("user_id").eq("id", relatedTask.helper_id).maybeSingle();
   if (!helper) return createApiError("not_found", "Helper tidak ditemukan", 404);
-  const admin = await createAdminClient();
-  const { data: report, error } = await admin.from("reports").insert({ reported_helper_id: helper.user_id, reporter_id: user.id, alasan: validation.data.alasan }).select().single();
+  const { data: report, error } = await supabase.from("reports").insert({ reported_helper_id: helper.user_id, reporter_id: user.id, alasan: validation.data.alasan }).select().single();
   if (error) return createApiError("server_error", error.message, 500);
   return apiResponse({ report, message: "Laporan diterima dan akan ditinjau" }, 201);
 }

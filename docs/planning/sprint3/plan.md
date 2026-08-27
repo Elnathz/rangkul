@@ -93,3 +93,24 @@ Scope tambahan ini menghidupkan panel Admin inti sesuai TDD §4.12, §6, §7, da
 - Semua halaman wajib mobile-first sesuai `AGENTS.md`.
 
 File utama, endpoint, migration, dan pendekatan test dirinci di `docs/superpowers/plans/2026-08-23-admin-panel-crud.md`.
+
+## Status Update Farros, 27 Agustus 2026
+
+Catatan ini menambahkan status implementasi tanpa menghapus scope Mervin atau keputusan historis di atas.
+
+- Provider Sprint 3 dikunci ke Midtrans Sandbox. Demo Ledger, `saldo_demo`, `charge-dummy`, dan top-up Admin ditunda.
+- Migration lanjutan `20260827180002_sprint3_payment_integrity.sql` mengunci payment intent, token Snap, signature settlement, order ID, nominal, dan retry settlement.
+- Migration `20260827180003_sprint3_payment_lifecycle.sql` menambah refund intent, kompensasi 50%, dan auto-release 72 jam dengan split 90/7/3.
+- Migration `20260827180004_sprint3_report_review.sql` menambah reviewer scoped, alasan keputusan, audit log, dan blokir acceptance untuk Helper `under_review`.
+- Migration `20260827180005_sprint3_safety_notifications.sql` menambah deduplikasi SOS, trigger notifikasi task/message, RPC create/acknowledge SOS, dan policy alert scoped.
+- `src/types/database.ts` sudah dipulihkan dan mencakup tabel, enum `refunding`, serta RPC lanjutan.
+- Seed Sprint 3 memiliki marker payment held/released, message task-scoped, notifikasi, dan SOS.
+- Test kontrak Farros ditambahkan pada `tests/sprint3-farros-follow-up-contract.test.mjs`.
+- Runtime migration reset, smoke test RLS, dan Midtrans Sandbox belum dapat diberi status selesai sebelum Docker Supabase serta credential Sandbox tersedia.
+
+## Status Cloud Terbaru
+
+- Migrasi Sprint 3 `20260827180000` sampai `20260827180005` sudah tercatat pada Supabase cloud yang terhubung.
+- Seed cloud berhasil dijalankan dan marker demo terverifikasi melalui query read-only.
+- Docker tidak diperlukan untuk jalur cloud. Migration reset lokal tetap bukan acceptance test deployment.
+- Smoke API authenticated, RLS negatif, dan CI remote masih menjadi pekerjaan verifikasi terakhir.

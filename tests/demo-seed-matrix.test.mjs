@@ -59,3 +59,9 @@ test("demo seed membuat akun Auth dengan UUID dari database", () => {
     /VALUES\s*\(\s*'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'/i,
   );
 });
+
+test("demo seed menyamakan password akun Auth existing", () => {
+  assert.match(migration, /demo_password_hash TEXT := '\$2b\$10\$/);
+  assert.match(migration, /UPDATE auth\.users[\s\S]*encrypted_password = demo_password_hash/);
+  assert.match(migration, /email_confirmed_at = COALESCE\(email_confirmed_at, NOW\(\)\)/);
+});

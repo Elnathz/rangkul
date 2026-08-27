@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { messageSchema } from "@/lib/validations/communication";
 import { revalidatePath } from "next/cache";
 
 export type InboxItem = {
@@ -62,9 +63,7 @@ export async function getInbox(): Promise<InboxItem[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const supabaseClient = await createClient();
-
-  const { data: messages, error } = await supabaseClient
+  const { data: messages, error } = await supabase
     .from("messages")
     .select(`
       *,
@@ -125,9 +124,7 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const supabaseClient = await createClient();
-
-  const { data: task, error: taskError } = await supabaseClient
+  const { data: task, error: taskError } = await supabase
     .from("tasks")
     .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
     .eq("id", taskId)
@@ -135,12 +132,11 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
     
   if (taskError || !task) throw new Error("Tugas tidak ditemukan");
   
-  const helperUserId = Array.isArray(task.helper_profile) 
-    ? task.helper_profile[0]?.user_id 
-    : task.helper_profile?.user_id;
+  const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
+  const helperUserId = helperProfile?.user_id ?? null;
   
   if (task.keluarga_id !== user.id && helperUserId !== user.id) {
-    const { data: koordinator } = await supabaseClient
+    const { data: koordinator } = await supabase
       .from("koordinator_profiles")
       .select("id")
       .eq("user_id", user.id)
@@ -149,7 +145,7 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
     if (!koordinator) throw new Error("Anda tidak berhak melihat pesan ini");
   }
 
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from("messages")
     .select(`
       *,
@@ -168,9 +164,10 @@ export async function sendMessage(taskId: string, message: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const supabaseClient = await createClient();
+  const validation = messageSchema.safeParse({ task_id: taskId, message });
+  if (!validation.success) throw new Error("Pesan belum valid");
 
-  const { data: task, error: taskError } = await supabaseClient
+  const { data: task, error: taskError } = await supabase
     .from("tasks")
     .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
     .eq("id", taskId)
@@ -178,10 +175,8 @@ export async function sendMessage(taskId: string, message: string) {
 
   if (taskError || !task) throw new Error("Tugas tidak ditemukan");
 
-  const helperUserId = Array.isArray(task.helper_profile) 
-    ? task.helper_profile[0]?.user_id 
-    : task.helper_profile?.user_id;
-
+  const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
+  const helperUserId = helperProfile?.user_id ?? null;
   if (task.keluarga_id !== user.id && helperUserId !== user.id) {
     throw new Error("Anda bukan partisipan tugas ini");
   }
@@ -189,7 +184,7 @@ export async function sendMessage(taskId: string, message: string) {
   const receiverId = user.id === task.keluarga_id ? helperUserId : task.keluarga_id;
   if (!receiverId) throw new Error("Tugas ini belum memiliki Helper");
 
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from("messages")
     .insert({
       sender_id: user.id,
@@ -213,9 +208,7 @@ export async function markMessagesAsRead(taskId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const supabaseClient = await createClient();
-
-  await supabaseClient
+  await supabase
     .from("messages")
     .update({ read_at: new Date().toISOString() })
     .eq("task_id", taskId)
