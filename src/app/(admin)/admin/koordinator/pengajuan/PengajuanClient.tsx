@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FileCheck, ExternalLink, UserCheck, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -17,14 +17,16 @@ type KoordinatorSubmission = {
   users?: { full_name: string | null } | null;
 };
 
-export default function PengajuanClient({ queue }: { queue: KoordinatorSubmission[] }) {
+export default function PengajuanClient({ queue, page, pageSize, total }: { queue: KoordinatorSubmission[]; page: number; pageSize: number; total: number }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   
   // Reject dialog state
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [alasan, setAlasan] = useState('');
   const [feedback, setFeedback] = useState<{ title: string; description: string } | null>(null);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handleApprove = async (id: string) => {
     try {
@@ -133,6 +135,8 @@ export default function PengajuanClient({ queue }: { queue: KoordinatorSubmissio
         ))}
       </div>
 
+      <PengajuanPagination page={page} totalPages={totalPages} pathname={pathname} router={router} />
+
       <Dialog open={!!rejectId} onOpenChange={(open) => !open && setRejectId(null)}>
         <DialogContent>
           <DialogHeader>
@@ -158,5 +162,25 @@ export default function PengajuanClient({ queue }: { queue: KoordinatorSubmissio
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function PengajuanPagination({ page, totalPages, pathname, router }: { page: number; totalPages: number; pathname: string; router: ReturnType<typeof useRouter> }) {
+  const navigate = (nextPage: number) => {
+    const params = new URLSearchParams(window.location.search);
+    if (nextPage <= 1) params.delete('page');
+    else params.set('page', String(nextPage));
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
+  return (
+    <nav className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Pagination pengajuan Koordinator">
+      <p className="text-sm text-slate-500">Halaman {page} dari {totalPages}</p>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => navigate(page - 1)} disabled={page <= 1} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">Sebelumnya</button>
+        <button type="button" onClick={() => navigate(page + 1)} disabled={page >= totalPages} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">Berikutnya</button>
+      </div>
+    </nav>
   );
 }

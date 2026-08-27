@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 type NotificationType = "task" | "payment" | "emergency" | "message" | "system" | "koordinator_info";
 
@@ -61,7 +62,7 @@ export default function NotificationPageClient() {
       if (!response.ok) throw new Error(data.message || "Notifikasi belum dapat dimuat.");
       setNotifications(data.notifications || []);
       setUnreadCount(data.unread_count || 0);
-    } catch (loadError) {
+    } catch (loadError: unknown) {
       setError(loadError instanceof Error ? loadError.message : "Notifikasi belum dapat dimuat.");
     } finally {
       setIsLoading(false);
@@ -69,10 +70,39 @@ export default function NotificationPageClient() {
   }, []);
 
   React.useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void loadNotifications();
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
+    const supabase = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any = null;
+
+    const initDataAndRealtime = async () => {
+      await loadNotifications();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        channel = supabase
+          .channel(`user-notifications-${Math.random().toString(36).substring(7)}`)
+          .on(
+            'postgres_changes',
+            { 
+              event: 'INSERT', 
+              schema: 'public', 
+              table: 'notifications',
+              filter: `user_id=eq.${user.id}` 
+            },
+            () => {
+              void loadNotifications();
+            }
+          )
+          .subscribe();
+      }
+    };
+
+    initDataAndRealtime();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [loadNotifications]);
 
   async function markAsRead(id: string) {
@@ -83,8 +113,8 @@ export default function NotificationPageClient() {
       if (!response.ok) throw new Error(data.message || "Notifikasi belum dapat ditandai.");
       setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification));
       setUnreadCount((current) => Math.max(0, current - 1));
-    } catch (markError) {
-      setError(markError instanceof Error ? markError.message : "Notifikasi belum dapat ditandai.");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Notifikasi belum dapat ditandai.");
     } finally {
       setMarkingId(null);
     }

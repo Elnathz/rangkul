@@ -10,6 +10,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle, MapPin, User, List, Phone, ShieldCheck, X } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { parseRegionAddress } from "@/lib/region-address";
+import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
+
+type ServiceCategory = ServiceCategoryRow & { parentName: string | null };
+type RegionValue = { provinsi: string; kota: string; kecamatan: string; kelurahan: string };
 
 export default function HelperEditProfilPage() {
   const router = useRouter();
@@ -33,8 +38,9 @@ export default function HelperEditProfilPage() {
     domisili_lng: null as number | null,
   });
 
-  const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
+  const [dbCategories, setDbCategories] = useState<ServiceCategory[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
+  const initialSnapshot = useRef<string | null>(null);
   
   const [catTab, setCatTab] = useState<string>("ringan");
   const [modalOpen, setModalOpen] = useState(false);
@@ -44,26 +50,31 @@ export default function HelperEditProfilPage() {
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
 
-  const tiers = [
+  const tiers: { id: ServiceCategory["tingkat"]; title: string; desc: string }[] = [
     {
       id: "ringan",
       title: "Ringan",
-      desc: "Aktivitas harian ringan & non-medis.",
-      catNames: ["Pengingat Obat", "Menemani Mengobrol (singkat)", "Bantuan Teknologi (singkat)", "Bersih-bersih Ringan", "Antar Obat (dekat, ≤1 km)"]
+      desc: "Aktivitas harian ringan dan non-medis."
     },
     {
       id: "sedang",
       title: "Sedang",
-      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
-      catNames: ["Menemani Mengobrol (lama)", "Bantuan Teknologi (lama)", "Antar Obat (sedang, 1–3 km)", "Belanja Kebutuhan (standar)"]
+      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri."
     },
     {
       id: "berat",
       title: "Berat",
-      desc: "Perawatan khusus dan penanganan medis dasar.",
-      catNames: ["Antar Obat (jauh, >3 km)", "Bersih-bersih Menyeluruh", "Kontrol Kesehatan (antar ke faskes)", "Belanja Kebutuhan (besar/jauh)"]
+      desc: "Perawatan khusus dan penanganan medis dasar."
     }
   ];
+
+  const getSnapshot = (nextForm = form, nextKategoriIds = kategoriIds) => JSON.stringify({
+    ...nextForm,
+    foto_url: "",
+    password: "",
+    confirmPassword: "",
+    kategoriIds: [...nextKategoriIds].sort(),
+  });
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -76,68 +87,62 @@ export default function HelperEditProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      // Set username
-      const name = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || "";
-      const phone = user.user_metadata?.phone || "";
-      
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('full_name, username, phone, alamat_detail')
+        .eq('id', user.id)
+        .maybeSingle();
       const { data: profile } = await supabase
         .from('helper_profiles')
-        .select('id, wilayah_domisili, domisili_lat, domisili_lng')
+        .select('id, wilayah_domisili, domisili_lat, domisili_lng, foto_wajah_url')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
-        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = "";
-        
-        if (profile.wilayah_domisili) {
-          const parts = profile.wilayah_domisili.split(' | ');
-          if (parts.length >= 3) {
-            const adminParts = parts[0].split(', ');
-            if (adminParts.length >= 4) {
-              region.kelurahan = adminParts[0];
-              region.kecamatan = adminParts[1];
-              region.kota = adminParts[2];
-              region.provinsi = adminParts[3];
-            }
-            const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-            if (rtrw) {
-              rt = rtrw[1];
-              rw = rtrw[2];
-            }
-            alamat = parts[2];
-          } else {
-            alamat = profile.wilayah_domisili;
-          }
-        }
-
-        setForm(prev => ({
-          ...prev,
-          username: name,
-          phone: phone,
-          alamat,
-          rt,
-          rw,
+        const parsed = parseRegionAddress(profile.wilayah_domisili);
+        const region: RegionValue = { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan };
+        const nextForm = {
+          ...form,
+          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+          foto_url: profile.foto_wajah_url || "",
+          alamat: parsed.detail,
+          rt: parsed.rt,
+          rw: parsed.rw,
           region,
           domisili_lat: profile.domisili_lat,
           domisili_lng: profile.domisili_lng,
-        }));
+        };
 
-        const { data: cats } = await supabase
-          .from('helper_service_categories')
-          .select('service_category_id')
-          .eq('helper_id', profile.id);
-          
-        if (cats) {
-          setKategoriIds(cats.map(c => c.service_category_id));
-        }
+        setForm(nextForm);
+
       }
 
-      const { data: allCats } = await supabase.from('service_categories').select('id, nama').eq('is_active', true);
-      if (allCats) setDbCategories(allCats);
+      const { data: allCats } = await supabase.from('service_categories').select('id, nama, tingkat, parent_id, is_active');
+      const nextCategories = getSelectableServiceCategories((allCats ?? []) as unknown as ServiceCategoryRow[]);
+      setDbCategories(nextCategories);
+      if (profile) {
+        const { data: selectedCats } = await supabase.from('helper_service_categories').select('service_category_id').eq('helper_id', profile.id);
+        const nextIds = selectedCats?.map((category) => category.service_category_id) ?? [];
+        setKategoriIds(nextIds);
+        const parsed = parseRegionAddress(profile.wilayah_domisili);
+        const nextForm = {
+          ...form,
+          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+          foto_url: profile.foto_wajah_url || "",
+          alamat: parsed.detail,
+          rt: parsed.rt,
+          rw: parsed.rw,
+          region: { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan },
+          domisili_lat: profile.domisili_lat,
+          domisili_lng: profile.domisili_lng,
+        };
+        initialSnapshot.current = getSnapshot(nextForm, nextIds);
+      }
     };
     fetchData();
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleKategori = (catId: string) => {
     setKategoriIds(prev => prev.includes(catId) ? prev.filter(k => k !== catId) : [...prev, catId]);
@@ -146,14 +151,14 @@ export default function HelperEditProfilPage() {
   const selectAllInTab = (tabId: string) => {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
-    const idsToAdd = dbCategories.filter(c => tier.catNames.includes(c.nama)).map(c => c.id);
+    const idsToAdd = dbCategories.filter(c => c.tingkat === tier.id).map(c => c.id);
     setKategoriIds(prev => Array.from(new Set([...prev, ...idsToAdd])));
   };
 
   const deselectAllInTab = (tabId: string) => {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
-    const idsToRemove = dbCategories.filter(c => tier.catNames.includes(c.nama)).map(c => c.id);
+    const idsToRemove = dbCategories.filter(c => c.tingkat === tier.id).map(c => c.id);
     setKategoriIds(prev => prev.filter(id => !idsToRemove.includes(id)));
   };
 
@@ -174,7 +179,36 @@ export default function HelperEditProfilPage() {
       return;
     }
 
+    const dataChanged = initialSnapshot.current !== getSnapshot();
+    if (!dataChanged && !fotoFile && !form.password) {
+      showToast("Tidak ada perubahan.", "success");
+      setLoading(false);
+      return;
+    }
+
     try {
+      const wilayah_domisili = [
+        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
+        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
+        form.alamat,
+      ].filter(Boolean).join(" | ");
+      const currentFormSnapshot = initialSnapshot.current ? JSON.parse(initialSnapshot.current) as { username: string; phone: string; alamat: string; rt: string; rw: string; region: RegionValue; domisili_lat: number | null; domisili_lng: number | null; kategoriIds: string[] } : null;
+      const accountChanged = !currentFormSnapshot || JSON.stringify({ username: form.username, phone: form.phone, alamat: form.alamat, rt: form.rt, rw: form.rw, region: form.region }) !== JSON.stringify({ username: currentFormSnapshot.username, phone: currentFormSnapshot.phone, alamat: currentFormSnapshot.alamat, rt: currentFormSnapshot.rt, rw: currentFormSnapshot.rw, region: currentFormSnapshot.region });
+      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
+      if (accountChanged) {
+        const accountResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah_domisili, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
+        const accountResult = await accountResponse.json();
+        if (!accountResponse.ok) throw new Error(accountResult.message || "Data akun gagal diperbarui");
+      }
+      if (helperChanged) {
+        const profileResponse = await fetch("/api/helper/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategori_ids: kategoriIds }) });
+        const profileResult = await profileResponse.json();
+        if (!profileResponse.ok) throw new Error(profileResult.message || "Data operasional gagal diperbarui");
+      }
+      if (form.password) {
+        const { error } = await createClient().auth.updateUser({ password: form.password });
+        if (error) throw new Error(error.message);
+      }
       if (fotoFile) {
         const uploadData = new FormData();
         uploadData.append("file", fotoFile);
@@ -191,8 +225,6 @@ export default function HelperEditProfilPage() {
         const photoResult = await photoResponse.json();
         if (!photoResponse.ok) throw new Error(photoResult.message || "Gagal mengirim foto untuk verifikasi");
         showToast("Foto baru dikirim dan menunggu verifikasi Koordinator.", "success");
-      } else {
-        showToast("Tidak ada foto baru yang dikirim.", "success");
       }
       setTimeout(() => router.push("/helper/dashboard"), 2000);
     } catch (error: unknown) {
@@ -372,40 +404,31 @@ export default function HelperEditProfilPage() {
                    ))}
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                <div className="space-y-4 mb-2">
                   {(() => {
                     const activeTier = tiers.find(t => t.id === catTab);
                     if (!activeTier) return null;
-                    const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
-                    
-                    return filteredDbCats.slice(0, 4).map(cat => {
-                      const isSelected = kategoriIds.includes(cat.id);
-                      return (
-                        <label 
-                          key={cat.id} 
-                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                            isSelected 
-                              ? 'bg-blue-50/50 border-[#0D47A1]' 
-                              : 'bg-white border-gray-200 hover:border-blue-200'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded flex justify-center items-center shrink-0 border transition-colors ${
-                            isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                          }`}>
-                            {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                          </div>
-                          <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                            {cat.nama}
-                          </span>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            onChange={() => toggleKategori(cat.id)}
-                            className="hidden" 
-                          />
-                        </label>
-                      );
-                    });
+                    const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
+
+                    return groupSelectableServiceCategories(filteredDbCats.slice(0, 4)).map((group) => (
+                      <section key={group.key} className="space-y-2">
+                        {group.parentName && <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{group.parentName}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px]">Parent</span></div>}
+                        <div className={group.parentName ? "space-y-2 border-l-2 border-blue-100 pl-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                          {group.items.map((cat) => {
+                            const isSelected = kategoriIds.includes(cat.id);
+                            return (
+                              <label key={cat.id} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
+                                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                  {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                                <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ));
                   })()}
                 </div>
 
@@ -420,7 +443,7 @@ export default function HelperEditProfilPage() {
                   >
                     {(() => {
                       const activeTier = tiers.find(t => t.id === catTab);
-                      const filteredCount = activeTier ? dbCategories.filter(c => activeTier.catNames.includes(c.nama)).length : 0;
+                      const filteredCount = activeTier ? dbCategories.filter(c => c.tingkat === activeTier.id).length : 0;
                       const rem = Math.max(0, filteredCount - 4);
                       return `Tampilkan Semua Kategori ${activeTier?.title} (+${rem} lainnya)`;
                     })()}
@@ -558,7 +581,7 @@ export default function HelperEditProfilPage() {
               {(() => {
                 const activeTier = tiers.find(t => t.id === modalActiveTab);
                 if (!activeTier) return null;
-                const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
+                const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
                 
                 return (
                   <div className="space-y-4">
@@ -569,28 +592,26 @@ export default function HelperEditProfilPage() {
                         <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] text-red-500" onClick={() => deselectAllInTab(modalActiveTab)}>Hapus Semua</Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {filteredDbCats.map(cat => {
-                        const isSelected = kategoriIds.includes(cat.id);
-                        return (
-                          <label 
-                            key={cat.id} 
-                            className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                              isSelected ? 'bg-blue-50/50 border-[#0D47A1]' : 'bg-white border-gray-200 hover:border-blue-200 shadow-sm'
-                            }`}
-                          >
-                            <div className={`mt-0.5 w-5 h-5 rounded flex justify-center items-center shrink-0 border transition-colors ${
-                              isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                            }`}>
-                              {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                            </div>
-                            <span className={`text-sm font-semibold leading-snug ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                              {cat.nama}
-                            </span>
-                            <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
-                          </label>
-                        );
-                      })}
+                    <div className="space-y-5">
+                      {groupSelectableServiceCategories(filteredDbCats).map((group) => (
+                        <section key={group.key} className="space-y-2">
+                          {group.parentName && <div className="flex items-center gap-2 border-b border-slate-200 pb-2"><h4 className="text-sm font-bold text-slate-900">{group.parentName}</h4><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Parent</span></div>}
+                          <div className={group.parentName ? "grid grid-cols-1 gap-3 border-l-2 border-blue-100 pl-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                            {group.items.map((cat) => {
+                              const isSelected = kategoriIds.includes(cat.id);
+                              return (
+                                <label key={cat.id} className={`flex items-start gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white shadow-sm hover:border-blue-200'}`}>
+                                  <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                    {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                  </div>
+                                  <span className={`text-sm font-semibold leading-snug ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                                  <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      ))}
                     </div>
                   </div>
                 );

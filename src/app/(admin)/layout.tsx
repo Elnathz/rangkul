@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 const navItems = [
   {
@@ -96,6 +96,15 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: "/admin/pesan",
+    label: "Pesan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function AdminLayout({
@@ -106,6 +115,7 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -117,8 +127,15 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-[#F5F8FC]">
+      <div className="md:hidden">
+        <div className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-white px-4 shadow-sm">
+          <Link href="/admin/dashboard" className="flex items-center gap-2.5"><Image src="/logo.svg" alt="Rangkul Admin" width={30} height={30} /><span className="font-display text-sm font-bold text-foreground">Rangkul Admin</span></Link>
+          <button type="button" onClick={() => setMobileOpen((open) => !open)} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}>{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+        </div>
+        {mobileOpen ? <><button type="button" className="fixed inset-0 z-40 bg-slate-950/20" onClick={() => setMobileOpen(false)} aria-label="Tutup navigasi" /><aside className="fixed inset-y-0 left-0 z-50 flex w-[min(19rem,86vw)] flex-col border-r border-border bg-white pt-16 shadow-xl"><nav className="flex-1 gap-1 overflow-y-auto p-3">{navItems.map(({ href, label, icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${pathname === href ? "bg-blue-50 text-[#0D47A1]" : "text-muted-foreground hover:bg-[#F5F8FC] hover:text-foreground"}`}><span className="shrink-0 text-[#0D47A1]">{icon}</span>{label}</Link>)}</nav><div className="border-t border-border p-3"><Link href="/" onClick={() => setMobileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted-foreground">Kembali ke Beranda</Link></div></aside></> : null}
+      </div>
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-white border-r border-border flex flex-col">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-white md:flex">
         <div className="h-16 flex items-center px-5 border-b border-border">
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
             <Image 
@@ -171,7 +188,8 @@ export default function AdminLayout({
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-between shrink-0">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-white px-4 pt-0 sm:px-8 md:pt-0">
+          <div className="w-10 md:hidden" aria-hidden="true" />
           <h1 className="font-display font-semibold text-base text-foreground">
             Panel Admin
           </h1>
@@ -203,7 +221,7 @@ export default function AdminLayout({
             )}
           </div>
         </header>
-        <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 pb-6 pt-20 sm:px-6 sm:pt-6 lg:px-8">{children}</main>
       </div>
     </div>
   );

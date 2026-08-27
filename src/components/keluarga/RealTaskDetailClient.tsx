@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPinned, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { useRouter } from "next/navigation";
+
 import { ExtraServiceApprovalCard } from "@/components/keluarga/ExtraServiceApprovalCard";
 import { TaskScheduleActions } from "@/components/keluarga/TaskScheduleActions";
 import { LansiaPhotoPreview } from "@/components/helper/LansiaPhotoPreview";
@@ -46,6 +48,7 @@ export type RealTaskDetail = {
   };
   helper: {
     id: string;
+    user_id: string;
     foto_wajah_url: string | null;
     rating_avg: number;
     total_tugas_selesai: number;
@@ -94,18 +97,21 @@ function getMapUrl(lansia: RealTaskDetail["lansia"]) {
 
 function HelperPhoto({ src, name }: { src: string | null; name: string }) {
   const [open, setOpen] = React.useState(false);
+  const [hasError, setHasError] = React.useState(false);
   const initials = name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "H";
+  
+  const showImage = Boolean(src && src.trim() !== "" && !hasError);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => src && setOpen(true)}
-        disabled={!src}
+        onClick={() => showImage && setOpen(true)}
+        disabled={!showImage}
         className="group relative h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-blue-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
-        aria-label={src ? "Buka foto Helper " + name : "Foto Helper belum tersedia"}
+        aria-label={showImage ? "Buka foto Helper " + name : "Foto Helper belum tersedia"}
       >
-        {src ? <img src={src} alt={"Foto " + name} className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-black text-[#0D47A1]">{initials}</span>}
+        {showImage ? <img src={src as string} onError={() => setHasError(true)} alt={"Foto " + name} className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-black text-[#0D47A1]">{initials}</span>}
       </button>
       <ImagePreviewModal open={open} onOpenChange={setOpen} src={src} alt={"Foto " + name} title={"Foto Helper " + name} />
     </>
@@ -113,7 +119,21 @@ function HelperPhoto({ src, name }: { src: string | null; name: string }) {
 }
 
 export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDetail }) {
-  const [task, setTask] = React.useState(initialTask);
+  const router = useRouter();
+  const task = initialTask;
+
+  React.useEffect(() => {
+    // Gunakan interval polling 3 detik sebagai fallback yang lebih handal
+    // karena Supabase Realtime kadang gagal mengirim event jika RLS policy menggunakan JOIN/EXISTS.
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+    }
+  }, [router]);
+
   const [evidenceOpen, setEvidenceOpen] = React.useState(false);
   const [tipAmount, setTipAmount] = React.useState("");
   const [isSubmittingTip, setIsSubmittingTip] = React.useState(false);
@@ -138,13 +158,8 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Gagal mengirim tip');
-      
-      // Update state locally
-      setTask((prev: typeof task) => ({ 
-        ...prev, 
-        harga_final: prev.harga_final + parseInt(tipAmount),
-        extraServices: [...prev.extraServices, { id: 'tip-' + Date.now(), nama_layanan: 'Tip untuk Helper', biaya: parseInt(tipAmount), status: 'disetujui' as const, created_at: new Date().toISOString() }]
-      }));
+
+      router.refresh();
       setTipAmount("");
       setFeedback({
         title: "Tip berhasil dikirim",
@@ -281,11 +296,26 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                   <h2 className="text-lg font-black text-slate-950">Rincian pembayaran</h2>
                 </div>
                 <div className="mt-4 space-y-3 text-sm">
-                  <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {Number(task.harga_dasar).toLocaleString("id-ID")}</span></div>
-                  {task.harga_final > task.harga_dasar && <div className="flex items-center justify-between gap-4 text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">Rp {(Number(task.harga_final) - Number(task.harga_dasar)).toLocaleString("id-ID")}</span></div>}
-                  <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total saat ini</span><span className="text-xl text-[#0D47A1]">Rp {Number(task.harga_final).toLocaleString("id-ID")}</span></div>
+                  {(() => {
+                    const basePrice = Number(task.harga_dasar) || 0;
+                    const finalPrice = Number(task.harga_final) || basePrice;
+                    const extraTimePrice = finalPrice > basePrice ? finalPrice - basePrice : 0;
+                    const serviceFee = 2500;
+                    const subtotal = finalPrice + serviceFee;
+                    const tax = Math.round(subtotal * 0.11);
+                    const total = subtotal + tax;
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {basePrice.toLocaleString("id-ID")}</span></div>
+                        {extraTimePrice > 0 && <div className="flex items-center justify-between gap-4 text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">Rp {extraTimePrice.toLocaleString("id-ID")}</span></div>}
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Biaya Layanan Aplikasi</span><span className="font-semibold text-slate-900">Rp {serviceFee.toLocaleString("id-ID")}</span></div>
+                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>PPN (11%)</span><span className="font-semibold text-slate-900">Rp {tax.toLocaleString("id-ID")}</span></div>
+                        <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total Pembayaran</span><span className="text-xl text-[#0D47A1]">Rp {total.toLocaleString("id-ID")}</span></div>
+                      </>
+                    );
+                  })()}
                 </div>
-                <p className="mt-4 text-xs leading-relaxed text-slate-500">Biaya aplikasi, pajak, dan status pembayaran ditampilkan setelah kontrak pembayaran mengembalikan nominal tersebut.</p>
 
                 {/* Tip Helper Section */}
                 {task.status === "selesai" && (
@@ -294,8 +324,8 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                       <div className="flex gap-2">
                          <div className="relative flex-1">
                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
-                           <input 
-                             type="number" 
+                           <input
+                             type="number"
                              placeholder="0"
                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20"
                              value={tipAmount}
@@ -303,7 +333,7 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                              disabled={isSubmittingTip}
                            />
                          </div>
-                         <Button 
+                         <Button
                            onClick={handleSubmitTip}
                            disabled={isSubmittingTip || !tipAmount || parseInt(tipAmount) <= 0}
                            className="rounded-xl bg-[#0D47A1] hover:bg-blue-800 px-6"
@@ -330,7 +360,12 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                     {task.helper && <p className="mt-1 text-xs text-slate-500">Rating {Number(task.helper.rating_avg).toFixed(1)} · {task.helper.total_tugas_selesai} tugas selesai</p>}
                   </div>
                 </div>
-                {helperName && <Link href="/beranda/pesan" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>}
+                {helperName && (
+                  <div className="mt-4 space-y-3">
+                    <Link href={`/beranda/pesan/${task.helper?.user_id}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>
+                    <Link href={`/kunjungan/${task.id}/laporkan`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-600 transition hover:border-red-300 hover:bg-red-50">Laporkan Helper</Link>
+                  </div>
+                )}
               </section>
               {task.status === "selesai" && task.evidence && (
                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">

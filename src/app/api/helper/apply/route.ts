@@ -23,14 +23,20 @@ export async function POST(request: Request) {
       return createApiError('forbidden', 'Hanya akun dengan role helper yang dapat mendaftar', 403);
     }
 
-    // Cek apakah sudah ada profil helper (tidak boleh daftar ulang kecuali rejected)
+    // Permintaan yang terputus setelah profil dibuat harus dapat dilanjutkan.
     const { data: existing } = await supabase
       .from('helper_profiles')
       .select('id, status')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (existing && existing.status !== 'suspended' && (existing.status as string) !== 'rejected') {
+    const canUpdateExisting = existing && (
+      existing.status === 'pending_verification' ||
+      existing.status === 'suspended' ||
+      (existing.status as string) === 'rejected'
+    );
+
+    if (existing && !canUpdateExisting) {
       return createApiError(
         'conflict',
         `Profil helper sudah ada dengan status: ${existing.status}`,
@@ -85,8 +91,6 @@ export async function POST(request: Request) {
 
     // Update atau Insert helper_profiles
     let profileId = existing?.id;
-    let errorMsg = '';
-    
     if (existing) {
       const { data: updated, error: updateError } = await supabase
         .from('helper_profiles')
@@ -106,13 +110,18 @@ export async function POST(request: Request) {
         .eq('id', existing.id)
         .select('id')
         .single();
-        
-      if (updateError) errorMsg = updateError.message;
-      else profileId = updated.id;
+
+      if (updateError || !updated) {
+        return createApiError('server_error', updateError?.message || 'Gagal memperbarui profil', 500);
+      }
+
+      profileId = updated.id;
       
       // Hapus kategori lama
       const { error: deleteError } = await supabase.from('helper_service_categories').delete().eq('helper_id', profileId as string);
-      if (deleteError) errorMsg = deleteError.message;
+      if (deleteError) {
+        return createApiError('server_error', 'Gagal memperbarui kategori layanan', 500);
+      }
     } else {
       const { data: profile, error: insertError } = await supabase
         .from('helper_profiles')
@@ -131,13 +140,16 @@ export async function POST(request: Request) {
         } as unknown as Database['public']['Tables']['helper_profiles']['Insert'])
         .select('id')
         .single();
-        
-      if (insertError) errorMsg = insertError.message;
-      else profileId = profile.id;
+
+      if (insertError || !profile) {
+        return createApiError('server_error', insertError?.message || 'Gagal menyimpan profil', 500);
+      }
+
+      profileId = profile.id;
     }
 
-    if (errorMsg || !profileId) {
-      return createApiError('server_error', errorMsg || 'Gagal menyimpan profil', 500);
+    if (!profileId) {
+      return createApiError('server_error', 'Gagal menyimpan profil', 500);
     }
 
     // Insert relasi kategori layanan

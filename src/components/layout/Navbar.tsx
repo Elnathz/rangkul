@@ -42,6 +42,7 @@ export default function Navbar() {
   const [sosOpen, setSosOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [badges, setBadges] = useState<Record<string, number>>({});
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -114,10 +115,16 @@ export default function Navbar() {
       try {
         const response = await fetch("/api/notifications?limit=1", { cache: "no-store" });
         if (!response.ok) return;
-        const data = await response.json() as { unread_count?: number };
-        if (isMounted) setUnreadNotificationCount(data.unread_count || 0);
+        const data = await response.json() as { unread_count?: number, badges?: Record<string, number> };
+        if (isMounted) {
+          setUnreadNotificationCount(data.unread_count || 0);
+          setBadges(data.badges || {});
+        }
       } catch {
-        if (isMounted) setUnreadNotificationCount(0);
+        if (isMounted) {
+          setUnreadNotificationCount(0);
+          setBadges({});
+        }
       }
     };
 
@@ -175,6 +182,9 @@ export default function Navbar() {
       { href: "/koordinator/antrean", label: "Antrean Helper" },
       { href: "/koordinator/helper", label: "Helper Terverifikasi" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
+      { href: "/koordinator/pesan", label: "Pesan" },
+      { href: "/koordinator/darurat", label: "Darurat" },
+      { href: "/koordinator/laporan", label: "Laporan" },
       ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
   }
@@ -203,10 +213,16 @@ export default function Navbar() {
         <ul className="hidden md:flex items-center gap-8 text-base font-semibold text-muted-foreground">
           {currentNavLinks.map(({ href, label }) => {
             const isActive = pathname === href;
+            const badgeCount = badges[href] || 0;
             return (
               <li key={href}>
-                <Link href={href} className={isActive ? "text-[#0D47A1] font-bold" : "hover:text-[#0D47A1] transition-colors"}>
+                <Link href={href} className={`relative ${isActive ? "text-[#0D47A1] font-bold" : "hover:text-[#0D47A1] transition-colors"}`}>
                   {label}
+                  {badgeCount > 0 && (
+                    <span className="absolute -right-3 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white" aria-hidden="true">
+                      {badgeCount > 99 ? "99+" : badgeCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
@@ -325,16 +341,24 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-border px-6 py-4 flex flex-col gap-4 shadow-lg">
-          {currentNavLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-base font-semibold text-foreground hover:text-[#0D47A1] py-1"
-              onClick={() => setMenuOpen(false)}
-            >
-              {label}
-            </Link>
-          ))}
+          {currentNavLinks.map(({ href, label }) => {
+            const badgeCount = badges[href] || 0;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="relative w-fit text-base font-semibold text-foreground hover:text-[#0D47A1] py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {label}
+                {badgeCount > 0 && (
+                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black text-white align-middle" aria-hidden="true">
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
           <div className="flex flex-col gap-2 pt-2 border-t border-border">
             {user ? (
               <div className="flex flex-col gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100">

@@ -3,6 +3,7 @@ import { apiResponse, createApiError } from '@/lib/api-response';
 import { serviceCategorySchema } from '@/lib/validations/admin';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
+import { writeAuditLog } from '@/lib/audit';
 
 type AppSupabaseClient = SupabaseClient<Database>;
 
@@ -87,7 +88,12 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { tingkat, parent_id, jarak_min_km, jarak_max_km, ...updateData } = validation.data;
+    const updateData = {
+      ...validation.data,
+      ...(validation.data.parent_id !== undefined ? { parent_id: validation.data.parent_id } : {}),
+      ...(validation.data.jarak_min_km !== undefined ? { jarak_min_km: validation.data.jarak_min_km } : {}),
+      ...(validation.data.jarak_max_km !== undefined ? { jarak_max_km: validation.data.jarak_max_km } : {}),
+    };
 
     const { data, error } = await supabase
       .from('service_categories')
@@ -100,6 +106,8 @@ export async function PUT(
       return createApiError('server_error', 'Gagal memperbarui kategori: ' + error.message, 500);
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await writeAuditLog({ actor_id: user.id, action: 'admin_service_category_updated', entity_type: 'service_category', entity_id: data.id, metadata: { fields: Object.keys(updateData) } });
     return apiResponse({ data, message: 'Kategori berhasil diperbarui' }, 200);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
@@ -134,6 +142,8 @@ export async function DELETE(
       return createApiError('server_error', 'Gagal menghapus kategori: ' + error.message, 500);
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await writeAuditLog({ actor_id: user.id, action: 'admin_service_category_deleted', entity_type: 'service_category', entity_id: data.id, metadata: { soft_delete: true } });
     return apiResponse({ data, message: 'Kategori berhasil dinonaktifkan (soft delete)' }, 200);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);

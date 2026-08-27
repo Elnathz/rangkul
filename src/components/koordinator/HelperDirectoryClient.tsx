@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Activity,
   BriefcaseBusiness,
@@ -138,21 +139,43 @@ export default function HelperDirectoryClient() {
 
   React.useEffect(() => {
     let active = true;
-    void fetchDirectoryData()
-      .then((payload) => {
+    let fetching = false;
+
+    const performFetch = async (isBackground = false) => {
+      if (fetching) return;
+      fetching = true;
+      try {
+        const payload = await fetchDirectoryData();
         if (!active) return;
         setDirectory(payload);
         setErrorMessage("");
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
+        if (!isBackground) setLoading(false);
+      } catch (error: unknown) {
         if (!active) return;
         setErrorMessage(error instanceof Error ? error.message : "Directory Helper gagal dimuat.");
-        setLoading(false);
-      });
+        if (!isBackground) setLoading(false);
+      } finally {
+        fetching = false;
+      }
+    };
+
+    void performFetch();
+
+    // 1. Polling every 30 seconds
+    const intervalId = setInterval(() => {
+      void performFetch(true);
+    }, 30000);
+
+    // 2. Refetch on focus
+    const onFocus = () => {
+      void performFetch(true);
+    };
+    window.addEventListener("focus", onFocus);
 
     return () => {
       active = false;
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -304,7 +327,8 @@ export default function HelperDirectoryClient() {
             {helpers.map((helper) => {
               const activity = activityMeta[helper.status_aktivitas];
               return (
-                <article key={helper.id} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-md">
+                <Link key={helper.id} href={`/koordinator/helper/${helper.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] rounded-2xl">
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-md cursor-pointer h-full">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blue-100 text-base font-bold text-[#0D47A1]">
                       {helper.foto_url && !failedAvatarIds.has(helper.id) ? (
@@ -366,6 +390,7 @@ export default function HelperDirectoryClient() {
                     </div>
                   </div>
                 </article>
+              </Link>
               );
             })}
           </div>

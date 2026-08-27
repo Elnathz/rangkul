@@ -29,3 +29,10 @@ test("proxy melewati bootstrap Supabase untuk route publik sebelum update sessio
     /if \(isPublicRoute\(pathname\)\) \{\s*return NextResponse\.next\(\);\s*\}/s,
   );
 });
+
+test("proxy mempertahankan akses role saat profile hanya dapat ditemukan lewat email", () => {
+  assert.match(proxySource, /userProfileById/);
+  assert.match(proxySource, /user\.email\.toLowerCase\(\)/);
+  assert.match(proxySource, /userProfileByEmail/);
+  assert.match(proxySource, /metadataRole/);
+});

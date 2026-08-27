@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 
 type KoordinatorOption = {
   id: string;
@@ -19,12 +20,9 @@ type KoordinatorOption = {
   users: {
     full_name: string | null;
     phone: string | null;
-    provinsi: string | null;
-    kabupaten_kota: string | null;
-    kecamatan: string | null;
-    kelurahan: string | null;
   } | null;
 };
+type ServiceCategoryOption = ServiceCategoryRow & { parentName: string | null };
 
 export default function HelperVerifikasiPage() {
   const router = useRouter();
@@ -46,11 +44,14 @@ export default function HelperVerifikasiPage() {
     setTimeout(() => setToast(null), 4000);
   };
   
-  const [dbCategories, setDbCategories] = useState<{id: string, nama: string}[]>([]);
+  const [dbCategories, setDbCategories] = useState<ServiceCategoryOption[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [koordinators, setKoordinators] = useState<KoordinatorOption[]>([]);
+  const [koordinatorsLoading, setKoordinatorsLoading] = useState(false);
+  const [koordinatorsError, setKoordinatorsError] = useState(false);
+  const [koordinatorsRetry, setKoordinatorsRetry] = useState(0);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
   const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
@@ -60,35 +61,16 @@ export default function HelperVerifikasiPage() {
       id: "ringan",
       title: "Ringan",
       desc: "Aktivitas harian ringan & non-medis.",
-      catNames: [
-        "Pengingat Obat", 
-        "Menemani Mengobrol (singkat)", 
-        "Bantuan Teknologi (singkat)", 
-        "Bersih-bersih Ringan", 
-        "Antar Obat (dekat, ≤1 km)"
-      ]
     },
     {
       id: "sedang",
       title: "Sedang",
       desc: "Bantuan rutinitas harian untuk lansia semi-mandiri.",
-      catNames: [
-        "Menemani Mengobrol (lama)", 
-        "Bantuan Teknologi (lama)", 
-        "Antar Obat (sedang, 1–3 km)", 
-        "Belanja Kebutuhan (standar)"
-      ]
     },
     {
       id: "berat",
       title: "Berat",
       desc: "Perawatan khusus dan penanganan medis dasar.",
-      catNames: [
-        "Antar Obat (jauh, >3 km)", 
-        "Bersih-bersih Menyeluruh", 
-        "Kontrol Kesehatan (antar ke faskes)", 
-        "Belanja Kebutuhan (besar/jauh)"
-      ]
     }
   ];
 
@@ -113,9 +95,8 @@ export default function HelperVerifikasiPage() {
       // Fetch categories
       const { data: cats } = await supabase
         .from('service_categories')
-        .select('id, nama')
-        .eq('is_active', true);
-      if (cats) setDbCategories(cats);
+        .select('id, nama, tingkat, parent_id, is_active');
+      if (cats) setDbCategories(getSelectableServiceCategories(cats as unknown as ServiceCategoryRow[]));
 
       // Fetch user profile if exists
       const { data: { user } } = await supabase.auth.getUser();
@@ -192,31 +173,53 @@ export default function HelperVerifikasiPage() {
   }, []);
 
   useEffect(() => {
-    if (form.region.kelurahan) {
-      const fetchKoords = async () => {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('koordinator_profiles')
-          .select(`
-            id, 
-            wilayah, 
-            tingkat,
-            ktp_url,
-            users!koordinator_profiles_user_id_fkey!inner(full_name, phone, provinsi, kabupaten_kota, kecamatan, kelurahan)
-          `)
-          .eq('status', 'verified')
-          .eq('users.provinsi', form.region.provinsi)
-          .eq('users.kabupaten_kota', form.region.kota)
-          .eq('users.kecamatan', form.region.kecamatan)
-          .eq('users.kelurahan', form.region.kelurahan);
-          
-        if (data) setKoordinators(data as unknown as KoordinatorOption[]);
-      };
-      fetchKoords();
-    } else {
-      queueMicrotask(() => setKoordinators([]));
+    if (!form.region.kelurahan) {
+      queueMicrotask(() => {
+        setKoordinators([]);
+        setKoordinatorsError(false);
+        setKoordinatorsLoading(false);
+      });
+      return;
     }
-  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi]);
+
+    let cancelled = false;
+    const fetchKoords = async () => {
+      setKoordinatorsLoading(true);
+      setKoordinatorsError(false);
+      const supabase = createClient();
+      let query = supabase
+        .from('koordinator_profiles')
+        .select(`
+          id,
+          wilayah,
+          tingkat,
+          ktp_url,
+          users!koordinator_profiles_user_id_fkey!inner(full_name, phone)
+        `)
+        .eq('status', 'verified');
+
+      for (const wilayahPart of [
+        form.region.kelurahan,
+        form.region.kecamatan,
+        form.region.kota,
+        form.region.provinsi,
+      ].filter(Boolean)) {
+        query = query.ilike('wilayah', `%${wilayahPart}%`);
+      }
+
+      const { data, error } = await query;
+      if (!cancelled) {
+        setKoordinators((data ?? []) as unknown as KoordinatorOption[]);
+        setKoordinatorsError(Boolean(error));
+        setKoordinatorsLoading(false);
+      }
+    };
+
+    void fetchKoords();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi, koordinatorsRetry]);
 
   // Helper to toggle by ID
   const toggleKategori = (catId: string) => {
@@ -229,7 +232,7 @@ export default function HelperVerifikasiPage() {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
     const idsToAdd = dbCategories
-      .filter(c => tier.catNames.includes(c.nama))
+      .filter(c => c.tingkat === tier.id)
       .map(c => c.id);
     setKategoriIds(prev => Array.from(new Set([...prev, ...idsToAdd])));
   };
@@ -238,7 +241,7 @@ export default function HelperVerifikasiPage() {
     const tier = tiers.find(t => t.id === tabId);
     if (!tier) return;
     const idsToRemove = dbCategories
-      .filter(c => tier.catNames.includes(c.nama))
+      .filter(c => c.tingkat === tier.id)
       .map(c => c.id);
     setKategoriIds(prev => prev.filter(id => !idsToRemove.includes(id)));
   };
@@ -448,40 +451,73 @@ export default function HelperVerifikasiPage() {
               </div>
 
               {form.region.kelurahan && (
-                <div className="mt-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-[#0D47A1] block mb-2">
+                <div className="relative mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5">
+                  <Label className="mb-3 block text-xs font-bold uppercase tracking-wider text-[#0D47A1]">
                     Koordinator RT/RW
                   </Label>
-                  
-                  {koordinators.length > 0 ? (
-                     <p className="text-xs text-blue-700/80 mb-3">Terdapat {koordinators.length} Koordinator Rangkul yang aktif di kelurahan {form.region.kelurahan}. Memilih koordinator akan mempercepat verifikasi akun Anda.</p>
+
+                  {koordinatorsLoading ? (
+                    <div role="status" aria-live="polite" className="flex items-center gap-3 rounded-xl border border-blue-100 bg-white/80 px-4 py-3 text-sm text-slate-600">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#0D47A1]" aria-hidden="true" />
+                      <span>Mencari Koordinator di {form.region.kelurahan}...</span>
+                    </div>
+                  ) : koordinatorsError ? (
+                    <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-800">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">Daftar Koordinator belum dapat dimuat</p>
+                        <p className="mt-1 leading-6 text-red-700/90">Coba lagi untuk memeriksa Koordinator di Kelurahan {form.region.kelurahan}.</p>
+                        <button
+                          type="button"
+                          className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-red-300 bg-white px-4 py-2 font-semibold text-red-800 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500/30"
+                          onClick={() => setKoordinatorsRetry((retry) => retry + 1)}
+                        >
+                          Coba lagi
+                        </button>
+                      </div>
+                    </div>
+                  ) : koordinators.length === 0 ? (
+                    <div role="status" aria-live="polite" className="rounded-xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                          <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900">Verifikasi Admin akan digunakan</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            Belum ada Koordinator terverifikasi di Kelurahan {form.region.kelurahan}. Anda tetap dapat mengirim pengajuan, lalu Admin akan memeriksa profil Anda.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs">
+                        <span className="text-slate-500">Status wilayah</span>
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">Menunggu verifikasi Admin</span>
+                      </div>
+                    </div>
                   ) : (
-                     <p className="text-xs text-blue-800/70 mb-3">
-                       Belum ada Koordinator Rangkul terverifikasi di Kelurahan {form.region.kelurahan}. Profil Anda akan langsung diverifikasi oleh Admin.
-                     </p>
+                    <div className="relative">
+                      <p className="mb-3 text-sm leading-6 text-blue-800/80">
+                        {koordinators.length} Koordinator tersedia di Kelurahan {form.region.kelurahan}. Memilih Koordinator akan mempercepat verifikasi akun Anda.
+                      </p>
+                      <button
+                        type="button"
+                        aria-haspopup="listbox"
+                        aria-expanded={showKoordDropdown}
+                        className="flex min-h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-900 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/30 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/30"
+                        onClick={() => setShowKoordDropdown(!showKoordDropdown)}
+                      >
+                        <span>
+                          {form.koordinator_id
+                            ? koordinators.find(k => k.id === form.koordinator_id)?.users?.full_name || 'Koordinator terpilih'
+                            : 'Pilih Koordinator'}
+                        </span>
+                        <svg className={`h-5 w-5 text-slate-400 transition-transform ${showKoordDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m19 9-7 7-7-7" /></svg>
+                      </button>
+                    </div>
                   )}
-                  
-                  <div className="relative mt-2">
-                    <button 
-                      type="button"
-                      className={`w-full text-left border-gray-300 rounded-xl p-3 shadow-sm focus:ring-[#0D47A1] focus:border-[#0D47A1] border ${koordinators.length === 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-50 flex justify-between items-center'}`}
-                      disabled={koordinators.length === 0}
-                      onClick={() => setShowKoordDropdown(!showKoordDropdown)}
-                    >
-                       {koordinators.length === 0 ? (
-                         <span>-- Tidak ada Koordinator Tersedia --</span>
-                       ) : (
-                         <span className="font-medium text-gray-900">
-                           {form.koordinator_id 
-                             ? koordinators.find(k => k.id === form.koordinator_id)?.users?.full_name || 'Koordinator Terpilih'
-                             : '-- Pilih Koordinator --'}
-                         </span>
-                       )}
-                       <svg className={`w-5 h-5 text-gray-400 transition-transform ${showKoordDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    
-                    {showKoordDropdown && koordinators.length > 0 && (
-                      <div className="absolute z-20 w-full mt-2 bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-200 overflow-hidden">
+
+                  {showKoordDropdown && koordinators.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
                         <div className="flex border-b border-gray-100">
                           <button
                             type="button"
@@ -559,7 +595,6 @@ export default function HelperVerifikasiPage() {
                         </div>
                       </div>
                     )}
-                  </div>
                 </div>
               )}
 
@@ -599,6 +634,9 @@ export default function HelperVerifikasiPage() {
                 Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
               </Label>
               <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
+              <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm leading-6 text-blue-900">
+                <span className="font-semibold">{dbCategories.length} layanan aktif tersedia.</span> Kategori induk nonaktif hanya digunakan untuk pengelompokan katalog dan tidak dapat dipilih sebagai layanan.
+              </p>
 
               {/* Preview Tabs */}
               <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
@@ -618,40 +656,31 @@ export default function HelperVerifikasiPage() {
                  ))}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+              <div className="space-y-4 mb-2">
                 {(() => {
                   const activeTier = tiers.find(t => t.id === activeTab);
                   if (!activeTier) return null;
-                  const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
-                  
-                  return filteredDbCats.slice(0, 4).map(cat => {
-                    const isSelected = kategoriIds.includes(cat.id);
-                    return (
-                      <label 
-                        key={cat.id} 
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                          isSelected 
-                            ? 'bg-blue-50/50 border-[#0D47A1]' 
-                            : 'bg-white border-gray-200 hover:border-blue-200'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded flex justify-center items-center shrink-0 border transition-colors ${
-                          isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                        }`}>
-                          {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                        </div>
-                        <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                          {cat.nama}
-                        </span>
-                        <input 
-                          type="checkbox" 
-                          checked={isSelected}
-                          onChange={() => toggleKategori(cat.id)}
-                          className="hidden" 
-                        />
-                      </label>
-                    );
-                  });
+                  const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
+
+                  return groupSelectableServiceCategories(filteredDbCats.slice(0, 4)).map((group) => (
+                    <section key={group.key} className="space-y-2">
+                      {group.parentName && <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{group.parentName}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px]">Parent</span></div>}
+                      <div className={group.parentName ? "space-y-2 border-l-2 border-blue-100 pl-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                        {group.items.map((cat) => {
+                          const isSelected = kategoriIds.includes(cat.id);
+                          return (
+                            <label key={cat.id} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
+                              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                              </div>
+                              <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                              <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ));
                 })()}
               </div>
 
@@ -666,7 +695,7 @@ export default function HelperVerifikasiPage() {
                 >
                   {(() => {
                     const activeTier = tiers.find(t => t.id === activeTab);
-                    const filteredCount = activeTier ? dbCategories.filter(c => activeTier.catNames.includes(c.nama)).length : 0;
+                    const filteredCount = activeTier ? dbCategories.filter(c => c.tingkat === activeTier.id).length : 0;
                     const rem = Math.max(0, filteredCount - 4);
                     return `Tampilkan Semua Kategori ${activeTier?.title} (+${rem} lainnya)`;
                   })()}
@@ -964,41 +993,32 @@ export default function HelperVerifikasiPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-5">
                   {(() => {
                     const activeTier = tiers.find(t => t.id === modalActiveTab);
                     if (!activeTier) return null;
                     
-                    const filteredDbCats = dbCategories.filter(c => activeTier.catNames.includes(c.nama));
+                    const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
                     
-                    return filteredDbCats.map((cat) => {
-                      const isSelected = kategoriIds.includes(cat.id);
-                      return (
-                        <label 
-                          key={cat.id} 
-                          className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all hover:shadow-sm ${
-                            isSelected 
-                              ? 'bg-blue-50/50 border-[#0D47A1] shadow-sm' 
-                              : 'bg-white border-gray-100 hover:border-blue-200'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-md flex justify-center items-center shrink-0 border transition-colors ${
-                            isSelected ? 'bg-[#0D47A1] border-[#0D47A1]' : 'bg-white border-gray-300'
-                          }`}>
-                            {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                          </div>
-                          <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>
-                            {cat.nama}
-                          </span>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            onChange={() => toggleKategori(cat.id)}
-                            className="hidden" 
-                          />
-                        </label>
-                      );
-                    });
+                    return groupSelectableServiceCategories(filteredDbCats).map((group) => (
+                      <section key={group.key} className="space-y-2">
+                        {group.parentName && <div className="flex items-center gap-2 border-b border-slate-200 pb-2"><h4 className="text-sm font-bold text-slate-900">{group.parentName}</h4><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Parent</span></div>}
+                        <div className={group.parentName ? "grid grid-cols-1 gap-3 border-l-2 border-blue-100 pl-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
+                          {group.items.map((cat) => {
+                            const isSelected = kategoriIds.includes(cat.id);
+                            return (
+                              <label key={cat.id} className={`flex items-center gap-3 rounded-2xl border-2 p-4 transition-all hover:shadow-sm ${isSelected ? 'border-[#0D47A1] bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white hover:border-blue-200'}`}>
+                                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
+                                  {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
+                                <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ));
                   })()}
                 </div>
              </div>

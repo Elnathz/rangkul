@@ -93,13 +93,28 @@ export async function proxy(request: NextRequest) {
   // If user is logged in, check role-based access
   if (user) {
     // Get user role from database
-    const { data: userProfile } = await supabase
+    const { data: userProfileById } = await supabase
       .from('users')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    let userProfile = userProfileById;
+    if (!userProfile && user.email) {
+      const { data: userProfileByEmail } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', user.email.toLowerCase())
+        .maybeSingle();
+      userProfile = userProfileByEmail;
+    }
       
-    const userRole = userProfile?.role;
+    const metadataRole = user.user_metadata?.role;
+    const userRole = userProfile?.role ?? (
+      metadataRole === 'keluarga' || metadataRole === 'helper' || metadataRole === 'koordinator' || metadataRole === 'admin'
+        ? metadataRole
+        : undefined
+    );
     
     // API Role-based access control
     if (isAdminApiRoute && userRole !== 'admin') {

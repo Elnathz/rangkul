@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, AlertCircle, MapPin, User, Phone, ShieldCheck, Users } from "lucide-react";
+import { Loader2, AlertCircle, MapPin, User, Phone, Users } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import React from "react";
 import type { Database } from "@/types/database";
+import { parseRegionAddress } from "@/lib/region-address";
 
 type LansiaProfile = Database["public"]["Tables"]["lansia_profiles"]["Row"];
 
@@ -24,6 +25,7 @@ export default function KeluargaEditProfilPage() {
   
   const [activeTab, setActiveTab] = useState<'mandiri' | 'operasional' | 'lansia'>('mandiri');
   const [lansias, setLansias] = useState<LansiaProfile[]>([]);
+  const initialSnapshot = React.useRef<string | null>(null);
 
   const [form, setForm] = useState({
     username: "",
@@ -54,13 +56,9 @@ export default function KeluargaEditProfilPage() {
       if (!user) return router.push('/login');
 
       // Set username
-      const name = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || "";
-      const phone = user.user_metadata?.phone || "";
-      const foto = user.user_metadata?.avatar_url || "";
-      
       const { data: profile } = await supabase
         .from('users')
-        .select('id, alamat_detail')
+        .select('id, full_name, username, phone, alamat_detail, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi')
         .eq('id', user.id)
         .single();
 
@@ -76,46 +74,24 @@ export default function KeluargaEditProfilPage() {
       }
 
       if (profile) {
-        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = "";
-        
-        if (profile.alamat_detail) {
-          const parts = profile.alamat_detail.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
-          } else {
-             alamat = profile.alamat_detail;
-          }
-        }
+        const parsed = parseRegionAddress(profile.alamat_detail);
+        const nextForm = {
+          ...form,
+          username: profile.full_name || profile.username || user.email?.split('@')[0] || "",
+          phone: profile.phone?.replace(/^\+62/, "0") || "",
+          foto_url: user.user_metadata?.avatar_url || "",
+          alamat: profile.alamat_detail?.includes("|") ? parsed.detail : profile.alamat_detail || "",
+          rt: profile.rt?.toString() || parsed.rt,
+          rw: profile.rw?.toString() || parsed.rw,
+          region: { provinsi: profile.provinsi || parsed.provinsi, kota: profile.kabupaten_kota || parsed.kotaKabupaten, kecamatan: profile.kecamatan || parsed.kecamatan, kelurahan: profile.kelurahan || parsed.kelurahan },
+        };
 
-        setForm(prev => ({
-          ...prev,
-          username: name,
-          phone: phone,
-          foto_url: foto,
-          alamat,
-          rt,
-          rw,
-          region,
-          domisili_lat: null,
-          domisili_lng: null,
-        }));
+        setForm(nextForm);
+        initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
       }
     };
     fetchData();
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +100,13 @@ export default function KeluargaEditProfilPage() {
 
     if (form.password && form.password !== form.confirmPassword) {
       showToast("Password dan Konfirmasi Password tidak cocok.");
+      setLoading(false);
+      return;
+    }
+
+    const currentSnapshot = JSON.stringify({ ...form, password: "", confirmPassword: "", foto_url: "" });
+    if (initialSnapshot.current === currentSnapshot && !form.password) {
+      showToast("Tidak ada perubahan.", "success");
       setLoading(false);
       return;
     }
@@ -137,7 +120,7 @@ export default function KeluargaEditProfilPage() {
       const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail }),
+        body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }),
       });
       const body = await response.json().catch(() => null) as { message?: string } | null;
       if (!response.ok) throw new Error(body?.message || "Profil gagal diperbarui");
@@ -319,6 +302,7 @@ export default function KeluargaEditProfilPage() {
                   Wilayah Administrasi Domisili <span className="text-red-500">*</span>
                 </Label>
                 <RegionSelect 
+                  initialRegion={form.region}
                   onRegionChange={(region, coords) => {
                     setForm(f => ({
                       ...f,

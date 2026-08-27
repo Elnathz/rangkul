@@ -65,3 +65,31 @@ NEXT_PUBLIC_SITE_URL=https://merangkul.vercel.app
 ```
 
 Secret hanya disimpan pada `.env.local` dan environment Vercel. Tidak ditulis ke repository.
+
+## Tambahan Integrasi Harga dan Profil Lansia
+
+Perubahan tambahan yang ikut masuk dalam Sprint 3:
+
+- Katalog Cari Helper membaca kategori layanan dari API dan menampilkan harga dasar dari data `service_categories`, bukan daftar kategori atau nominal hardcode.
+- Filter katalog mengirim kategori, tingkat layanan, radius, pencarian, dan koordinat lansia ke server supaya hasil tetap mengikuti aturan radius dan verifikasi Helper.
+- Form tambah dan edit profil lansia diselaraskan dengan field `umur`, `tingkat_mobilitas`, dan `kebutuhan_khusus` serta format alamat canonical pada API.
+- Migration, tipe database, dan validasi lansia harus tetap dijalankan bersama agar form tidak mengirim payload yang tidak ada di schema.
+
+## Testing Tambahan
+
+- Test kontrak harga dinamis dan filter katalog dari data database.
+- Test payload tambah dan edit lansia terhadap validasi server dan schema migration.
+- Jalankan quality gate penuh setelah konflik selesai: lint, typecheck, test, dan build.
+
+## Tambahan Panel Admin CRUD
+
+Scope tambahan ini menghidupkan panel Admin inti sesuai TDD §4.12, §6, §7, dan §9:
+
+- Dashboard membaca statistik, task, laporan, dan audit log dari database.
+- Pengguna membaca data nyata dengan tabs Semua, Keluarga, Helper, Koordinator, dan Admin.
+- Helper membaca profil nyata dan menyediakan suspend serta verifikasi fallback Admin.
+- Kategori menyediakan CRUD nyata untuk harga, durasi, risiko, tingkat, parent, dan radius.
+- Aksi sensitif memakai audit log dan operasi penghapusan akun memakai Supabase Auth Admin API.
+- Semua halaman wajib mobile-first sesuai `AGENTS.md`.
+
+File utama, endpoint, migration, dan pendekatan test dirinci di `docs/superpowers/plans/2026-08-23-admin-panel-crud.md`.
