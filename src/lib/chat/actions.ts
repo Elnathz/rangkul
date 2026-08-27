@@ -129,13 +129,17 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
 
   const { data: task, error: taskError } = await supabaseClient
     .from("tasks")
-    .select("keluarga_id, helper_id")
+    .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
     .eq("id", taskId)
     .single();
     
   if (taskError || !task) throw new Error("Tugas tidak ditemukan");
   
-  if (task.keluarga_id !== user.id && task.helper_id !== user.id) {
+  const helperUserId = Array.isArray(task.helper_profile) 
+    ? task.helper_profile[0]?.user_id 
+    : task.helper_profile?.user_id;
+  
+  if (task.keluarga_id !== user.id && helperUserId !== user.id) {
     const { data: koordinator } = await supabaseClient
       .from("koordinator_profiles")
       .select("id")
@@ -168,17 +172,21 @@ export async function sendMessage(taskId: string, message: string) {
 
   const { data: task, error: taskError } = await supabaseClient
     .from("tasks")
-    .select("keluarga_id, helper_id")
+    .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
     .eq("id", taskId)
     .single();
 
   if (taskError || !task) throw new Error("Tugas tidak ditemukan");
 
-  if (task.keluarga_id !== user.id && task.helper_id !== user.id) {
+  const helperUserId = Array.isArray(task.helper_profile) 
+    ? task.helper_profile[0]?.user_id 
+    : task.helper_profile?.user_id;
+
+  if (task.keluarga_id !== user.id && helperUserId !== user.id) {
     throw new Error("Anda bukan partisipan tugas ini");
   }
   
-  const receiverId = user.id === task.keluarga_id ? task.helper_id : task.keluarga_id;
+  const receiverId = user.id === task.keluarga_id ? helperUserId : task.keluarga_id;
   if (!receiverId) throw new Error("Tugas ini belum memiliki Helper");
 
   const { data, error } = await supabaseClient
