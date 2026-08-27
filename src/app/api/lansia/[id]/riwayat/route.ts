@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
-import { calculateRiwayatTrend } from '@/lib/riwayat-rangkul';
+import { calculateIndicatorTrends, calculateRiwayatTrend } from '@/lib/riwayat-rangkul';
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -34,7 +34,33 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     });
     const snapshots = kunjungan.flatMap((item) => item.health_snapshot ? [{ energi: item.health_snapshot.energi, mobilitas: item.health_snapshot.mobilitas, mood: item.health_snapshot.mood, nafsu_makan: item.health_snapshot.nafsu_makan, kualitas_tidur: item.health_snapshot.kualitas_tidur }] : []);
 
-    return apiResponse({ lansia, kunjungan, tren: calculateRiwayatTrend(snapshots), disclaimer: 'Riwayat Rangkul adalah catatan pendampingan, bukan diagnosis medis.' }, 200);
+    const trendSnapshots = kunjungan.flatMap((item) => item.health_snapshot
+      ? [{ tanggal: item.waktu, energi: item.health_snapshot.energi, mobilitas: item.health_snapshot.mobilitas, mood: item.health_snapshot.mood, nafsu_makan: item.health_snapshot.nafsu_makan, kualitas_tidur: item.health_snapshot.kualitas_tidur }]
+      : []);
+    const visits = kunjungan.map((item) => ({
+      task_id: item.task_id,
+      submitted_at: item.waktu,
+      foto_bukti_url: item.foto_bukti_url,
+      catatan_kondisi: item.catatan_kondisi,
+      cerita_hari_ini: item.health_snapshot?.cerita_hari_ini ?? null,
+      snapshot: item.health_snapshot ? {
+        energi: item.health_snapshot.energi,
+        mobilitas: item.health_snapshot.mobilitas,
+        mood: item.health_snapshot.mood,
+        nafsu_makan: item.health_snapshot.nafsu_makan,
+        kualitas_tidur: item.health_snapshot.kualitas_tidur,
+      } : null,
+    }));
+    const trend = calculateRiwayatTrend(snapshots);
+    return apiResponse({
+      lansia: { id: lansia.id, nama: lansia.nama },
+      kunjungan,
+      visits,
+      trends: calculateIndicatorTrends(trendSnapshots),
+      tren: trend,
+      attention: { perlu_perhatian: trend.perlu_perhatian, alasan: trend.alasan },
+      disclaimer: 'Riwayat Rangkul adalah catatan pendampingan, bukan diagnosis medis.',
+    }, 200);
   } catch (error: unknown) {
     return createApiError('server_error', error instanceof Error ? error.message : 'Terjadi kesalahan server', 500);
   }
