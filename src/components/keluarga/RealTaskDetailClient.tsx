@@ -362,7 +362,7 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                 </div>
                 {helperName && (
                   <div className="mt-4 space-y-3">
-                    <Link href={`/beranda/pesan/${task.helper?.user_id}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>
+                    <Link href={`/beranda/pesan/${task.id}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-[#0D47A1] transition hover:border-blue-200 hover:bg-blue-50">Hubungi Helper</Link>
                     <Link href={`/kunjungan/${task.id}/laporkan`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-600 transition hover:border-red-300 hover:bg-red-50">Laporkan Helper</Link>
                   </div>
                 )}
