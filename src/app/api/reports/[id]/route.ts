@@ -13,8 +13,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!validation.success) return apiResponse({ error: "validation_error", message: "Status laporan belum valid", fieldErrors: validation.error.flatten().fieldErrors }, 422);
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin" && profile?.role !== "koordinator") return createApiError("forbidden", "Hanya Koordinator atau Admin yang dapat menindak laporan", 403);
-  const { data: report, error } = await supabase.from("reports").update({ status: validation.data.status, ditindak_oleh: user.id, updated_at: new Date().toISOString() }).eq("id", id).select().maybeSingle();
-  if (error) return createApiError("server_error", error.message, 500);
-  if (!report) return createApiError("not_found", "Laporan tidak ditemukan", 404);
+  const { data: report, error } = await supabase.rpc("review_report", {
+    p_report_id: id,
+    p_status: validation.data.status,
+    p_helper_status: validation.data.helper_status ?? null,
+    p_decision_reason: validation.data.decision_reason ?? null,
+  });
+  if (error) {
+    const status = error.code === "P0002" ? 404 : error.code === "42501" ? 403 : error.code === "22023" ? 422 : 500;
+    return createApiError(status === 404 ? "not_found" : status === 403 ? "forbidden" : status === 422 ? "validation_error" : "server_error", error.message, status);
+  }
   return apiResponse({ report });
 }

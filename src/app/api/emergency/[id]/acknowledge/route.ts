@@ -1,5 +1,5 @@
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -9,13 +9,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return createApiError("unauthorized", "Anda harus login untuk mengakui SOS", 401);
-  const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-  if (!profile || !["keluarga", "koordinator", "admin"].includes(profile.role)) return createApiError("forbidden", "Role ini tidak dapat mengakui SOS", 403);
-  const { data: alert } = await supabase.from("emergency_alerts").select("id, task_id, status").eq("id", id).maybeSingle();
-  if (!alert) return createApiError("not_found", "Sinyal darurat tidak ditemukan", 404);
-  const admin = await createAdminClient();
-  const { data: updated, error } = await admin.from("emergency_alerts").update({ status: "acknowledged", acknowledged_by: user.id, acknowledged_at: new Date().toISOString() }).eq("id", id).eq("status", "active").select().maybeSingle();
-  if (error) return createApiError("server_error", error.message, 500);
-  if (!updated) return createApiError("conflict", "Sinyal darurat sudah diakui", 409);
-  return apiResponse({ alert: updated });
+  const { data: alert, error } = await supabase.rpc("acknowledge_emergency_alert", {
+    p_alert_id: id,
+  });
+  if (error) {
+    const status = error.code === "42501" ? 403 : error.code === "P0002" ? 404 : error.code === "P0001" ? 409 : 422;
+    const code = status === 404 ? "not_found" : status === 409 ? "conflict" : status === 403 ? "forbidden" : "invalid_request";
+    return createApiError(code, error.message, status);
+  }
+  return apiResponse({ alert });
 }
