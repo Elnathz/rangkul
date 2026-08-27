@@ -29,6 +29,7 @@ function SearchField({ onPositionChange }: { onPositionChange: (pos: { lat: numb
     const provider = new OpenStreetMapProvider();
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const searchControl = new (GeoSearchControl as any)({
       provider: provider,
       style: "bar",
@@ -43,6 +44,7 @@ function SearchField({ onPositionChange }: { onPositionChange: (pos: { lat: numb
 
     map.addControl(searchControl);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleShowLocation = (e: any) => {
        const latlng = { lat: e.location.y, lng: e.location.x };

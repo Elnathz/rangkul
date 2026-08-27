@@ -293,7 +293,6 @@ export type Database = {
           created_at: string
           domisili_lat: number | null
           domisili_lng: number | null
-          foto_url: string | null
           foto_wajah_url: string | null
           id: string
           is_available: boolean
@@ -317,7 +316,6 @@ export type Database = {
           created_at?: string
           domisili_lat?: number | null
           domisili_lng?: number | null
-          foto_url?: string | null
           foto_wajah_url?: string | null
           id?: string
           is_available?: boolean
@@ -376,12 +374,63 @@ export type Database = {
           },
         ]
       }
+      helper_photo_change_requests: {
+        Row: {
+          alasan: string | null
+          diajukan_at: string
+          ditinjau_at: string | null
+          ditinjau_oleh: string | null
+          foto_wajah_url: string
+          helper_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          alasan?: string | null
+          diajukan_at?: string
+          ditinjau_at?: string | null
+          ditinjau_oleh?: string | null
+          foto_wajah_url: string
+          helper_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          alasan?: string | null
+          diajukan_at?: string
+          ditinjau_at?: string | null
+          ditinjau_oleh?: string | null
+          foto_wajah_url?: string
+          helper_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helper_photo_change_requests_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_photo_change_requests_ditinjau_oleh_fkey"
+            columns: ["ditinjau_oleh"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       koordinator_profiles: {
         Row: {
           created_at: string
           diverifikasi_at: string | null
           diverifikasi_oleh: string | null
+          domisili_lat: number | null
+          domisili_lng: number | null
           dokumen_url: string | null
+          foto_url: string | null
           ktp_url: string | null
           id: string
           saldo_komisi: number
@@ -395,7 +444,10 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          domisili_lat?: number | null
+          domisili_lng?: number | null
           dokumen_url?: string | null
+          foto_url?: string | null
           ktp_url?: string | null
           id?: string
           saldo_komisi?: number
@@ -409,7 +461,10 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          domisili_lat?: number | null
+          domisili_lng?: number | null
           dokumen_url?: string | null
+          foto_url?: string | null
           ktp_url?: string | null
           id?: string
           saldo_komisi?: number
@@ -452,6 +507,9 @@ export type Database = {
           lng: number | null
           nama: string
           updated_at: string
+          umur: number | null
+          tingkat_mobilitas: string | null
+          kebutuhan_khusus: string | null
         }
         Insert: {
           alamat: string
@@ -468,6 +526,9 @@ export type Database = {
           lng?: number | null
           nama: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Update: {
           alamat?: string
@@ -484,6 +545,9 @@ export type Database = {
           lng?: number | null
           nama?: string
           updated_at?: string
+          umur?: number | null
+          tingkat_mobilitas?: string | null
+          kebutuhan_khusus?: string | null
         }
         Relationships: [
           {
@@ -589,11 +653,16 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          gateway_ref: string | null
           held_at: string | null
+          helper_share: number
           id: string
+          jumlah_total: number
+          koordinator_share: number
           midtrans_order_id: string | null
           midtrans_snap_token: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
           released_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           task_id: string
@@ -602,11 +671,16 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          gateway_ref?: string | null
           held_at?: string | null
+          helper_share?: number
           id?: string
+          jumlah_total: number
+          koordinator_share?: number
           midtrans_order_id?: string | null
           midtrans_snap_token?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          platform_fee?: number
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           task_id: string
@@ -615,11 +689,16 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          gateway_ref?: string | null
           held_at?: string | null
+          helper_share?: number
           id?: string
+          jumlah_total?: number
+          koordinator_share?: number
           midtrans_order_id?: string | null
           midtrans_snap_token?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          platform_fee?: number
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           task_id?: string
@@ -1052,6 +1131,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_account_status: {
+        Args: {
+          next_status: Database["public"]["Enums"]["account_status"]
+          target_user_id: string
+        }
+        Returns: Database["public"]["Tables"]["users"]["Row"]
+      }
       create_extra_service: {
         Args: {
           p_biaya: number
@@ -1059,6 +1145,43 @@ export type Database = {
           p_task_id: string
         }
         Returns: Database["public"]["Tables"]["task_extra_services"]["Row"]
+      }
+      create_midtrans_payment: {
+        Args: {
+          p_amount: number
+          p_order_id: string
+          p_snap_token: string
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      settle_midtrans_payment: {
+        Args: {
+          p_gateway_ref: string
+          p_order_id: string
+          p_payload: Json
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      release_task_payment: {
+        Args: { p_task_id: string }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      refund_midtrans_payment: {
+        Args: {
+          p_gateway_ref: string | null
+          p_payload: Json
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      cancel_task_with_compensation: {
+        Args: {
+          p_cancellation_reason: string
+          p_refund_payload: Json
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
       }
       decide_extra_service: {
         Args: {
@@ -1096,6 +1219,35 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["tasks"]["Row"]
       }
+        confirm_task_cancel_compensation: {
+          Args: {
+            p_refund_payload: Json
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["tasks"]["Row"]
+        }
+        prepare_midtrans_payment_intent: {
+          Args: {
+            p_amount: number
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
+        prepare_task_cancel_compensation: {
+          Args: {
+            p_cancellation_reason: string
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
+        save_midtrans_snap_token: {
+          Args: {
+            p_order_id: string
+            p_snap_token: string
+            p_task_id: string
+          }
+          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        }
       reschedule_task: {
         Args: {
           p_jadwal_waktu: string
@@ -1137,6 +1289,7 @@ export type Database = {
         | "held_escrow"
         | "released"
         | "refunded"
+        | "disputed"
         | "dibatalkan_kompensasi"
       report_status: "menunggu" | "ditindak" | "selesai"
       task_status:
@@ -1321,6 +1474,7 @@ export const Constants = {
         "held_escrow",
         "released",
         "refunded",
+        "disputed",
         "dibatalkan_kompensasi",
       ],
       report_status: ["menunggu", "ditindak", "selesai"],

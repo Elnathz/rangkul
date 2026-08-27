@@ -55,7 +55,19 @@ export async function POST(request: Request) {
       kelurahan,
       rt,
       rw,
+      umur,
+      tingkat_mobilitas,
+      kebutuhan_khusus,
     } = validation.data;
+
+    // Format alamat lengkap
+    let fullAlamat = alamat;
+    if (rt || rw) {
+       fullAlamat += `, RT ${rt || '-'}/RW ${rw || '-'}`;
+    }
+    if (kelurahan) {
+       fullAlamat += `, ${kelurahan}, ${kecamatan}, ${kabupaten_kota}, ${provinsi}`;
+    }
 
     // Create Lansia Profile record in Supabase
     const { data: profile, error: insertError } = await supabase
@@ -63,7 +75,7 @@ export async function POST(request: Request) {
       .insert({
         keluarga_id: user.id,
         nama,
-        alamat,
+        alamat: fullAlamat,
         lat: lat ?? null,
         lng: lng ?? null,
         catatan_kondisi: catatan_kondisi || null,
@@ -71,12 +83,9 @@ export async function POST(request: Request) {
         dokumen_hubungan_keluarga_url: dokumen_hubungan_keluarga_url || null,
         foto_url: foto_url || null,
         hubungan_keluarga,
-        provinsi,
-        kabupaten_kota,
-        kecamatan,
-        kelurahan,
-        rt,
-        rw,
+        umur,
+        tingkat_mobilitas,
+        kebutuhan_khusus: kebutuhan_khusus || null,
       } as unknown as Database['public']['Tables']['lansia_profiles']['Insert'])
       .select('*')
       .single();

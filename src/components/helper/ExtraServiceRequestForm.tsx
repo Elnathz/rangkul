@@ -104,13 +104,14 @@ export function ExtraServiceRequestForm({
                 type="number"
                 value={biaya}
                 onChange={(event) => setBiaya(event.target.value)}
-                placeholder="0"
-                min="1"
-                step="1000"
+                placeholder="1000"
+                min="1000"
+                step="1"
                 required
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#0D47A1] focus:ring-2 focus:ring-blue-100"
               />
             </div>
+            <span className="mt-1 block text-xs font-normal text-slate-500">Minimal Rp1.000</span>
           </label>
           {error && (
             <p role="alert" className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">

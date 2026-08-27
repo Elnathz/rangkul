@@ -48,7 +48,6 @@ export type ApprovalQueueTask = {
     rating_avg: number;
     wilayah_domisili: string;
     bio: string | null;
-    foto_url: string | null;
     foto_wajah_url: string | null;
     verified_by_admin_fallback: boolean;
     users: Relation<{ full_name: string | null }>;
@@ -182,7 +181,7 @@ export function ApprovalTaskCard({ task, isProcessing, onApprove }: ApprovalTask
   if (!lansia || !category || !helper) return null;
 
   const helperName = user?.full_name || "Helper tanpa nama";
-  const helperPhoto = helper.foto_wajah_url || helper.foto_url;
+  const helperPhoto = helper.foto_wajah_url;
   const helperTrust = helper.tingkat_kepercayaan === "terpercaya" ? "Terpercaya" : "Probation";
 
   return (

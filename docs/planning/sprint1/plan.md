@@ -1,5 +1,9 @@
 # Sprint 1: Autentikasi & Profil Pengguna — Implementation Plan
 
+## Completion Pass 2026-08-22
+
+Gap Sprint 1 yang ditutup pada pass ini: matriks seed identitas dan wilayah sesuai TDD §19, serta signed URL dokumen yang dibatasi satu jam. Verifikasi alur UI yang sudah ada tidak diperluas menjadi fitur baru.
+
 ## Progress Audit 22 Agustus 2026
 
 - Verifikasi Helper, approval Koordinator/Admin, radius layanan, fallback wilayah, foto profil, upload privat, dan direktori Helper sudah tersedia.

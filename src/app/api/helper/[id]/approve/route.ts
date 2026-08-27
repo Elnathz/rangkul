@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { helperApproveSchema } from '@/lib/validations/helper';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { writeAuditLog } from '@/lib/audit';
+import { extractKelurahan } from '@/lib/region';
 
 // PUT /api/helper/[id]/approve — Koordinator atau Admin approve Helper
 export async function PUT(
@@ -64,14 +65,11 @@ export async function PUT(
         return createApiError('forbidden', 'Akun koordinator belum diverifikasi admin', 403);
       }
 
-      // Guard: wilayah harus matching (case-insensitive)
-      const wilayahKoordFull = koordProfile.wilayah.toLowerCase();
-      const wilayahHelperFull = helperProfile.wilayah_domisili.toLowerCase();
-      
-      const kelurahanKoord = wilayahKoordFull.split('|')[0].trim();
-      const kelurahanHelper = wilayahHelperFull.split('|')[0].trim();
+      // Format alamat Helper dan Koordinator berbeda, jadi batas approval hanya kelurahan.
+      const kelurahanKoord = extractKelurahan(koordProfile.wilayah);
+      const kelurahanHelper = extractKelurahan(helperProfile.wilayah_domisili);
 
-      if (kelurahanKoord !== kelurahanHelper && !wilayahHelperFull.includes(wilayahKoordFull) && !wilayahKoordFull.includes(wilayahHelperFull)) {
+      if (!kelurahanKoord || !kelurahanHelper || kelurahanKoord !== kelurahanHelper) {
         return createApiError(
           'forbidden',
           'Anda hanya dapat menyetujui helper yang berdomisili di kelurahan/wilayah Anda',
@@ -133,3 +131,5 @@ export async function PUT(
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
 }
+
+export const POST = PUT;

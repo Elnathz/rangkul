@@ -11,29 +11,20 @@ import { Loader2, AlertCircle, MapPin, Heart, ArrowLeft, UserRound, Stethoscope 
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import Link from "next/link";
-import type { Database } from "@/types/database";
-
-type LansiaEditData = Database["public"]["Tables"]["lansia_profiles"]["Row"] & {
-  umur?: number | null;
-  kondisi_medis?: string | null;
-  tingkat_mobilitas?: string | null;
-  kebutuhan_khusus?: string | null;
-  wilayah_domisili?: string | null;
-  domisili_lat?: number | null;
-  domisili_lng?: number | null;
-};
+import { ImageCropperModal } from "@/components/ui/ImageCropperModal";
 
 export default function LansiaEditProfilPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
   const supabase = createClient();
-  
+
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
-  
+
   const [activeTab, setActiveTab] = useState<'biodata' | 'kondisi' | 'alamat'>('biodata');
+  const initialSnapshot = useRef<string | null>(null);
 
   const [form, setForm] = useState({
     nama: "",
@@ -53,6 +44,9 @@ export default function LansiaEditProfilPage() {
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
 
+  const [cropModalSrc, setCropModalSrc] = useState<string | null>(null);
+  const [croppedFile, setCroppedFile] = useState<File | null>(null);
+
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
@@ -61,39 +55,44 @@ export default function LansiaEditProfilPage() {
   useEffect(() => {
     const fetchData = async () => {
       setFetching(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push('/login');
-
-      const { data: dbData } = await supabase
-        .from('lansia_profiles')
-        .select('*')
-        .eq('id', id)
-        .eq('keluarga_id', user.id)
-        .single();
-      const data = dbData as unknown as LansiaEditData | null;
+      const response = await fetch(`/api/lansia/${id}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => null) as { profile?: { nama?: string; umur?: number; catatan_kondisi?: string; tingkat_mobilitas?: string; kebutuhan_khusus?: string; foto_url?: string; alamat?: string; lat?: number | null; lng?: number | null }; message?: string } | null;
+      if (response.status === 401) return router.push('/login');
+      if (!response.ok) throw new Error(payload?.message || 'Profil lansia gagal dimuat');
+      const dbData = payload?.profile;
+      const data = dbData as { nama?: string; umur?: number; catatan_kondisi?: string; tingkat_mobilitas?: string; kebutuhan_khusus?: string; foto_url?: string; alamat?: string; lat?: number; lng?: number } | null;
 
       if (data) {
         const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = data.alamat || "";
-        
-        if (data.wilayah_domisili) {
-          const parts = data.wilayah_domisili.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
+        let rt = "", rw = "", baseAlamat = data.alamat || "";
+
+        // Coba ekstrak RT/RW
+        const rtrwMatch = baseAlamat.match(/RT\s*(\d+)\s*\/?\s*RW\s*(\d+)/i);
+        if (rtrwMatch) {
+            rt = rtrwMatch[1];
+            rw = rtrwMatch[2];
+        }
+
+        // Pisahkan bagian alamat depan dan bagian wilayah
+        const parts = baseAlamat.split(',').map(p => p.trim());
+        if (parts.length >= 4) {
+          // Asumsi format: Alamat, RT/RW, Kelurahan, Kecamatan, Kota, Provinsi
+          // Cari mana yang mengandung RT/RW
+          const rtRwIndex = parts.findIndex(p => p.match(/RT\s*\d+\s*\/?\s*RW\s*\d+/i));
+
+          if (rtRwIndex > 0) {
+             baseAlamat = parts.slice(0, rtRwIndex).join(', ');
+             if (parts.length >= rtRwIndex + 4) {
+                region.kelurahan = parts[rtRwIndex + 1];
+                region.kecamatan = parts[rtRwIndex + 2];
+                region.kota = parts[rtRwIndex + 3];
+                if (parts.length > rtRwIndex + 4) {
+                   region.provinsi = parts[rtRwIndex + 4];
+                }
              }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
           } else {
-             alamat = data.wilayah_domisili;
+             // Fallback jika tidak ada RT/RW tapi ada banyak part
+             baseAlamat = parts[0];
           }
         }
 
@@ -101,17 +100,31 @@ export default function LansiaEditProfilPage() {
           ...prev,
           nama: data.nama || "",
           umur: data.umur?.toString() || "",
-          kondisi_medis: data.kondisi_medis || "",
+          kondisi_medis: data.catatan_kondisi || "",
           tingkat_mobilitas: data.tingkat_mobilitas || "",
           kebutuhan_khusus: data.kebutuhan_khusus || "",
           foto_url: data.foto_url || "",
-          alamat,
+          alamat: baseAlamat,
           rt,
           rw,
           region,
-          domisili_lat: data.domisili_lat ?? null,
-          domisili_lng: data.domisili_lng ?? null,
+          domisili_lat: data.lat ?? null,
+          domisili_lng: data.lng ?? null,
         }));
+        initialSnapshot.current = JSON.stringify({
+          nama: data.nama || "",
+          umur: data.umur?.toString() || "",
+          kondisi_medis: data.catatan_kondisi || "",
+          tingkat_mobilitas: data.tingkat_mobilitas || "",
+          kebutuhan_khusus: data.kebutuhan_khusus || "",
+          foto_url: data.foto_url || "",
+          alamat: baseAlamat,
+          rt,
+          rw,
+          region,
+          domisili_lat: data.lat ?? null,
+          domisili_lng: data.lng ?? null,
+        });
       }
       setFetching(false);
     };
@@ -129,26 +142,33 @@ export default function LansiaEditProfilPage() {
       return;
     }
 
+    const currentSnapshot = JSON.stringify(form);
+    if (initialSnapshot.current === currentSnapshot && !croppedFile && !fotoInputRef.current?.files?.[0]) {
+      showToast("Tidak ada perubahan.", "success");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not logged in");
 
       let finalFotoUrl = form.foto_url;
-      const file = fotoInputRef.current?.files?.[0];
-      
+      const file = croppedFile || fotoInputRef.current?.files?.[0];
+
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/lansia/${id}/${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from('dokumen')
           .upload(fileName, file, { upsert: true });
-          
+
         if (uploadError) throw uploadError;
-        
+
         const { data: signedUrlData } = await supabase.storage
           .from('dokumen')
           .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
-          
+
         if (signedUrlData) {
            finalFotoUrl = signedUrlData.signedUrl;
         }
@@ -163,27 +183,26 @@ export default function LansiaEditProfilPage() {
          fullAlamat += `, ${form.region.kelurahan}, ${form.region.kecamatan}, ${form.region.kota}, ${form.region.provinsi}`;
       }
 
-      const { error: updateError } = await supabase
-        .from('lansia_profiles')
-        .update({
-          nama: form.nama,
-          alamat: fullAlamat,
-          catatan_kondisi: form.kondisi_medis,
-          foto_url: finalFotoUrl,
-          lat: form.domisili_lat,
-          lng: form.domisili_lng,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('keluarga_id', user.id);
+      const payload: Record<string, unknown> = {
+        nama: form.nama,
+        umur: parseInt(form.umur, 10),
+        alamat: fullAlamat,
+        catatan_kondisi: form.kondisi_medis,
+        tingkat_mobilitas: form.tingkat_mobilitas,
+        kebutuhan_khusus: form.kebutuhan_khusus,
+        foto_url: finalFotoUrl,
+      };
+      if (form.domisili_lat !== null) payload.lat = form.domisili_lat;
+      if (form.domisili_lng !== null) payload.lng = form.domisili_lng;
+      const updateResponse = await fetch(`/api/lansia/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const updateBody = await updateResponse.json().catch(() => null) as { message?: string } | null;
+      if (!updateResponse.ok) throw new Error(updateBody?.message || 'Profil lansia gagal diperbarui');
 
-      if (updateError) throw updateError;
-      
       showToast("Profil lansia berhasil diperbarui!", "success");
       setTimeout(() => router.push(`/lansia/${id}`), 2000);
     } catch (err: unknown) {
       console.error(err);
-      showToast(err instanceof Error ? err.message : "Terjadi kesalahan koneksi.");
+      showToast((err as Error).message || "Terjadi kesalahan koneksi.");
       setLoading(false);
     }
   };
@@ -214,7 +233,7 @@ export default function LansiaEditProfilPage() {
       <div className="bg-gradient-to-br from-[#0D47A1] to-[#1976D2] pt-8 pb-32 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
         <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-        
+
         <div className="max-w-xl mx-auto relative z-10">
           <Link href={`/lansia/${id}`} className="inline-flex items-center text-white/80 hover:text-white mb-6 text-sm font-semibold transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
@@ -228,24 +247,24 @@ export default function LansiaEditProfilPage() {
 
         {/* Tabs - Glassmorphism */}
         <div className="relative p-1.5 bg-white/20 backdrop-blur-md rounded-2xl flex border border-white/20 shadow-sm overflow-hidden mb-6">
-          <div 
+          <div
             className={`absolute inset-y-1.5 w-[calc(33.333%-6px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out ${activeTab === 'biodata' ? 'translate-x-0' : activeTab === 'kondisi' ? 'translate-x-[calc(100%+9px)]' : 'translate-x-[calc(200%+18px)]'}`}
           />
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('biodata')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-colors relative z-10 ${activeTab === 'biodata' ? 'text-[#0D47A1]' : 'text-white hover:text-blue-100'}`}
           >
             Biodata
           </button>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('kondisi')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-colors relative z-10 ${activeTab === 'kondisi' ? 'text-[#0D47A1]' : 'text-white hover:text-blue-100'}`}
           >
             Kondisi
           </button>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('alamat')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-colors relative z-10 ${activeTab === 'alamat' ? 'text-[#0D47A1]' : 'text-white hover:text-blue-100'}`}
@@ -255,7 +274,7 @@ export default function LansiaEditProfilPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           {/* TAB: BIODATA */}
           <div className={`transition-all duration-500 ${activeTab === 'biodata' ? 'block animate-in fade-in slide-in-from-left-4' : 'hidden'}`}>
             <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-xl shadow-slate-200/50 space-y-6">
@@ -265,16 +284,16 @@ export default function LansiaEditProfilPage() {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Data Personal Lansia</h2>
               </div>
-              
+
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-3">Foto Lansia (Opsional)</Label>
-                <Label 
+                <Label
                   htmlFor="foto_upload"
                   className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors h-32 group ${
                     form.foto_url ? 'border-green-500 bg-green-50' : 'border-slate-300 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'
                   }`}
                 >
-                  <input 
+                  <input
                     type="file" id="foto_upload" ref={fotoInputRef} className="hidden" accept="image/jpeg, image/png"
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
@@ -284,12 +303,15 @@ export default function LansiaEditProfilPage() {
                           e.target.value = '';
                           return;
                         }
-                        setForm({ ...form, foto_url: URL.createObjectURL(file) });
+                        const reader = new FileReader();
+                        reader.onload = () => setCropModalSrc(reader.result as string);
+                        reader.readAsDataURL(file);
                         setFotoFileName(file.name);
+                        e.target.value = '';
                       }
                     }}
                   />
-                  
+
                   {form.foto_url ? (
                     <>
                       <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
@@ -309,7 +331,7 @@ export default function LansiaEditProfilPage() {
                   )}
                 </Label>
               </div>
-              
+
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Nama Lengkap Lansia <span className="text-red-500">*</span></Label>
                 <Input value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} placeholder="Sesuai KTP" className="rounded-xl h-11" required />
@@ -331,7 +353,7 @@ export default function LansiaEditProfilPage() {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Kesehatan & Mobilitas</h2>
               </div>
-              
+
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Tingkat Mobilitas <span className="text-red-500">*</span></Label>
                 <div className="grid grid-cols-1 gap-2">
@@ -370,7 +392,7 @@ export default function LansiaEditProfilPage() {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Lokasi Tinggal Lansia</h2>
               </div>
-              
+
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3 shadow-sm mb-2">
                 <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-orange-800 leading-relaxed">
@@ -380,14 +402,14 @@ export default function LansiaEditProfilPage() {
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Wilayah Administrasi</Label>
-                <RegionSelect 
+                <RegionSelect
                   initialRegion={form.region}
                   onRegionChange={(region, coords) => {
                     setForm(f => ({
                       ...f,
                       region,
-                      ...(coords ? { 
-                        domisili_lat: coords.lat, 
+                      ...(coords ? {
+                        domisili_lat: coords.lat,
                         domisili_lng: coords.lng,
                         ...(coords.address ? { alamat: coords.address } : {})
                       } : {})
@@ -415,7 +437,7 @@ export default function LansiaEditProfilPage() {
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Titik Peta Koordinat (Opsional)</Label>
                 <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                  <LocationPicker 
+                  <LocationPicker
                     position={form.domisili_lat && form.domisili_lng ? { lat: form.domisili_lat, lng: form.domisili_lng } : null}
                     onPositionChange={(pos, targetAddress) => {
                        setForm(f => ({ ...f, domisili_lat: pos.lat, domisili_lng: pos.lng, ...(targetAddress ? { alamat: targetAddress } : {}) }));
@@ -433,6 +455,22 @@ export default function LansiaEditProfilPage() {
           </div>
         </form>
       </div>
+
+      {cropModalSrc && (
+        <ImageCropperModal
+          imageSrc={cropModalSrc}
+          aspectRatio={4/3}
+          onCropComplete={(file) => {
+            setCroppedFile(file);
+            setForm({ ...form, foto_url: URL.createObjectURL(file) });
+            setCropModalSrc(null);
+          }}
+          onCancel={() => {
+            setCropModalSrc(null);
+            setFotoFileName(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export default function AntreanPersetujuanPage() {
         catatan,
         lansia_profiles!inner ( nama, alamat, catatan_kondisi, foto_url ),
         service_categories!inner ( nama, tingkat, is_high_risk ),
-        helper_profiles!inner ( tingkat_kepercayaan, total_tugas_selesai, rating_avg, wilayah_domisili, bio, foto_url, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
+        helper_profiles!inner ( tingkat_kepercayaan, total_tugas_selesai, rating_avg, wilayah_domisili, bio, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
       `)
       .eq("status", "menunggu_persetujuan_koordinator")
       .order("jadwal_waktu", { ascending: true });

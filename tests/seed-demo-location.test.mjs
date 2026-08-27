@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-const alignmentMigration = fs.readFileSync(new URL("../supabase/migrations/20260822110000_align_demo_to_mbahburgas.sql", import.meta.url), "utf8");
+const alignmentMigration = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
 
-test("seed demo memakai akun mbahburgas jika akun itu sudah ada", () => {
+test("seed demo membuat atau memakai akun inti mbahburgas dan masburgas", () => {
   assert.match(alignmentMigration, /username\) = ["']mbahburgas["']/i);
+  assert.match(alignmentMigration, /demokoordinator@rangkul\.id/);
+  assert.match(alignmentMigration, /demohelper@rangkul\.id/);
+  assert.match(alignmentMigration, /pending_verification/);
+  assert.match(alignmentMigration, /raw_user_meta_data ->> 'username'/i);
   assert.match(alignmentMigration, /IF .*NULL/i);
   assert.match(alignmentMigration, /IF NOT EXISTS/i);
 });

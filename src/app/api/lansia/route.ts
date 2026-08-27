@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       kelurahan,
       rt,
       rw,
+      foto_url,
     } = validation.data;
 
     const { data: profile, error: insertError } = await supabase
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
         kelurahan,
         rt,
         rw,
+        foto_url: foto_url || null,
       } as unknown as Database['public']['Tables']['lansia_profiles']['Insert'])
       .select('*')
       .single();

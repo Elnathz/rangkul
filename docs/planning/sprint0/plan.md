@@ -1,5 +1,9 @@
 # Sprint 0 Foundation Implementation Plan
 
+## Completion Pass 2026-08-22
+
+Gap Sprint 0 yang ditutup pada pass ini: regression proxy route publik, perintah `npm run seed`, dan coverage RLS opt-in. Quality gate tetap mengikuti TDD §14.2. Payment, offline, dan fitur domain Sprint 3 atau 4 tidak ditarik ke pass ini.
+
 ## Progress Audit 22 Agustus 2026
 
 - Fondasi Next.js, route groups, autentikasi, Supabase, storage privat, RLS dasar, response helper, dan middleware sudah tersedia.

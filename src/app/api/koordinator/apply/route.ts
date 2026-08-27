@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { koordinatorApplySchema } from '@/lib/validations/koordinator';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import type { Database } from '@/types/database';
@@ -13,11 +13,16 @@ export async function POST(request: Request) {
       return createApiError('unauthorized', 'Anda harus login', 401);
     }
 
-    const { data: userProfile } = await supabase
+    const supabaseAdmin = await createAdminClient();
+    
+    // Use admin client here to bypass missing table grants on public.users
+    const { data: userProfile, error: profileError } = await supabaseAdmin
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single();
+
+    console.log("Koordinator Apply Debug:", { userId: user.id, userProfile, profileError, userMeta: user.user_metadata });
 
     if (!userProfile || userProfile.role !== 'koordinator') {
       return createApiError('forbidden', 'Hanya akun dengan role koordinator yang dapat mendaftar', 403);
@@ -55,7 +60,8 @@ export async function POST(request: Request) {
     const { wilayah, tingkat, dokumen_url, ktp_url, foto_url, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw } = validation.data;
 
     // Update tabel users untuk mengisi lokasi granular
-    const { error: userUpdateError } = await supabase
+    // Use admin client here to bypass missing table grants on public.users
+    const { error: userUpdateError } = await supabaseAdmin
       .from('users')
       .update({
         provinsi,

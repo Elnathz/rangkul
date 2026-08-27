@@ -9,7 +9,7 @@ export const VERIFICATION_UPLOADS = [
     key: "foto",
     label: "Foto Profil",
     docType: "foto_helper",
-    field: "foto_url",
+    field: "foto_wajah_url",
   },
 ] as const;
 

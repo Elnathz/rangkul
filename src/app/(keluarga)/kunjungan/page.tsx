@@ -18,7 +18,7 @@ type TaskRow = {
   harga_final: number;
   lansia_profiles: Relation<{ nama: string; alamat: string; rt: number | null; rw: number | null; kelurahan: string | null; kecamatan: string | null; kabupaten_kota: string | null; provinsi: string | null; foto_url: string | null }>;
   service_categories: Relation<{ nama: string; estimasi_durasi_menit: number }>;
-  helper_profiles: Relation<{ foto_url: string | null; foto_wajah_url: string | null; users: Relation<{ full_name: string }> }>;
+  helper_profiles: Relation<{ foto_wajah_url: string | null; users: Relation<{ full_name: string }> }>;
 };
 
 function relation<T>(value: Relation<T>) {
@@ -36,7 +36,7 @@ export default async function KunjunganPage() {
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("id, status, jadwal_waktu, harga_dasar, harga_final, lansia_profiles!inner ( nama, alamat, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi, foto_url ), service_categories!inner ( nama, estimasi_durasi_menit ), helper_profiles ( foto_url, foto_wajah_url, users ( full_name ) )")
+    .select("id, status, jadwal_waktu, harga_dasar, harga_final, lansia_profiles!inner ( nama, alamat, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi, foto_url ), service_categories!inner ( nama, estimasi_durasi_menit ), helper_profiles ( foto_wajah_url, users ( full_name ) )")
     .eq("keluarga_id", user.id)
     .order("jadwal_waktu", { ascending: false });
 
@@ -97,7 +97,7 @@ function TaskCard({ task }: { task: TaskRow }) {
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex gap-3"><Calendar className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div><p className="text-xs font-bold uppercase tracking-wider text-blue-900">Jadwal</p><p className="mt-1 text-sm font-bold text-blue-950">{formatDate(task.jadwal_waktu)}</p><p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#0D47A1]"><Clock3 className="h-3.5 w-3.5" />{category.estimasi_durasi_menit} menit</p></div></div></div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-700">Lokasi lansia</p><RegionAddress value={lansia.alamat} compact /></div></div></div>
         </div>
-         <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-sm font-black text-[#0D47A1]">{helper?.foto_wajah_url || helper?.foto_url ? <img src={helper.foto_wajah_url || helper.foto_url || ""} alt="" className="h-full w-full object-cover" /> : helperUsers?.full_name?.slice(0, 1) || "H"}</div><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-700">Helper</p><p className="truncate text-sm font-bold text-slate-950">{helperUsers?.full_name || "Belum ditugaskan"}</p></div></div>
+         <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-sm font-black text-[#0D47A1]">{helper?.foto_wajah_url ? <img src={helper.foto_wajah_url} alt="" className="h-full w-full object-cover" /> : helperUsers?.full_name?.slice(0, 1) || "H"}</div><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-700">Helper</p><p className="truncate text-sm font-bold text-slate-950">{helperUsers?.full_name || "Belum ditugaskan"}</p></div></div>
       </CardContent>
       <CardFooter className="justify-end border-t border-slate-100 bg-slate-50 px-5 py-4"><Button asChild className="rounded-xl bg-[#0D47A1] font-bold hover:bg-blue-800"><Link href={`/kunjungan/${task.id}`}>Lihat detail</Link></Button></CardFooter>
     </Card>

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-const migration = fs.readFileSync(new URL("../supabase/migrations/20260821150000_add_task_notifications.sql", import.meta.url), "utf8");
+const migration = fs.readFileSync(new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url), "utf8");
 const seed = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
 const notificationApi = fs.readFileSync(new URL("../src/app/api/notifications/route.ts", import.meta.url), "utf8");
 const readApi = fs.readFileSync(new URL("../src/app/api/notifications/[id]/read/route.ts", import.meta.url), "utf8");
@@ -13,8 +13,8 @@ test("booking direct memicu notifikasi Helper melalui trigger database", () => {
   assert.match(migration, /CREATE TRIGGER on_direct_booking_created/);
   assert.match(migration, /notify_helper_of_direct_booking/);
   assert.match(migration, /helper_user_id/);
-  assert.match(seed, /'f1000000-0000-0000-0000-000000000002'/);
-  assert.match(seed, /'f0000000-0000-0000-0000-000000000001'/);
+  assert.match(seed, /'\[DEMO_MATRIX\] Task dikonfirmasi'/);
+  assert.match(seed, /existing_helper_id/);
 });
 
 test("API notifikasi membatasi pembacaan dan penandaan ke user yang login", () => {

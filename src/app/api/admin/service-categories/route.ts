@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { serviceCategorySchema } from '@/lib/validations/admin';
+import { writeAuditLog } from '@/lib/audit';
 
 export async function GET() {
   try {
@@ -73,12 +74,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const { tingkat, parent_id, jarak_min_km, jarak_max_km, ...insertData } = validation.data;
-    
     // Insert new category
     const { data, error } = await supabase
       .from('service_categories')
-      .insert(insertData)
+      .insert({
+        nama: validation.data.nama,
+        deskripsi: validation.data.deskripsi,
+        estimasi_durasi_menit: validation.data.estimasi_durasi_menit,
+        harga_dasar: validation.data.harga_dasar,
+        is_high_risk: validation.data.is_high_risk,
+        is_active: validation.data.is_active,
+        tingkat: validation.data.tingkat,
+        parent_id: validation.data.parent_id ?? null,
+        jarak_min_km: validation.data.jarak_min_km ?? null,
+        jarak_max_km: validation.data.jarak_max_km ?? null,
+      })
       .select()
       .single();
 
@@ -86,6 +96,8 @@ export async function POST(request: Request) {
       return createApiError('server_error', 'Gagal menambahkan kategori: ' + error.message, 500);
     }
 
+    const { data: { user: actor } } = await supabase.auth.getUser();
+    if (actor) await writeAuditLog({ actor_id: actor.id, action: 'admin_service_category_created', entity_type: 'service_category', entity_id: data.id, metadata: { nama: data.nama } });
     return apiResponse({ data, message: 'Kategori berhasil ditambahkan' }, 201);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);

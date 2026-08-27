@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
 import HelperVerificationButtons from '@/components/koordinator/HelperVerificationButtons';
 import MapRadiusViewer from '@/components/koordinator/MapRadiusViewer';
+import HelperPhotoApprovalButton from '@/components/koordinator/HelperPhotoApprovalButton';
 
 export default async function KoordinatorDetailHelperPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,6 +47,13 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
       </KoordinatorStatusGuard>
     );
   }
+
+  const { data: pendingPhotoRequest } = await supabase
+    .from('helper_photo_change_requests')
+    .select('id, foto_wajah_url')
+    .eq('helper_id', helper.id)
+    .eq('status', 'pending')
+    .maybeSingle();
 
   // Fetch Kategori yang dipilih Helper lewat tabel relasi
   let categories: string[] = [];
@@ -124,6 +132,7 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
 
           <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="space-y-6">
+                {pendingPhotoRequest && <HelperPhotoApprovalButton requestId={pendingPhotoRequest.id} photoUrl={pendingPhotoRequest.foto_wajah_url} />}
                 <div>
                    <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Bio Singkat & Pengalaman</h3>
                    <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
@@ -207,15 +216,15 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
              <div className="space-y-6">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Foto Wajah Terkini</h3>
-                  {helper.foto_url ? (
+                  {helper.foto_wajah_url ? (
                     <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden shadow-sm relative group aspect-square max-w-[240px]">
                        <img 
-                         src={helper.foto_url} 
+                         src={helper.foto_wajah_url}
                          alt="Foto Wajah Helper" 
                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                        />
                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <a href={helper.foto_url} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-3 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center hover:bg-gray-50">
+                        <a href={helper.foto_wajah_url} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-3 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center hover:bg-gray-50">
                            <ImageIcon className="w-4 h-4 mr-1.5" />
                            Layar Penuh
                          </a>

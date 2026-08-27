@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createTaskSchema } from '@/lib/validations/booking';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import { distanceInKm } from '@/lib/geo';
 
 export async function POST(request: Request) {
   try {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     // Fetch category and its tingkat
     const { data: category, error: catError } = await supabase
       .from('service_categories')
-      .select('harga_dasar, is_high_risk, is_active')
+      .select('harga_dasar, is_high_risk, is_active, jarak_min_km, jarak_max_km')
       .eq('id', service_category_id)
       .single();
 
@@ -58,11 +59,25 @@ export async function POST(request: Request) {
       return createApiError('validation_error', 'Kategori layanan tidak aktif atau merupakan parent category', 400);
     }
 
-    // Enforce probation rule if helper_id is provided (Direct Booking)
+    const isDistanceBasedCategory = category.jarak_min_km !== null || category.jarak_max_km !== null;
+    if (isDistanceBasedCategory && !helper_id) {
+      return createApiError('validation_error', 'Pilih Helper agar jarak dan radius layanan dapat diverifikasi', 422);
+    }
+
+    let jarakKm: number | null = null;
+
+    const { data: lansiaLocation } = await supabase
+      .from('lansia_profiles')
+      .select('lat, lng')
+      .eq('id', lansia_id)
+      .eq('keluarga_id', user.id)
+      .single();
+
+    // Enforce probation rule and distance bands if helper_id is provided (Direct Booking)
     if (helper_id) {
       const { data: helperData, error: helperError } = await supabase
         .from('helper_profiles')
-        .select('tingkat_kepercayaan, status')
+        .select('tingkat_kepercayaan, status, domisili_lat, domisili_lng, radius_layanan_km')
         .eq('id', helper_id)
         .single();
         
@@ -76,6 +91,21 @@ export async function POST(request: Request) {
 
       if (helperData.tingkat_kepercayaan === 'probation' && category.is_high_risk) {
         return createApiError('forbidden', 'Helper probation tidak boleh mengambil tugas berisiko tinggi', 403);
+      }
+
+      if (isDistanceBasedCategory) {
+        if (!lansiaLocation || lansiaLocation.lat === null || lansiaLocation.lng === null || helperData.domisili_lat === null || helperData.domisili_lng === null) {
+          return createApiError('validation_error', 'Koordinat Helper dan lansia wajib tersedia untuk layanan berbasis jarak', 422);
+        }
+        jarakKm = distanceInKm(Number(helperData.domisili_lat), Number(helperData.domisili_lng), Number(lansiaLocation.lat), Number(lansiaLocation.lng));
+        if ((category.jarak_min_km !== null && jarakKm < Number(category.jarak_min_km)) || (category.jarak_max_km !== null && jarakKm > Number(category.jarak_max_km))) {
+          return createApiError('validation_error', 'Jarak lokasi tidak sesuai dengan band jarak kategori layanan', 422);
+        }
+      }
+
+      if (lansiaLocation && lansiaLocation.lat !== null && lansiaLocation.lng !== null && helperData.domisili_lat !== null && helperData.domisili_lng !== null) {
+        jarakKm ??= distanceInKm(Number(helperData.domisili_lat), Number(helperData.domisili_lng), Number(lansiaLocation.lat), Number(lansiaLocation.lng));
+        if (jarakKm > Number(helperData.radius_layanan_km)) return createApiError('validation_error', 'Lokasi lansia berada di luar radius layanan Helper', 422);
       }
     }
 

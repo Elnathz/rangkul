@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-const migration = fs.readFileSync(new URL("../supabase/migrations/20260822140000_task_scheduling_actions.sql", import.meta.url), "utf8");
+const migration = fs.readFileSync(new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url), "utf8");
 const cancelRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/cancel/route.ts", import.meta.url), "utf8");
 const rescheduleRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/reschedule/route.ts", import.meta.url), "utf8");
 const validation = fs.readFileSync(new URL("../src/lib/validations/task-scheduling.ts", import.meta.url), "utf8");

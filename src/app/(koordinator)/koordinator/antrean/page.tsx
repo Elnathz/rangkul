@@ -5,6 +5,7 @@ import { CheckCircle2, FileCheck, UserCheck, MapPin } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
+import { extractKelurahan } from '@/lib/region';
 
 type PendingHelper = {
   id: string;
@@ -52,9 +53,10 @@ export default async function AntreanHelperPage() {
       .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`)
       .order('created_at', { ascending: false });
 
-    pendingHelpers = (helpers || []).filter(h => 
+    const koordinatorKelurahan = extractKelurahan(koordinator.wilayah);
+    pendingHelpers = (helpers || []).filter(h =>
       h.koordinator_id === koordinator.id || 
-      (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
+      (h.koordinator_id === null && extractKelurahan(h.wilayah_domisili) === koordinatorKelurahan)
     ) as unknown as PendingHelper[];
   }
 

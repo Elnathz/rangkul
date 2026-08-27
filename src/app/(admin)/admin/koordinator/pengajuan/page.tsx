@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import PengajuanClient from './PengajuanClient';
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; pageSize?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -10,7 +10,14 @@ export default async function Page() {
     redirect('/login');
   }
 
-  // Fetch pending koordinators
+  const params = await searchParams;
+  const requestedPage = Number(params.page ?? "1");
+  const requestedPageSize = Number(params.pageSize ?? "10");
+  const page = Number.isFinite(requestedPage) ? Math.max(requestedPage, 1) : 1;
+  const pageSize = Number.isFinite(requestedPageSize) ? Math.min(Math.max(requestedPageSize, 1), 50) : 10;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   const { data: koordinators } = await supabase
     .from('koordinator_profiles')
     .select(`
@@ -18,9 +25,16 @@ export default async function Page() {
       users!koordinator_profiles_user_id_fkey!inner ( id, full_name, email, phone )
     `)
     .eq('status', 'pending_verification')
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .range(from, to);
+
+  const { count } = await supabase
+    .from('koordinator_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending_verification');
 
   const queue = koordinators || [];
+  const total = count ?? 0;
 
   return (
     <div>
@@ -31,14 +45,14 @@ export default async function Page() {
         Daftar pengajuan akun koordinator yang menunggu verifikasi admin.
       </p>
       
-      {queue.length === 0 ? (
+      {total === 0 ? (
         <div className="bg-white rounded-2xl border border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Belum ada pengajuan yang masuk.
           </p>
         </div>
       ) : (
-        <PengajuanClient queue={queue} />
+        <PengajuanClient queue={queue} page={page} pageSize={pageSize} total={total} />
       )}
     </div>
   );

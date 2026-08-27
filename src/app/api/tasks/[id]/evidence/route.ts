@@ -65,7 +65,7 @@ export async function POST(request: Request, context: RouteContext) {
     return apiResponse({
       message: "Laporan tersimpan. Keluarga dapat meninjau hasil kunjunganmu.",
       task,
-      status: "menunggu_persetujuan_keluarga",
+      status: task?.status ?? "selesai",
     }, 201);
   } catch (error: unknown) {
     return createApiError(

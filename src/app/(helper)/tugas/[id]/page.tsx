@@ -206,7 +206,7 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
               ) : rawTask.status === "dikerjakan" ? (
                 <div className="space-y-3 rounded-2xl border border-purple-100 bg-purple-50 p-5 text-center">
                   <p className="text-sm font-bold text-purple-950">Tugas sedang dikerjakan.</p>
-                  <Link href={`/helper/tugas/${rawTask.id}/lapor`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-purple-700 px-4 text-sm font-bold text-white transition hover:bg-purple-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-2">
+                  <Link href={`/tugas/${rawTask.id}/lapor`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-purple-700 px-4 text-sm font-bold text-white transition hover:bg-purple-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-2">
                     Lanjut ke laporan tugas
                   </Link>
                 </div>

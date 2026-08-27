@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle, MapPin, User, Phone, ShieldCheck } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { parseRegionAddress } from "@/lib/region-address";
 
 export default function KoordinatorEditProfilPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function KoordinatorEditProfilPage() {
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   
   const [activeTab, setActiveTab] = useState<'mandiri' | 'operasional'>('mandiri');
+  const initialSnapshot = useRef<string | null>(null);
 
   const [form, setForm] = useState({
     username: "",
@@ -47,11 +49,11 @@ export default function KoordinatorEditProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      // Set username
-      const name = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || "";
-      const phone = user.user_metadata?.phone || "";
-      const foto = user.user_metadata?.avatar_url || "";
-      
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('full_name, username, phone, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi')
+        .eq('id', user.id)
+        .maybeSingle();
       const { data: profile } = await supabase
         .from('koordinator_profiles')
         .select('id, wilayah')
@@ -59,46 +61,24 @@ export default function KoordinatorEditProfilPage() {
         .single();
 
       if (profile) {
-        const region = { provinsi: "", kota: "", kecamatan: "", kelurahan: "" };
-        let rt = "", rw = "", alamat = "";
-        
-        if (profile.wilayah) {
-          const parts = profile.wilayah.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region.kelurahan = adminParts[0];
-                region.kecamatan = adminParts[1];
-                region.kota = adminParts[2];
-                region.provinsi = adminParts[3];
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
-          } else {
-             alamat = profile.wilayah;
-          }
-        }
+        const parsed = parseRegionAddress(profile.wilayah);
+        const nextForm = {
+          ...form,
+          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+          foto_url: user.user_metadata?.avatar_url || "",
+          alamat: parsed.detail,
+          rt: parsed.rt,
+          rw: parsed.rw,
+          region: { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan },
+        };
 
-        setForm(prev => ({
-          ...prev,
-          username: name,
-          phone: phone,
-          foto_url: foto,
-          alamat,
-          rt,
-          rw,
-          region,
-          domisili_lat: null,
-          domisili_lng: null,
-        }));
+        setForm(nextForm);
+        initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
       }
     };
     fetchData();
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,15 +91,32 @@ export default function KoordinatorEditProfilPage() {
       return;
     }
 
+    const currentSnapshot = JSON.stringify({ ...form, password: "", confirmPassword: "", foto_url: "" });
+    if (initialSnapshot.current === currentSnapshot && !form.password) {
+      showToast("Tidak ada perubahan.", "success");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // MOCKUP API UPDATE
-      // In a real app, this would call Supabase to update auth.users, public.users, and koordinator_profiles
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      showToast("Profil berhasil diperbarui!", "success");
-      setTimeout(() => router.push("/koordinator/dashboard"), 2000);
-    } catch {
-      showToast("Terjadi kesalahan.");
+      const wilayah = [
+        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
+        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
+        form.alamat,
+      ].filter(Boolean).join(" | ");
+      const userResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
+      const userBody = await userResponse.json().catch(() => null) as { message?: string } | null;
+      if (!userResponse.ok) throw new Error(userBody?.message || "Data akun gagal diperbarui");
+      const profileResponse = await fetch("/api/koordinator/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah }) });
+      const profileBody = await profileResponse.json().catch(() => null) as { message?: string } | null;
+      if (!profileResponse.ok) throw new Error(profileBody?.message || "Wilayah koordinator gagal diperbarui");
+      if (form.password) {
+        const { error } = await createClient().auth.updateUser({ password: form.password });
+        if (error) throw new Error(error.message);
+      }
+      router.push("/koordinator/dashboard");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
     }
   };

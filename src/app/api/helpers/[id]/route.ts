@@ -20,13 +20,13 @@ export async function GET(
       .from('helper_profiles')
       // KTP URL, koordinat exact, dan suspend_reason tidak diekspos di katalog
       .select(`
-        id, bio, wilayah_domisili, radius_layanan_km,
+        id, bio, wilayah_domisili, radius_layanan_km, foto_wajah_url,
         is_available, rating_avg, total_tugas_selesai,
         tingkat_kepercayaan, verified_by_admin_fallback,
         created_at,
         users!inner ( id, full_name ),
         helper_service_categories (
-          service_categories ( id, nama, deskripsi, estimasi_durasi_menit, harga_dasar )
+          service_categories ( id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, jarak_min_km, jarak_max_km )
         )
       `)
       .eq('id', id)

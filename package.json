@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"tests/*.test.mjs\""
+    "test": "node --experimental-strip-types --test \"tests/*.test.mjs\"",
+    "seed": "node scripts/seed.mjs",
+    "seed:cloud": "node scripts/seed.mjs --linked"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -22,6 +24,7 @@
     "@supabase/supabase-js": "^2.111.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "framer-motion": "^13.1.1",
     "leaflet": "^1.9.4",
     "leaflet-geosearch": "^4.4.0",
@@ -29,6 +32,7 @@
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-easy-crop": "^6.2.3",
     "react-hook-form": "^7.84.0",
     "react-leaflet": "^5.0.0",
     "shadcn": "^4.16.1",

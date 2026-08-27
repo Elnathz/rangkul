@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { updateProfileSchema } from '@/lib/validations/auth';
 
@@ -11,13 +11,24 @@ export async function GET() {
       return createApiError('unauthorized', 'Anda belum login', 401);
     }
 
-    const { data: userProfile, error: profileError } = await supabase
+    const { data: userProfileById } = await supabase
       .from('users')
       .select('*')
       .eq('id', authUser.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !userProfile) {
+    let userProfile = userProfileById;
+    if (!userProfile && authUser.email) {
+      const adminClient = await createAdminClient();
+      const { data: userProfileByEmail } = await adminClient
+        .from('users')
+        .select('*')
+        .eq('email', authUser.email.toLowerCase())
+        .maybeSingle();
+      userProfile = userProfileByEmail;
+    }
+
+    if (!userProfile) {
       return createApiError('user_not_found', 'Profil pengguna tidak ditemukan', 404);
     }
 
@@ -53,15 +64,28 @@ export async function PUT(request: Request) {
     const updates = validation.data;
 
     // Cek status akun + ambil username saat ini
-    const { data: current, error: currentError } = await supabase
+    const { data: currentById } = await supabase
       .from('users')
-      .select('account_status, username')
+      .select('id, account_status, username')
       .eq('id', authUser.id)
-      .single();
+      .maybeSingle();
 
-    if (currentError || !current) {
+    let current = currentById;
+    if (!current && authUser.email) {
+      const adminClient = await createAdminClient();
+      const { data: currentByEmail } = await adminClient
+        .from('users')
+        .select('id, account_status, username')
+        .eq('email', authUser.email.toLowerCase())
+        .maybeSingle();
+      current = currentByEmail;
+    }
+
+    if (!current) {
       return createApiError('user_not_found', 'Profil pengguna tidak ditemukan', 404);
     }
+
+    const profileId = current.id;
 
     if (current.account_status === 'suspended') {
       return createApiError('account_suspended', 'Akun sedang ditangguhkan', 403);
@@ -73,8 +97,8 @@ export async function PUT(request: Request) {
         .from('users')
         .select('id')
         .ilike('username', updates.username)
-        .neq('id', authUser.id)
-        .single();
+        .neq('id', profileId)
+        .maybeSingle();
 
       if (existing) {
         return createApiError('username_taken', 'Username sudah dipakai', 409);
@@ -84,7 +108,7 @@ export async function PUT(request: Request) {
     const { data: updated, error: updateError } = await supabase
       .from('users')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', authUser.id)
+      .eq('id', profileId)
       .select('*')
       .single();
 
