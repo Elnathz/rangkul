@@ -192,15 +192,15 @@ Rating tidak dimodelkan sebagai state wajib — bisa muncul kapan saja setelah S
 
 | Status       | Dipicu Oleh                                               | Bukti yang Dibutuhkan                                                                                                                                                                                                             |
 | ------------ | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DIAJUKAN     | Keluarga membuat pesanan                                  | Tidak ada. Berlaku maksimal**1 jam** (§3.2).                                                                                                                                                                               |
-| DIKONFIRMASI | Helper menerima tugas                                     | Constraint unik di database agar tidak ada dua Helper menerima tugas sama. Jika tugas termasuk kategori yang butuh approval eksplisit (§3.3.2), status sementara`menunggu_persetujuan_koordinator` sebelum resmi DIKONFIRMASI. |
+| DIAJUKAN     | Keluarga membuat pesanan                                  | Tidak ada. Berlaku sampai `expires_at`, maksimal **1 jam** dan 15 menit untuk mode `cepat` (§3.2, §3.14).                                                                                                                     |
+| DIKONFIRMASI | Helper menerima tugas atau Keluarga memilih pelamar       | Constraint/conditional transaction memastikan hanya satu Helper. Jika tugas butuh approval eksplisit (§3.3.2), status sementara `menunggu_persetujuan_koordinator` sebelum resmi DIKONFIRMASI.                                  |
 | DIKERJAKAN   | Helper check-in di lokasi                                 | Timestamp otomatis + lokasi opsional.                                                                                                                                                                                             |
 | SELESAI      | Helper submit laporan (termasuk Health Snapshot, §3.12)  | Foto bukti + catatan kondisi + skor Health Snapshot.                                                                                                                                                                              |
 | DIBATALKAN   | Keluarga (sebelum DIKERJAKAN) atau sistem (timeout 1 jam) | Alasan wajib diisi.                                                                                                                                                                                                               |
 
 ### 3.2 Batas Waktu Penerimaan Tugas & Penanganan Race Condition
 
-**Batas waktu:** Tugas DIAJUKAN harus mencapai DIKONFIRMASI dalam maksimal **1 jam**. Scheduled job (§2.2) memeriksa tugas yang lewat `created_at + 1 jam` dan otomatis mengubahnya ke DIBATALKAN ("Kedaluwarsa"), Keluarga dinotifikasi untuk booking ulang.
+**Batas waktu:** Tugas DIAJUKAN harus mencapai DIKONFIRMASI dalam maksimal **1 jam**. Scheduled job (§2.2) memeriksa `expires_at` dan otomatis mengubah task yang lewat batas menjadi DIBATALKAN ("Kedaluwarsa"), lalu Keluarga dinotifikasi untuk booking ulang. Mode `cepat` Sprint 6 memakai batas lebih pendek 15 menit (§3.14); mode lain tetap maksimal satu jam.
 
 **Race condition:** Conditional update (`UPDATE tasks SET status='DIKONFIRMASI', helper_id=X WHERE id=Y AND status='DIAJUKAN'`), cek jumlah baris berubah. Jangan pola baca-lalu-tulis.
 
@@ -392,7 +392,30 @@ upload foto → upload data → update database → status "Submitted" (🟢)
 
 **Catatan implementasi:** memakai IndexedDB (bukan `localStorage`, kapasitasnya terlalu kecil untuk data terstruktur + foto) dikombinasikan dengan event listener `online`/`offline` browser standar + antrean retry manual — **bukan** Background Sync API native, karena dukungan lintas browser untuk API tersebut tidak seragam. Hasil akhir yang dilihat pengguna (indikator 🟡/🟢, sinkron otomatis saat online) tetap sama, implementasinya lebih portable.
 
-### 3.14 Status Keputusan Bisnis
+### 3.14 Mode Penugasan Helper, Ekstensi Sprint 6
+
+Sprint 6 menambahkan dua cara menemukan Helper tanpa mengganti alur langsung yang sudah stabil. Ketiganya memakai state task yang sama. Mode penugasan tidak boleh menambah status task baru hanya untuk membedakan cara Helper ditemukan.
+
+| `mode_penugasan` | Kegunaan | Cara Helper ditetapkan | Batasan utama |
+| ---------------- | -------- | ---------------------- | -------------- |
+| `langsung` | Keluarga sudah mengetahui Helper yang diinginkan. | Keluarga memilih satu Helper, lalu Helper tersebut menerima task. | Perilaku Sprint 0-5 tetap dipertahankan. `helper_id` sudah terisi saat task dibuat. |
+| `pelamar` | Kunjungan terjadwal dan Keluarga ingin memilih dari Helper yang benar-benar tersedia. | Helper mengajukan diri, lalu Keluarga memilih tepat satu pelamar melalui transaksi atomik. | Jadwal minimal 3 jam dari waktu pembuatan. Harga tetap, tidak ada bidding atau negosiasi. |
+| `cepat` | Kunjungan non-high-risk pada hari yang sama dan Keluarga membutuhkan kepastian lebih cepat. | Task disiarkan ke Helper eligible. Helper pertama yang lolos conditional acceptance mendapat task. | Hanya Helper `verified`, `terpercaya`, `is_available`, sesuai kategori/radius, tidak bentrok jadwal, dan tidak memenuhi kondisi approval eksplisit §3.3.2. Window pencarian 15 menit. |
+
+Aturan bersama:
+
+1. Task tetap dibuat dengan status `diajukan`. Mode `pelamar` dan `cepat` memakai `helper_id = null` sampai pemilihan atau acceptance berhasil.
+2. Mode `pelamar` memakai tabel `task_applications`. Mengajukan diri tidak mengubah status task. Pemilihan Keluarga berarti Helper sudah menyatakan bersedia, sehingga tidak ada acceptance kedua.
+3. Pemilihan pelamar mengunci task dan application. Hanya satu application berubah menjadi `selected`; application lain menjadi `rejected`. Pelamar yang sudah `withdrawn` tidak dapat dipilih.
+4. Setelah Helper ditetapkan, aturan approval §3.3.2 tetap berlaku. Helper probation atau kategori high-risk tetap menuju `menunggu_persetujuan_koordinator`.
+5. Mode `cepat` tidak menerima Helper probation, kategori high-risk, atau target di luar hari yang sama. Acceptance menggunakan conditional update database dan tidak boleh memakai pola baca-lalu-tulis.
+6. Sebelum Helper ditetapkan, response marketplace hanya memuat kategori, harga fix, jadwal, kelurahan/kecamatan, dan jarak yang sudah dibulatkan. Nama lengkap lansia, alamat, koordinat mentah, dokumen, catatan kondisi, kebutuhan khusus, Health Snapshot, dan chat tidak boleh dikirim.
+7. Helper harus melayani kategori, berada dalam radius, tidak memiliki task aktif atau jadwal yang tumpang tindih, dan berstatus operasional yang sah pada saat apply maupun saat dipilih/accept.
+8. Mode `pelamar` mengikuti batas maksimal `diajukan` satu jam pada §3.2. Mode `cepat` memakai `expires_at = created_at + 15 menit`. Jika tidak ada Helper, task menjadi `dibatalkan` oleh scheduled job dan Keluarga dapat mencoba mode lain.
+9. Pembayaran, approval, check-in, evidence, laporan, cancel, dan release setelah Helper ditetapkan tetap mengikuti §3.1, §3.3, §3.4, §3.7, dan §3.8.
+10. Fitur ini adalah ekstensi Sprint 6 yang harus selesai sebelum submission. Fitur tidak menjadi acceptance Sprint 4 atau Sprint 5 dan tidak boleh mengurangi quality gate keamanan, seed, atau stabilitas demo.
+
+### 3.15 Status Keputusan Bisnis
 
 Seluruh keputusan terbuka dari draf sebelumnya telah dikunci pada revisi ini:
 
@@ -404,6 +427,7 @@ Seluruh keputusan terbuka dari draf sebelumnya telah dikunci pada revisi ini:
 | Model approval transaksi | Dikunci §3.3.2                                          |
 | Verifikasi wilayah       | Dikunci §3.3.1                                          |
 | Trigger suspend Helper   | Dikunci §3.10                                           |
+| Mode penugasan Helper    | Dikunci §3.14 (`langsung`, `pelamar`, `cepat`)         |
 
 ---
 
@@ -456,8 +480,8 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 
 | ID        | Requirement                                                                                                                    | Prioritas |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| FR-TSK-01 | Keluarga booking kunjungan (pilih Helper, kategori, jadwal)                                                                    | Must      |
-| FR-TSK-02 | Helper terima tugas via conditional update (anti race-condition)                                                               | Must      |
+| FR-TSK-01 | Keluarga booking kunjungan dengan kategori, jadwal, dan mode penugasan yang diizinkan §3.14                                    | Must      |
+| FR-TSK-02 | Helper terima tugas mode `langsung`/`cepat` via conditional update (anti race-condition)                                           | Must      |
 | FR-TSK-03 | Tugas otomatis DIBATALKAN (expired) jika tak diterima dalam 1 jam                                                              | Must      |
 | FR-TSK-04 | Helper check-in saat tiba (status DIKERJAKAN)                                                                                  | Must      |
 | FR-TSK-05 | Helper submit laporan (foto + catatan + Health Snapshot) → status SELESAI                                                     | Must      |
@@ -467,6 +491,11 @@ Prioritas MoSCoW: **Must** (wajib MVP), **Should** (penting, bisa menyusul), **C
 | FR-TSK-09 | Sistem menghitung akumulasi pembatalan Keluarga; >2 kali otomatis`restricted` (§3.9)                                        | Must      |
 | FR-TSK-10 | Booking yang butuh approval Koordinator (§3.3.2) berstatus sementara`menunggu_persetujuan_koordinator` sebelum DIKONFIRMASI | Must      |
 | FR-TSK-11 | Koordinator menerima notifikasi pasif untuk setiap transaksi di wilayahnya (§3.3.2), tanpa perlu aksi                         | Must      |
+| FR-TSK-12 | Helper eligible dapat apply dan withdraw pada task mode `pelamar` tanpa mengubah status task                                    | Must      |
+| FR-TSK-13 | Keluarga melihat profil publik pelamar dan memilih tepat satu Helper secara atomik                                                | Must      |
+| FR-TSK-14 | Mode `cepat` menemukan Helper terpercaya eligible melalui first valid acceptance dalam window 15 menit                         | Must      |
+| FR-TSK-15 | Marketplace sebelum assignment hanya menampilkan data task dan lokasi yang sudah direduksi                                       | Must      |
+| FR-TSK-16 | Apply, select, withdraw, dan quick accept memeriksa ulang kategori, radius, availability, schedule conflict, serta status Helper | Must      |
 
 ### 4.6 Pembayaran & Escrow
 
@@ -654,6 +683,43 @@ flowchart TD
     A --> J[Jadi verifikator fallback wilayah tanpa Koordinator - 3.3.1]
 ```
 
+### 5.5 Alur Mode Penugasan Sprint 6
+
+**Pilih dari Pelamar:**
+
+```mermaid
+flowchart TD
+    A[Keluarga membuat task mode pelamar] --> B[Server menyimpan task DIAJUKAN tanpa helper_id]
+    B --> C[Marketplace menampilkan ringkasan lokasi yang direduksi]
+    C --> D[Helper eligible mengajukan diri]
+    D --> E[Keluarga melihat profil publik pelamar]
+    E --> F{Keluarga memilih satu pelamar?}
+    F -- Tidak sampai satu jam --> G[Sistem membatalkan task kedaluwarsa]
+    F -- Ya --> H[RPC mengunci task, application, dan Helper]
+    H --> I{Masih eligible dan application pending?}
+    I -- Tidak --> J[409, refresh daftar pelamar]
+    I -- Ya --> K[Set selected, reject pelamar lain, isi helper_id]
+    K --> L{Butuh approval §3.3.2?}
+    L -- Ya --> M[Menunggu persetujuan Koordinator]
+    L -- Tidak --> N[Tugas DIKONFIRMASI]
+```
+
+**Cari Cepat:**
+
+```mermaid
+flowchart TD
+    A[Keluarga membuat task mode cepat] --> B[Server validasi same-day dan non-high-risk]
+    B --> C[Task DIAJUKAN tanpa helper_id, expiry 15 menit]
+    C --> D[Hanya Helper terpercaya eligible melihat ringkasan]
+    D --> E[Helper pertama menekan Terima]
+    E --> F[RPC cek ulang status, kategori, radius, availability, dan jadwal]
+    F --> G{Conditional update berhasil?}
+    G -- Tidak --> H[409, task sudah diambil atau tidak eligible]
+    G -- Ya --> I[Isi helper_id dan status DIKONFIRMASI]
+    C --> J{Tidak ada Helper sampai expiry?}
+    J -- Ya --> K[Sistem membatalkan dan menawarkan mode lain]
+```
+
 ---
 
 ## 6. Skema Database
@@ -758,16 +824,43 @@ flowchart TD
 | Kolom                                  | Tipe                        | Keterangan                                                                                                                                                 |
 | -------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id                                     | uuid, PK                    |                                                                                                                                                            |
-| keluarga_id, lansia_id, helper_id      | uuid, FK                    | `helper_id` nullable sampai DIKONFIRMASI                                                                                                                 |
+| keluarga_id, lansia_id, helper_id      | uuid, FK                    | Mode `langsung` mengisi `helper_id` saat create; mode `pelamar`/`cepat` nullable sampai assignment berhasil                                            |
 | service_category_id                    | uuid, FK service_categories |                                                                                                                                                            |
 | jadwal_waktu, jadwal_waktu_asli        | timestamptz, nullable       |                                                                                                                                                            |
 | reschedule_count                       | int, default 0              | Maks 2                                                                                                                                                     |
+| mode_penugasan                         | enum, default `langsung`    | `langsung` / `pelamar` / `cepat` (§3.14)                                                                                                              |
 | status                                 | enum                        | `diajukan` / `menunggu_persetujuan_koordinator` / `dikonfirmasi` / `dikerjakan` / `menunggu_persetujuan_keluarga` / `selesai` / `dibatalkan` |
 | harga_dasar                            | numeric                     | Snapshot kategori saat booking                                                                                                                             |
 | harga_final                            | numeric, nullable           | harga_dasar + layanan tambahan disetujui                                                                                                                   |
+| expires_at                             | timestamptz, nullable       | Maksimal satu jam untuk `langsung`/`pelamar`; 15 menit untuk `cepat`                                                                                    |
 | dibatalkan_oleh, alasan_batal          | uuid, text, nullable        |                                                                                                                                                            |
 | confirmed_at, started_at, completed_at | timestamptz, nullable       |                                                                                                                                                            |
 | created_at                             | timestamptz                 |                                                                                                                                                            |
+
+Constraint mode penugasan:
+
+- `langsung`: `helper_id` wajib terisi ketika task dibuat.
+- `pelamar` dan `cepat`: `helper_id` wajib null selama status `diajukan`, lalu wajib terisi setelah status meninggalkan `diajukan` karena assignment berhasil.
+- `cepat`: kategori tidak boleh `is_high_risk` dan `jadwal_waktu` harus pada tanggal lokal yang sama dengan pembuatan task.
+
+### `task_applications`
+
+| Kolom                  | Tipe                     | Keterangan |
+| ---------------------- | ------------------------ | ---------- |
+| id                     | uuid, PK                 |            |
+| task_id                | uuid, FK tasks           | Hanya task `mode_penugasan = pelamar` dan status `diajukan` |
+| helper_id              | uuid, FK helper_profiles | Helper yang mengajukan diri |
+| status                 | enum                     | `pending` / `selected` / `withdrawn` / `rejected` / `expired` |
+| diajukan_at            | timestamptz              | Waktu application dibuat |
+| diputus_at             | timestamptz, nullable    | Waktu selected/rejected/withdrawn/expired |
+
+Constraint dan index wajib:
+
+- `UNIQUE (task_id, helper_id)` mencegah application ganda.
+- Partial unique index satu `selected` per task.
+- Helper hanya dapat insert/withdraw application miliknya.
+- Keluarga pemilik task hanya dapat membaca pelamar dan memilih melalui RPC, bukan mengubah row application langsung.
+- Application yang tidak lagi `pending` bersifat immutable selain perubahan yang dilakukan RPC assignment/expiry.
 
 ### `task_extra_services`
 
@@ -975,7 +1068,8 @@ Request:
 
 ```json
 {
-  "helper_id": "uuid",
+  "mode_penugasan": "langsung",
+  "helper_id": "uuid, wajib untuk langsung dan null untuk pelamar/cepat",
   "lansia_id": "uuid",
   "service_category_id": "uuid",
   "jadwal_waktu": "2026-08-20T09:00:00+07:00",
@@ -988,9 +1082,10 @@ Response `201`:
 ```json
 {
   "task_id": "uuid",
+  "mode_penugasan": "langsung",
   "status": "diajukan",
   "harga_dasar": 50000,
-  "expired_at": "2026-08-20T08:00:00+07:00"
+  "expires_at": "2026-08-20T08:00:00+07:00"
 }
 ```
 
@@ -1000,6 +1095,12 @@ Error `409` — Helper tidak tersedia di radius/kategori diminta:
 { "error": "helper_unavailable", "message": "Helper tidak melayani kategori atau wilayah ini" }
 ```
 
+Validasi mode:
+
+- `langsung`: `helper_id` wajib dan Helper target harus eligible.
+- `pelamar`: `helper_id` harus null dan `jadwal_waktu` minimal 3 jam dari waktu server.
+- `cepat`: `helper_id` harus null, jadwal berada pada hari lokal yang sama, kategori non-high-risk, dan expiry dibuat server 15 menit.
+
 **Endpoint lengkap:**
 
 ```
@@ -1007,6 +1108,11 @@ POST   /api/tasks                          (keluarga booking, respons termasuk p
 GET    /api/tasks                          (list, filter per role)
 GET    /api/tasks/:id
 PATCH  /api/tasks/:id/accept               (helper terima langsung, conditional update, §3.2)
+GET    /api/tasks/marketplace              (ringkasan task pelamar/cepat yang sudah direduksi, filter eligibility server)
+POST   /api/tasks/:id/applications         (helper apply pada mode pelamar)
+DELETE /api/tasks/:id/applications/me      (helper withdraw application pending miliknya)
+GET    /api/tasks/:id/applications         (keluarga pemilik melihat profil publik pelamar)
+PATCH  /api/tasks/:id/applications/:aid/select (keluarga memilih satu pelamar secara atomik)
 PATCH  /api/tasks/:id/koordinator-approve  (khusus kondisi §3.3.2, oleh koordinator_id terkait)
 PATCH  /api/tasks/:id/reschedule           (§3.7)
 PATCH  /api/tasks/:id/start                (helper check-in)
@@ -1016,6 +1122,29 @@ POST   /api/tasks/:id/evidence             (helper submit laporan + Health Snaps
 PATCH  /api/tasks/:id/complete             (keluarga konfirmasi selesai)
 PATCH  /api/tasks/:id/cancel               (keluarga batalkan; sistem hitung kompensasi §3.8, update akumulasi §3.9)
 POST   /api/tasks/:id/rating               (§4.8 — sinyal kualitas saja)
+```
+
+Kontrak error assignment Sprint 6:
+
+- `401 unauthorized`: sesi tidak ada atau kedaluwarsa.
+- `403 forbidden`: role/ownership salah, Helper tidak terverifikasi, atau data berada di luar scope actor.
+- `404 not_found`: task/application tidak tersedia tanpa membocorkan resource milik user lain.
+- `409 conflict`: task sudah diambil/dipilih, application sudah berubah, duplicate apply, atau jadwal menjadi bentrok.
+- `422 validation_error`: kombinasi mode, jadwal, kategori, atau `helper_id` tidak sah.
+
+Endpoint marketplace tidak boleh memakai `SELECT *` pada `tasks` atau join langsung ke seluruh `lansia_profiles`. Response sebelum assignment dibatasi menjadi:
+
+```json
+{
+  "task_id": "uuid",
+  "mode_penugasan": "pelamar",
+  "kategori": { "id": "uuid", "nama": "Menemani Mengobrol", "estimasi_durasi_menit": 60 },
+  "jadwal_waktu": "2026-09-03T17:00:00+07:00",
+  "harga_dasar": 50000,
+  "lokasi_ringkas": { "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "jarak_km": 2.5 },
+  "expires_at": "2026-09-03T14:00:00+07:00",
+  "application_status": "pending atau null"
+}
 ```
 
 ### Payment
@@ -1132,6 +1261,18 @@ flowchart LR
 | Webhook Signature                           | Payload Midtrans divalidasi HMAC SHA512 sebelum diproses                                                        |
 | Dokumen sensitif (KTP, KK, dokumen jabatan) | Supabase Storage bucket private + signed URL                                                                    |
 | Row Level Security                          | Aktif di setiap tabel data pribadi — diuji eksplisit sebelum submission                                        |
+| Marketplace sebelum assignment              | Server projection tereduksi; tidak mengirim nama/alamat/koordinat/catatan kesehatan lansia (§3.14)            |
+| Assignment task                             | RPC dengan row lock dan conditional state; seluruh eligibility dihitung ulang saat select/accept               |
+
+RLS `task_applications` wajib dibuktikan dengan runtime test:
+
+- Helper dapat membuat, membaca, dan withdraw application miliknya pada task `pelamar` yang masih tersedia.
+- Helper tidak dapat membaca identitas Helper lain yang melamar task yang sama.
+- Keluarga hanya dapat membaca daftar application untuk task miliknya dan hanya mendapat field profil Helper yang memang publik.
+- Keluarga tidak dapat update `status` application langsung. Pemilihan hanya melalui RPC yang memverifikasi ownership.
+- Koordinator tidak mendapat daftar pelamar hanya karena task berada di wilayahnya. Akses baru muncul setelah assignment membutuhkan approval §3.3.2.
+- Admin tidak memakai marketplace sebagai jalur membaca data lansia. Akses investigasi tetap mengikuti laporan/audit yang sah.
+- Task `cepat` atau `pelamar` yang belum assigned tidak boleh dapat dibaca melalui policy `tasks` umum oleh seluruh Helper. Helper mengakses projection marketplace yang sudah direduksi.
 
 ---
 
@@ -1161,8 +1302,10 @@ flowchart LR
 | `/lansia/{id}/riwayat`     | **Riwayat Rangkul** — timeline, grafik tren, badge peringatan (§3.12). |
 | `/cari-helper`             | Katalog Helper dalam radius layanan + filter kategori jasa.                    |
 | `/booking/{helper_id}`     | Penjadwalan kunjungan, harga fix ditampilkan jelas (§3.4.1).                  |
+| `/booking/new`             | Pilih mode `pelamar` atau `cepat`, lansia, kategori, dan jadwal (§3.14).      |
 | `/kunjungan`               | Riwayat status tugas.                                                          |
 | `/kunjungan/{id}`          | Detail: foto bukti, chat, reschedule, approve Layanan Tambahan, rating.        |
+| `/kunjungan/{id}/pelamar`  | Keluarga membandingkan profil publik pelamar dan memilih satu Helper.           |
 | `/kunjungan/{id}/laporkan` | Laporkan Helper/kejadian bermasalah (§3.10).                                  |
 | `/pembayaran/{task_id}`    | Status escrow.                                                                 |
 | `/pesan`                   | Inbox percakapan lintas tugas.                                                 |
@@ -1174,7 +1317,8 @@ flowchart LR
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `/helper/dashboard`   | Status verifikasi, tingkat kepercayaan, ringkasan tugas, penghasilan.                                                 |
 | `/helper/verifikasi`  | Pengajuan diri: KTP, wilayah domisili, radius layanan, bio.                                                           |
-| `/helper/tugas`       | Job board dalam radius layanan.                                                                                       |
+| `/helper/tugas`       | Daftar tugas Helper sendiri dan status application.                                                                    |
+| `/helper/tugas/baru`  | Marketplace tereduksi untuk task mode `pelamar` dan `cepat` yang lolos eligibility server.                           |
 | `/helper/tugas/{id}`  | Terima tugas (harga fix), check-in, ajukan Layanan Tambahan, chat, tombol SOS.                                        |
 | `/helper/laporan`     | Formulir laporan: foto + catatan + Health Snapshot + Cerita Hari Ini, dengan indikator sinkronisasi offline (§3.13). |
 | `/helper/penghasilan` | Riwayat transaksi & saldo.                                                                                            |
@@ -1285,6 +1429,12 @@ sequenceDiagram
 | Laporan dipakai tidak adil untuk menjatuhkan Helper         | Sedang | Rendah                            | Butuh 2 laporan terkumpul (bukan 1 rating), status`under_review` tetap butuh review manual sebelum suspend penuh (§3.10) |
 | Keluarga membatalkan berulang untuk mengganggu Helper       | Sedang | Rendah                            | Restriksi otomatis setelah >2 pembatalan, wajib banding ke Admin (§3.9)                                                    |
 | Harga berubah sepihak di tengah transaksi                   | Sedang | Rendah                            | Fix price, Layanan Tambahan wajib approval eksplisit Keluarga (§3.4.1)                                                     |
+| Dua pelamar dipilih hampir bersamaan                        | Tinggi | Rendah                            | RPC select mengunci task/application, partial unique index satu selected, conflict 409 (§3.14)                              |
+| Pelamar withdraw saat sedang dipilih                        | Sedang | Rendah                            | Selection memeriksa ulang application `pending` dan eligibility di transaksi yang sama                                      |
+| Alamat atau kondisi lansia bocor sebelum assignment         | Tinggi | Sedang                            | Marketplace projection tereduksi, direct table policy ditutup, runtime RLS test (§3.14, §16)                                |
+| Helper menerima dua jadwal yang bertumpuk                   | Tinggi | Sedang                            | Eligibility dan acceptance memeriksa ulang interval task aktif dengan row lock                                               |
+| Mode cepat tidak menemukan Helper dalam 15 menit            | Sedang | Sedang                            | Expiry otomatis, notifikasi jujur, dan CTA kembali ke katalog/mode pelamar tanpa klaim emergency response                    |
+| Fitur Sprint 6 merusak baseline yang sudah stabil           | Tinggi | Rendah                            | Kerja di branch fitur, integrasi ke `develop`, feature flag fail closed, regression penuh, dan go/no-go teknis paling lambat 5 September 18.00 WIB |
 
 ---
 
@@ -1550,28 +1700,56 @@ Ketentuan tambahan:
 **Tanggal:** 25–31 Agustus 2026
 **Tujuan:** membuat **Riwayat Rangkul** menjadi momen demo yang diingat juri, menutup celah administrasi, lalu menstabilkan keamanan dan data seed.
 
-| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ketergantungan                                                       | Hasil yang harus dapat didemokan                                                                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Ketergantungan                                                       | Hasil yang harus dapat didemokan                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend**       | 1.`/lansia/{id}/riwayat`: timeline kunjungan, foto, Cerita Hari Ini, lima tren indikator, dan copy yang tegas bahwa ini bukan diagnosis medis. 2. Badge `Perlu Perhatian` bila aturan tren terpenuhi. 3. Panel Admin inti: user, kategori, Koordinator pending, Helper `under_review`, fallback, banding, demo wallet, audit log. 4. Koordinator: laporan, darurat, komisi ringkas; filter RW hanya bila P0 stabil. 5. Offline draft laporan memakai IndexedDB: simpan, edit, indikator pending sync, retry setelah online. 6. Rapikan empty/error state, mobile layout, aksesibilitas, dan skeleton loading. | Query riwayat/admin API selesai Hari 2; laporan format sudah stabil. | Juri dapat melihat empat kunjungan seed dan memahami tren lansia dalam kurang dari 30 detik; Helper dapat menyimpan draf ketika mode offline disimulasikan. |
-| **Backend**        | 1. Query timeline/tren Health Snapsh<br />ot dan fungsi rule-based untuk badge. 2. Implementasikan endpoint Admin/banding/audit yang ada di P0; setiap aksi sensitif menulis`audit_logs`. 3. Finalisasi trust tier: lima tugas bersih → `terpercaya`; laporan reset counter sesuai aturan. 4. Tambahkan idempotency pada upload/sinkronisasi evidence. 5. Tulis/cek scheduled job: expire, auto-release demo, dan reminder hanya bila benar-benar diperlukan. 6. Audit RLS per tabel dengan matriks role. 7. Finalisasi `npm run seed` untuk seluruh skenario demo dan endpoint reset lokal bila aman.       | Task, report, payment, role policy dari Sprint 0–3.                 | Reset seed menghasilkan data yang konsisten; role yang tidak berwenang tidak dapat membaca dokumen, chat, Health Snapshot, atau audit log.                  |
-| **Integrasi & QA** | 1. Jalankan matriks alur untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin. 2. Lakukan dry run demo menggunakan database seed dari nol. 3. Buat daftar bug P0/P1; fitur P2 berhenti dikerjakan jika masih ada bug P0. 4. Freeze perubahan schema besar setelah Hari 5.                                                                                                                                                                                                                                                                                                                              | Semua workstream.                                                    | Demo dapat dijalankan ulang tanpa edit manual Supabase; Riwayat Rangkul dan mekanisme trust tampil konsisten.                                               |
+| **Backend**        | 1. Query timeline/tren Health Snapsh<br />ot dan fungsi rule-based untuk badge. 2. Implementasikan endpoint Admin/banding/audit yang ada di P0; setiap aksi sensitif menulis`audit_logs`. 3. Finalisasi trust tier: lima tugas bersih → `terpercaya`; laporan reset counter sesuai aturan. 4. Tambahkan idempotency pada upload/sinkronisasi evidence. 5. Tulis/cek scheduled job: expire, auto-release demo, dan reminder hanya bila benar-benar diperlukan. 6. Audit RLS per tabel dengan matriks role. 7. Finalisasi `npm run seed` untuk seluruh skenario demo dan endpoint reset lokal bila aman. | Task, report, payment, role policy dari Sprint 0–3.                 | Reset seed menghasilkan data yang konsisten; role yang tidak berwenang tidak dapat membaca dokumen, chat, Health Snapshot, atau audit log.                  |
+| **Integrasi & QA** | 1. Jalankan matriks alur untuk Keluarga, Helper, Koordinator RT, Koordinator RW, dan Admin. 2. Lakukan dry run demo menggunakan database seed dari nol. 3. Buat daftar bug P0/P1; fitur P2 berhenti dikerjakan jika masih ada bug P0. 4. Freeze perubahan schema besar setelah Hari 5.                                                                                                                                                                                                                                                                                                                        | Semua workstream.                                                    | Demo dapat dijalankan ulang tanpa edit manual Supabase; Riwayat Rangkul dan mekanisme trust tampil konsisten.                                               |
 
 **Quality gate Sprint 4:** audit RLS lulus; tidak ada dokumen sensitif dalam bucket public; seed menghasilkan semua status penting; demo path dapat selesai tanpa Midtrans, SMS, atau data real.
 
 ---
 
-#### Sprint 5 — Hardening, Dokumentasi, dan Submission
+#### Sprint 5 - Hardening Baseline dan Candidate Freeze
 
-**Tanggal:** 1–6 September 2026
-**Tujuan:** berhenti menambah fitur. Fokus pada bukti bahwa Rangkul stabil, dapat dinilai, dan mudah dipahami juri.
+**Tanggal:** 1-2 September 2026
+**Tujuan:** menghentikan perubahan scope baseline Sprint 0-4, menutup bug P0/P1, dan menghasilkan candidate yang stabil sebelum dua mode assignment Sprint 6 diintegrasikan.
 
 | Area                     | Tugas detail                                                                                                                                                                                                                                                                                                                                                        | Hasil yang harus selesai                                                                       |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Frontend**       | 1. Uji seluruh resolusi mobile/desktop dan alur role. 2. Perbaiki loading, error, empty, disabled state, dan copy. 3. Ambil screenshot README dan siapkan akun/link demo. 4. Rekam demo cadangan bila koneksi acara buruk.                                                                                                                                          | Tidak ada halaman penting kosong/404; demo visual rapi; form tidak membingungkan.              |
-| **Backend**        | 1. Jalankan migration pada environment bersih. 2. Jalankan seed berkali-kali secara aman. 3. Uji RLS, API error, cron/job, dan fitur ledger. 4. Rotasi/review secret, cek webhook/feature flag, dan pastikan Supabase heartbeat hidup. 5. Verifikasi observability/log error dasar.                                                                                 | Migration, seed, build, dan CI lulus; environment demo tidak bergantung pada laptop developer. |
-| **Integrasi & QA** | 1. Dua kali dry run penuh: satu dengan internet normal, satu dengan mode demo wallet/offline mock. 2. Triase bug: hanya P0/P1 boleh diperbaiki; tidak ada fitur baru. 3. Selesaikan README sesuai template resmi, arsitektur, cara install, cara seed, akun demo, security note, dan limitasi produk. 4. Submit minimal 12 jam sebelum batas 6 September 23.59 WIB. | Link hosting, repository, README, video cadangan, dan skrip demo siap.                         |
+| **Frontend**       | 1. Uji seluruh resolusi mobile/desktop dan alur role baseline. 2. Perbaiki loading, error, empty, disabled state, dan copy yang menghambat demo. 3. Ambil screenshot awal README dan siapkan akun/link demo. | Tidak ada halaman penting kosong/404; jalur baseline dapat dipakai pada empat viewport. |
+| **Backend**        | 1. Jalankan migration pada environment development cloud yang bersih. 2. Jalankan seed berulang. 3. Uji RLS, API error, cron/job, payment fallback, dan webhook. 4. Review secret serta observability dasar. | Migration, seed, runtime security test, build, dan CI lulus; environment demo tidak bergantung pada laptop developer. |
+| **Integrasi & QA** | 1. Dry run semua role. 2. Triase bug P0/P1 dan bekukan perubahan scope baseline. 3. Tandai commit candidate yang menjadi titik rollback jika Sprint 6 gagal quality gate. | Candidate baseline hijau tersedia paling lambat 2 September 23.00 WIB. |
 
-**Quality gate Sprint 5:** tidak ada bug P0; build dari clone baru berhasil; jalur demo utama diuji dengan semua akun seed; submission tidak dilakukan pada menit terakhir.
+**Quality gate Sprint 5:** tidak ada bug P0; build dari clone baru berhasil; migration dan seed cloud idempoten; jalur demo utama diuji dengan semua akun seed; commit candidate dan rollback point tercatat.
+
+---
+
+#### Sprint 6 - Mode Penugasan Fleksibel Sebelum Submission
+
+**Tanggal:** 3-5 September 2026
+
+**Tujuan:** menambahkan mode `Pilih dari Pelamar` dan `Cari Cepat` sebelum deadline tanpa mengubah kestabilan alur `langsung` dan tanpa melemahkan keamanan data.
+
+**Gate kompetisi:** seluruh pekerjaan dimulai dari branch fitur dan diintegrasikan ke `develop`. Feature flag production tetap off sampai seluruh runtime RLS, race, regression, migration, seed, responsive, test, dan build gate lulus. Keputusan go/no-go wajib diambil paling lambat 5 September 2026 pukul 18.00 WIB. Tanggal 6 September hanya untuk verifikasi production, bukti submission, dan pengiriman sebelum pukul 12.00 WIB.
+
+| Vertical slice | Owner | Tugas fullstack | Hasil yang harus dapat dibuktikan |
+| -------------- | ----- | --------------- | --------------------------------- |
+| Kontrak dan schema assignment | Farros, direview Mervin | Amendment §3.14; enum `mode_penugasan`; tabel `task_applications`; constraint; generated types; API contract; migration test. | Migration berlaku tanpa mengubah perilaku task `langsung`; kombinasi mode/helper/status invalid ditolak database. |
+| Pilih dari Pelamar | Farros, direview Mervin | Form Keluarga; job board Helper; apply/withdraw API; daftar pelamar; select RPC; notification; RLS; seed; runtime test; responsive QA. | Beberapa Helper dapat apply, Keluarga memilih satu, hanya satu selected, dan aturan approval tetap berjalan. |
+| Cari Cepat | Mervin, direview Farros | Mode booking same-day; eligibility query; marketplace tereduksi; quick accept RPC; expiry; status UI Keluarga/Helper; notification; RLS; seed; concurrency test. | Hanya Helper terpercaya eligible yang melihat task dan satu Helper menang meskipun dua menerima bersamaan. |
+| Privacy marketplace dan konflik jadwal | Mervin, direview Farros | Server projection; tutup direct task read sebelum assignment; overlap validator; fail-closed radius/category; runtime role matrix. | Helper tidak melihat data lansia sensitif dan tidak dapat menerima dua task yang bertumpuk. |
+| Integrasi dan demo | Keduanya | Seed tiga mode; error/empty/loading/conflict; mobile 375/768/1024/1440; lint/typecheck/test/build; preview deployment non-production. | Mode langsung tidak regresi; pelamar dan cepat memiliki happy path serta forbidden/race evidence. |
+
+**Urutan 3-5 September:**
+
+1. 3 September: kontrak, failing tests, migration schema, feature flag fail closed, dan fondasi eligibility. Farros dan Mervin mulai vertical slice masing-masing secara paralel.
+2. 4 September: Farros menuntaskan apply, withdraw, selection, dan notification mode `pelamar`. Mervin menuntaskan marketplace tereduksi, quick acceptance, expiry, dan notification mode `cepat`. Keduanya melakukan review silang API, RLS, dan UI.
+3. 5 September sampai 15.00 WIB: runtime RLS, race test, seed cloud, regression mode `langsung`, mobile/accessibility QA, dan preview dry run.
+4. 5 September pukul 15.00-18.00 WIB: hanya perbaikan blocker dan menjalankan quality gate terakhir. Pukul 18.00 WIB adalah batas go/no-go.
+5. 6 September pukul 00.00-12.00 WIB: tidak ada fitur baru. Verifikasi production, akun demo, README, video cadangan, repository, dan bukti submission.
+
+**Quality gate Sprint 6:** mode `langsung` tidak regresi; satu selected per task; quick accept anti-race; schedule conflict ditegakkan server; marketplace tidak membocorkan data lansia; runtime RLS tidak skip; migration dan seed cloud lulus; empat viewport dan keyboard lulus; seluruh lint, typecheck, test, dan build lulus. Feature flag production hanya diaktifkan setelah semua gate tersebut hijau.
 
 ### 14.5 Urutan Integrasi Alur E2E
 
@@ -1587,6 +1765,8 @@ Urutan ini harus dipatuhi. Jangan membangun chat atau panel Admin lengkap sebelu
 7. Keluarga membayar/menyelesaikan via Midtrans → pembagian saldo tercatat
 8. Keluarga melapor dua kali → Helper under_review → Admin/Koordinator meninjau
 9. Seed reset → jalur 1–8 dapat didemokan ulang
+10. Sprint 6: Keluarga membuat task pelamar → beberapa Helper apply → satu dipilih atomik
+11. Sprint 6: Keluarga membuat task cepat → dua Helper mencoba menerima → satu berhasil
 ```
 
 ### 14.6 Matriks Kepemilikan Fitur
@@ -1603,6 +1783,7 @@ Urutan ini harus dipatuhi. Jangan membangun chat atau panel Admin lengkap sebelu
 | Chat/notifikasi/SOS             |        Ya |            Ya | Realtime subscription, event/policy       |
 | Offline draft                   |        Ya |            Ya | IndexedDB, idempotency submit             |
 | Admin/Koordinator panel         |        Ya |            Ya | table/action UI, authorization/audit      |
+| Assignment pelamar/cepat        |        Ya |            Ya | apply/select/accept UI, RPC, RLS, race test |
 | Seeder, test, demo              | Pendukung | Pemilik utama | keduanya wajib dry run                    |
 
 ### 14.7 Rencana Jika Tertinggal
@@ -1618,6 +1799,8 @@ Urutan fitur yang boleh dipotong adalah:
 5. Help Center interaktif; ganti dengan halaman FAQ statis.
 
 Fitur yang **tidak boleh** dipotong karena merupakan argumen Rangkul di depan juri: verifikasi komunitas, booking dengan state machine yang benar, bukti/laporan kunjungan, Riwayat Rangkul, perlindungan data dasar/RLS, dan data seed yang membuat demo bisa diulang.
+
+Mode `pelamar` dan `cepat` adalah target Sprint 6 sebelum submission. Keduanya tetap di belakang feature flag sampai seluruh gate hijau. Jika pada batas go/no-go masih ada regresi mode `langsung`, kebocoran marketplace, race assignment, atau schedule conflict, flag wajib tetap off dan baseline Sprint 5 digunakan.
 
 ### 14.8 Checklist Handover Antarsprint
 
@@ -1639,6 +1822,7 @@ Sebelum sprint ditutup, owner FE dan BE mengisi checklist singkat berikut di iss
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Wajib ada (dinilai juri)    | Auth 4 peran • Profil lansia + verifikasi identitas • Katalog & verifikasi Helper (radius layanan) • Kategori jasa fix price + Layanan Tambahan • Booking, model approval bertingkat, reschedule, kompensasi pembatalan, restriksi >2 pembatalan • Bukti kunjungan + Health Snapshot • Riwayat Rangkul (timeline + tren) • Rating + sistem laporan (2x → under_review) • Chat + inbox • Notifikasi terpusat (termasuk notifikasi pasif Koordinator) • Koordinator approve/reject Helper & booking kondisi khusus • Panel Admin (verifikasi Koordinator, fallback wilayah, banding) • Escrow Midtrans sandbox • Tombol darurat • Offline draft laporan |
 | Jika waktu tersisa          | Notifikasi SMS darurat • Jadwal kunjungan berkala (recurring) • Feedback sederhana dari lansia • Dashboard komisi Koordinator detail • Badge peringatan otomatis Riwayat Rangkul • Filter pengawasan RW                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Sprint 6 sebelum submission | Mode penugasan `pelamar` dan `cepat` (§3.14), hanya diaktifkan setelah quality gate teknis lulus paling lambat 5 September 18.00 WIB                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Sengaja dipotong dari scope | Payment gateway produksi • Sistem asuransi/liabilitas formal • Ekspansi multi-kota • Algoritma matching/rekomendasi canggih • Fitur AI apa pun • Komunitas curhat terbuka (§3.12)                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ---
@@ -1647,6 +1831,7 @@ Sebelum sprint ditutup, owner FE dan BE mengisi checklist singkat berikut di iss
 
 - Row Level Security wajib aktif di setiap tabel data pribadi — diuji eksplisit sebelum submission.
 - Foto, catatan kondisi lansia, Health Snapshot, dan dokumen identitas hanya bisa diakses oleh pihak berwenang (Keluarga pemilik, Admin, Koordinator yang menindaklanjuti laporan) — tidak ada dashboard publik.
+- Sebelum assignment Sprint 6, Helper hanya menerima projection marketplace yang direduksi. Nama lansia, alamat lengkap, koordinat mentah, catatan kondisi, kebutuhan khusus, dokumen, Health Snapshot, dan chat tidak boleh tersedia melalui API maupun policy tabel langsung.
 - README wajib menjelaskan perlindungan data sensitif, sesuai lima elemen wajib README di Guidebook §4.2.A (mapping §17.2). Klausul AI di Guidebook §4.1 poin 7 bersifat kondisional — karena Rangkul tidak memakai AI, klausul ini **tidak berlaku** (§17.4).
 - Kontrol keamanan konkret: XSS Protection, CSRF Token, SQL Injection Prevention, Rate Limiter, HTTPS, JWT Expiration, CSP Header, verifikasi signature webhook, bucket storage privat untuk dokumen sensitif, validasi Zod 4 lapis (detail §8).
 
@@ -1777,6 +1962,25 @@ Bagian ini mengikat keputusan Sprint 3 ketika ada referensi historis yang masih 
 ### 19.7 Cara Menjalankan
 
 - Skrip seed idealnya satu perintah (`npm run seed`), memakai Supabase service role key (hanya dijalankan lokal/CI, tidak pernah di-expose ke client), dijalankan ulang otomatis tiap kali environment demo di-reset.
+
+### 19.8 Fixture Mode Penugasan Sprint 6
+
+- 1 task `langsung` untuk regression alur Sprint 0-5.
+- 1 task `pelamar` berstatus `diajukan` dengan minimal 3 application `pending` dari Helper eligible.
+- 1 task `pelamar` yang sudah memiliki 1 application `selected` dan application lain `rejected`.
+- 1 task `cepat` aktif dengan expiry 15 menit dan minimal 2 Helper terpercaya eligible untuk concurrency demo.
+- 1 task `cepat` kedaluwarsa yang berubah `dibatalkan` tanpa assignment.
+- 1 Helper di luar radius, 1 Helper tanpa kategori, 1 Helper dengan jadwal bentrok, 1 Helper probation, dan 1 Helper under_review sebagai negative fixtures.
+- Seluruh marketplace fixture memakai lokasi ringkas. Exact address dan data kondisi tetap hanya berada pada resource private milik Keluarga/Helper terpilih.
+
+## Amendment Mengikat Mode Penugasan Sprint 6, 27 Agustus 2026
+
+- Mode `langsung` tetap menjadi baseline submission dan tidak boleh regresi.
+- Mode `pelamar` dan `cepat` mengikuti §3.14 serta harus diselesaikan pada Sprint 6 tanggal 3-5 September 2026.
+- Kedua mode tidak masuk acceptance Sprint 4 atau Sprint 5 dan tidak boleh digunakan untuk menutupi blocker RLS, storage, seed, payment, atau stabilitas demo.
+- Tidak ada bidding harga, negosiasi, auto-dispatch berbasis algoritma, live map, ETA, atau klaim layanan darurat.
+- Feature flag production default off dan fail closed. Flag hanya boleh diaktifkan setelah seluruh quality gate Sprint 6 hijau.
+- Go/no-go ditetapkan paling lambat 5 September 2026 pukul 18.00 WIB. Tanggal 6 September hanya untuk verifikasi final, deployment submission, dokumentasi, dan submit paling lambat pukul 12.00 WIB.
 
 ---
 
