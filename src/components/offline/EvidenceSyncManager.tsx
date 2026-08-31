@@ -60,6 +60,7 @@ export default function EvidenceSyncManager({ syncFn }: EvidenceSyncManagerProps
     window.addEventListener("online", handleOnline);
 
     // Also sync on mount if already online
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (navigator.onLine) void syncAll();
 
     return () => {

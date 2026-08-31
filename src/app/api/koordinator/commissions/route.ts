@@ -68,14 +68,17 @@ export async function GET(request: Request) {
       return createApiError("server_error", "Gagal mengambil data komisi", 500);
     }
 
-    const items = (payments || []).map((p: any) => ({
-      id: p.id,
-      task_id: p.task_id,
-      layanan: p.tasks?.service_categories?.nama || "Pendampingan",
-      jumlah_total: p.jumlah_total,
-      koordinator_share: p.koordinator_share,
-      released_at: p.released_at || p.created_at,
-    }));
+    const items = (payments || []).map((p: Record<string, unknown>) => {
+      const taskObj = p.tasks as { service_categories?: { nama?: string } | null } | null;
+      return {
+        id: p.id as string,
+        task_id: p.task_id as string,
+        layanan: taskObj?.service_categories?.nama || "Pendampingan",
+        jumlah_total: p.jumlah_total as number,
+        koordinator_share: p.koordinator_share as number,
+        released_at: (p.released_at || p.created_at) as string,
+      };
+    });
 
     const totalCommission = items.reduce((sum, item) => sum + Number(item.koordinator_share || 0), 0);
     const totalTransactions = count || 0;
