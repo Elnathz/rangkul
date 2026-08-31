@@ -72,7 +72,12 @@ export async function POST(request: Request) {
       return createApiError('signed_url_failed', 'Gagal membuat signed URL', 500);
     }
 
-    return apiResponse({ url: signedData.signedUrl }, 200);
+    return apiResponse({ 
+      url: signedData.signedUrl,
+      path: filePath,
+      bucket: 'dokumen',
+      content_type: file.type
+    }, 200);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }

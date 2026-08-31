@@ -69,7 +69,7 @@ export default function KoordinatorPengajuanPage() {
       if (!uploadSkRes.ok) {
         throw new Error(uploadSkData.message || 'Gagal mengunggah SK Jabatan.');
       }
-      uploadedSkUrl = uploadSkData.data?.url || uploadSkData.url;
+      uploadedSkUrl = uploadSkData.data?.path || uploadSkData.path;
 
       if (ktpFile) {
         const ktpFormData = new FormData();
@@ -85,7 +85,7 @@ export default function KoordinatorPengajuanPage() {
         if (!uploadKtpRes.ok) {
           throw new Error(uploadKtpData.message || 'Gagal mengunggah KTP.');
         }
-        uploadedKtpUrl = uploadKtpData.data?.url || uploadKtpData.url;
+        uploadedKtpUrl = uploadKtpData.data?.path || uploadKtpData.path;
       }
 
       if (fotoWajahFile) {
@@ -102,7 +102,7 @@ export default function KoordinatorPengajuanPage() {
         if (!uploadFotoRes.ok) {
           throw new Error(uploadFotoData.message || 'Gagal mengunggah Foto Wajah.');
         }
-        uploadedFotoWajahUrl = uploadFotoData.data?.url || uploadFotoData.url;
+        uploadedFotoWajahUrl = uploadFotoData.data?.path || uploadFotoData.path;
       }
 
       // 2. Compose "wilayah" from inputs
