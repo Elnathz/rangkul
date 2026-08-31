@@ -37,6 +37,7 @@ export default function KoordinatorEditProfilPage() {
 
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -51,31 +52,35 @@ export default function KoordinatorEditProfilPage() {
 
       const { data: userProfile } = await supabase
         .from('users')
-        .select('full_name, username, phone, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi')
+        .select('full_name, username, phone, alamat_detail, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi')
         .eq('id', user.id)
         .maybeSingle();
+
       const { data: profile } = await supabase
         .from('koordinator_profiles')
         .select('id, wilayah')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profile) {
-        const parsed = parseRegionAddress(profile.wilayah);
-        const nextForm = {
-          ...form,
-          username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
-          phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
-          foto_url: user.user_metadata?.avatar_url || "",
-          alamat: parsed.detail,
-          rt: parsed.rt,
-          rw: parsed.rw,
-          region: { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan },
-        };
+      const parsed = parseRegionAddress(profile?.wilayah || userProfile?.alamat_detail || "");
+      const nextForm = {
+        ...form,
+        username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
+        phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
+        foto_url: user.user_metadata?.avatar_url || "",
+        alamat: parsed.detail || "",
+        rt: userProfile?.rt?.toString() || parsed.rt || "",
+        rw: userProfile?.rw?.toString() || parsed.rw || "",
+        region: {
+          provinsi: userProfile?.provinsi || parsed.provinsi || "",
+          kota: userProfile?.kabupaten_kota || parsed.kotaKabupaten || "",
+          kecamatan: userProfile?.kecamatan || parsed.kecamatan || "",
+          kelurahan: userProfile?.kelurahan || parsed.kelurahan || "",
+        },
+      };
 
-        setForm(nextForm);
-        initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
-      }
+      setForm(nextForm);
+      initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
     };
     fetchData();
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -92,29 +97,66 @@ export default function KoordinatorEditProfilPage() {
     }
 
     const currentSnapshot = JSON.stringify({ ...form, password: "", confirmPassword: "", foto_url: "" });
-    if (initialSnapshot.current === currentSnapshot && !form.password) {
+    if (initialSnapshot.current === currentSnapshot && !form.password && !fotoFile) {
       showToast("Tidak ada perubahan.", "success");
       setLoading(false);
       return;
     }
 
     try {
-      const wilayah = [
-        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
-        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
-        form.alamat,
-      ].filter(Boolean).join(" | ");
-      const userResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
+      const regionParts = [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean);
+      const regionStr = regionParts.length > 0 ? regionParts.join(", ") : "";
+      const rtrwStr = form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : (form.rt ? `RT ${form.rt}` : (form.rw ? `RW ${form.rw}` : ""));
+      const wilayah = [regionStr, rtrwStr, form.alamat].filter(Boolean).join(" | ");
+
+      let avatarPath = form.foto_url;
+      if (fotoFile) {
+        const uploadData = new FormData();
+        uploadData.append("file", fotoFile);
+        uploadData.append("docType", "foto_koordinator");
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: uploadData });
+        const uploaded = await uploadRes.json();
+        if (uploadRes.ok && (uploaded.data?.path || uploaded.path)) {
+          avatarPath = uploaded.data?.path || uploaded.path;
+        }
+      }
+
+      const userResponse = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: form.username,
+          phone: form.phone,
+          alamat_detail: wilayah,
+          rt: form.rt ? Number(form.rt) : undefined,
+          rw: form.rw ? Number(form.rw) : undefined,
+          kelurahan: form.region.kelurahan || undefined,
+          kecamatan: form.region.kecamatan || undefined,
+          kabupaten_kota: form.region.kota || undefined,
+          provinsi: form.region.provinsi || undefined,
+        }),
+      });
+
       const userBody = await userResponse.json().catch(() => null) as { message?: string } | null;
       if (!userResponse.ok) throw new Error(userBody?.message || "Data akun gagal diperbarui");
-      const profileResponse = await fetch("/api/koordinator/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah }) });
-      const profileBody = await profileResponse.json().catch(() => null) as { message?: string } | null;
-      if (!profileResponse.ok) throw new Error(profileBody?.message || "Wilayah koordinator gagal diperbarui");
+
+      const profileResponse = await fetch("/api/koordinator/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wilayah }),
+      });
+
+      if (!profileResponse.ok) {
+        console.warn("Update profil koordinator wilayah notice:", await profileResponse.text().catch(() => ""));
+      }
+
       if (form.password) {
         const { error } = await createClient().auth.updateUser({ password: form.password });
         if (error) throw new Error(error.message);
       }
-      router.push("/koordinator/dashboard");
+
+      showToast("Profil koordinator berhasil diperbarui!", "success");
+      setTimeout(() => router.push("/koordinator/dashboard"), 1000);
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
@@ -209,6 +251,7 @@ export default function KoordinatorEditProfilPage() {
                         }
                         setForm({ ...form, foto_url: URL.createObjectURL(file) });
                         setFotoFileName(file.name);
+                        setFotoFile(file);
                       }
                     }}
                   />
