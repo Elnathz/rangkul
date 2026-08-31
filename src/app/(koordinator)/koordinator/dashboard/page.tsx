@@ -155,7 +155,14 @@ export default async function KoordinatorDashboardPage() {
           ))}
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href="/koordinator/komisi"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-100"
+          >
+            Lihat Rincian Komisi Saya (3%)
+            <ChevronRight className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+          </Link>
           <Link
             href="/koordinator/helper"
             className="inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-bold text-[#0D47A1] shadow-sm transition hover:border-blue-200 hover:bg-blue-50"

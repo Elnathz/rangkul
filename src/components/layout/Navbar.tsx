@@ -182,6 +182,7 @@ export default function Navbar() {
       { href: "/koordinator/antrean", label: "Antrean Helper" },
       { href: "/koordinator/helper", label: "Helper Terverifikasi" },
       { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
+      { href: "/koordinator/komisi", label: "Komisi" },
       { href: "/koordinator/pesan", label: "Pesan" },
       { href: "/koordinator/darurat", label: "Darurat" },
       { href: "/koordinator/laporan", label: "Laporan" },
