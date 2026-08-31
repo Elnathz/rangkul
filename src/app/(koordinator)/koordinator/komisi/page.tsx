@@ -51,6 +51,7 @@ export default function KoordinatorKomisiPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchCommissions(page);
   }, [page]);
 

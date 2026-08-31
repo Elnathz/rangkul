@@ -107,6 +107,7 @@ export default function LaporanHelperPage() {
 
   React.useEffect(() => {
     if (!draft || isDraftLoading) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       catatan_kondisi: draft.catatan_kondisi,
       skor_energi: draft.skor_energi ?? 3,
