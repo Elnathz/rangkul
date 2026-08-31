@@ -187,6 +187,16 @@ export default function Navbar() {
       { href: "/koordinator/laporan", label: "Laporan" },
       ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
     ];
+  } else if (role === 'admin') {
+    currentNavLinks = [
+      { href: "/admin/dashboard", label: "Dashboard" },
+      { href: "/admin/users", label: "Pengguna" },
+      { href: "/admin/helpers", label: "Helper" },
+      { href: "/admin/categories", label: "Kategori" },
+      { href: "/admin/reports", label: "Laporan" },
+      { href: "/admin/koordinator/pengajuan", label: "Pengajuan" },
+      { href: "/admin/audit-logs", label: "Audit" },
+    ];
   }
 
   return (

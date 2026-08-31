@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getSignedUrl } from '@/lib/storage/private-files';
 import PengajuanClient from './PengajuanClient';
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; pageSize?: string }> }) {
@@ -33,7 +34,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
     .select('id', { count: 'exact', head: true })
     .eq('status', 'pending_verification');
 
-  const queue = koordinators || [];
+  const rawQueue = koordinators || [];
+  const queue = await Promise.all(
+    rawQueue.map(async (item) => ({
+      ...item,
+      dokumen_url: item.dokumen_url ? await getSignedUrl(item.dokumen_url) : null,
+      ktp_url: item.ktp_url ? await getSignedUrl(item.ktp_url) : null,
+    }))
+  );
   const total = count ?? 0;
 
   return (
