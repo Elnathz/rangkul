@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
@@ -29,8 +29,10 @@ const money = (value: number | null | undefined) => `Rp ${Number(value || 0).toL
 export default function PembayaranPage({ params }: { params: Promise<{ task_id: string }> }) {
   const router = useRouter();
   const { task_id: taskId } = use(params);
+  const idempotencyKeyRef = useRef(`demo-wallet:${taskId}`);
   const [task, setTask] = useState<Task | null>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [saldo, setSaldo] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [snapReady, setSnapReady] = useState(false);
@@ -38,16 +40,21 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
 
   const loadData = async () => {
     setError(null);
-    const [taskResponse, paymentResponse] = await Promise.all([
+    const [taskResponse, paymentResponse, walletResponse] = await Promise.all([
       fetch(`/api/tasks/${taskId}`, { cache: "no-store" }),
       fetch(`/api/payments/${taskId}/status`, { cache: "no-store" }),
+      fetch(`/api/wallet`, { cache: "no-store" }).catch(() => null),
     ]);
     const taskBody = await taskResponse.json().catch(() => null) as { task?: Task; message?: string } | null;
     const paymentBody = await paymentResponse.json().catch(() => null) as { payment?: Payment; message?: string } | null;
+    const walletBody = walletResponse?.ok
+      ? (await walletResponse.json().catch(() => null) as { saldo?: number } | null)
+      : null;
     if (!taskResponse.ok) throw new Error(taskBody?.message || "Detail tugas tidak dapat dimuat");
     if (!paymentResponse.ok) throw new Error(paymentBody?.message || "Status pembayaran tidak dapat dimuat");
     setTask(taskBody?.task || null);
     setPayment(paymentBody?.payment || null);
+    setSaldo(walletBody?.saldo ?? null);
   };
 
   useEffect(() => {
@@ -116,8 +123,11 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
     setProcessing(true);
     setError(null);
     try {
+      const idempotencyKey = idempotencyKeyRef.current;
       const response = await fetch(`/api/payments/${taskId}/demo-wallet/charge`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotency_key: idempotencyKey }),
       });
       const body = await response.json().catch(() => null) as { message?: string } | null;
       if (!response.ok) throw new Error(body?.message || "Pembayaran dengan Saldo Demo gagal");
@@ -155,7 +165,14 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
           <Button onClick={handlePayment} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">
             {processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Menyiapkan Midtrans...</> : "Bayar dengan Midtrans"}
           </Button>
-          <Button onClick={() => void handleDemoWalletPayment()} disabled={processing} variant="outline" className="h-14 w-full rounded-2xl border-blue-200 bg-blue-50/50 text-base font-bold text-[#0D47A1] hover:bg-blue-100/60 shadow-sm">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+            <p className="flex items-center justify-between text-sm font-semibold text-slate-600">
+              <span>Saldo Demo tersedia</span>
+              <span className="font-black text-[#0D47A1]">{money(saldo)}</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Saldo Demo bukan uang nyata dan bukan bukti transaksi gateway. Hanya untuk demo.</p>
+          </div>
+          <Button onClick={() => void handleDemoWalletPayment()} disabled={processing || (saldo !== null && saldo < Number(task.harga_final))} variant="outline" className="h-14 w-full rounded-2xl border-blue-200 bg-blue-50/50 text-base font-bold text-[#0D47A1] hover:bg-blue-100/60 shadow-sm">
             {processing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Memproses Saldo Demo...</> : "Bayar dengan Saldo Demo (Fallback)"}
           </Button>
         </div>
