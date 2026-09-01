@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { SignedImage } from "@/components/ui/SignedImage";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
@@ -564,7 +565,7 @@ export default function HelperVerifikasiPage() {
                                      onClick={() => { setForm({...form, koordinator_id: k.id}); setShowKoordDropdown(false); }}
                                    >
                                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100">
-                                       {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                                       {k.ktp_url ? <SignedImage path={k.ktp_url} alt="" className="w-full h-full object-cover" fallbackClassName="h-full w-full bg-gray-50" /> : <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                                      </div>
                                      <div>
                                        <div className="font-bold text-gray-900 text-sm flex items-center gap-1">
@@ -1066,7 +1067,7 @@ export default function HelperVerifikasiPage() {
                          onClick={() => { setForm({...form, koordinator_id: k.id}); setKoordModalOpen(false); }}
                        >
                          <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border-4 border-white shadow-sm">
-                           {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                           {k.ktp_url ? <SignedImage path={k.ktp_url} alt="" className="w-full h-full object-cover" fallbackClassName="h-full w-full bg-gray-50" /> : <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                          </div>
                          <div className="flex-1">
                            <div className="flex justify-between items-start">
