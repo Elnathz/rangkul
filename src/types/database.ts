@@ -161,6 +161,7 @@ export type Database = {
           alasan: string
           created_by: string
           created_at: string
+          entry_type: string
         }
         Insert: {
           id?: string
@@ -171,6 +172,7 @@ export type Database = {
           alasan: string
           created_by: string
           created_at?: string
+          entry_type?: string
         }
         Update: {
           id?: string
@@ -181,6 +183,7 @@ export type Database = {
           alasan?: string
           created_by?: string
           created_at?: string
+          entry_type?: string
         }
         Relationships: [
           {
@@ -712,6 +715,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -730,6 +734,7 @@ export type Database = {
           held_at?: string | null
           helper_share?: number
           id?: string
+          idempotency_key?: string | null
           jumlah_total: number
           koordinator_share?: number
           midtrans_order_id?: string | null
@@ -748,6 +753,7 @@ export type Database = {
           held_at?: string | null
           helper_share?: number
           id?: string
+          idempotency_key?: string | null
           jumlah_total?: number
           koordinator_share?: number
           midtrans_order_id?: string | null
@@ -1010,6 +1016,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           status: Database["public"]["Enums"]["task_status"]
@@ -1033,6 +1040,7 @@ export type Database = {
           jadwal_waktu_asli?: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id: string
           status?: Database["public"]["Enums"]["task_status"]
@@ -1056,6 +1064,7 @@ export type Database = {
           jadwal_waktu_asli?: string | null
           keluarga_id?: string
           lansia_id?: string
+          mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id?: string
           status?: Database["public"]["Enums"]["task_status"]
@@ -1315,6 +1324,17 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["demo_wallet_ledger"]["Row"]
       }
+      charge_task_with_demo_wallet: {
+        Args: {
+          p_task_id: string
+          p_idempotency_key?: string | null
+        }
+        Returns: {
+          payment_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+          saldo_tersisa: number
+        }[]
+      }
       admin_review_appeal: {
         Args: {
           appeal_id: string
@@ -1397,6 +1417,7 @@ export type Database = {
         | "disputed"
         | "dibatalkan_kompensasi"
       report_status: "menunggu" | "ditindak" | "selesai"
+      task_assignment_mode: "langsung" | "pelamar" | "cepat"
       task_status:
         | "diajukan"
         | "menunggu_persetujuan_koordinator"

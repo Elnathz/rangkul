@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { lansia_id, service_category_id, helper_id, jadwal_waktu, catatan, tambahan_waktu_menit } = validation.data;
+    const { lansia_id, service_category_id, helper_id, jadwal_waktu, catatan, tambahan_waktu_menit, mode_penugasan, expires_at } = validation.data;
 
     // Fetch category and its tingkat
     const { data: category, error: catError } = await supabase
@@ -59,8 +59,32 @@ export async function POST(request: Request) {
       return createApiError('validation_error', 'Kategori layanan tidak aktif atau merupakan parent category', 400);
     }
 
+    const mode = mode_penugasan ?? 'langsung';
+
+    // Sprint 6 quick mode: helper_id wajib kosong, kategori non-high-risk, jadwal today, expiry 15 menit.
+    if (mode === 'cepat') {
+      if (helper_id) {
+        return createApiError('validation_error', 'Mode Cari Cepat tidak menerima Helper tertentu', 422);
+      }
+      if (category.is_high_risk) {
+        return createApiError('validation_error', 'Kategori berisiko tinggi tidak bisa memakai mode Cari Cepat', 422);
+      }
+      const now = new Date();
+      const schedule = new Date(jadwal_waktu);
+      if (schedule.getTime() <= now.getTime()) {
+        return createApiError('validation_error', 'Jadwal Cari Cepat harus di masa mendatang', 422);
+      }
+      if (schedule.toDateString() !== now.toDateString()) {
+        return createApiError('validation_error', 'Mode Cari Cepat hanya untuk kunjungan pada hari yang sama', 422);
+      }
+    }
+
+    if (mode === 'pelamar' && helper_id) {
+      return createApiError('validation_error', 'Mode Pilih dari Pelamar tidak menerima Helper tertentu', 422);
+    }
+
     const isDistanceBasedCategory = category.jarak_min_km !== null || category.jarak_max_km !== null;
-    if (isDistanceBasedCategory && !helper_id) {
+    if (isDistanceBasedCategory && !helper_id && mode === 'langsung') {
       return createApiError('validation_error', 'Pilih Helper agar jarak dan radius layanan dapat diverifikasi', 422);
     }
 
@@ -113,20 +137,30 @@ export async function POST(request: Request) {
     const extra_time_price = (tambahan_waktu_menit || 0) * 1000;
     const harga_final = harga_dasar + extra_time_price;
 
+    let expiry: string;
+    if (mode === 'cepat') {
+      expiry = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    } else {
+      expiry = expires_at
+        ? new Date(expires_at).toISOString()
+        : new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    }
+
     // Insert task into Supabase tasks table
     const { data: task, error: insertError } = await supabase
       .from('tasks')
       .insert({
         keluarga_id: user.id,
         lansia_id,
-        helper_id: helper_id || null,
+        helper_id: mode === 'langsung' ? (helper_id || null) : null,
         service_category_id,
         jadwal_waktu,
         catatan: catatan || null,
         status: 'diajukan',
+        mode_penugasan: mode,
         harga_dasar,
         harga_final,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        expires_at: expiry,
       })
       .select('*')
       .single();
