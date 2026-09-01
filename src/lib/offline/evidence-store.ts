@@ -7,6 +7,8 @@ export type OfflineEvidenceDraft = {
   client_submission_id: string;
   photo: Blob;
   photo_preview_url?: string;
+  lansia_nama?: string;
+  kategori_nama?: string;
   catatan_kondisi: string;
   skor_energi: number | null;
   skor_mobilitas: number | null;
@@ -88,6 +90,20 @@ export async function getPendingDrafts(ownerId: string): Promise<OfflineEvidence
     const index = database.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).index("owner_user_id");
     const request = index.getAll(ownerId);
     request.onsuccess = () => resolve((request.result as OfflineEvidenceDraft[]).filter(d => d.status === "pending_sync" || d.status === "failed"));
+    request.onerror = () => reject(request.error ?? new Error("Draf gagal dibaca"));
+  });
+  database.close();
+  return allDrafts;
+}
+
+export async function getAllDrafts(ownerId: string): Promise<OfflineEvidenceDraft[]> {
+  const database = await openDatabase();
+  const allDrafts = await new Promise<OfflineEvidenceDraft[]>((resolve, reject) => {
+    const index = database.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).index("owner_user_id");
+    const request = index.getAll(ownerId);
+    request.onsuccess = () => resolve(
+      (request.result as OfflineEvidenceDraft[]).sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+    );
     request.onerror = () => reject(request.error ?? new Error("Draf gagal dibaca"));
   });
   database.close();

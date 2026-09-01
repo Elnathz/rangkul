@@ -40,6 +40,14 @@ export async function POST(request: Request, context: RouteContext) {
       }, 422);
     }
 
+    // Path bukti harus milik actor dan bertipe foto_bukti, bukan signed URL external.
+    const pathParts = validation.data.foto_bukti_url.split("/");
+    const fileOwnerId = pathParts[0];
+    const fileDocType = pathParts[1];
+    if (fileOwnerId !== user.id || fileDocType !== "foto_bukti") {
+      return createApiError("validation_error", "Berkas bukti tidak berasal dari akun Anda", 422);
+    }
+
     const { data: task, error: submitError } = await supabase.rpc("submit_task_evidence", {
       p_task_id: taskId,
       p_foto_bukti_url: validation.data.foto_bukti_url,
@@ -49,7 +57,7 @@ export async function POST(request: Request, context: RouteContext) {
       p_mood: validation.data.skor_mood,
       p_nafsu_makan: validation.data.skor_nafsu_makan,
       p_kualitas_tidur: validation.data.skor_tidur,
-      p_cerita_hari_ini: validation.data.cerita_hari_ini ?? null,
+      p_cerita_hari_ini: validation.data.cerita_hari_ini,
       p_client_submission_id: validation.data.client_submission_id,
     });
 
