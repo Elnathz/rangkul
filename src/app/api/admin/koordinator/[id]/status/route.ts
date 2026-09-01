@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { koordinatorActionSchema } from '@/lib/validations/koordinator';
+import { koordinatorStatusSchema } from '@/lib/validations/koordinator';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { writeAuditLog } from '@/lib/audit';
 import {
@@ -9,14 +9,14 @@ import {
 
 function reviewErrorResponse(error: unknown) {
   if (error instanceof KoordinatorReviewError) {
-    const message = error.status === 500 ? 'Gagal menyetujui koordinator' : error.message;
+    const message = error.status === 500 ? 'Gagal memperbarui status koordinator' : error.message;
     return createApiError(error.code, message, error.status);
   }
   return null;
 }
 
-// PUT /api/admin/koordinator/[id]/approve — alias ke canonical review status
-export async function PUT(
+// PATCH /api/admin/koordinator/[id]/status — canonical Admin review Koordinator
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -35,35 +35,46 @@ export async function PUT(
       .single();
 
     if (!userProfile || userProfile.role !== 'admin') {
-      return createApiError('forbidden', 'Hanya admin yang dapat menyetujui koordinator', 403);
+      return createApiError('forbidden', 'Hanya admin yang dapat mereview koordinator', 403);
     }
 
     const { id: koordinatorId } = await params;
 
     const body = await request.json().catch(() => ({}));
-    const validation = koordinatorActionSchema.safeParse(body);
+    const validation = koordinatorStatusSchema.safeParse(body);
+
     if (!validation.success) {
-      return apiResponse({
-        error: 'validation_error',
-        message: 'Data tidak valid',
-        fieldErrors: validation.error.flatten().fieldErrors,
-      }, 422);
+      return apiResponse(
+        {
+          error: 'validation_error',
+          message: 'Data input tidak valid',
+          fieldErrors: validation.error.flatten().fieldErrors,
+        },
+        422
+      );
     }
 
-    await reviewKoordinatorStatus(supabase, koordinatorId, user.id, {
-      status: 'verified',
-      catatan: validation.data.catatan,
-    });
+    const { status, alasan, catatan } = validation.data;
+
+    await reviewKoordinatorStatus(supabase, koordinatorId, user.id, { status, alasan, catatan });
 
     await writeAuditLog({
       actor_id: user.id,
-      action: 'koordinator_approved',
+      action: status === 'verified' ? 'koordinator_approved' : 'koordinator_rejected',
       entity_type: 'koordinator_profiles',
       entity_id: koordinatorId,
-      metadata: { catatan: validation.data.catatan ?? null } as import('@/types/database').Json,
+      metadata: {
+        status,
+        alasan: alasan ?? null,
+        catatan: catatan ?? null,
+      } as import('@/types/database').Json,
     });
 
-    return apiResponse({ message: 'Koordinator berhasil disetujui.' }, 200);
+    return apiResponse({
+      message: status === 'verified'
+        ? 'Koordinator berhasil disetujui.'
+        : 'Koordinator berhasil ditolak. Dapat mengajukan ulang.',
+    }, 200);
   } catch (error: unknown) {
     return reviewErrorResponse(error) ?? createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
