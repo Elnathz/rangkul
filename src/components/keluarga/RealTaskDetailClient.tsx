@@ -14,6 +14,7 @@ import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { ImagePreviewModal } from "@/components/ui/ImagePreviewModal";
 import { RegionAddress } from "@/components/ui/RegionAddress";
 import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
+import QuickMatchStatus from "@/components/keluarga/booking/QuickMatchStatus";
 import type { TaskStatus } from "@/lib/constants/task-status";
 
 type ExtraServiceStatus = "menunggu_persetujuan_keluarga" | "disetujui" | "ditolak";
@@ -32,6 +33,8 @@ export type RealTaskDetail = {
   harga_dasar: number;
   harga_final: number;
   catatan: string | null;
+  mode_penugasan?: string | null;
+  expires_at?: string | null;
   lansia: {
     nama: string;
     alamat: string;
@@ -206,6 +209,17 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
               <p className="mt-1 text-2xl font-black text-[#0D47A1]">Rp {Number(task.harga_final).toLocaleString("id-ID")}</p>
             </div>
           </header>
+
+          {task.mode_penugasan === "cepat" && (
+            <div className="p-6 pb-0 sm:p-8 sm:pb-0">
+              <QuickMatchStatus
+                status={task.status}
+                expiresAt={task.expires_at || null}
+                helperInfo={task.helper ? { full_name: helperName || "Helper" } : null}
+                onRefresh={() => router.refresh()}
+              />
+            </div>
+          )}
 
           <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-6">

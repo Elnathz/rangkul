@@ -113,7 +113,7 @@ export default function TambahLansiaPage() {
           setLoading(false);
           return;
         }
-        fotoUrl = uploadData.data?.url || uploadData.url;
+        fotoUrl = uploadData.data?.path || uploadData.path;
       }
 
       const identitasFile = identitasInputRef.current?.files?.[0];
@@ -128,7 +128,7 @@ export default function TambahLansiaPage() {
           setLoading(false);
           return;
         }
-        identitasUrl = uploadData.data?.url || uploadData.url;
+        identitasUrl = uploadData.data?.path || uploadData.path;
       }
 
       const hubunganFile = hubunganInputRef.current?.files?.[0];
@@ -143,7 +143,7 @@ export default function TambahLansiaPage() {
           setLoading(false);
           return;
         }
-        hubunganUrl = uploadData.data?.url || uploadData.url;
+        hubunganUrl = uploadData.data?.path || uploadData.path;
       }
 
       const payload = {

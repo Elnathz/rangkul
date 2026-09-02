@@ -134,7 +134,16 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
   
   const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
   const helperUserId = helperProfile?.user_id ?? null;
-  if (task.keluarga_id !== user.id && helperUserId !== user.id) throw new Error("Anda tidak berhak melihat pesan ini");
+  
+  if (task.keluarga_id !== user.id && helperUserId !== user.id) {
+    const { data: koordinator } = await supabase
+      .from("koordinator_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    if (!koordinator) throw new Error("Anda tidak berhak melihat pesan ini");
+  }
 
   const { data, error } = await supabase
     .from("messages")

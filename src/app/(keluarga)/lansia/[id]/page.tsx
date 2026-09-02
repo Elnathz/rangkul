@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, ActivityIcon, UserRound, Calendar, MapPin, UserCheck, Stethoscope } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, UserRound, Calendar, MapPin, Stethoscope, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import type { Database } from "@/types/database";
 
@@ -136,16 +136,23 @@ export default function LansiaProfilPage() {
           <Link href="/beranda" className="inline-flex items-center text-white/80 hover:text-white mb-6 text-sm font-semibold transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
           </Link>
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">Profil Lansia</h1>
               <p className="text-blue-100 mt-1.5 opacity-90">Data kesehatan dan detail dari lansia kesayangan Anda.</p>
             </div>
-            <Link href={`/lansia/${id}/edit`}>
-              <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#0D47A1] rounded-xl shadow-lg backdrop-blur-md transition-all font-bold">
-                <Edit className="w-4 h-4 mr-2" /> Edit Profil
-              </Button>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href={`/lansia/${id}/riwayat`}>
+                <Button className="bg-[#0D47A1] text-white hover:bg-blue-800 rounded-xl shadow-lg font-bold border border-white/20">
+                  <HeartPulse className="w-4 h-4 mr-2" /> Riwayat Rangkul
+                </Button>
+              </Link>
+              <Link href={`/lansia/${id}/edit`}>
+                <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#0D47A1] rounded-xl shadow-lg backdrop-blur-md transition-all font-bold">
+                  <Edit className="w-4 h-4 mr-2" /> Edit Profil
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -184,6 +191,25 @@ export default function LansiaProfilPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Riwayat Rangkul Access Banner */}
+        <div className="bg-gradient-to-r from-blue-900 to-[#0D47A1] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs font-bold border border-blue-400/30">
+              <HeartPulse className="w-4 h-4 text-rose-400" />
+              <span>Health Snapshot & Memory Capsule</span>
+            </div>
+            <h3 className="text-xl font-extrabold text-white">Riwayat Pendampingan {lansia.nama}</h3>
+            <p className="text-sm text-blue-100/90 leading-relaxed max-w-xl">
+              Pantau laporan perkembangan kesehatan, mood, energi, serta foto kegiatan harian dari Helper yang mendampingi.
+            </p>
+          </div>
+          <Link href={`/lansia/${id}/riwayat`} className="shrink-0 w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-white text-[#0D47A1] hover:bg-blue-50 font-black rounded-xl px-6 py-4 shadow-md transition-all">
+              Buka Riwayat →
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

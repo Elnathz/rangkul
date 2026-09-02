@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useOfflineEvidence } from "@/hooks/use-offline-evidence";
 import type { OfflineEvidenceDraft } from "@/lib/offline/evidence-store";
+import { createClient } from "@/lib/supabase/client";
 
 type TaskSummary = {
   id: string;
@@ -78,7 +79,16 @@ export default function LaporanHelperPage() {
     if (!reportResponse.ok) throw new Error(reportPayload.message || "Laporan belum dapat disimpan");
   }, [taskId]);
 
-  const { draft, isOnline, isLoading: isDraftLoading, syncError, save: saveDraft, sync } = useOfflineEvidence(taskId, syncDraft);
+  const [userId, setUserId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  const { draft, isOnline, isLoading: isDraftLoading, syncError, save: saveDraft, sync } = useOfflineEvidence(taskId, userId, syncDraft);
 
   React.useEffect(() => {
     let active = true;
@@ -97,15 +107,14 @@ export default function LaporanHelperPage() {
 
   React.useEffect(() => {
     if (!draft || isDraftLoading) return;
-    // Hydration ini membaca snapshot eksternal yang sudah selesai dimuat dari IndexedDB.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       catatan_kondisi: draft.catatan_kondisi,
-      skor_energi: draft.skor_energi,
-      skor_mobilitas: draft.skor_mobilitas,
-      skor_mood: draft.skor_mood,
-      skor_nafsu_makan: draft.skor_nafsu_makan,
-      skor_tidur: draft.skor_tidur,
+      skor_energi: draft.skor_energi ?? 3,
+      skor_mobilitas: draft.skor_mobilitas ?? 3,
+      skor_mood: draft.skor_mood ?? 3,
+      skor_nafsu_makan: draft.skor_nafsu_makan ?? 3,
+      skor_tidur: draft.skor_tidur ?? 3,
       cerita_hari_ini: draft.cerita_hari_ini,
     });
     setPhoto(new File([draft.photo], "bukti-kunjungan.jpg", { type: draft.photo.type || "image/jpeg" }));
@@ -140,13 +149,15 @@ export default function LaporanHelperPage() {
 
     const draftPayload = (): OfflineEvidenceDraft => ({
       id: draft?.id ?? crypto.randomUUID(),
+      owner_user_id: userId,
       task_id: taskId,
       client_submission_id: draft?.client_submission_id ?? crypto.randomUUID(),
       photo,
       ...form,
       status: "pending_sync",
       retry_count: draft?.retry_count ?? 0,
-      error_message: null,
+      last_error: null,
+      created_at: draft?.created_at ?? new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
 

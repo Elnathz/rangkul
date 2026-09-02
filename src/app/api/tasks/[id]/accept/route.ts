@@ -75,7 +75,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { data: taskRow, error: taskError } = await taskWriter
       .from("tasks")
       .select(`
-        id, status, helper_id, expires_at,
+        id, status, helper_id, expires_at, mode_penugasan,
         lansia_profiles ( lat, lng ),
         service_categories ( is_high_risk )
       `)
@@ -90,7 +90,31 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("not_found", "Tugas tidak ditemukan atau sudah tidak tersedia", 404);
     }
 
-    const task = taskRow as unknown as TaskRelations;
+    const task = taskRow as unknown as TaskRelations & { mode_penugasan?: string };
+
+    // Mode Cepat handling via RPC
+    if (task.mode_penugasan === "cepat") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc("accept_quick_task", {
+        p_task_id: taskId,
+        p_helper_user_id: user.id,
+      });
+
+      if (rpcErr) {
+        return createApiError("server_error", rpcErr.message, 500);
+      }
+
+      const res = (rpcResult || {}) as { success: boolean; code?: string; message: string };
+      if (!res.success) {
+        const httpStatus = res.code === "race_condition_lost" || res.code === "task_already_assigned" || res.code === "task_expired" ? 409 : 403;
+        return createApiError(res.code || "forbidden", res.message, httpStatus);
+      }
+
+      return apiResponse({
+        message: res.message,
+        task: { id: taskId, status: "dikonfirmasi", helper_id: helper.id },
+      }, 200);
+    }
 
     if (
       !canHelperAcceptTask(task.status, task.helper_id, helper.id) ||

@@ -1,4 +1,5 @@
-﻿import Navbar from "@/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
+import HelperLayoutClient from "./HelperLayoutClient";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="pt-16 min-h-screen bg-[#F5F8FC]">
         {children}
       </main>
+      <HelperLayoutClient />
     </>
   );
 }
