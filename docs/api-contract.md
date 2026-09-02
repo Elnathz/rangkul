@@ -4,7 +4,7 @@ Dokumen ini menjadi kontrak integrasi antara halaman Rangkul, Route Handler Next
 
 ## Format respons
 
-Respons sukses mengembalikan data domain langsung atau objek dengan `message`, `task`, dan `status`. Respons gagal selalu memakai:
+Respons sukses selalu memakai envelope `{ "data": ... }`. Respons gagal selalu memakai:
 
 ```json
 {
@@ -55,7 +55,7 @@ Hanya Helper pemilik task yang dapat mengirim laporan ketika status task `dikerj
 
 ```json
 {
-  "foto_bukti_url": "signed-storage-url",
+  "foto_bukti_url": "actor-id/foto_bukti/object-name.jpg",
   "catatan_kondisi": "Catatan kondisi minimal sepuluh karakter",
   "skor_energi": 1,
   "skor_mobilitas": 1,
@@ -67,7 +67,7 @@ Hanya Helper pemilik task yang dapat mengirim laporan ketika status task `dikerj
 }
 ```
 
-Server menyimpan `task_evidence` dan `health_snapshots` dalam satu fungsi database, lalu mengubah task menjadi `selesai`. `client_submission_id` membuat retry aman dan mencegah laporan ganda. Foto bukti harus berasal dari upload privat dan tidak boleh berupa URL publik permanen.
+Server menyimpan `task_evidence` dan `health_snapshots` dalam satu fungsi database, lalu mengubah task menjadi `selesai`. `client_submission_id` membuat retry aman dan mencegah laporan ganda. `foto_bukti_url` adalah object path dari upload privat, bukan signed URL. Route memetakan field `skor_*` ke kolom deployed `energi`, `mobilitas`, `mood`, `nafsu_makan`, dan `kualitas_tidur`.
 
 ### `PATCH /api/tasks/:id/confirm-completion`
 
@@ -101,7 +101,7 @@ Keputusan memakai conditional RPC dan mengembalikan `409` bila pengajuan sudah d
 
 ### `POST /api/storage/upload`
 
-Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencakup `foto_bukti`, `foto_lansia`, `foto_helper`, `foto_koordinator`, `ktp`, `identitas_lansia`, `hubungan_keluarga`, dan `dokumen_koordinator`. Bucket tetap privat, sehingga URL yang dikembalikan bersifat signed dan memiliki masa berlaku.
+Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencakup `foto_bukti`, `foto_lansia`, `foto_helper`, `foto_koordinator`, `ktp`, `identitas_lansia`, `hubungan_keluarga`, dan `dokumen_koordinator`. Server menentukan bucket dan object path final. Response `201` mengembalikan `data.path`, `data.bucket`, `data.content_type`, dan metadata aman. Signed URL opsional hanya untuk preview sesi aktif dan tidak boleh disimpan sebagai referensi permanen.
 
 ## Katalog, kategori, dan Riwayat Rangkul
 
@@ -126,7 +126,7 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 
 - `POST /api/reports` menerima `{ "task_id": "uuid", "alasan": "..." }`. Server menurunkan Helper dari task milik Keluarga.
 - `GET /api/reports` mengembalikan laporan sesuai scope Keluarga, Koordinator wilayah, atau Admin.
-- `PATCH /api/reports/:id` menerima `{ "status": "ditindak" | "selesai" }` dari Koordinator/Admin.
+- `PATCH /api/reports/:id` menerima status, keputusan Helper opsional, dan alasan wajib dari Koordinator/Admin sesuai kontrak review Sprint 4.
 - `GET /api/messages/conversations`, `GET /api/messages/:task_id`, dan `POST /api/messages` hanya bekerja untuk peserta task.
 - `PATCH /api/messages/:id/read` hanya dapat dipanggil penerima pesan.
 - `POST /api/emergency` menerima `{ "task_id": "uuid" }` dari Helper yang sedang `dikerjakan`.
@@ -135,3 +135,101 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 ## Akses data
 
 Role, relasi task, dan RLS server menjadi sumber otorisasi. Halaman tidak boleh mengambil seluruh data lalu menyaringnya di browser. Respons katalog dan Helper tidak boleh memuat KTP, dokumen hubungan keluarga, Health Snapshot, atau metadata audit.
+
+## Kontrak Sprint 4
+
+Bagian ini mengikat route yang disentuh Sprint 4. Semua error mematuhi format global. JSON atau query malformed menghasilkan `400`, sesi tidak tersedia `401`, role atau scope salah `403`, resource tersembunyi `404`, state/idempotency conflict `409`, validasi field `422`, dan kegagalan internal tersanitasi `500`.
+
+### Riwayat Rangkul
+
+`GET /api/lansia/:id/riwayat` hanya untuk Keluarga pemilik lansia. Server mengambil ownership sebelum timeline. Response `200`:
+
+```json
+{
+  "data": {
+    "lansia": { "id": "uuid", "nama": "Mbah Sari" },
+    "timeline": [
+      {
+        "task_id": "uuid",
+        "selesai_at": "2026-08-29T03:00:00Z",
+        "foto_bukti_url": "short-lived-signed-url",
+        "catatan_kondisi": "Kondisi stabil selama kunjungan.",
+        "cerita_hari_ini": "Bercerita tentang kebun di rumah lama.",
+        "scores": {
+          "energi": 4,
+          "mobilitas": 4,
+          "mood": 5,
+          "nafsu_makan": 4,
+          "kualitas_tidur": 3
+        }
+      }
+    ],
+    "tren": [],
+    "perlu_perhatian": false,
+    "disclaimer": "Riwayat ini membantu keluarga melihat pola kunjungan dan bukan diagnosis medis."
+  }
+}
+```
+
+Task yang belum `selesai`, task milik lansia lain, dan signed URL lama tidak dipakai. Lansia di luar ownership menghasilkan `404`.
+
+### Kategori dan review Koordinator
+
+- `POST /api/categories`, Admin only. Request memuat field allowlist kategori. Server menetapkan actor dan audit. Response `201` memakai `{ data: { category } }`.
+- `PATCH /api/categories/:id`, Admin only. Request memuat field yang berubah. Server mengambil category dan referensi histori. Stale state atau perubahan yang merusak histori menghasilkan `409`.
+- `/api/admin/service-categories` dan `/api/admin/service-categories/:id` adalah alias kompatibilitas menuju service yang sama. Alias update lama boleh menerima `PUT`, tetapi tidak memiliki business rule sendiri.
+- `PATCH /api/admin/koordinator/:id/status`, Admin only. Request `{ "decision": "approve | reject", "reason": "wajib saat reject" }`. Status awal harus `pending_verification`; status akhir `verified` atau `rejected`. Server menetapkan reviewer dan waktu. Request concurrent kedua menghasilkan `409`.
+- Route approve/reject Koordinator lama adalah alias menuju mutation canonical.
+
+### Fallback Helper
+
+`PATCH /api/admin/helpers/:id/assign-fallback`, Admin only, menerima `{ "reason": "alasan assignment" }`. Browser tidak mengirim wilayah authoritative. RPC mengambil wilayah Helper, mengunci row, memeriksa Koordinator RT aktif dan fallback RW yang sah, lalu menetapkan `verified_by_admin_fallback`. Jika Koordinator yang memenuhi tersedia atau status Helper sudah berubah, response `409`.
+
+### Evidence offline
+
+`POST /api/tasks/:id/evidence` memakai request yang didefinisikan pada bagian Task dan laporan. Status IndexedDB tidak dikirim sebagai authority. Status awal task harus `dikerjakan`; status akhir `selesai`. `client_submission_id` wajib berupa UUID dan menjadi idempotency key. Retry key yang sama dengan payload sama mengembalikan `200` serta row pertama. Key yang sama untuk task atau payload berbeda menghasilkan `409`.
+
+### Saldo Demo
+
+`POST /api/payments/:task_id/demo-wallet/charge` hanya untuk Keluarga pemilik task. Request opsional:
+
+```json
+{ "idempotency_key": "uuid" }
+```
+
+Request tidak menerima nominal. Server mengambil `harga_final`, wallet, payment, actor, dan split. Status awal payment harus eligible dan status akhir `held_escrow` dengan `payment_method = saldo_demo`. Debit wallet, ledger, payment, transaction log, dan audit `charge_demo_wallet` berada dalam satu transaksi. Saldo kurang menghasilkan `409` tanpa partial write.
+
+### Komisi Koordinator
+
+`GET /api/koordinator/commissions?from=&to=&page=&limit=` hanya untuk Koordinator `verified`. Server menghitung `payments.koordinator_share` dari payment `released` pada scope wilayah aktor. Response `200`:
+
+```json
+{
+  "data": {
+    "total_released": 15000,
+    "transaction_count": 5,
+    "entries": [],
+    "pagination": { "page": 1, "limit": 20, "total": 5 }
+  }
+}
+```
+
+Rentang tanggal invalid menghasilkan `422`. Empty period tetap `200` dengan array kosong. Database error tidak diubah menjadi nilai nol.
+
+### Review laporan dan banding
+
+`PATCH /api/reports/:id` menerima:
+
+```json
+{
+  "status": "ditindak | selesai",
+  "helper_status": "verified | suspended",
+  "decision_reason": "alasan keputusan"
+}
+```
+
+Koordinator hanya boleh memutus report dalam wilayahnya, sedangkan Admin lintas wilayah. Server mengambil report, Helper, actor, dan state terbaru. Status awal harus `menunggu` atau `ditindak`. Perubahan status Helper mewajibkan `decision_reason`. RPC menulis report, Helper, reviewer, waktu, dan audit `review_report`, `restore_helper`, atau `suspend_helper` secara atomik. Reviewer kedua menerima `409`.
+
+`POST /api/appeals` hanya untuk Keluarga `restricted` dan menerima `{ "alasan": "..." }`. Partial unique index membatasi satu appeal `menunggu` per user. Duplicate concurrent menghasilkan `409`.
+
+`PATCH /api/admin/appeals/:id` hanya untuk Admin dan menerima `{ "status": "disetujui | ditolak", "alasan": "..." }`. Status awal harus `menunggu`. RPC mengunci appeal, mengubah account status sesuai keputusan, menyimpan reviewer dan waktu, lalu menulis audit `resolve_appeal` dalam transaksi yang sama. Reviewer kedua menerima `409`.

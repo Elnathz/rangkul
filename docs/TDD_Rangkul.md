@@ -351,7 +351,7 @@ Diubah dari trigger rating 1 bintang (rawan false-positive — bisa salah pencet
 ### 3.11 Verifikasi Identitas Lansia saat Registrasi
 
 - Saat menambah profil lansia pertama kali, Keluarga wajib mengunggah: (1) foto/scan KTP lansia, dan (2) bukti hubungan keluarga (KK atau surat keterangan dari kelurahan/RT).
-- Tersimpan di `lansia_profiles.dokumen_identitas_lansia_url` dan `dokumen_hubungan_keluarga_url` (bucket private + signed URL).
+- Tersimpan di `lansia_profiles.dokumen_identitas_lansia_url` dan `dokumen_hubungan_keluarga_url` sebagai object path pada bucket private. Signed URL berumur pendek dibuat setelah authorization saat file dibaca dan tidak disimpan kembali ke database.
 - Tidak diverifikasi manual di muka (supaya tidak jadi bottleneck pendaftaran) — tapi wajib diunggah, dan Admin/Koordinator bisa membukanya saat menindaklanjuti laporan/kecurigaan.
 
 ### 3.12 Riwayat Rangkul — Fitur Unggulan (Wow Factor)
@@ -367,7 +367,7 @@ Ini identitas utama Rangkul yang membedakannya dari sekadar "marketplace booking
 
 - Timeline kronologis tiap kunjungan (foto + cerita + skor).
 - Grafik tren per indikator dari waktu ke waktu (mis. "Mobilitas turun 15% selama 3 minggu terakhir").
-- **Badge peringatan otomatis** (rule-based, bukan AI): jika rata-rata skor turun pada **3 kunjungan berturut-turut**, tampilkan badge "Perlu Perhatian" + saran menaikkan frekuensi kunjungan. Murni aturan `IF` di atas data yang sudah terkumpul — tidak mengklaim diagnosis medis apa pun, hanya menyoroti pola untuk keputusan Keluarga.
+- **Badge peringatan otomatis** (rule-based, bukan AI): hitung rata-rata lima indikator pada tiga kunjungan valid terbaru. Badge "Perlu Perhatian" hanya tampil jika rata-rata kunjungan pertama lebih besar dari kunjungan kedua dan rata-rata kunjungan kedua lebih besar dari kunjungan ketiga. Nilai yang sama, data invalid, atau kurang dari tiga kunjungan menghasilkan `false`. CTA meminta Keluarga memperhatikan perubahan dan berdiskusi dengan pihak yang tepat tanpa diagnosis atau rekomendasi medis.
 
 Fitur komunitas curhat terbuka (ide awal Keluarga saling berbagi cerita) **sengaja tidak dimasukkan** — butuh moderasi konten serius yang tidak realistis dikerjakan & dijaga aman oleh tim 3 orang dalam sisa waktu yang ada, dan produk pemenang biasanya diingat karena satu fitur inti yang sangat kuat, bukan banyak fitur setengah jadi. Resonansi emosionalnya tetap dihadirkan lewat copywriting halaman Riwayat Rangkul, bukan lewat forum terbuka.
 
@@ -378,7 +378,7 @@ Helper bisa berada di lokasi dengan sinyal buruk saat harus submit laporan. Alur
 ```
 Helper isi form laporan (Health Snapshot + cerita + foto)
         ↓
-Disimpan ke IndexedDB, status lokal "Pending Sync" (🟡)
+Disimpan ke IndexedDB, status lokal `pending_sync`
         ↓
    [Jika offline]
         ↓
@@ -387,10 +387,10 @@ Tetap bisa diedit, tambah foto, submit lokal — tidak hilang
    [Saat koneksi kembali]
         ↓
 Event listener `online` memicu proses sinkronisasi otomatis:
-upload foto → upload data → update database → status "Submitted" (🟢)
+upload foto → upload data → update database → status lokal `submitted`
 ```
 
-**Catatan implementasi:** memakai IndexedDB (bukan `localStorage`, kapasitasnya terlalu kecil untuk data terstruktur + foto) dikombinasikan dengan event listener `online`/`offline` browser standar + antrean retry manual — **bukan** Background Sync API native, karena dukungan lintas browser untuk API tersebut tidak seragam. Hasil akhir yang dilihat pengguna (indikator 🟡/🟢, sinkron otomatis saat online) tetap sama, implementasinya lebih portable.
+**Catatan implementasi:** memakai IndexedDB (bukan `localStorage`, kapasitasnya terlalu kecil untuk data terstruktur + foto) dikombinasikan dengan event listener `online`/`offline` browser standar + antrean retry manual. Background Sync API native tidak dipakai karena dukungan lintas browser tidak seragam. Status `draft`, `pending_sync`, `syncing`, `failed`, dan `submitted` hanya state lokal. Server baru membuat `task_evidence` setelah upload berhasil dan selalu menyimpan row final sebagai laporan terkirim.
 
 ### 3.14 Status Keputusan Bisnis
 
@@ -784,21 +784,21 @@ flowchart TD
 | ------------------------- | ---------------------- | ----------------------------------------- |
 | id                        | uuid, PK               |                                           |
 | task_id                   | uuid, FK tasks, unique |                                           |
-| foto_url, catatan_kondisi | text                   |                                           |
-| sync_status               | enum                   | `pending_sync` / `submitted` (§3.13) |
+| foto_bukti_url, catatan_kondisi | text              | `foto_bukti_url` menyimpan object path private, bukan signed URL |
+| client_submission_id      | text, unique            | Kunci idempotensi submit ulang dari draft lokal |
 
 ### `health_snapshots`
 
 Inti dari fitur Riwayat Rangkul (§3.12).
 
-| Kolom                                                                | Tipe                     | Keterangan                               |
-| -------------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
-| id                                                                   | uuid, PK                 |                                          |
-| task_id                                                              | uuid, FK tasks, unique   |                                          |
-| lansia_id                                                            | uuid, FK lansia_profiles | Denormalisasi untuk query timeline cepat |
-| skor_energi, skor_mobilitas, skor_mood, skor_nafsu_makan, skor_tidur | int (1-5)                |                                          |
-| cerita_hari_ini                                                      | text                     | Memory Capsule                           |
-| created_at                                                           | timestamptz              |                                          |
+| Kolom                                                | Tipe                     | Keterangan                               |
+| ---------------------------------------------------- | ------------------------ | ---------------------------------------- |
+| id                                                   | uuid, PK                 |                                          |
+| task_id                                              | uuid, FK tasks, unique   |                                          |
+| lansia_id                                            | uuid, FK lansia_profiles | Denormalisasi untuk query timeline cepat |
+| energi, mobilitas, mood, nafsu_makan, kualitas_tidur | int (1-5)                | Nama kolom deployed yang canonical       |
+| cerita_hari_ini                                      | text                     | Memory Capsule                           |
+| created_at                                           | timestamptz              |                                          |
 
 ### `ratings`
 
@@ -814,11 +814,11 @@ Inti dari fitur Riwayat Rangkul (§3.12).
 | --------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | id                                            | uuid, PK               |                                                                                                        |
 | task_id                                       | uuid, FK tasks, unique |                                                                                                        |
-| payment_method                                | enum                   | `midtrans` / `dummy_saldo`                                                                         |
+| payment_method                                | enum                   | `midtrans` / `saldo_demo`                                                                           |
 | jumlah_total                                  | numeric                | =`harga_final`                                                                                       |
 | helper_share, platform_fee, koordinator_share | numeric                | 90/7/3 normal, 50/0/0 jika kompensasi pembatalan (§3.8)                                               |
 | status                                        | enum                   | `pending` / `held_escrow` / `released` / `refunded` / `disputed` / `dibatalkan_kompensasi` |
-| gateway_ref                                   | text                   | Kosong jika`payment_method = dummy_saldo`                                                            |
+| gateway_ref                                   | text                   | Kosong jika`payment_method = saldo_demo`                                                             |
 | released_at                                   | timestamptz, nullable  |                                                                                                        |
 
 ### `transaction_logs`
@@ -871,6 +871,7 @@ Inti dari fitur Riwayat Rangkul (§3.12).
 | alasan                          | text                     |                                           |
 | status                          | enum                     | `menunggu` / `ditindak` / `selesai` |
 | ditindak_oleh                   | uuid, FK users, nullable | Koordinator atau Admin                    |
+| decision_reason                 | text, nullable           | Alasan keputusan manual saat laporan ditindak atau diselesaikan |
 
 > **Trigger otomatis:** setiap insert baru ke `reports` untuk `reported_helper_id` yang sama, hitung total laporan aktif. Jika mencapai 2 → update `helper_profiles.status = 'under_review'` (§3.10). Implementasi via Postgres trigger function, bukan logika aplikasi, supaya konsisten meski ada request bersamaan.
 
@@ -883,6 +884,7 @@ Inti dari fitur Riwayat Rangkul (§3.12).
 | alasan                     | text                        |                                            |
 | status                     | enum                        | `menunggu` / `disetujui` / `ditolak` |
 | direview_oleh, direview_at | uuid, timestamptz, nullable | Admin                                      |
+| review_reason              | text, nullable              | Alasan keputusan Admin                     |
 | created_at                 | timestamptz                 |                                            |
 
 ### `audit_logs`
@@ -1773,6 +1775,41 @@ Bagian ini mengikat keputusan Sprint 3 ketika ada referensi historis yang masih 
 - Message Sprint 3 wajib memiliki `task_id`. Akses baca, kirim, dan read receipt hanya untuk Keluarga atau Helper yang menjadi peserta task. Relasi Helper selalu diselesaikan melalui `helper_profiles.user_id`.
 - SOS hanya mengirim notifikasi in-app ke Keluarga dan Koordinator wilayah yang sah, menyediakan `tel:112` pada UI, dan tidak mengklaim SMS aktif. Alert aktif dideduplikasi per task dan acknowledge bersifat conditional.
 - Acceptance evidence Sprint 3 mencakup migration reset, seed idempoten, test kontrak, integration test RLS, smoke test Midtrans Sandbox jika credential tersedia, dan quality gate lokal maupun CI.
+
+## Amendment Mengikat Sprint 4 Farros, 30 Agustus 2026
+
+Bagian ini mengikat kontrak aktif Sprint 4 ketika bagian historis sebelumnya memakai nama schema atau endpoint yang berbeda. Catatan Sprint 3 tetap dipertahankan sebagai histori provider.
+
+### Nama schema dan aturan canonical
+
+- `payments.payment_method` memakai `saldo_demo` sebagai nilai canonical untuk fallback demo. `dummy_saldo` hanya istilah historis dan tidak boleh dipakai pada migration, route, payload, atau UI baru.
+- `task_evidence.foto_bukti_url` menyimpan object path private. Signed URL berumur pendek hanya dibuat setelah authorization read dan tidak pernah disimpan kembali ke row.
+- Kolom deployed Health Snapshot adalah `energi`, `mobilitas`, `mood`, `nafsu_makan`, dan `kualitas_tidur`. Payload browser tetap memakai label form `skor_energi`, `skor_mobilitas`, `skor_mood`, `skor_nafsu_makan`, dan `skor_tidur`, lalu route memetakan nilai tersebut satu kali ke kolom database.
+- Status `draft`, `pending_sync`, `syncing`, `failed`, dan `submitted` adalah state lokal IndexedDB. Server tidak membuat row `pending_sync`; row evidence baru dibuat setelah upload berhasil melalui transaksi submit idempoten.
+- Laporan formal pertama terhadap Helper `terpercaya` mereset `tugas_selesai_berturut` ke 0 dan menurunkan `tingkat_kepercayaan` ke `probation` dalam transaksi insert report. Laporan formal kedua yang masih aktif mengubah status Helper menjadi `under_review`. Rating rendah tidak menjalankan kedua aturan tersebut.
+- Setiap task yang pertama kali bertransisi ke `selesai` menaikkan counter tepat sekali. Update ulang pada task selesai tidak menambah counter. Counter kelima menaikkan tier ke `terpercaya` hanya ketika status Helper masih `verified`.
+
+### Kontrak API dan audit
+
+Semua response sukses memakai `{ data }`. Semua response gagal memakai `{ error, message, fieldErrors? }`. Status error canonical pada endpoint Sprint 4 adalah 400 untuk JSON atau query malformed, 401 untuk sesi tidak ada, 403 untuk role atau scope salah, 404 untuk resource yang tidak boleh diekspos, 409 untuk state atau idempotency conflict, dan 500 untuk kegagalan server yang sudah disanitasi.
+
+Setiap mutation harus mendokumentasikan actor, data server-authoritative, status awal, status akhir, dan idempotency key atau alasan bahwa mutation tidak membutuhkan key. Nominal, role, ownership, status, reviewer, dan object path final tidak dipercaya dari browser.
+
+| Endpoint | Actor dan data server | State guard dan idempotensi |
+| --- | --- | --- |
+| `GET /api/lansia/:id/riwayat` | Keluarga pemilik lansia. Server mengambil ownership, task selesai, evidence, snapshot, dan signed evidence URL. | Read only. Lansia di luar ownership menghasilkan `404` tanpa membocorkan keberadaan row. |
+| `POST /api/storage/upload` dan read file per resource | User terautentikasi mengirim file dan `docType`. Server menentukan bucket, owner prefix, path final, serta memvalidasi size, MIME, extension, dan magic byte. | Upload mengembalikan object path. Reader menerima resource ID, bukan bucket atau arbitrary path. |
+| `POST /api/tasks/:id/evidence` | Helper pemilik task. Server mengambil task, actor, dan status; request membawa lima skor, cerita, catatan, object path, serta `client_submission_id`. | `dikerjakan` ke `selesai`. `client_submission_id` yang sama dan payload sama mengembalikan hasil pertama; reuse untuk task atau payload berbeda menghasilkan `409`. |
+| `POST /api/categories` dan `PATCH /api/categories/:id` | Admin. Server mengambil actor, category existing, referensi task, serta field allowlist. | Create atau update category aktif. Alias `/api/admin/service-categories` memakai service yang sama. Mutation stale atau delete yang merusak histori menghasilkan `409`. |
+| `PATCH /api/admin/koordinator/:id/status` | Admin. Server mengambil profile, status, reviewer, dan waktu. | Hanya `pending_verification` ke `verified` atau `rejected`. Alias approve/reject memanggil primitive yang sama. Request concurrent kedua menghasilkan `409`. |
+| `PATCH /api/admin/helpers/:id/assign-fallback` | Admin. Server menghitung Koordinator RT aktif dan fallback RW yang sesuai wilayah. | Assignment hanya dari kondisi tanpa Koordinator yang memenuhi. RPC mengunci scope dan menolak request stale dengan `409`. |
+| `POST /api/payments/:task_id/demo-wallet/charge` | Keluarga pemilik task. Server mengambil task, `harga_final`, wallet, payment, split, dan actor. Request tidak membawa nominal. | Payment eligible ke `held_escrow` dengan method `saldo_demo`. Idempotency key sama tidak mendebit dua kali; payment sudah ditahan menghasilkan hasil pertama atau `409` sesuai key. |
+| `GET /api/koordinator/commissions` | Koordinator `verified`. Server mengambil payment `released`, `koordinator_share`, assignment, wilayah, dan pagination. | Read only dan region scoped. Payment non-released tidak dihitung. |
+| `PATCH /api/reports/:id` | Koordinator wilayah atau Admin. Server mengambil report, Helper, reviewer, scope wilayah, dan status terbaru. | `menunggu` atau `ditindak` menuju keputusan yang diizinkan. Perubahan Helper mewajibkan alasan. RPC menulis keputusan dan audit atomik; reviewer kedua mendapat `409`. |
+| `POST /api/appeals` | Keluarga `restricted`. Server mengambil actor dan pending appeal existing. | Maksimal satu appeal `menunggu` per user melalui partial unique index. Duplicate concurrent menghasilkan `409`. |
+| `PATCH /api/admin/appeals/:id` | Admin. Server mengambil appeal, account, reviewer, dan status terbaru. | Hanya `menunggu` ke `disetujui` atau `ditolak`, dengan alasan wajib dan audit atomik. Reviewer kedua mendapat `409`. |
+
+Audit action canonical adalah `review_report`, `restore_helper`, `suspend_helper`, `resolve_appeal`, `approve_koordinator`, `reject_koordinator`, `assign_admin_fallback`, `topup_demo_wallet`, dan `charge_demo_wallet`. Audit yang diwajibkan business rule harus berada dalam transaksi database yang sama dengan mutation, bukan ditulis sebagai request kedua dari route.
 
 ### 19.7 Cara Menjalankan
 
