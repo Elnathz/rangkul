@@ -48,6 +48,15 @@ test("daftar kunjungan keluarga membaca task nyata dan detail menampilkan hasil 
   assert.match(confirmRoute, /status: "released"/);
 });
 
+test("detail kunjungan menandatangani foto private setelah ownership dan membaca status payment", () => {
+  assert.match(familyDetailPage, /\.eq\("keluarga_id", user\.id\)/);
+  assert.match(familyDetailPage, /resolvePrivatePhotoUrl/);
+  assert.match(familyDetailPage, /createSignedUrl/);
+  assert.match(familyDetailPage, /payments \( status, payment_method, held_at, released_at \)/);
+  assert.match(familyDetail, /task\.payment\?\.status === "released"/);
+  assert.match(familyDetail, /Dana kunjungan sudah dicairkan/);
+});
+
 test("migration demo mengarahkan Helper ke akun masburgas", () => {
   const demoMigration = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
   assert.match(demoMigration, /LOWER\(u\.username\) = 'masburgas'/);

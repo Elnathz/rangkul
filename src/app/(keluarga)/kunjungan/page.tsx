@@ -6,8 +6,9 @@ import { RegionAddress } from "@/components/ui/RegionAddress";
 import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import type { TaskStatus } from "@/lib/constants/task-status";
+import { resolvePrivatePhotoUrl } from "@/lib/storage/private-object";
 
 type Relation<T> = T | T[] | null;
 type TaskRow = {
@@ -34,13 +35,27 @@ export default async function KunjunganPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data, error } = await supabase
+  const taskReader = await createAdminClient();
+  const { data, error } = await taskReader
     .from("tasks")
     .select("id, status, jadwal_waktu, harga_dasar, harga_final, lansia_profiles!inner ( nama, alamat, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi, foto_url ), service_categories!inner ( nama, estimasi_durasi_menit ), helper_profiles ( foto_wajah_url, users ( full_name ) )")
     .eq("keluarga_id", user.id)
     .order("jadwal_waktu", { ascending: false });
 
-  const tasks = (error ? [] : (data ?? [])) as unknown as TaskRow[];
+  const rawTasks = (error ? [] : (data ?? [])) as unknown as TaskRow[];
+  const tasks = await Promise.all(rawTasks.map(async (task) => {
+    const helper = relation(task.helper_profiles);
+    if (!helper) return task;
+    const photoUrl = await resolvePrivatePhotoUrl(helper.foto_wajah_url, async (path, expiresIn) => {
+      const { data: signed } = await taskReader.storage.from("dokumen").createSignedUrl(path, expiresIn);
+      return signed?.signedUrl ?? null;
+    });
+    const signedHelper = { ...helper, foto_wajah_url: photoUrl };
+    return {
+      ...task,
+      helper_profiles: Array.isArray(task.helper_profiles) ? [signedHelper] : signedHelper,
+    };
+  }));
   const upcoming = tasks.filter((task) => ["diajukan", "menunggu_persetujuan_koordinator", "dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga"].includes(task.status));
   const history = tasks.filter((task) => ["selesai", "dibatalkan"].includes(task.status));
 
