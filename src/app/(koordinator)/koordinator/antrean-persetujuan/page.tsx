@@ -7,7 +7,6 @@ import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 
 import { ApprovalTaskCard, type ApprovalQueueTask } from "@/components/koordinator/ApprovalTaskCard";
 import KoordinatorStatusGuard from "@/components/koordinator/KoordinatorStatusGuard";
-import { createClient } from "@/lib/supabase/client";
 
 type KoordinatorProfile = {
   id: string;
@@ -20,64 +19,34 @@ export default function AntreanPersetujuanPage() {
   const [processingId, setProcessingId] = React.useState<string | null>(null);
   const [koordinator, setKoordinator] = React.useState<KoordinatorProfile | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [loadFailed, setLoadFailed] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
 
   const loadQueue = React.useCallback(async () => {
-    const supabase = createClient();
     setError(null);
+    setLoadFailed(false);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Sesi Anda sudah berakhir. Silakan login kembali.");
+    try {
+      const response = await fetch("/api/koordinator/task-approvals", { cache: "no-store" });
+      const payload = await response.json().catch(() => null) as {
+        data?: { koordinator?: KoordinatorProfile; tasks?: ApprovalQueueTask[] };
+        message?: string;
+      } | null;
+      if (!response.ok) {
+        setLoadFailed(true);
+        setError(response.status === 401 ? "Sesi Anda sudah berakhir. Silakan login kembali." : payload?.message || "Antrean tugas belum dapat dimuat.");
+        return;
+      }
+
+      setKoordinator(payload?.data?.koordinator ?? null);
+      setTasks(payload?.data?.tasks ?? []);
+    } catch {
+      setLoadFailed(true);
+      setError("Koneksi bermasalah. Antrean tugas belum dapat dimuat.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data: profile, error: profileError } = await supabase
-      .from("koordinator_profiles")
-      .select("id, wilayah, status")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      setError("Status Koordinator belum dapat dimuat.");
-      setLoading(false);
-      return;
-    }
-
-    setKoordinator(profile);
-
-    if (!profile || profile.status !== "verified") {
-      setTasks([]);
-      setLoading(false);
-      return;
-    }
-
-    const { data: taskRows, error: taskError } = await supabase
-      .from("tasks")
-      .select(`
-        id,
-        status,
-        helper_id,
-        jadwal_waktu,
-        harga_final,
-        catatan,
-        lansia_profiles!inner ( nama, alamat, catatan_kondisi, foto_url ),
-        service_categories!inner ( nama, tingkat, is_high_risk ),
-        helper_profiles!inner ( tingkat_kepercayaan, total_tugas_selesai, rating_avg, wilayah_domisili, bio, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
-      `)
-      .eq("status", "menunggu_persetujuan_koordinator")
-      .order("jadwal_waktu", { ascending: true });
-
-    if (taskError) {
-      setError("Antrean tugas belum dapat dimuat. Periksa migration RLS Koordinator.");
-      setLoading(false);
-      return;
-    }
-
-    setTasks((taskRows || []) as unknown as ApprovalQueueTask[]);
-    setLoading(false);
   }, []);
 
   React.useEffect(() => {
@@ -113,6 +82,23 @@ export default function AntreanPersetujuanPage() {
 
   if (loading) {
     return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm font-semibold text-slate-500"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Memuat antrean tugas...</div>;
+  }
+
+  if (loadFailed) {
+    return (
+      <main className="min-h-[60vh] bg-[#F5F8FC] px-4 py-10 sm:px-6">
+        <div role="alert" className="mx-auto flex max-w-xl flex-col items-center rounded-3xl border border-red-200 bg-white p-6 text-center shadow-sm sm:p-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-700">
+            <AlertCircle className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <h1 className="mt-4 text-xl font-bold text-slate-950">Antrean persetujuan belum dapat dibuka</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{error}</p>
+          <button type="button" onClick={() => { setLoading(true); void loadQueue(); }} className="mt-6 min-h-11 rounded-xl bg-[#0D47A1] px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2">
+            Coba lagi
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (
