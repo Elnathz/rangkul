@@ -14,7 +14,6 @@ export default async function KoordinatorLaporanPage() {
     redirect("/login");
   }
 
-  // 1. Verifikasi status koordinator
   const { data: koordinator } = await supabase
     .from("koordinator_profiles")
     .select("id, status")
@@ -38,7 +37,6 @@ export default async function KoordinatorLaporanPage() {
   let mappedReports: any[] = [];
 
   if (helperIds.length > 0) {
-    // 3. Ambil laporan untuk helper-helper tersebut beserta relasinya
     const { data: reports } = await supabase
       .from("reports")
       .select(`
@@ -50,24 +48,27 @@ export default async function KoordinatorLaporanPage() {
         reported_helper_id,
         reporter_id,
         ditindak_oleh,
+        decision_reason,
         helper:users!reports_reported_helper_id_fkey(
           full_name,
-          email,
-          phone
+          helper_profiles(status)
         ),
         reporter:users!reports_reporter_id_fkey(
-          full_name,
-          email
-        )
+          full_name
+        ),
+        reviewer:users!reports_ditindak_oleh_fkey(full_name)
       `)
       .in("reported_helper_id", helperIds)
       .order("created_at", { ascending: false });
 
-    // Restructure for the client component
+    const counts = new Map<string, number>();
+    for (const report of reports || []) counts.set(report.reported_helper_id, (counts.get(report.reported_helper_id) ?? 0) + 1);
     mappedReports = (reports || []).map(r => ({
       ...r,
       helper: r.helper ? { user: Array.isArray(r.helper) ? r.helper[0] : r.helper } : null,
-      reporter: Array.isArray(r.reporter) ? r.reporter[0] : r.reporter
+      reporter: Array.isArray(r.reporter) ? r.reporter[0] : r.reporter,
+      reviewer: Array.isArray(r.reviewer) ? r.reviewer[0] : r.reviewer,
+      report_count: counts.get(r.reported_helper_id) ?? 1,
     }));
   }
 

@@ -13,8 +13,8 @@ export async function POST(request: Request) {
   const { data: helper } = await supabase.from("helper_profiles").select("user_id").eq("id", relatedTask.helper_id).maybeSingle();
   if (!helper) return createApiError("not_found", "Helper tidak ditemukan", 404);
   const { data: report, error } = await supabase.from("reports").insert({ reported_helper_id: helper.user_id, reporter_id: user.id, alasan: validation.data.alasan }).select().single();
-  if (error) return createApiError("server_error", error.message, 500);
-  return apiResponse({ report, message: "Laporan diterima dan akan ditinjau" }, 201);
+  if (error) return createApiError("server_error", "Laporan belum dapat dikirim", 500);
+  return apiResponse({ data: { report }, message: "Laporan diterima dan akan ditinjau" }, 201);
 }
 
 export async function GET() {
@@ -30,6 +30,6 @@ export async function GET() {
     query = query.in("reported_helper_id", (helpers || []).map((helper) => helper.user_id));
   } else if (profile?.role !== "admin") return createApiError("forbidden", "Role ini tidak dapat melihat laporan", 403);
   const { data: reports, error } = await query;
-  if (error) return createApiError("server_error", error.message, 500);
-  return apiResponse({ reports: reports || [] });
+  if (error) return createApiError("server_error", "Laporan belum dapat dimuat", 500);
+  return apiResponse({ data: { reports: reports || [] } });
 }

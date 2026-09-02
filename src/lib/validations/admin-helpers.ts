@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 export const adminHelperUpdateSchema = z.object({
-  status: z.enum(["pending_verification", "verified", "under_review", "rejected", "suspended"]).optional(),
-  suspend_reason: z.string().trim().min(5).max(500).nullable().optional(),
-  assign_fallback: z.boolean().optional(),
-});
+  bio: z.string().trim().max(1000).nullable().optional(),
+}).strict().refine((data) => Object.values(data).some((v) => v !== undefined), { message: "Tidak ada perubahan yang dikirim" });
+
+export const adminHelperDecisionSchema = z.object({
+  decision: z.enum(["suspend", "restore"]),
+  reason: z.string().trim().min(10).max(500),
+}).strict();
+
+export const adminFallbackSchema = z.object({
+  reason: z.string().trim().min(10).max(500),
+}).strict();

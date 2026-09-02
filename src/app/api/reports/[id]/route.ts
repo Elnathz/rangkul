@@ -16,12 +16,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { data: report, error } = await supabase.rpc("review_report", {
     p_report_id: id,
     p_status: validation.data.status,
-    p_helper_status: validation.data.helper_status ?? null,
-    p_decision_reason: validation.data.decision_reason ?? null,
+    p_helper_status: validation.data.helper_status,
+    p_decision_reason: validation.data.decision_reason,
   });
   if (error) {
-    const status = error.code === "P0002" ? 404 : error.code === "42501" ? 403 : error.code === "22023" ? 422 : 500;
-    return createApiError(status === 404 ? "not_found" : status === 403 ? "forbidden" : status === 422 ? "validation_error" : "server_error", error.message, status);
+    const status = error.code === "P0002" ? 404 : error.code === "P0001" ? 409 : error.code === "42501" ? 403 : error.code === "22023" ? 422 : 500;
+    const code = status === 404 ? "not_found" : status === 409 ? "conflict" : status === 403 ? "forbidden" : status === 422 ? "validation_error" : "server_error";
+    const message = status === 409 ? "Laporan sudah diputus reviewer lain atau masih memiliki laporan aktif" : status === 403 ? "Anda tidak memiliki scope untuk laporan ini" : status === 404 ? "Laporan tidak ditemukan" : status === 422 ? "Keputusan laporan tidak valid" : "Keputusan laporan belum dapat disimpan";
+    return createApiError(code, message, status);
   }
-  return apiResponse({ report });
+  return apiResponse({ data: { report } });
 }
