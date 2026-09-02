@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const queuePage = fs.readFileSync(new URL("../src/app/(koordinator)/koordinator/antrean-persetujuan/page.tsx", import.meta.url), "utf8");
+const queueApi = fs.readFileSync(new URL("../src/app/api/koordinator/task-approvals/route.ts", import.meta.url), "utf8");
 const approvalCard = fs.readFileSync(new URL("../src/components/koordinator/ApprovalTaskCard.tsx", import.meta.url), "utf8");
 const approvalRoute = fs.readFileSync(new URL("../src/app/api/tasks/[id]/koordinator-approve/route.ts", import.meta.url), "utf8");
 const visibilityMigration = fs.readFileSync(new URL("../supabase/migrations/20260801121120_initial_schema.sql", import.meta.url), "utf8");
@@ -11,10 +12,11 @@ const demoDataMigration = fs.readFileSync(new URL("../supabase/seed.sql", import
 
 test("antrean Koordinator membaca task waiting dari database", () => {
   assert.doesNotMatch(queuePage, /MOCK_TASKS/);
-  assert.match(queuePage, /\.from\(["']tasks["']\)/);
-  assert.match(queuePage, /menunggu_persetujuan_koordinator/);
-  assert.match(queuePage, /foto_wajah_url/);
-  assert.match(queuePage, /foto_wajah_url/);
+  assert.match(queuePage, /fetch\(["']\/api\/koordinator\/task-approvals["']/);
+  assert.match(queueApi, /\.from\(["']tasks["']\)/);
+  assert.match(queueApi, /menunggu_persetujuan_koordinator/);
+  assert.match(queueApi, /foto_wajah_url/);
+  assert.match(queueApi, /resolvePrivatePhotoUrl/);
   assert.match(approvalCard, /Profil Helper/);
   assert.match(approvalCard, /Profil lansia/);
   assert.match(approvalCard, /ImagePreviewModal/);
