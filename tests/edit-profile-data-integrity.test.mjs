@@ -35,8 +35,8 @@ test("edit lansia memakai endpoint kepemilikan dan mempertahankan koordinat koso
 });
 
 test("suspend Helper mencabut verifikasi fallback Admin", () => {
-  const source = read("src/app/api/admin/helpers/[id]/route.ts");
+  const sql = read("supabase/migrations/20260828140000_trust_safety_decisions.sql");
   const suspendSource = read("src/app/api/admin/helpers/[id]/suspend/route.ts");
-  assert.match(source, /verified_by_admin_fallback\s*=\s*false/);
-  assert.match(suspendSource, /verified_by_admin_fallback: false/);
+  assert.match(sql, /verified_by_admin_fallback\s*=\s*CASE WHEN p_status = 'suspended' THEN FALSE/);
+  assert.match(suspendSource, /admin_decide_helper_status/);
 });

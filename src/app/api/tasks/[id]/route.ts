@@ -1,5 +1,6 @@
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { resolvePrivatePhotoUrl } from "@/lib/storage/private-object";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -48,7 +49,21 @@ export async function GET(request: Request, context: RouteContext) {
     if (taskError) return createApiError("server_error", taskError.message, 500);
     if (!task) return createApiError("not_found", "Tugas tidak ditemukan", 404);
 
-    return apiResponse({ task });
+    const admin = await createAdminClient();
+    const lansiaProfiles = Array.isArray(task.lansia_profiles) ? task.lansia_profiles[0] : task.lansia_profiles;
+    const signedLansiaFoto = await resolvePrivatePhotoUrl(lansiaProfiles?.foto_url ?? null, async (path, exp) => {
+      const { data, error } = await admin.storage.from("dokumen").createSignedUrl(path, exp);
+      return error ? null : data.signedUrl;
+    });
+
+    const transformedTask = {
+      ...task,
+      lansia_profiles: lansiaProfiles
+        ? { ...lansiaProfiles, foto_url: signedLansiaFoto }
+        : lansiaProfiles,
+    };
+
+    return apiResponse({ task: transformedTask });
   } catch (error: unknown) {
     return createApiError(
       "server_error",

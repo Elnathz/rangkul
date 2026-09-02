@@ -10,7 +10,10 @@ import { RegionAddress } from "@/components/ui/RegionAddress";
 import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
 import { createClient } from "@/lib/supabase/server";
 import { canHelperAcceptTask } from "@/lib/helper/task-acceptance";
+import { projectHelperTaskPrivacy } from "@/lib/helper/task-privacy";
 import type { TaskBoardStatus } from "@/lib/helper/task-board";
+import { createAdminClient } from "@/lib/supabase/server";
+import { resolvePrivatePhotoUrl } from "@/lib/storage/private-object";
 
 type PageProps = { params: Promise<{ id: string }> };
 type Relation<T> = T | T[] | null;
@@ -33,6 +36,9 @@ type RawTask = {
   lansia_profiles: Relation<{
     nama: string;
     alamat: string;
+    kelurahan: string | null;
+    kecamatan: string | null;
+    kabupaten_kota: string | null;
     lat: number | null;
     lng: number | null;
     foto_url: string | null;
@@ -79,7 +85,8 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
 
   if (!helper) redirect("/helper/verifikasi");
 
-  const { data: task, error } = await supabase
+  const taskReader = await createAdminClient();
+  const { data: task, error } = await taskReader
     .from("tasks")
     .select(`
       id,
@@ -90,7 +97,7 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
       harga_final,
       catatan,
       task_extra_services ( id, nama_layanan, biaya, status ),
-      lansia_profiles!inner ( nama, alamat, lat, lng, foto_url, catatan_kondisi ),
+      lansia_profiles!inner ( nama, alamat, kelurahan, kecamatan, kabupaten_kota, lat, lng, foto_url, catatan_kondisi ),
       service_categories!inner ( nama, deskripsi, tingkat, estimasi_durasi_menit, is_high_risk )
     `)
     .eq("id", id)
@@ -104,11 +111,16 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
   if (!lansia || !category) notFound();
   const extraServices = rawTask.task_extra_services ?? [];
   const helperShare = Math.round(Number(rawTask.harga_final) * 0.9);
+  const privacy = projectHelperTaskPrivacy({ helper_id: rawTask.helper_id, catatan: rawTask.catatan, lansia }, helper.id);
+  const lansiaPhotoUrl = await resolvePrivatePhotoUrl(privacy.lansia_foto_url, async (path, expiresIn) => {
+    const { data } = await taskReader.storage.from("dokumen").createSignedUrl(path, expiresIn);
+    return data?.signedUrl ?? null;
+  });
 
   const canAccept = canHelperAcceptTask(rawTask.status, rawTask.helper_id, helper.id);
   const canStart = rawTask.status === "dikonfirmasi" && rawTask.helper_id === helper.id;
-  const mapUrl = Number.isFinite(Number(lansia.lat)) && Number.isFinite(Number(lansia.lng))
-    ? `https://www.google.com/maps/search/?api=1&query=${lansia.lat},${lansia.lng}`
+  const mapUrl = Number.isFinite(Number(privacy.lat)) && Number.isFinite(Number(privacy.lng))
+    ? `https://www.google.com/maps/search/?api=1&query=${privacy.lat},${privacy.lng}`
     : null;
 
   return (
@@ -160,7 +172,7 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm"><MapPinned className="h-5 w-5" aria-hidden="true" /></div>
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lokasi tujuan</p>
-                      <p className="mt-1 text-sm font-bold text-slate-900">{lansia.nama}</p>
+                      <p className="mt-1 text-sm font-bold text-slate-900">{privacy.lansia_nama}</p>
                       {mapUrl ? <a href={mapUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline">Buka Maps <ExternalLink className="h-3 w-3" aria-hidden="true" /></a> : <p className="mt-1 text-xs text-slate-500">Koordinat belum tersedia</p>}
                     </div>
                   </div>
@@ -171,14 +183,14 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Profil lansia</p>
-                    <h2 className="mt-1 text-xl font-black text-slate-950">{lansia.nama}</h2>
+                    <h2 className="mt-1 text-xl font-black text-slate-950">{privacy.lansia_nama}</h2>
                   </div>
                   <ShieldCheck className="h-6 w-6 text-emerald-600" aria-hidden="true" />
                 </div>
-                <LansiaPhotoPreview src={lansia.foto_url} name={lansia.nama} />
+                <LansiaPhotoPreview src={lansiaPhotoUrl} name={privacy.lansia_nama} />
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-amber-800">Catatan kondisi</p>
-                  <p className="mt-1 text-sm leading-relaxed text-amber-950">{lansia.catatan_kondisi || "Tidak ada catatan kondisi khusus."}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-amber-950">{privacy.catatan_kondisi || "Detail kondisi tersedia setelah tugas diterima."}</p>
                 </div>
               </div>
 
@@ -187,7 +199,7 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
                   <MapPinned className="h-5 w-5 text-[#0D47A1]" aria-hidden="true" />
                   <h2 className="text-base font-bold text-slate-950">Alamat lengkap lansia</h2>
                 </div>
-                <RegionAddress value={lansia.alamat} />
+                <RegionAddress value={privacy.lansia_alamat} />
               </div>
 
               <ExtraServiceRequestForm taskId={rawTask.id} status={rawTask.status} services={extraServices} />
@@ -197,12 +209,12 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
             <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Catatan dari keluarga</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{rawTask.catatan || "Tidak ada catatan tambahan dari keluarga."}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{privacy.catatan_tugas || "Detail catatan tersedia setelah tugas diterima."}</p>
               </div>
               {canAccept ? (
                 <AcceptTaskButton taskId={rawTask.id} />
               ) : canStart ? (
-                <StartTaskButton taskId={rawTask.id} />
+                <StartTaskButton taskId={rawTask.id} jadwalWaktu={rawTask.jadwal_waktu} />
               ) : rawTask.status === "dikerjakan" ? (
                 <div className="space-y-3 rounded-2xl border border-purple-100 bg-purple-50 p-5 text-center">
                   <p className="text-sm font-bold text-purple-950">Tugas sedang dikerjakan.</p>

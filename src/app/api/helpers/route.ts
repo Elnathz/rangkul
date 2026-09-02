@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
+import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
 
 // GET /api/helpers — Katalog helper verified dengan filter radius dan kategori
 // Query params: lat (float), lng (float), radius_km (float, default 10), category_id (uuid)
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
     const radiusParam = searchParams.get('radius_km') ?? '10';
     const categoryId = searchParams.get('category_id');
     const tingkat = searchParams.get('tingkat');
+    const jadwalWaktu = searchParams.get('jadwal_waktu');
 
     const lat = latParam ? parseFloat(latParam) : null;
     const lng = lngParam ? parseFloat(lngParam) : null;
@@ -79,6 +81,10 @@ export async function GET(request: Request) {
     if (lat !== null && lng !== null) filtered = filtered.filter((h) => h.jarak_km !== null && h.jarak_km <= Math.min(radiusKm, Number(h.radius_layanan_km)));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (tingkat) filtered = filtered.filter((h) => (h.helper_service_categories as any[])?.some((c: any) => c.service_categories?.tingkat === tingkat));
+
+    if (jadwalWaktu) {
+      filtered = filtered.filter((helper) => !isUrgentProbationBooking(helper.tingkat_kepercayaan, jadwalWaktu));
+    }
 
     filtered = filtered.map((helper) => ({
       ...helper,

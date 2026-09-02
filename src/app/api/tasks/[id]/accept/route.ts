@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
 import {
   canHelperAcceptTask,
@@ -71,7 +71,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("not_found", "Profil Helper tidak ditemukan", 404);
     }
 
-    const { data: taskRow, error: taskError } = await supabase
+    const taskWriter = await createAdminClient();
+    const { data: taskRow, error: taskError } = await taskWriter
       .from("tasks")
       .select(`
         id, status, helper_id, expires_at, mode_penugasan,
@@ -82,7 +83,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (taskError) {
-      return createApiError("server_error", taskError.message, 500);
+      return createApiError("server_error", "Tugas belum dapat diperiksa", 500);
     }
 
     if (!taskRow) {
@@ -151,7 +152,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("forbidden", "Helper belum memenuhi syarat menerima tugas", 403);
     }
 
-    let acceptQuery = supabase
+    let acceptQuery = taskWriter
       .from("tasks")
       .update({
         helper_id: helper.id,
@@ -169,7 +170,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (acceptError) {
-      return createApiError("server_error", acceptError.message, 500);
+      return createApiError("server_error", "Tugas belum dapat diterima", 500);
     }
 
     if (!acceptedTask) {
@@ -182,11 +183,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         : "Tugas berhasil diterima",
       task: acceptedTask,
     }, 200);
-  } catch (error: unknown) {
-    return createApiError(
-      "server_error",
-      error instanceof Error ? error.message : "Terjadi kesalahan server",
-      500,
-    );
+  } catch {
+    return createApiError("server_error", "Tugas belum dapat diterima", 500);
   }
 }

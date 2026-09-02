@@ -64,7 +64,7 @@ export default function LaporanHelperPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        foto_bukti_url: uploadPayload.data?.path || uploadPayload.path,
+        foto_bukti_url: uploadPayload.path || uploadPayload.url,
         catatan_kondisi: draft.catatan_kondisi,
         skor_energi: draft.skor_energi,
         skor_mobilitas: draft.skor_mobilitas,
@@ -125,7 +125,25 @@ export default function LaporanHelperPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!photo) {
-      setFeedback({ title: "Foto bukti belum dipilih", description: "Tambahkan foto kunjungan sebelum mengirim laporan.", tone: "info" });
+      setFeedback({ title: "Foto bukti belum dipilih", description: "Tambahkan foto kunjungan sebelum mengirim laporan.", tone: "danger" });
+      return;
+    }
+
+    if (form.catatan_kondisi.trim().length < 10) {
+      setFeedback({
+        title: "Catatan kondisi belum lengkap",
+        description: `Catatan kondisi lansia wajib diisi minimal 10 karakter (saat ini: ${form.catatan_kondisi.trim().length} karakter).`,
+        tone: "danger",
+      });
+      return;
+    }
+
+    if (form.cerita_hari_ini.trim().length < 10) {
+      setFeedback({
+        title: "Memory Capsule belum lengkap",
+        description: `Cerita Hari Ini (Memory Capsule) wajib diisi minimal 10 karakter untuk dibagikan ke keluarga (saat ini: ${form.cerita_hari_ini.trim().length} karakter).`,
+        tone: "danger",
+      });
       return;
     }
 
@@ -205,8 +223,13 @@ export default function LaporanHelperPage() {
                   <input id="foto-bukti" type="file" accept="image/jpeg,image/png" className="sr-only" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} required />
                 </label>
                 <div className="space-y-2">
-                  <Label htmlFor="catatan-kondisi">Catatan kondisi lansia</Label>
-                  <Textarea id="catatan-kondisi" value={form.catatan_kondisi} onChange={(event) => setForm((current) => ({ ...current, catatan_kondisi: event.target.value }))} placeholder="Jelaskan kondisi, aktivitas, dan hal penting selama kunjungan." minLength={10} required rows={5} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="catatan-kondisi">Catatan kondisi lansia <span className="text-red-500">*</span></Label>
+                    <span className={`text-xs font-semibold ${form.catatan_kondisi.trim().length >= 10 ? "text-emerald-600" : "text-amber-600"}`}>
+                      {form.catatan_kondisi.trim().length}/2000 karakter (min. 10)
+                    </span>
+                  </div>
+                  <Textarea id="catatan-kondisi" value={form.catatan_kondisi} onChange={(event) => setForm((current) => ({ ...current, catatan_kondisi: event.target.value }))} placeholder="Jelaskan kondisi fisik, keaktifan, dan hal penting selama kunjungan (minimal 10 karakter)." minLength={10} required rows={5} />
                 </div>
               </CardContent>
             </Card>
@@ -230,8 +253,15 @@ export default function LaporanHelperPage() {
                   </fieldset>
                 ))}
                 <div className="space-y-2 pt-2">
-                  <Label htmlFor="cerita-hari-ini" className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#0D47A1]" />Memory Capsule</Label>
-                  <Textarea id="cerita-hari-ini" value={form.cerita_hari_ini} onChange={(event) => setForm((current) => ({ ...current, cerita_hari_ini: event.target.value }))} placeholder="Tuliskan momen atau cerita yang ingin dibaca keluarga." rows={4} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="cerita-hari-ini" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-[#0D47A1]" />Memory Capsule (Cerita Hari Ini) <span className="text-red-500">*</span>
+                    </Label>
+                    <span className={`text-xs font-semibold ${form.cerita_hari_ini.trim().length >= 10 ? "text-emerald-600" : "text-amber-600"}`}>
+                      {form.cerita_hari_ini.trim().length}/2000 karakter (min. 10)
+                    </span>
+                  </div>
+                  <Textarea id="cerita-hari-ini" value={form.cerita_hari_ini} onChange={(event) => setForm((current) => ({ ...current, cerita_hari_ini: event.target.value }))} placeholder="Tuliskan momen manis, percakapan, atau cerita berharga hari ini untuk dibaca keluarga (minimal 10 karakter)." minLength={10} required rows={4} />
                 </div>
               </CardContent>
               <CardFooter className="border-t border-slate-100 bg-slate-50 p-6">

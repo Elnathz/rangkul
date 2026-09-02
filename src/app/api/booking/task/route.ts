@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createTaskSchema } from '@/lib/validations/booking';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
+import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
 
 export async function POST(request: Request) {
   try {
@@ -87,6 +88,10 @@ export async function POST(request: Request) {
       
       if (helperData.status !== 'verified') {
          return createApiError('forbidden', 'Helper belum diverifikasi atau sedang di-suspend', 403);
+      }
+
+      if (isUrgentProbationBooking(helperData.tingkat_kepercayaan, jadwal_waktu)) {
+        return createApiError('probation_helper_urgent_booking', 'Helper probation tidak dapat menerima pesanan mendesak (kurang dari 3 jam)', 422);
       }
 
       if (helperData.tingkat_kepercayaan === 'probation' && category.is_high_risk) {

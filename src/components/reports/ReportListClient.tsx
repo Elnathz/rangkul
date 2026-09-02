@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
-import { AlertCircle, CheckCircle2, Clock, ShieldAlert, User, Check, X, Shield, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle, CheckCircle2, Clock, RotateCcw, Shield, ShieldAlert, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 
 type ReportItem = {
   id: string;
@@ -17,178 +14,122 @@ type ReportItem = {
   reported_helper_id: string;
   reporter_id: string;
   ditindak_oleh: string | null;
-  helper?: {
-    user: { full_name: string; phone: string | null; email: string };
-    koordinator?: { user: { full_name: string } } | null;
-  } | null;
-  reporter?: { full_name: string; email: string } | null;
+  decision_reason: string | null;
+  report_count: number;
+  helper?: { user: { full_name: string; helper_profiles?: { status: string } | { status: string }[] | null } } | null;
+  reporter?: { full_name: string } | null;
+  reviewer?: { full_name: string } | null;
 };
 
-export function ReportListClient({ initialReports, isAdmin = false }: { initialReports: ReportItem[], isAdmin?: boolean }) {
-  const [reports, setReports] = useState<ReportItem[]>(initialReports);
-  const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ title: string; description: string; tone: "success" | "danger" } | null>(null);
+type ReviewDraft = {
+  reportId: string;
+  status: "ditindak" | "selesai";
+  helperStatus: "none" | "verified" | "suspended";
+  reason: string;
+};
+
+const statusLabels = {
+  menunggu: "Menunggu peninjauan",
+  ditindak: "Sedang ditindak",
+  selesai: "Selesai",
+};
+
+export function ReportListClient({ initialReports, isAdmin = false }: { initialReports: ReportItem[]; isAdmin?: boolean }) {
+  const [reports, setReports] = useState(initialReports);
+  const [draft, setDraft] = useState<ReviewDraft | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [notice, setNotice] = useState<{ tone: "success" | "danger"; message: string } | null>(null);
   const router = useRouter();
 
-  const handleUpdateStatus = async (reportId: string, newStatus: "ditindak" | "selesai") => {
-    setIsProcessing(reportId);
+  async function submitReview() {
+    if (!draft || draft.reason.trim().length < 10) return;
+    setProcessing(true);
+    setNotice(null);
     try {
-      const response = await fetch(`/api/reports/${reportId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+      const response = await fetch(`/api/reports/${draft.reportId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: draft.status,
+          decision_reason: draft.reason,
+          helper_status: draft.helperStatus === "none" ? undefined : draft.helperStatus,
+        }),
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Gagal mengubah status laporan');
-      }
-      
-      setFeedback({
-        title: "Status Berhasil Diperbarui",
-        description: `Laporan kini berstatus ${newStatus === 'ditindak' ? 'Sedang Ditindaklanjuti' : 'Selesai'}.`,
-        tone: "success"
-      });
-      
-      // Update local state for immediate feedback
-      setReports(current => 
-        current.map(r => r.id === reportId ? { ...r, status: newStatus } : r)
-      );
-      
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.message || "Keputusan laporan belum dapat disimpan.");
+      setReports((current) => current.map((report) => report.id === draft.reportId
+        ? { ...report, status: draft.status, decision_reason: draft.reason, updated_at: new Date().toISOString() }
+        : report));
+      setDraft(null);
+      setNotice({ tone: "success", message: "Keputusan laporan tersimpan dan audit dibuat dalam transaksi yang sama." });
       router.refresh();
     } catch (error: unknown) {
-      setFeedback({
-        title: "Terjadi Kesalahan",
-        description: error instanceof Error ? error.message : "Gagal mengubah status laporan.",
-        tone: "danger"
-      });
+      setNotice({ tone: "danger", message: error instanceof Error ? error.message : "Keputusan laporan belum dapat disimpan." });
     } finally {
-      setIsProcessing(null);
+      setProcessing(false);
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'menunggu':
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full"><Clock className="w-3.5 h-3.5" /> Menunggu Peninjauan</span>;
-      case 'ditindak':
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full"><ShieldAlert className="w-3.5 h-3.5" /> Sedang Ditindak</span>;
-      case 'selesai':
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full"><CheckCircle2 className="w-3.5 h-3.5" /> Selesai</span>;
-      default:
-        return null;
-    }
-  };
+  }
 
   if (reports.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-6">
-        <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
-          <Shield className="w-8 h-8" />
-        </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-1">Tidak ada laporan</h3>
-        <p className="text-slate-500 text-sm max-w-sm">Belum ada laporan pelanggaran dari Keluarga di wilayah Anda.</p>
-      </div>
-    );
+    return <div className="mt-6 rounded-2xl bg-white p-10 text-center"><Shield className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" /><h2 className="mt-3 font-bold text-slate-900">Tidak ada laporan</h2><p className="mt-1 text-sm text-slate-600">Belum ada laporan dalam scope {isAdmin ? "Admin" : "wilayah Anda"}.</p></div>;
   }
 
   return (
-    <div className="space-y-4 mt-6">
-      {reports.map((report) => (
-        <div 
-          key={report.id} 
-          className="p-5 md:p-6 rounded-2xl border border-slate-200 bg-white shadow-sm transition-all relative overflow-hidden"
-        >
-          {report.status === 'menunggu' && (
-            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
-          )}
-          
-          <div className="flex flex-col gap-5">
-            {/* Header: Status & Date */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                {getStatusBadge(report.status)}
-                <span className="text-xs font-medium text-slate-500">
-                  Dilaporkan: {format(new Date(report.created_at), "dd MMM yyyy, HH:mm", { locale: localeId })}
-                </span>
+    <div className="mt-6 space-y-4">
+      {notice && <div role="status" className={`flex items-start justify-between gap-3 rounded-xl p-4 text-sm font-semibold ${notice.tone === "success" ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-900"}`}><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg" aria-label="Tutup pemberitahuan"><X className="h-4 w-4" /></button></div>}
+      {reports.map((report) => {
+        const profileRelation = report.helper?.user.helper_profiles;
+        const profile = Array.isArray(profileRelation) ? profileRelation[0] : profileRelation;
+        return (
+          <article key={report.id} className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6">
+            <header className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={report.status} />
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{report.report_count} laporan tercatat</span>
+                {profile?.status && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold capitalize text-blue-800">Helper {profile.status.replace("_", " ")}</span>}
               </div>
-              <span className="text-xs font-mono text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                ID: {report.id.split('-')[0]}
-              </span>
-            </div>
-            
-            {/* Content: Reason & Users */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-3">
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Alasan Pelaporan</h4>
-                  <p className="text-sm text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-100 leading-relaxed">
-                    &quot;{report.alasan}&quot;
-                  </p>
-                </div>
-              </div>
+              <time dateTime={report.created_at} className="text-xs font-semibold text-slate-500">{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(report.created_at))}</time>
+            </header>
 
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Helper Terlapor</h4>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-red-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{report.helper?.user?.full_name || "Unknown"}</p>
-                      <p className="text-xs text-slate-500">{report.helper?.user?.email}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Pelapor (Keluarga)</h4>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{report.reporter?.full_name || "Unknown"}</p>
-                      <p className="text-xs text-slate-500">{report.reporter?.email}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="min-w-0"><h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Alasan pelaporan</h2><p className="mt-2 break-words rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">{report.alasan}</p></div>
+              <dl className="space-y-3 text-sm">
+                <div><dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Helper terlapor</dt><dd className="mt-1 flex items-center gap-2 font-semibold text-slate-900"><UserRound className="h-4 w-4 text-red-600" aria-hidden="true" />{report.helper?.user.full_name || "Nama tidak tersedia"}</dd></div>
+                <div><dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Pelapor</dt><dd className="mt-1 font-semibold text-slate-900">{report.reporter?.full_name || "Keluarga pelapor"}</dd></div>
+              </dl>
             </div>
 
-            {/* Actions */}
-            {report.status !== 'selesai' && (
-              <div className="flex flex-wrap items-center justify-end gap-3 mt-2 pt-4 border-t border-slate-100">
-                {report.status === 'menunggu' && (
-                  <Button
-                    onClick={() => handleUpdateStatus(report.id, 'ditindak')}
-                    disabled={isProcessing === report.id}
-                    variant="outline"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl"
-                  >
-                    {isProcessing === report.id ? "Memproses..." : "Tandai Sedang Ditindak"}
-                  </Button>
-                )}
-                <Button
-                  onClick={() => handleUpdateStatus(report.id, 'selesai')}
-                  disabled={isProcessing === report.id}
-                  className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
-                >
-                  {isProcessing === report.id ? "Memproses..." : "Selesaikan Kasus"}
-                </Button>
+            {report.decision_reason && <div className="mt-4 rounded-xl bg-blue-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-blue-800">Keputusan reviewer</p><p className="mt-2 text-sm leading-relaxed text-blue-950">{report.decision_reason}</p><p className="mt-2 text-xs font-semibold text-blue-800">Reviewer: {report.reviewer?.full_name || "Koordinator atau Admin"}</p></div>}
+
+            {report.status !== "selesai" && (
+              <div className="mt-5 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                {report.status === "menunggu" && <Button type="button" variant="outline" onClick={() => setDraft({ reportId: report.id, status: "ditindak", helperStatus: "none", reason: "" })} className="min-h-11 rounded-xl border-blue-200 text-blue-800">Mulai tindak lanjut</Button>}
+                <Button type="button" onClick={() => setDraft({ reportId: report.id, status: "selesai", helperStatus: "none", reason: "" })} className="min-h-11 rounded-xl bg-[#0D47A1] text-white">Buat keputusan akhir</Button>
               </div>
             )}
-          </div>
-        </div>
-      ))}
-      <FeedbackDialog
-        open={Boolean(feedback)}
-        onOpenChange={(open) => !open && setFeedback(null)}
-        title={feedback?.title ?? ""}
-        description={feedback?.description ?? ""}
-        tone={feedback?.tone ?? "success"}
-      />
+
+            {draft?.reportId === report.id && (
+              <section className="mt-5 rounded-2xl bg-slate-50 p-4 sm:p-5" aria-labelledby={`review-${report.id}`}>
+                <div className="flex items-start justify-between gap-3"><div><h3 id={`review-${report.id}`} className="font-bold text-slate-950">{draft.status === "ditindak" ? "Mulai tindak lanjut" : "Keputusan akhir laporan"}</h3><p className="mt-1 text-sm text-slate-600">Alasan minimal 10 karakter dan akan dicatat di audit.</p></div><button type="button" onClick={() => setDraft(null)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg" aria-label="Batalkan keputusan"><X className="h-5 w-5" /></button></div>
+                {draft.status === "selesai" && <fieldset className="mt-4"><legend className="text-sm font-bold text-slate-800">Dampak pada Helper</legend><div className="mt-2 grid gap-2 sm:grid-cols-3"><DecisionOption label="Tutup laporan saja" description="Status Helper tidak berubah" value="none" selected={draft.helperStatus} onChange={(value) => setDraft({ ...draft, helperStatus: value })} /><DecisionOption label="Pulihkan Helper" description="Kembali verified dan probation" value="verified" selected={draft.helperStatus} onChange={(value) => setDraft({ ...draft, helperStatus: value })} /><DecisionOption label="Tangguhkan Helper" description="Tidak dapat menerima tugas baru" value="suspended" selected={draft.helperStatus} onChange={(value) => setDraft({ ...draft, helperStatus: value })} /></div></fieldset>}
+                <label className="mt-4 block text-sm font-bold text-slate-800">Alasan keputusan<textarea value={draft.reason} onChange={(event) => setDraft({ ...draft, reason: event.target.value })} minLength={10} maxLength={500} rows={4} className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3 text-base font-normal outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" /></label>
+                {draft.helperStatus === "suspended" && <p className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />Tindakan ini memblokir Helper menerima tugas baru. Tugas aktif tidak dibatalkan otomatis.</p>}
+                <div className="mt-4 flex justify-end"><Button type="button" onClick={() => void submitReview()} disabled={processing || draft.reason.trim().length < 10} className="min-h-11 rounded-xl bg-slate-900 text-white">{processing ? "Menyimpan..." : "Konfirmasi keputusan"}</Button></div>
+              </section>
+            )}
+          </article>
+        );
+      })}
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: ReportItem["status"] }) {
+  const Icon = status === "menunggu" ? Clock : status === "ditindak" ? ShieldAlert : CheckCircle2;
+  const tone = status === "menunggu" ? "bg-amber-50 text-amber-800" : status === "ditindak" ? "bg-blue-50 text-blue-800" : "bg-emerald-50 text-emerald-800";
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${tone}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{statusLabels[status]}</span>;
+}
+
+function DecisionOption({ label, description, value, selected, onChange }: { label: string; description: string; value: ReviewDraft["helperStatus"]; selected: ReviewDraft["helperStatus"]; onChange: (value: ReviewDraft["helperStatus"]) => void }) {
+  return <label className={`flex min-h-20 cursor-pointer gap-3 rounded-xl border p-3 ${selected === value ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white"}`}><input type="radio" name="helper-decision" value={value} checked={selected === value} onChange={() => onChange(value)} className="mt-1 h-4 w-4" /><span><span className="block text-sm font-bold text-slate-900">{label}</span><span className="mt-1 block text-xs leading-relaxed text-slate-600">{description}</span></span></label>;
 }

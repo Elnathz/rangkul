@@ -17,3 +17,17 @@ test("seed command menjalankan seed SQL idempoten tanpa reset database", () => {
   assert.doesNotMatch(seedScript, /db.*reset/);
   assert.match(seedScript, /npx\.cmd/);
 });
+
+test("seed cloud memverifikasi target lalu mengunggah asset private", async () => {
+  const assetScript = await readFile("scripts/seed-assets.mjs", "utf8");
+
+  assert.match(seedScript, /SUPABASE_DEMO_PROJECT_REF/);
+  assert.match(seedScript, /project-ref/);
+  assert.match(seedScript, /seed-assets\.mjs/);
+  assert.match(assetScript, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(assetScript, /NEXT_PUBLIC_SUPABASE_URL/);
+  assert.match(assetScript, /createClient/);
+  assert.match(assetScript, /upsert:\s*true/);
+  assert.doesNotMatch(assetScript, /console\.(log|error)\([^\n]*(SERVICE_ROLE|serviceRoleKey)/);
+  assert.match(packageJson.scripts["seed:cloud"], /scripts\/seed\.mjs --linked/);
+});

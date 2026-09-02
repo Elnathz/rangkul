@@ -17,6 +17,10 @@ type AuditAction =
   | 'koordinator_approved'
   | 'koordinator_rejected'
   | 'resolve_appeal'
+  | 'review_report'
+  | 'restore_helper'
+  | 'suspend_helper'
+  | 'assign_admin_fallback'
   | 'submit_appeal'
   | 'admin_demo_wallet_topup';
 

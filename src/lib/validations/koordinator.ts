@@ -1,13 +1,14 @@
 import { z } from 'zod';
+import { privateStorageReferenceSchema } from '@/lib/validations/storage';
 
 export const koordinatorApplySchema = z.object({
   wilayah: z.string().min(3, 'Nama wilayah minimal 3 karakter'),
   tingkat: z.enum(['rt', 'rw'], {
     error: 'Tingkat harus rt atau rw',
   }),
-  dokumen_url: z.string().url('URL dokumen jabatan tidak valid'),
-  ktp_url: z.string().url('URL KTP tidak valid').optional(),
-  foto_url: z.string().url('URL Foto Wajah tidak valid').optional(),
+  dokumen_url: privateStorageReferenceSchema,
+  ktp_url: privateStorageReferenceSchema.optional().nullable(),
+  foto_url: privateStorageReferenceSchema.optional().nullable(),
   provinsi: z.string().min(1, 'Provinsi wajib diisi'),
   kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),
   kecamatan: z.string().min(1, 'Kecamatan wajib diisi'),
@@ -24,7 +25,7 @@ export const koordinatorActionSchema = z.object({
 
 export const koordinatorRejectSchema = z.object({
   alasan: z.string().min(5, 'Alasan penolakan wajib diisi minimal 5 karakter'),
-  foto_url: z.string().url('URL Foto tidak valid').optional(),
+  foto_url: privateStorageReferenceSchema.optional().nullable(),
 });
 
 export type KoordinatorRejectInput = z.infer<typeof koordinatorRejectSchema>;

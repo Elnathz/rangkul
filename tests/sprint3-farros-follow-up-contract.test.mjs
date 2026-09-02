@@ -6,6 +6,7 @@ const read = (relativePath) => fs.readFileSync(relativePath, "utf8");
 const paymentIntegrity = read("supabase/migrations/20260827180002_sprint3_payment_integrity.sql");
 const paymentLifecycle = read("supabase/migrations/20260827180003_sprint3_payment_lifecycle.sql");
 const reportReview = read("supabase/migrations/20260827180004_sprint3_report_review.sql");
+const trustSafetyDecisions = read("supabase/migrations/20260828140000_trust_safety_decisions.sql");
 const safety = read("supabase/migrations/20260827180005_sprint3_safety_notifications.sql");
 const seed = read("supabase/seed.sql");
 const paymentPage = read("src/app/(keluarga)/pembayaran/[task_id]/page.tsx");
@@ -35,6 +36,10 @@ test("review laporan dan acceptance Helper under_review punya enforcement databa
   assert.match(reportReview, /decision_reason/);
   assert.match(reportReview, /prevent_under_review_acceptance/);
   assert.match(reportReview, /Task participants can read messages/);
+  assert.match(trustSafetyDecisions, /v_report\.status NOT IN \('menunggu', 'ditindak'\)/);
+  assert.match(trustSafetyDecisions, /'review_report'/);
+  assert.match(trustSafetyDecisions, /'restore_helper'/);
+  assert.match(trustSafetyDecisions, /'suspend_helper'/);
 });
 
 test("SOS dan notifikasi punya deduplikasi serta scope recipient", () => {

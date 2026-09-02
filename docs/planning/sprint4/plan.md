@@ -39,21 +39,21 @@
 - **Belum ada:** acceptance penting belum diimplementasikan.
 - **Gagal gate:** implementasi yang ada melanggar quality gate keamanan, privasi, atau reproducibility.
 
-| Area | Status | Yang sudah ada | Gap dan dampak nyata |
-| --- | --- | --- | --- |
-| Riwayat Rangkul | Parsial | `GET /api/lansia/:id/riwayat`, timeline, lima tren, fungsi strict decline, badge, dan halaman Keluarga sudah ada. | Foto memakai URL yang tersimpan langsung, grafik tidak memberi tanggal/periode yang cukup jelas, error tidak punya retry, dan authorization belum dibuktikan dengan runtime RLS test. Klaim dapat dipahami juri dalam 30 detik belum punya evidence. |
-| Storage private | Gagal gate | Upload memeriksa sesi, tipe file, ukuran, dan magic bytes. Bucket bersifat private. | Route mengembalikan signed URL 1 jam lalu UI menyimpannya permanen ke kolom `_url`. Bukti kunjungan dan dokumen verifikasi akan rusak setelah URL kedaluwarsa. Belum ada endpoint read/re-sign yang memeriksa hak reviewer. |
-| Offline evidence | Parsial | IndexedDB, `client_submission_id`, status draft, listener `online`, dan RPC submit evidence idempoten sudah ada. | Draft tidak terikat user, tidak autosave, status sukses langsung dihapus, sink failure ditelan hook lalu UI redirect seolah sukses, listener hanya hidup di halaman lapor, dan skor default 3 dapat terkirim tanpa pilihan sadar. |
-| Trust tier otomatis | Belum ada | Kolom `tingkat_kepercayaan`, counter, status `under_review`, dan blok accept di database sudah ada. | Tidak ada trigger/RPC yang menaikkan Helper menjadi `terpercaya` setelah lima tugas bersih. Laporan formal juga belum mereset counter sesuai TDD. |
-| Review laporan dan suspend | Parsial | `review_report` memakai lock, scope wilayah, reason, audit, dan trigger dua laporan. | UI review tidak mengirim `helper_status` atau `decision_reason`. Admin masih dapat memulihkan status melalui generic PATCH tanpa keputusan beralasan. Beberapa audit ditulis setelah mutation dan error audit ditelan. |
-| Banding | Parsial | Form banding, daftar Admin, dan `admin_review_appeal` tersedia. | Pembuatan banding melakukan read lalu insert tanpa partial unique constraint untuk satu banding pending, sehingga request bersamaan dapat menggandakan data. |
-| Admin inti | Parsial | User, kategori, statistik, antrean Koordinator, Helper, laporan, fallback, banding, demo wallet, dan audit log memiliki halaman/route. | Kontrak kategori memakai `/api/admin/service-categories` dan `PUT`, bukan endpoint canonical TDD. Approve/reject Koordinator belum conditional update. Fallback tidak membuktikan ketiadaan Koordinator aktif. Statistik melakukan query serial dan GMV tidak berasal dari released payment. |
-| Saldo Demo | Parsial | Wallet, ledger top-up, RPC dengan row lock, halaman top-up, dan RLS Admin tersedia. | Belum ada jalur Keluarga membayar task memakai Saldo Demo. Top-up dan audit belum atomik, tidak ada history ledger yang memadai, dan quality gate demo tanpa Midtrans belum terpenuhi. |
-| Operasi Koordinator | Parsial | Laporan dan darurat tersedia. Darurat memakai Realtime refresh dan acknowledge. | `/koordinator/komisi` masih placeholder. Endpoint komisi belum ada. Error query berisiko tampil seperti empty state. Pengawasan RW juga placeholder dan hanya boleh dikerjakan setelah P0 stabil. |
-| RLS dan privasi | Gagal gate | Tabel domain utama sudah mengaktifkan RLS dan memiliki banyak policy berbasis role/ownership. | Policy awal `Authenticated users can read all users` masih memakai `USING (true)`. Satu-satunya runtime RLS integration test di-skip. Reviewer formal belum memiliki jalur authorized read untuk evidence/snapshot. Test regex SQL tidak membuktikan isolasi data. |
-| Seeder demo | Gagal gate | Akun multi-role, kategori, task, snapshot menurun, reports, wallet, dan fixture dasar tersedia. | Jumlah fixture tidak memenuhi §19, dokumen empat Keluarga kosong, foto evidence memakai `demo.invalid`, status task approval belum lengkap, appeal tidak koheren, saldo rerun tidak selalu deterministik, dan seed dapat memilih lalu mengubah Admin yang sudah ada. |
-| CI dan scheduled job | Parsial | Workflow CI menjalankan `npm ci`, lint, typecheck, test, dan build untuk push `main`/`develop` serta PR ke `main`. | PR menuju `develop` tidak menjadi event CI. Heartbeat berjalan tiap lima menit, bukan Senin/Kamis sesuai §2.3. Jadwal ini boros dan tidak sesuai tujuan mencegah auto-pause. |
-| Kualitas test | Parsial | Suite saat audit memiliki 134 test, 133 lulus, 1 skip. | Mayoritas test memeriksa source/SQL dengan regex. Runtime RLS justru test yang di-skip. Green suite saat ini tidak cukup untuk menyatakan Sprint 4 selesai. |
+| Area                       | Status     | Yang sudah ada                                                                                                                         | Gap dan dampak nyata                                                                                                                                                                                                                                                                            |
+| -------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Riwayat Rangkul            | Parsial    | `GET /api/lansia/:id/riwayat`, timeline, lima tren, fungsi strict decline, badge, dan halaman Keluarga sudah ada.                    | Foto memakai URL yang tersimpan langsung, grafik tidak memberi tanggal/periode yang cukup jelas, error tidak punya retry, dan authorization belum dibuktikan dengan runtime RLS test. Klaim dapat dipahami juri dalam 30 detik belum punya evidence.                                            |
+| Storage private            | Gagal gate | Upload memeriksa sesi, tipe file, ukuran, dan magic bytes. Bucket bersifat private.                                                    | Route mengembalikan signed URL 1 jam lalu UI menyimpannya permanen ke kolom`_url`. Bukti kunjungan dan dokumen verifikasi akan rusak setelah URL kedaluwarsa. Belum ada endpoint read/re-sign yang memeriksa hak reviewer.                                                                    |
+| Offline evidence           | Parsial    | IndexedDB,`client_submission_id`, status draft, listener `online`, dan RPC submit evidence idempoten sudah ada.                    | Draft tidak terikat user, tidak autosave, status sukses langsung dihapus, sink failure ditelan hook lalu UI redirect seolah sukses, listener hanya hidup di halaman lapor, dan skor default 3 dapat terkirim tanpa pilihan sadar.                                                               |
+| Trust tier otomatis        | Belum ada  | Kolom`tingkat_kepercayaan`, counter, status `under_review`, dan blok accept di database sudah ada.                                 | Tidak ada trigger/RPC yang menaikkan Helper menjadi`terpercaya` setelah lima tugas bersih. Laporan formal juga belum mereset counter sesuai TDD.                                                                                                                                              |
+| Review laporan dan suspend | Parsial    | `review_report` memakai lock, scope wilayah, reason, audit, dan trigger dua laporan.                                                 | UI review tidak mengirim`helper_status` atau `decision_reason`. Admin masih dapat memulihkan status melalui generic PATCH tanpa keputusan beralasan. Beberapa audit ditulis setelah mutation dan error audit ditelan.                                                                       |
+| Banding                    | Parsial    | Form banding, daftar Admin, dan`admin_review_appeal` tersedia.                                                                       | Pembuatan banding melakukan read lalu insert tanpa partial unique constraint untuk satu banding pending, sehingga request bersamaan dapat menggandakan data.                                                                                                                                    |
+| Admin inti                 | Parsial    | User, kategori, statistik, antrean Koordinator, Helper, laporan, fallback, banding, demo wallet, dan audit log memiliki halaman/route. | Kontrak kategori memakai`/api/admin/service-categories` dan `PUT`, bukan endpoint canonical TDD. Approve/reject Koordinator belum conditional update. Fallback tidak membuktikan ketiadaan Koordinator aktif. Statistik melakukan query serial dan GMV tidak berasal dari released payment. |
+| Saldo Demo                 | Parsial    | Wallet, ledger top-up, RPC dengan row lock, halaman top-up, dan RLS Admin tersedia.                                                    | Belum ada jalur Keluarga membayar task memakai Saldo Demo. Top-up dan audit belum atomik, tidak ada history ledger yang memadai, dan quality gate demo tanpa Midtrans belum terpenuhi.                                                                                                          |
+| Operasi Koordinator        | Parsial    | Laporan dan darurat tersedia. Darurat memakai Realtime refresh dan acknowledge.                                                        | `/koordinator/komisi` masih placeholder. Endpoint komisi belum ada. Error query berisiko tampil seperti empty state. Pengawasan RW juga placeholder dan hanya boleh dikerjakan setelah P0 stabil.                                                                                             |
+| RLS dan privasi            | Gagal gate | Tabel domain utama sudah mengaktifkan RLS dan memiliki banyak policy berbasis role/ownership.                                          | Policy awal`Authenticated users can read all users` masih memakai `USING (true)`. Satu-satunya runtime RLS integration test di-skip. Reviewer formal belum memiliki jalur authorized read untuk evidence/snapshot. Test regex SQL tidak membuktikan isolasi data.                           |
+| Seeder demo                | Gagal gate | Akun multi-role, kategori, task, snapshot menurun, reports, wallet, dan fixture dasar tersedia.                                        | Jumlah fixture tidak memenuhi §19, dokumen empat Keluarga kosong, foto evidence memakai`demo.invalid`, status task approval belum lengkap, appeal tidak koheren, saldo rerun tidak selalu deterministik, dan seed dapat memilih lalu mengubah Admin yang sudah ada.                          |
+| CI dan scheduled job       | Parsial    | Workflow CI menjalankan`npm ci`, lint, typecheck, test, dan build untuk push `main`/`develop` serta PR ke `main`.              | PR menuju`develop` tidak menjadi event CI. Heartbeat berjalan tiap lima menit, bukan Senin/Kamis sesuai §2.3. Jadwal ini boros dan tidak sesuai tujuan mencegah auto-pause.                                                                                                                  |
+| Kualitas test              | Parsial    | Suite saat audit memiliki 134 test, 133 lulus, 1 skip.                                                                                 | Mayoritas test memeriksa source/SQL dengan regex. Runtime RLS justru test yang di-skip. Green suite saat ini tidak cukup untuk menyatakan Sprint 4 selesai.                                                                                                                                     |
 
 ### Kesimpulan audit
 
@@ -70,14 +70,14 @@ Fitur yang juga wajib ditutup sebelum klaim selesai adalah trust tier otomatis, 
 
 Terdapat drift antara TDD dan schema cloud. Jangan memilih salah satu secara diam-diam. Task 0 harus membuat amendment singkat di TDD dan mencatat keputusan berikut sebelum kode domain berubah:
 
-| Konflik | TDD saat ini | Implementasi cloud saat ini | Keputusan yang harus dikunci |
-| --- | --- | --- | --- |
-| Metode pembayaran demo | `dummy_saldo` | enum `saldo_demo` | Gunakan `saldo_demo` sebagai canonical karena sudah deployed dan disebut amendment Sprint 3. Perbarui seluruh referensi TDD yang masih `dummy_saldo`. |
-| Kolom Health Snapshot | `skor_energi`, `skor_mobilitas`, `skor_mood`, `skor_nafsu_makan`, `skor_tidur` | `energi`, `mobilitas`, `mood`, `nafsu_makan`, `kualitas_tidur` | Pertahankan nama deployed untuk menghindari rename berisiko, lalu dokumentasikan mapping API secara eksplisit. |
-| Foto evidence | `task_evidence.foto_url` | `task_evidence.foto_bukti_url` | Pertahankan `foto_bukti_url` dan koreksi tabel kontrak TDD. Nilainya berubah menjadi private object path. |
-| Sync evidence | `sync_status = pending_sync/submitted` | kolom belum ada, status hanya lokal | Tambahkan enum/kolom bila status server tetap diwajibkan TDD. `pending_sync` lokal tidak boleh membuat record server sebelum upload. |
-| Kategori Admin | `POST /api/categories`, `PATCH /api/categories/:id` | `/api/admin/service-categories`, update `PUT` | Tambahkan route canonical. Route lama tetap alias menuju service yang sama sampai seluruh client dipindah. |
-| Review Koordinator/fallback | endpoint canonical TDD memakai mutation status/fallback | route approve/reject terpisah dan generic Helper PATCH | Sediakan route canonical dengan conditional update/RPC. Alias lama tidak boleh memiliki implementasi business rule terpisah. |
+| Konflik                     | TDD saat ini                                                                             | Implementasi cloud saat ini                                              | Keputusan yang harus dikunci                                                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metode pembayaran demo      | `dummy_saldo`                                                                          | enum`saldo_demo`                                                       | Gunakan`saldo_demo` sebagai canonical karena sudah deployed dan disebut amendment Sprint 3. Perbarui seluruh referensi TDD yang masih `dummy_saldo`. |
+| Kolom Health Snapshot       | `skor_energi`, `skor_mobilitas`, `skor_mood`, `skor_nafsu_makan`, `skor_tidur` | `energi`, `mobilitas`, `mood`, `nafsu_makan`, `kualitas_tidur` | Pertahankan nama deployed untuk menghindari rename berisiko, lalu dokumentasikan mapping API secara eksplisit.                                           |
+| Foto evidence               | `task_evidence.foto_url`                                                               | `task_evidence.foto_bukti_url`                                         | Pertahankan`foto_bukti_url` dan koreksi tabel kontrak TDD. Nilainya berubah menjadi private object path.                                               |
+| Sync evidence               | `sync_status = pending_sync/submitted`                                                 | kolom belum ada, status hanya lokal                                      | Tambahkan enum/kolom bila status server tetap diwajibkan TDD.`pending_sync` lokal tidak boleh membuat record server sebelum upload.                    |
+| Kategori Admin              | `POST /api/categories`, `PATCH /api/categories/:id`                                  | `/api/admin/service-categories`, update `PUT`                        | Tambahkan route canonical. Route lama tetap alias menuju service yang sama sampai seluruh client dipindah.                                               |
+| Review Koordinator/fallback | endpoint canonical TDD memakai mutation status/fallback                                  | route approve/reject terpisah dan generic Helper PATCH                   | Sediakan route canonical dengan conditional update/RPC. Alias lama tidak boleh memiliki implementasi business rule terpisah.                             |
 
 Kontrak tambahan yang dibutuhkan quality gate tetapi belum tertulis rinci harus ditambahkan pada amendment:
 
@@ -110,14 +110,14 @@ Mervin memiliki vertical slice berikut sampai migration/RLS dan automated test, 
 
 ### Shared file dan aturan integrasi
 
-| File/area bersama | Primary editor | Reviewer wajib | Aturan |
-| --- | --- | --- | --- |
-| `docs/TDD_Rangkul.md` dan `docs/api-contract.md` | Owner task kontrak | owner lain | Satu PR kontrak lebih dulu. Jangan edit paralel pada bagian yang sama. |
-| `src/types/database.ts` | owner migration terakhir | owner lain | Regenerasi setelah migration di-apply ke cloud development. Jangan edit manual untuk menyembunyikan schema drift. |
-| `supabase/seed.sql` | Farros | Mervin | Mervin mengirim fixture domain sebagai patch kecil; Farros melakukan integrasi dan replay akhir. |
-| `src/lib/audit.ts` | Farros | Mervin | Tambahan action dibuat sekali dan digunakan semua route. |
-| `src/lib/validations/*` | owner domain | owner lain | Schema browser dan server harus memakai source yang sama bila bentuk input sama. |
-| `.github/workflows/*` | Farros | Mervin | Perubahan jadwal/deploy hanya setelah dry run command lokal lulus. |
+| File/area bersama                                    | Primary editor           | Reviewer wajib | Aturan                                                                                                            |
+| ---------------------------------------------------- | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `docs/TDD_Rangkul.md` dan `docs/api-contract.md` | Owner task kontrak       | owner lain     | Satu PR kontrak lebih dulu. Jangan edit paralel pada bagian yang sama.                                            |
+| `src/types/database.ts`                            | owner migration terakhir | owner lain     | Regenerasi setelah migration di-apply ke cloud development. Jangan edit manual untuk menyembunyikan schema drift. |
+| `supabase/seed.sql`                                | Farros                   | Mervin         | Mervin mengirim fixture domain sebagai patch kecil; Farros melakukan integrasi dan replay akhir.                  |
+| `src/lib/audit.ts`                                 | Farros                   | Mervin         | Tambahan action dibuat sekali dan digunakan semua route.                                                          |
+| `src/lib/validations/*`                            | owner domain<br />       | owner lain     | Schema browser dan server harus memakai source yang sama bila bentuk input sama.                                  |
+| `.github/workflows/*`                              | Farros                   | Mervin         | Perubahan jadwal/deploy hanya setelah dry run command lokal lulus.                                                |
 
 Branch kerja mengikuti AGENTS.md: `feature/<scope>-<deskripsi>`. Setiap branch membuat PR ke `develop`. Integrasi akhir Sprint 4 ada di `develop`; `develop` ke `main` hanya melalui PR setelah gate lengkap.
 
@@ -133,32 +133,32 @@ Branch kerja mengikuti AGENTS.md: `feature/<scope>-<deskripsi>`. Setiap branch m
 
 ## Urutan Eksekusi dan Ketergantungan
 
-| Urutan | Task | Owner | Dependensi | Gate keluar |
-| --- | --- | --- | --- | --- |
-| 0 | Normalisasi kontrak TDD dan API | Farros, direview Mervin | Tidak ada | Drift nama dan endpoint diputuskan tertulis. |
-| 1 | Fondasi private file | Mervin, direview Farros | Task 0 | Database menyimpan object path dan authorized reader mendapat URL sementara. |
-| 2 | Riwayat Rangkul end-to-end | Farros, direview Mervin | Task 0 dan read helper Task 1 | Timeline, tren, badge, privasi, dan UI lulus. |
-| 3 | Offline evidence end-to-end | Mervin, direview Farros | Task 0 dan upload helper Task 1 | Offline save, reload, reconnect, retry, dan idempotency terbukti. |
-| 4 | Trust tier otomatis | Farros, direview Mervin | Task 0 | Lima tugas bersih promosi atomik, report reset counter. |
-| 5 | Admin identity, kategori, statistik, dan approval | Mervin, direview Farros | Task 0 dan Task 1 | Mutation canonical, conditional, audited, dan UI lengkap. |
-| 6 | Trust-safety, fallback, dan banding | Farros, direview Mervin | Task 4 dan primitive Admin Task 5 | Dua laporan, keputusan beralasan, fallback, dan banding aman. |
-| 7 | Pembayaran Saldo Demo | Mervin, direview Farros | Task 0 dan primitive audit Task 5 | Task dapat dibayar tanpa Midtrans secara atomik. |
-| 8 | Komisi dan darurat Koordinator | Mervin, direview Farros | Task 7 untuk komisi | Ringkasan released payment dan state darurat jujur. |
-| 9 | Audit RLS dan privacy runtime | Farros, dibantu Mervin | Task 1-8 | Seluruh role matrix lulus pada cloud development. |
-| 10 | Seed deterministik cloud | Farros integrator, Mervin contributor | Task 1-9 | Matriks §19 lengkap dan dua rerun menghasilkan state yang sama. |
-| 11 | CI, dry run, dan handover | Keduanya | Task 1-10 | Semua gate source/cloud/demo lulus dan evidence tercatat. |
+| Urutan | Task                                              | Owner                                 | Dependensi                        | Gate keluar                                                                  |
+| ------ | ------------------------------------------------- | ------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| 0      | Normalisasi kontrak TDD dan API                   | Farros, direview Mervin               | Tidak ada                         | Drift nama dan endpoint diputuskan tertulis.                                 |
+| 1      | Fondasi private file                              | Mervin, direview Farros               | Task 0                            | Database menyimpan object path dan authorized reader mendapat URL sementara. |
+| 2      | Riwayat Rangkul end-to-end                        | Farros, direview Mervin               | Task 0 dan read helper Task 1     | Timeline, tren, badge, privasi, dan UI lulus.                                |
+| 3      | Offline evidence end-to-end                       | Mervin, direview Farros               | Task 0 dan upload helper Task 1   | Offline save, reload, reconnect, retry, dan idempotency terbukti.            |
+| 4      | Trust tier otomatis                               | Farros, direview Mervin               | Task 0                            | Lima tugas bersih promosi atomik, report reset counter.                      |
+| 5      | Admin identity, kategori, statistik, dan approval | Mervin, direview Farros               | Task 0 dan Task 1                 | Mutation canonical, conditional, audited, dan UI lengkap.                    |
+| 6      | Trust-safety, fallback, dan banding               | Farros, direview Mervin               | Task 4 dan primitive Admin Task 5 | Dua laporan, keputusan beralasan, fallback, dan banding aman.                |
+| 7      | Pembayaran Saldo Demo                             | Mervin, direview Farros               | Task 0 dan primitive audit Task 5 | Task dapat dibayar tanpa Midtrans secara atomik.                             |
+| 8      | Komisi dan darurat Koordinator                    | Mervin, direview Farros               | Task 7 untuk komisi               | Ringkasan released payment dan state darurat jujur.                          |
+| 9      | Audit RLS dan privacy runtime                     | Farros, dibantu Mervin                | Task 1-8                          | Seluruh role matrix lulus pada cloud development.                            |
+| 10     | Seed deterministik cloud                          | Farros integrator, Mervin contributor | Task 1-9                          | Matriks §19 lengkap dan dua rerun menghasilkan state yang sama.             |
+| 11     | CI, dry run, dan handover                         | Keduanya                              | Task 1-10                         | Semua gate source/cloud/demo lulus dan evidence tercatat.                    |
 
 Task 1 dan Task 4 dapat berjalan paralel setelah Task 0. Task 2 menunggu kontrak read private file dari Task 1. Task 3 menunggu kontrak upload object path. Task 5 dapat berjalan paralel dengan Task 2-4 selama tidak menyentuh file bersama. Task 9-11 adalah fase integrasi dan tidak boleh dideklarasikan selesai dari branch owner masing-masing.
 
 ## Jadwal Pemulihan 27-31 Agustus 2026
 
-| Tanggal | Farros | Mervin | Checkpoint bersama |
-| --- | --- | --- | --- |
-| 27 Agustus | Task 0 dan mulai Task 4 | Task 1 | Kontrak freeze, private path shape, daftar migration, dan test merah disepakati. |
-| 28 Agustus | Selesaikan Task 4, kerjakan Task 2 | Selesaikan Task 1, kerjakan Task 3 | Riwayat membaca foto melalui authorized path. Offline submit tidak redirect saat gagal. |
-| 29 Agustus | Task 6 | Task 5 dan Task 7 | Review `under_review`, Admin mutation, serta Saldo Demo dapat didemokan dari UI. Schema besar freeze setelah checkpoint. |
-| 30 Agustus | Task 9 dan integrasi seed | Task 8 dan fixture domain untuk seed | Runtime RLS matrix, komisi, darurat, dan seed rerun pertama. P2 dipotong bila ada P0. |
-| 31 Agustus | Task 10-11, triase P0/P1 | Task 10-11, responsive dan accessibility walkthrough | Dua dry run, gate lengkap, bukti CI, serta handover Sprint 5. |
+| Tanggal    | Farros                             | Mervin                                               | Checkpoint bersama                                                                                                        |
+| ---------- | ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 27 Agustus | Task 0 dan mulai Task 4            | Task 1                                               | Kontrak freeze, private path shape, daftar migration, dan test merah disepakati.                                          |
+| 28 Agustus | Selesaikan Task 4, kerjakan Task 2 | Selesaikan Task 1, kerjakan Task 3                   | Riwayat membaca foto melalui authorized path. Offline submit tidak redirect saat gagal.                                   |
+| 29 Agustus | Task 6                             | Task 5 dan Task 7                                    | Review`under_review`, Admin mutation, serta Saldo Demo dapat didemokan dari UI. Schema besar freeze setelah checkpoint. |
+| 30 Agustus | Task 9 dan integrasi seed          | Task 8 dan fixture domain untuk seed                 | Runtime RLS matrix, komisi, darurat, dan seed rerun pertama. P2 dipotong bila ada P0.                                     |
+| 31 Agustus | Task 10-11, triase P0/P1           | Task 10-11, responsive dan accessibility walkthrough | Dua dry run, gate lengkap, bukti CI, serta handover Sprint 5.                                                             |
 
 Jika Task 1, Task 7, atau Task 9 belum lulus pada 30 Agustus, hentikan Task 8 bagian filter RW dan seluruh P2. Menambah fitur saat tiga gate tersebut merah hanya memperbesar permukaan bug dan tidak menambah nilai demo yang dapat dipercaya.
 
@@ -793,17 +793,17 @@ Policy pengganti tidak boleh memakai `USING (true)` untuk authenticated. Public 
 
 **Matriks minimum:**
 
-| Resource | Keluarga | Helper | Koordinator | Admin |
-| --- | --- | --- | --- | --- |
-| `users` | diri sendiri dan profil Helper publik yang diperlukan | diri sendiri/participant publik | diri sendiri dan scope verifikasi | seluruh untuk operasi Admin |
-| `lansia_profiles` | milik sendiri | hanya setelah menjadi participant task | hanya saat approval/laporan yang sah | investigasi/Admin |
-| `tasks` | milik sendiri | available projection atau assigned | scope wilayah/approval | audit/operasi |
-| `task_evidence`, `health_snapshots` | task milik sendiri | task assigned miliknya | hanya review sah | investigasi/Admin |
-| `messages` | participant task | participant task | hanya jika TDD memberi akses | investigasi terbatas |
-| `reports`, `appeals` | milik/yang dibuat sendiri | status terkait dirinya tanpa reporter overexposure | scope wilayah | seluruh untuk review |
-| `payments`, wallet, ledger | milik sendiri | share miliknya | share wilayahnya | operasi/audit |
-| `audit_logs` | deny | deny | deny kecuali contract khusus | read only Admin |
-| private storage | owner/resource authorized | resource authorized | review authorized | review authorized |
+| Resource                                | Keluarga                                              | Helper                                             | Koordinator                          | Admin                       |
+| --------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- | ------------------------------------ | --------------------------- |
+| `users`                               | diri sendiri dan profil Helper publik yang diperlukan | diri sendiri/participant publik                    | diri sendiri dan scope verifikasi    | seluruh untuk operasi Admin |
+| `lansia_profiles`                     | milik sendiri                                         | hanya setelah menjadi participant task             | hanya saat approval/laporan yang sah | investigasi/Admin           |
+| `tasks`                               | milik sendiri                                         | available projection atau assigned                 | scope wilayah/approval               | audit/operasi               |
+| `task_evidence`, `health_snapshots` | task milik sendiri                                    | task assigned miliknya                             | hanya review sah                     | investigasi/Admin           |
+| `messages`                            | participant task                                      | participant task                                   | hanya jika TDD memberi akses         | investigasi terbatas        |
+| `reports`, `appeals`                | milik/yang dibuat sendiri                             | status terkait dirinya tanpa reporter overexposure | scope wilayah                        | seluruh untuk review        |
+| `payments`, wallet, ledger            | milik sendiri                                         | share miliknya                                     | share wilayahnya                     | operasi/audit               |
+| `audit_logs`                          | deny                                                  | deny                                               | deny kecuali contract khusus         | read only Admin             |
+| private storage                         | owner/resource authorized                             | resource authorized                                | review authorized                    | review authorized           |
 
 **Langkah:**
 
@@ -1000,34 +1000,34 @@ Refs: TDD §2.3, §14.4
 
 ## Matriks Acceptance Sprint 4
 
-| Gate | Evidence wajib | Owner | Status baseline |
-| --- | --- | --- | --- |
-| Riwayat 30 detik | Video/screenshot timeline, grafik, badge, runtime ownership test | Farros | Parsial |
-| Private storage | Row berisi object path, re-sign test, unauthorized read test | Mervin | Gagal |
-| Offline evidence | Offline reload/reconnect/retry/dedup recording dan test | Mervin | Parsial |
-| Trust tier | Runtime completion/report/concurrency test | Farros | Belum ada |
-| Admin P0 | Mutation race, audit, forbidden, UI state | Mervin/Farros sesuai slice | Parsial |
-| Saldo Demo | Charge success/insufficient/double-click/ownership test | Mervin | Belum ada end-to-end |
-| Koordinator | Commission scope dan emergency acknowledge test | Mervin | Parsial |
-| RLS | Role-resource-action matrix tanpa skip | Farros | Gagal |
-| Seed | Count §19, private assets, rerun checksum/count | Farros integrator | Gagal |
-| CI/job | Local gate, remote run, heartbeat schedule, job schedule | Farros integrator | Parsial |
-| Demo | Runbook dan dua dry run dengan normal/failure path | Keduanya | Belum dibuktikan |
+| Gate             | Evidence wajib                                                   | Owner                      | Status baseline      |
+| ---------------- | ---------------------------------------------------------------- | -------------------------- | -------------------- |
+| Riwayat 30 detik | Video/screenshot timeline, grafik, badge, runtime ownership test | Farros                     | Parsial              |
+| Private storage  | Row berisi object path, re-sign test, unauthorized read test     | Mervin                     | Gagal                |
+| Offline evidence | Offline reload/reconnect/retry/dedup recording dan test          | Mervin                     | Parsial              |
+| Trust tier       | Runtime completion/report/concurrency test                       | Farros                     | Belum ada            |
+| Admin P0         | Mutation race, audit, forbidden, UI state                        | Mervin/Farros sesuai slice | Parsial              |
+| Saldo Demo       | Charge success/insufficient/double-click/ownership test          | Mervin                     | Belum ada end-to-end |
+| Koordinator      | Commission scope dan emergency acknowledge test                  | Mervin                     | Parsial              |
+| RLS              | Role-resource-action matrix tanpa skip                           | Farros                     | Gagal                |
+| Seed             | Count §19, private assets, rerun checksum/count                 | Farros integrator          | Gagal                |
+| CI/job           | Local gate, remote run, heartbeat schedule, job schedule         | Farros integrator          | Parsial              |
+| Demo             | Runbook dan dua dry run dengan normal/failure path               | Keduanya                   | Belum dibuktikan     |
 
 Tidak ada baris berstatus `Parsial`, `Belum ada`, atau `Gagal` yang boleh diubah menjadi selesai hanya berdasarkan keberadaan file. Status berubah setelah evidence column terpenuhi.
 
 ## Risiko dan Keputusan Cut
 
-| Risiko | Trigger | Respons wajib |
-| --- | --- | --- |
-| Private file rusak setelah satu jam | Database masih menyimpan signed URL | Hentikan polish; selesaikan Task 1 sebelum Riwayat/review sign-off. |
-| RLS runtime tidak dapat dijalankan | Secret/akun test tidak tersedia | Siapkan credential development. Jangan mengganti dengan test regex atau klaim aman. |
-| Cloud migration target tidak jelas | Project ref tidak terverifikasi | Jangan `db push`; verifikasi linked project dan environment lebih dulu. |
-| Seed merusak akun existing | Seeder memilih akun tanpa marker demo | Hentikan seed, perbaiki selector/transaction, pulihkan hanya data demo yang teridentifikasi. |
-| Saldo Demo terlambat | Task 7 belum lulus 29 Agustus | Potong filter RW, advanced stats, dan polish non-demo. Jangan memotong RLS/storage/seed. |
-| Offline terlalu kompleks | Autosave/sync manager masih false-success | Pertahankan manual retry yang jujur; jangan klaim auto-sync sampai listener global terbukti. |
-| Audit log gagal terpisah | Mutation sukses tetapi audit gagal | Pindahkan mutation dan audit ke RPC transaction sebelum sign-off. |
-| Waktu habis | Ada P0 pada 30 Agustus | Bekukan P2 dan alihkan kedua owner ke blocker P0. |
+| Risiko                              | Trigger                                   | Respons wajib                                                                                |
+| ----------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Private file rusak setelah satu jam | Database masih menyimpan signed URL       | Hentikan polish; selesaikan Task 1 sebelum Riwayat/review sign-off.                          |
+| RLS runtime tidak dapat dijalankan  | Secret/akun test tidak tersedia           | Siapkan credential development. Jangan mengganti dengan test regex atau klaim aman.          |
+| Cloud migration target tidak jelas  | Project ref tidak terverifikasi           | Jangan`db push`; verifikasi linked project dan environment lebih dulu.                     |
+| Seed merusak akun existing          | Seeder memilih akun tanpa marker demo     | Hentikan seed, perbaiki selector/transaction, pulihkan hanya data demo yang teridentifikasi. |
+| Saldo Demo terlambat                | Task 7 belum lulus 29 Agustus             | Potong filter RW, advanced stats, dan polish non-demo. Jangan memotong RLS/storage/seed.     |
+| Offline terlalu kompleks            | Autosave/sync manager masih false-success | Pertahankan manual retry yang jujur; jangan klaim auto-sync sampai listener global terbukti. |
+| Audit log gagal terpisah            | Mutation sukses tetapi audit gagal        | Pindahkan mutation dan audit ke RPC transaction sebelum sign-off.                            |
+| Waktu habis                         | Ada P0 pada 30 Agustus                    | Bekukan P2 dan alihkan kedua owner ke blocker P0.                                            |
 
 ## Handoff Wajib per Vertical Slice
 

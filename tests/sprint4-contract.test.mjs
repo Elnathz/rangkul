@@ -6,11 +6,15 @@ const read = (path) => fs.readFileSync(path, "utf8");
 
 test("Riwayat Rangkul mengembalikan timeline, tren indikator, dan perhatian rule-based", () => {
   const route = read("src/app/api/lansia/[id]/riwayat/route.ts");
+  const service = read("src/lib/riwayat-rangkul.ts");
   assert.match(route, /health_snapshots/);
   assert.match(route, /cerita_hari_ini/);
-  assert.match(route, /trends|tren/);
-  assert.match(route, /perlu_perhatian/);
+  assert.match(service, /tren/);
+  assert.match(service, /perlu_perhatian/);
   assert.match(route, /signed|createSignedUrl|foto_bukti_url/);
+  assert.match(service, /jsonResponse\(\{\s*data:/);
+  assert.doesNotMatch(service, /\bvisits\s*:/);
+  assert.doesNotMatch(service, /\bkunjungan\s*:/);
 });
 
 test("offline evidence memakai IndexedDB dan memiliki status sinkronisasi", () => {
