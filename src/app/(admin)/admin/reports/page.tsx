@@ -13,7 +13,6 @@ export default async function AdminReportsPage() {
     redirect("/login");
   }
 
-  // Verifikasi status admin
   const { data: profile } = await supabase
     .from("users")
     .select("role")
@@ -41,23 +40,27 @@ export default async function AdminReportsPage() {
       reported_helper_id,
       reporter_id,
       ditindak_oleh,
+      decision_reason,
       helper:users!reports_reported_helper_id_fkey(
         full_name,
-        email,
-        phone
+        helper_profiles(status)
       ),
       reporter:users!reports_reporter_id_fkey(
-        full_name,
-        email
-      )
+        full_name
+      ),
+      reviewer:users!reports_ditindak_oleh_fkey(full_name)
     `)
     .order("created_at", { ascending: false });
 
-  // Restructure for the client component
+  const counts = new Map<string, number>();
+  for (const report of reports || []) counts.set(report.reported_helper_id, (counts.get(report.reported_helper_id) ?? 0) + 1);
   const mappedReports = (reports || []).map(r => ({
     ...r,
     helper: r.helper ? { user: Array.isArray(r.helper) ? r.helper[0] : r.helper } : null,
-    reporter: Array.isArray(r.reporter) ? r.reporter[0] : r.reporter
+    reporter: Array.isArray(r.reporter) ? r.reporter[0] : r.reporter,
+    reviewer: Array.isArray(r.reviewer) ? r.reviewer[0] : r.reviewer,
+    decision_reason: (r as { decision_reason?: string | null }).decision_reason ?? null,
+    report_count: counts.get(r.reported_helper_id) ?? 1,
   }));
 
   return (
