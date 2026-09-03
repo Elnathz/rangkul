@@ -84,8 +84,7 @@ BEGIN
   END IF;
 
   IF v_wallet.saldo < v_charge THEN
-    RAISE EXCEPTION 'Saldo Demo tidak mencukupi' USING ERRCODE = '45001'
-      USING DETAIL = v_wallet.saldo::TEXT;
+    RAISE EXCEPTION 'Saldo Demo tidak mencukupi' USING ERRCODE = '45001', DETAIL = v_wallet.saldo::TEXT;
   END IF;
 
   v_new_balance := v_wallet.saldo - v_charge;
