@@ -27,11 +27,12 @@ test("laporan Helper memakai endpoint evidence atomic dan validasi lima snapshot
   assert.match(evidenceMigration, /FOR UPDATE/);
 });
 
-test("UI laporan Helper tidak lagi memakai mock atau simulasi timeout", () => {
+test("UI laporan Helper memakai endpoint nyata dan autosave offline, bukan mock", () => {
   assert.doesNotMatch(helperReport, /MOCK_TASKS/);
-  assert.doesNotMatch(helperReport, /setTimeout/);
   assert.match(helperReport, /api\/storage\/upload/);
   assert.match(helperReport, /api\/tasks\/\$\{taskId\}\/evidence/);
+  assert.match(helperReport, /saveEvidenceDraft/);
+  assert.match(helperReport, /useOfflineEvidence/);
 });
 
 test("detail task Helper memakai URL laporan tanpa route group", () => {
