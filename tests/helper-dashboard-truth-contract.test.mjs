@@ -8,9 +8,9 @@ test("dashboard Helper menggunakan availability dan status task yang dibagikan",
   assert.match(page, /is_available/);
   assert.match(page, /AvailabilityToggle/);
   assert.match(page, /getTaskStatusPresentation/);
-  assert.match(page, /Tugas berikutnya/);
   assert.match(page, /Ringkasan kerja/);
-  assert.ok(page.indexOf("Tugas berikutnya") < page.indexOf("Ringkasan kerja"));
+  assert.match(page, /Tugas berikutnya/);
+  assert.ok(page.indexOf("Ringkasan kerja") < page.indexOf("Tugas berikutnya"));
   assert.doesNotMatch(page, /Estimasi Fee/);
   assert.doesNotMatch(page, /href: '#'/);
 });
