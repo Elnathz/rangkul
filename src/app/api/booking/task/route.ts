@@ -4,6 +4,7 @@ import { createTaskSchema } from '@/lib/validations/booking';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
 import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
+import { isSprint6MatchingEnabled } from '@/lib/features/sprint6-matching';
 
 export async function POST(request: Request) {
   try {
@@ -61,6 +62,10 @@ export async function POST(request: Request) {
     }
 
     const mode = mode_penugasan ?? 'langsung';
+
+    if (mode !== 'langsung' && !isSprint6MatchingEnabled()) {
+      return createApiError('not_found', 'Fitur belum tersedia', 404);
+    }
 
     // Sprint 6 quick mode: helper_id wajib kosong, kategori non-high-risk, jadwal today, expiry 15 menit.
     if (mode === 'cepat') {
