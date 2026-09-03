@@ -293,14 +293,14 @@ export default function LaporanHelperPage() {
                   <Textarea id="cerita-hari-ini" value={form.cerita_hari_ini} onChange={(event) => setForm((current) => ({ ...current, cerita_hari_ini: event.target.value }))} placeholder="Tuliskan momen manis, percakapan, atau cerita berharga hari ini untuk dibaca keluarga (minimal 10 karakter)." minLength={10} required rows={4} />
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-slate-100 bg-slate-50 p-6">
-                {(!areScoresChosen || form.cerita_hari_ini.trim().length < 10) && (
-                  <p className="mb-3 w-full text-xs font-semibold text-amber-700">Lengkapi kelima penilaian dan Cerita Hari Ini (minimal 10 karakter) sebelum mengirim laporan.</p>
-                )}
+              <CardFooter className="block border-t border-slate-100 bg-slate-50 p-6">
                 <Button type="submit" className="min-h-12 w-full rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800" disabled={isSubmitting || !areScoresChosen || form.cerita_hari_ini.trim().length < 10}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSubmitting ? "Mengirim laporan..." : "Kirim laporan kunjungan"}
                 </Button>
+                {(!areScoresChosen || form.cerita_hari_ini.trim().length < 10) && (
+                  <p className="mt-3 w-full text-center text-xs font-semibold text-amber-700">Lengkapi kelima penilaian dan Cerita Hari Ini (minimal 10 karakter) sebelum mengirim laporan.</p>
+                )}
               </CardFooter>
             </Card>
           </motion.div>
