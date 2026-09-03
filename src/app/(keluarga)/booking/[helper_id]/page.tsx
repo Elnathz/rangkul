@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle } from "lucide-react";
+import { isUrgentProbationBooking } from "@/lib/helper/task-acceptance";
 
 interface Lansia {
   id: string;
@@ -22,6 +23,11 @@ interface ServiceCategory {
   tingkat?: 'ringan' | 'sedang' | 'berat';
 }
 
+type HelperDetail = {
+  tingkat_kepercayaan: "probation" | "terpercaya";
+  users: { full_name: string | null } | null;
+};
+
 export default function BookingPage({ params }: { params: Promise<{ helper_id: string }> }) {
   const router = useRouter();
   const { helper_id } = use(params);
@@ -32,6 +38,7 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [helper, setHelper] = useState<HelperDetail | null>(null);
 
   const [form, setForm] = useState({
     lansia_id: "",
@@ -45,6 +52,9 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
     const supabase = createClient();
     async function loadData() {
       try {
+        const querySchedule = new URLSearchParams(window.location.search).get("jadwal_waktu") ?? "";
+        if (querySchedule) setForm((current) => ({ ...current, jadwal_waktu: querySchedule }));
+
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data: lansiaData } = await supabase
@@ -59,12 +69,25 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
           .select("id, nama, harga_dasar, tingkat")
           .eq("is_active", true);
         if (catData) setCategories(catData as unknown as ServiceCategory[]);
+
+        if (helper_id !== "direct") {
+          const response = await fetch(`/api/helpers/${helper_id}`);
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.message || "Profil Helper tidak dapat dimuat.");
+          setHelper(payload.helper ?? payload.data?.helper ?? null);
+        }
+      } catch (reason: unknown) {
+        setErrorMsg(reason instanceof Error ? reason.message : "Data booking tidak dapat dimuat.");
       } finally {
         setFetching(false);
       }
     }
     loadData();
   }, []);
+
+  const urgentProbation = helper
+    ? isUrgentProbationBooking(helper.tingkat_kepercayaan, form.jadwal_waktu)
+    : false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +157,13 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
             <p className="text-sm text-muted-foreground text-center py-6">Memuat data lansia dan layanan...</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {helper && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <p className="font-bold text-slate-900">{helper.users?.full_name || "Helper Rangkul"}</p>
+                  <p className="mt-1">Tingkat kepercayaan: <span className="font-semibold capitalize">{helper.tingkat_kepercayaan}</span></p>
+                  {helper.tingkat_kepercayaan === "probation" && <p className="mt-2 text-xs leading-relaxed text-amber-800">Booking ini membutuhkan persetujuan Koordinator. Untuk jadwal kurang dari tiga jam, pilih Helper terpercaya.</p>}
+                </div>
+              )}
               <div>
                 <Label htmlFor="lansia" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                   Pilih Lansia yang Didampingi *
@@ -300,9 +330,11 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
                 <strong>Perhatian:</strong> Tugas yang diajukan akan otomatis dibatalkan jika tidak diterima oleh Helper dalam waktu <strong>1 jam</strong>.
               </div>
 
+              {urgentProbation && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">Helper probation tidak tersedia untuk jadwal kurang dari tiga jam. Kembali ke katalog dan pilih Helper terpercaya.</div>}
+
               <Button
                 type="submit"
-                disabled={loading || lansiaList.length === 0}
+                disabled={loading || lansiaList.length === 0 || urgentProbation}
                 className="w-full h-12 bg-brand-gradient text-white font-bold rounded-xl shadow-sm hover:opacity-90 transition-opacity mt-4"
               >
                 {loading ? "Memproses..." : "Pesan Sekarang"}

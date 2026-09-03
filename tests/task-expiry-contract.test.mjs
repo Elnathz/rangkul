@@ -6,7 +6,7 @@ const migration = await readFile(
   "supabase/migrations/20260801121120_initial_schema.sql",
   "utf8",
 );
-const workflow = await readFile(".github/workflows/heartbeat.yml", "utf8");
+const workflow = await readFile(".github/workflows/scheduled-jobs.yml", "utf8");
 
 test("expiry RPC only cancels unaccepted expired tasks", () => {
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.expire_pending_tasks/);
@@ -18,7 +18,7 @@ test("expiry RPC only cancels unaccepted expired tasks", () => {
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.expire_pending_tasks\(\) TO service_role/);
 });
 
-test("heartbeat invokes the expiry RPC with the service role", () => {
+test("scheduled job invokes the expiry RPC with the service role", () => {
   assert.match(workflow, /rest\/v1\/rpc\/expire_pending_tasks/);
   assert.match(workflow, /-X POST/);
   assert.match(workflow, /SUPABASE_SERVICE_ROLE_KEY/);

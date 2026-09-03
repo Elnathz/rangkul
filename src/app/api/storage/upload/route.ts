@@ -60,8 +60,7 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error("Storage Upload Error:", uploadError);
-      const uploadMessage = (uploadError as { message?: string }).message || 'Upload file gagal';
-      return createApiError('upload_failed', uploadMessage, 500);
+      return createApiError('upload_failed', 'Upload file gagal', 500);
     }
 
     const { data: signedData, error: signedError } = await adminSupabase.storage
@@ -72,13 +71,12 @@ export async function POST(request: Request) {
       return createApiError('signed_url_failed', 'Gagal membuat signed URL', 500);
     }
 
-    return apiResponse({ 
+    return apiResponse({
       url: signedData.signedUrl,
       path: filePath,
-      bucket: 'dokumen',
-      content_type: file.type
+      preview_url: signedData.signedUrl,
     }, 200);
-  } catch (error: unknown) {
-    return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
+  } catch {
+    return createApiError('server_error', 'Upload file gagal', 500);
   }
 }

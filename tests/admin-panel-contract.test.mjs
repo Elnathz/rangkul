@@ -20,12 +20,21 @@ test("Admin pengguna memiliki tabs berdasarkan role", () => {
   assert.doesNotMatch(source, /USR-001|Siti Aminah|const users = \[/);
 });
 
+test("navigasi Admin menyediakan akses ke fallback verifikasi Helper", () => {
+  const layout = read("src/app/(admin)/layout.tsx");
+  assert.match(layout, /href: "\/admin\/helpers\/fallback"/);
+  assert.match(layout, /label: "Fallback verifikasi"/);
+});
+
 test("mutation Admin membuat audit log dan memakai Auth Admin API untuk hapus", () => {
   const users = read("src/app/api/admin/users/[id]/route.ts");
   const helpers = read("src/app/api/admin/helpers/[id]/suspend/route.ts");
+  const trustSafetyMigration = read("supabase/migrations/20260828140000_trust_safety_decisions.sql");
   assert.match(users, /auth\.admin\.deleteUser/);
   assert.match(users, /writeAuditLog/);
-  assert.match(helpers, /writeAuditLog/);
+  assert.match(helpers, /rpc\("admin_decide_helper_status"/);
+  assert.doesNotMatch(helpers, /writeAuditLog/);
+  assert.match(trustSafetyMigration, /INSERT INTO public\.audit_logs/);
 });
 
 test("route kategori menyimpan semua field schema", () => {

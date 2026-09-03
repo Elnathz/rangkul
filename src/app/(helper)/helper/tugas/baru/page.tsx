@@ -1,11 +1,13 @@
 import React from "react";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { projectHelperTaskPrivacy } from "@/lib/helper/task-privacy";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import CariPekerjaanClient, { type JobData } from "./CariPekerjaanClient";
 
 type RawJob = {
   id: string;
+  helper_id: string | null;
   jadwal_waktu: string;
   harga_dasar: number;
   harga_final: number;
@@ -14,6 +16,9 @@ type RawJob = {
     id: string;
     nama: string;
     alamat: string;
+    kelurahan: string | null;
+    kecamatan: string | null;
+    kabupaten_kota: string | null;
     lat: number | null;
     lng: number | null;
     catatan_kondisi: string | null;
@@ -86,15 +91,17 @@ export default async function CariPekerjaanPage() {
   let loadError = "";
 
   if (canBrowse && Number.isFinite(originLat) && Number.isFinite(originLng)) {
-    const { data: taskRows, error: taskError } = await supabase
+    const taskReader = await createAdminClient();
+    const { data: taskRows, error: taskError } = await taskReader
       .from("tasks")
       .select(`
         id,
+        helper_id,
         jadwal_waktu,
         harga_dasar,
         harga_final,
         catatan,
-        lansia_profiles!inner ( id, nama, alamat, lat, lng, catatan_kondisi ),
+        lansia_profiles!inner ( id, nama, alamat, kelurahan, kecamatan, kabupaten_kota, lat, lng, catatan_kondisi ),
         service_categories!inner ( id, nama, deskripsi, estimasi_durasi_menit, tingkat, is_high_risk )
       `)
       .eq("status", "diajukan")
@@ -115,16 +122,17 @@ export default async function CariPekerjaanPage() {
             Number(job.lansia_profiles.lat),
             Number(job.lansia_profiles.lng),
           );
+          const privacy = projectHelperTaskPrivacy({ helper_id: job.helper_id, catatan: job.catatan, lansia: job.lansia_profiles }, profile.id);
 
           return {
             id: job.id,
             jadwal_waktu: job.jadwal_waktu,
             harga_dasar: Number(job.harga_dasar),
             harga_final: Number(job.harga_final),
-            lansia_nama: job.lansia_profiles.nama,
-            lansia_alamat: job.lansia_profiles.alamat,
-            catatan_tugas: job.catatan || "Tidak ada catatan tambahan dari keluarga.",
-            catatan_kondisi: job.lansia_profiles.catatan_kondisi || "Tidak ada catatan kondisi khusus.",
+            lansia_nama: privacy.lansia_nama,
+            lansia_alamat: privacy.lansia_alamat,
+            catatan_tugas: privacy.catatan_tugas || "Detail catatan tersedia setelah tugas diterima.",
+            catatan_kondisi: privacy.catatan_kondisi || "Detail kondisi tersedia setelah tugas diterima.",
             kategori_nama: job.service_categories.nama,
             kategori_deskripsi: job.service_categories.deskripsi,
             kategori_tingkat: job.service_categories.tingkat,

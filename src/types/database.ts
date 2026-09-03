@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -46,6 +46,7 @@ export type Database = {
           direview_at: string | null
           direview_oleh: string | null
           id: string
+          review_reason: string | null
           status: Database["public"]["Enums"]["appeal_status"]
           user_id: string
         }
@@ -55,6 +56,7 @@ export type Database = {
           direview_at?: string | null
           direview_oleh?: string | null
           id?: string
+          review_reason?: string | null
           status?: Database["public"]["Enums"]["appeal_status"]
           user_id: string
         }
@@ -64,6 +66,7 @@ export type Database = {
           direview_at?: string | null
           direview_oleh?: string | null
           id?: string
+          review_reason?: string | null
           status?: Database["public"]["Enums"]["appeal_status"]
           user_id?: string
         }
@@ -122,6 +125,61 @@ export type Database = {
           },
         ]
       }
+      demo_wallet_ledger: {
+        Row: {
+          alasan: string
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          saldo_setelah: number
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          alasan: string
+          amount: number
+          created_at?: string
+          created_by: string
+          id?: string
+          saldo_setelah: number
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          alasan?: string
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          saldo_setelah?: number
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_wallet_ledger_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_wallet_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_wallet_ledger_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "demo_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_wallets: {
         Row: {
           id: string
@@ -147,94 +205,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      demo_wallet_ledger: {
-        Row: {
-          id: string
-          wallet_id: string
-          user_id: string
-          amount: number
-          saldo_setelah: number
-          alasan: string
-          created_by: string
-          created_at: string
-          entry_type: string
-        }
-        Insert: {
-          id?: string
-          wallet_id: string
-          user_id: string
-          amount: number
-          saldo_setelah: number
-          alasan: string
-          created_by: string
-          created_at?: string
-          entry_type?: string
-        }
-        Update: {
-          id?: string
-          wallet_id?: string
-          user_id?: string
-          amount?: number
-          saldo_setelah?: number
-          alasan?: string
-          created_by?: string
-          created_at?: string
-          entry_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demo_wallet_ledger_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "demo_wallets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demo_wallet_ledger_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demo_wallet_ledger_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      helper_service_categories: {
-        Row: {
-          helper_id: string
-          service_category_id: string
-        }
-        Insert: {
-          helper_id: string
-          service_category_id: string
-        }
-        Update: {
-          helper_id?: string
-          service_category_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "helper_service_categories_helper_id_fkey"
-            columns: ["helper_id"]
-            isOneToOne: false
-            referencedRelation: "helper_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "helper_service_categories_service_category_id_fkey"
-            columns: ["service_category_id"]
-            isOneToOne: false
-            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -345,93 +315,6 @@ export type Database = {
           },
         ]
       }
-      helper_profiles: {
-        Row: {
-          bio: string | null
-          created_at: string
-          domisili_lat: number | null
-          domisili_lng: number | null
-          foto_wajah_url: string | null
-          id: string
-          is_available: boolean
-          koordinator_id: string | null
-          ktp_url: string | null
-          radius_layanan_km: number
-          rating_avg: number
-          saldo_tersedia: number
-          status: Database["public"]["Enums"]["helper_status"]
-          suspend_reason: string | null
-          tingkat_kepercayaan: Database["public"]["Enums"]["trust_tier"]
-          total_tugas_selesai: number
-          tugas_selesai_berturut: number
-          updated_at: string
-          user_id: string
-          verified_by_admin_fallback: boolean
-          wilayah_domisili: string
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string
-          domisili_lat?: number | null
-          domisili_lng?: number | null
-          foto_wajah_url?: string | null
-          id?: string
-          is_available?: boolean
-          koordinator_id?: string | null
-          ktp_url?: string | null
-          radius_layanan_km?: number
-          rating_avg?: number
-          saldo_tersedia?: number
-          status?: Database["public"]["Enums"]["helper_status"]
-          suspend_reason?: string | null
-          tingkat_kepercayaan?: Database["public"]["Enums"]["trust_tier"]
-          total_tugas_selesai?: number
-          tugas_selesai_berturut?: number
-          updated_at?: string
-          user_id: string
-          verified_by_admin_fallback?: boolean
-          wilayah_domisili: string
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string
-          domisili_lat?: number | null
-          domisili_lng?: number | null
-          foto_wajah_url?: string | null
-          id?: string
-          is_available?: boolean
-          koordinator_id?: string | null
-          ktp_url?: string | null
-          radius_layanan_km?: number
-          rating_avg?: number
-          saldo_tersedia?: number
-          status?: Database["public"]["Enums"]["helper_status"]
-          suspend_reason?: string | null
-          tingkat_kepercayaan?: Database["public"]["Enums"]["trust_tier"]
-          total_tugas_selesai?: number
-          tugas_selesai_berturut?: number
-          updated_at?: string
-          user_id?: string
-          verified_by_admin_fallback?: boolean
-          wilayah_domisili?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "helper_profiles_koordinator_id_fkey"
-            columns: ["koordinator_id"]
-            isOneToOne: false
-            referencedRelation: "koordinator_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "helper_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       helper_photo_change_requests: {
         Row: {
           alasan: string | null
@@ -465,17 +348,147 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "helper_photo_change_requests_ditinjau_oleh_fkey"
+            columns: ["ditinjau_oleh"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "helper_photo_change_requests_helper_id_fkey"
             columns: ["helper_id"]
             isOneToOne: false
             referencedRelation: "helper_profiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      helper_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          domisili_lat: number | null
+          domisili_lng: number | null
+          foto_wajah_url: string | null
+          id: string
+          is_available: boolean
+          koordinator_id: string | null
+          ktp_url: string | null
+          promoted_at: string | null
+          promoted_by: string | null
+          radius_layanan_km: number
+          rating_avg: number
+          saldo_tersedia: number
+          status: Database["public"]["Enums"]["helper_status"]
+          suspend_reason: string | null
+          tingkat_kepercayaan: Database["public"]["Enums"]["trust_tier"]
+          total_tugas_selesai: number
+          tugas_selesai_berturut: number
+          updated_at: string
+          user_id: string
+          verified_by_admin_fallback: boolean
+          wilayah_domisili: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          domisili_lat?: number | null
+          domisili_lng?: number | null
+          foto_wajah_url?: string | null
+          id?: string
+          is_available?: boolean
+          koordinator_id?: string | null
+          ktp_url?: string | null
+          promoted_at?: string | null
+          promoted_by?: string | null
+          radius_layanan_km?: number
+          rating_avg?: number
+          saldo_tersedia?: number
+          status?: Database["public"]["Enums"]["helper_status"]
+          suspend_reason?: string | null
+          tingkat_kepercayaan?: Database["public"]["Enums"]["trust_tier"]
+          total_tugas_selesai?: number
+          tugas_selesai_berturut?: number
+          updated_at?: string
+          user_id: string
+          verified_by_admin_fallback?: boolean
+          wilayah_domisili: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          domisili_lat?: number | null
+          domisili_lng?: number | null
+          foto_wajah_url?: string | null
+          id?: string
+          is_available?: boolean
+          koordinator_id?: string | null
+          ktp_url?: string | null
+          promoted_at?: string | null
+          promoted_by?: string | null
+          radius_layanan_km?: number
+          rating_avg?: number
+          saldo_tersedia?: number
+          status?: Database["public"]["Enums"]["helper_status"]
+          suspend_reason?: string | null
+          tingkat_kepercayaan?: Database["public"]["Enums"]["trust_tier"]
+          total_tugas_selesai?: number
+          tugas_selesai_berturut?: number
+          updated_at?: string
+          user_id?: string
+          verified_by_admin_fallback?: boolean
+          wilayah_domisili?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "helper_photo_change_requests_ditinjau_oleh_fkey"
-            columns: ["ditinjau_oleh"]
+            foreignKeyName: "helper_profiles_koordinator_id_fkey"
+            columns: ["koordinator_id"]
             isOneToOne: false
+            referencedRelation: "koordinator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_profiles_promoted_by_fkey"
+            columns: ["promoted_by"]
+            isOneToOne: false
+            referencedRelation: "koordinator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      helper_service_categories: {
+        Row: {
+          helper_id: string
+          service_category_id: string
+        }
+        Insert: {
+          helper_id: string
+          service_category_id: string
+        }
+        Update: {
+          helper_id?: string
+          service_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helper_service_categories_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "helper_service_categories_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -485,12 +498,12 @@ export type Database = {
           created_at: string
           diverifikasi_at: string | null
           diverifikasi_oleh: string | null
+          dokumen_url: string | null
           domisili_lat: number | null
           domisili_lng: number | null
-          dokumen_url: string | null
           foto_url: string | null
-          ktp_url: string | null
           id: string
+          ktp_url: string | null
           saldo_komisi: number
           status: Database["public"]["Enums"]["koordinator_status"]
           tingkat: Database["public"]["Enums"]["koordinator_tingkat"]
@@ -502,12 +515,12 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          dokumen_url?: string | null
           domisili_lat?: number | null
           domisili_lng?: number | null
-          dokumen_url?: string | null
           foto_url?: string | null
-          ktp_url?: string | null
           id?: string
+          ktp_url?: string | null
           saldo_komisi?: number
           status?: Database["public"]["Enums"]["koordinator_status"]
           tingkat?: Database["public"]["Enums"]["koordinator_tingkat"]
@@ -519,12 +532,12 @@ export type Database = {
           created_at?: string
           diverifikasi_at?: string | null
           diverifikasi_oleh?: string | null
+          dokumen_url?: string | null
           domisili_lat?: number | null
           domisili_lng?: number | null
-          dokumen_url?: string | null
           foto_url?: string | null
-          ktp_url?: string | null
           id?: string
+          ktp_url?: string | null
           saldo_komisi?: number
           status?: Database["public"]["Enums"]["koordinator_status"]
           tingkat?: Database["public"]["Enums"]["koordinator_tingkat"]
@@ -560,14 +573,20 @@ export type Database = {
           foto_url: string | null
           hubungan_keluarga: string | null
           id: string
+          kabupaten_kota: string | null
+          kebutuhan_khusus: string | null
+          kecamatan: string | null
           keluarga_id: string
+          kelurahan: string | null
           lat: number | null
           lng: number | null
           nama: string
-          updated_at: string
-          umur: number | null
+          provinsi: string | null
+          rt: number | null
+          rw: number | null
           tingkat_mobilitas: string | null
-          kebutuhan_khusus: string | null
+          umur: number | null
+          updated_at: string
         }
         Insert: {
           alamat: string
@@ -579,14 +598,20 @@ export type Database = {
           foto_url?: string | null
           hubungan_keluarga?: string | null
           id?: string
+          kabupaten_kota?: string | null
+          kebutuhan_khusus?: string | null
+          kecamatan?: string | null
           keluarga_id: string
+          kelurahan?: string | null
           lat?: number | null
           lng?: number | null
           nama: string
-          updated_at?: string
-          umur?: number | null
+          provinsi?: string | null
+          rt?: number | null
+          rw?: number | null
           tingkat_mobilitas?: string | null
-          kebutuhan_khusus?: string | null
+          umur?: number | null
+          updated_at?: string
         }
         Update: {
           alamat?: string
@@ -598,14 +623,20 @@ export type Database = {
           foto_url?: string | null
           hubungan_keluarga?: string | null
           id?: string
+          kabupaten_kota?: string | null
+          kebutuhan_khusus?: string | null
+          kecamatan?: string | null
           keluarga_id?: string
+          kelurahan?: string | null
           lat?: number | null
           lng?: number | null
           nama?: string
-          updated_at?: string
-          umur?: number | null
+          provinsi?: string | null
+          rt?: number | null
+          rw?: number | null
           tingkat_mobilitas?: string | null
-          kebutuhan_khusus?: string | null
+          umur?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -775,6 +806,57 @@ export type Database = {
           },
         ]
       }
+      promotion_checklist: {
+        Row: {
+          catatan_koordinator: string | null
+          completed_at: string | null
+          created_at: string
+          dikenal_warga: boolean
+          helper_id: string
+          id: string
+          identitas_valid: boolean
+          koordinator_id: string
+          wawancara_dilakukan: boolean
+        }
+        Insert: {
+          catatan_koordinator?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dikenal_warga?: boolean
+          helper_id: string
+          id?: string
+          identitas_valid?: boolean
+          koordinator_id: string
+          wawancara_dilakukan?: boolean
+        }
+        Update: {
+          catatan_koordinator?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dikenal_warga?: boolean
+          helper_id?: string
+          id?: string
+          identitas_valid?: boolean
+          koordinator_id?: string
+          wawancara_dilakukan?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_checklist_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_checklist_koordinator_id_fkey"
+            columns: ["koordinator_id"]
+            isOneToOne: false
+            referencedRelation: "koordinator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratings: {
         Row: {
           created_at: string
@@ -831,6 +913,7 @@ export type Database = {
         Row: {
           alasan: string
           created_at: string
+          decision_reason: string | null
           ditindak_oleh: string | null
           id: string
           reported_helper_id: string
@@ -841,6 +924,7 @@ export type Database = {
         Insert: {
           alasan: string
           created_at?: string
+          decision_reason?: string | null
           ditindak_oleh?: string | null
           id?: string
           reported_helper_id: string
@@ -851,6 +935,7 @@ export type Database = {
         Update: {
           alasan?: string
           created_at?: string
+          decision_reason?: string | null
           ditindak_oleh?: string | null
           id?: string
           reported_helper_id?: string
@@ -925,7 +1010,15 @@ export type Database = {
           parent_id?: string | null
           tingkat?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_evidence: {
         Row: {
@@ -1006,6 +1099,7 @@ export type Database = {
           checkin_lng: number | null
           checkin_time: string | null
           completed_at: string | null
+          confirmed_at: string | null
           created_at: string
           expires_at: string | null
           harga_dasar: number
@@ -1019,6 +1113,7 @@ export type Database = {
           mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
+          started_at: string | null
           status: Database["public"]["Enums"]["task_status"]
           updated_at: string
         }
@@ -1030,6 +1125,7 @@ export type Database = {
           checkin_lng?: number | null
           checkin_time?: string | null
           completed_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
           expires_at?: string | null
           harga_dasar: number
@@ -1043,6 +1139,7 @@ export type Database = {
           mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
         }
@@ -1054,6 +1151,7 @@ export type Database = {
           checkin_lng?: number | null
           checkin_time?: string | null
           completed_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
           expires_at?: string | null
           harga_dasar?: number
@@ -1067,6 +1165,7 @@ export type Database = {
           mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id?: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
         }
@@ -1136,57 +1235,57 @@ export type Database = {
       users: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
+          alamat_detail: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          kabupaten_kota: string | null
+          kecamatan: string | null
+          kelurahan: string | null
           phone: string | null
+          provinsi: string | null
           role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-          username: string
-          alamat_detail: string | null
           rt: number | null
           rw: number | null
-          kelurahan: string | null
-          kecamatan: string | null
-          kabupaten_kota: string | null
-          provinsi: string | null
+          updated_at: string
+          username: string
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          alamat_detail?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
+          kabupaten_kota?: string | null
+          kecamatan?: string | null
+          kelurahan?: string | null
           phone?: string | null
+          provinsi?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          username: string
-          alamat_detail?: string | null
           rt?: number | null
           rw?: number | null
-          kelurahan?: string | null
-          kecamatan?: string | null
-          kabupaten_kota?: string | null
-          provinsi?: string | null
+          updated_at?: string
+          username: string
         }
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          alamat_detail?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          kabupaten_kota?: string | null
+          kecamatan?: string | null
+          kelurahan?: string | null
           phone?: string | null
+          provinsi?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          username?: string
-          alamat_detail?: string | null
           rt?: number | null
           rw?: number | null
-          kelurahan?: string | null
-          kecamatan?: string | null
-          kabupaten_kota?: string | null
-          provinsi?: string | null
+          updated_at?: string
+          username?: string
         }
         Relationships: []
       }
@@ -1195,126 +1294,114 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acknowledge_emergency_alert: {
+        Args: { p_alert_id: string }
+        Returns: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["emergency_status"]
+          task_id: string
+          triggered_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "emergency_alerts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_decide_helper_status: {
+        Args: {
+          p_helper_id: string
+          p_reason: string
+          p_status: Database["public"]["Enums"]["helper_status"]
+        }
+        Returns: {
+          bio: string | null
+          created_at: string
+          domisili_lat: number | null
+          domisili_lng: number | null
+          foto_wajah_url: string | null
+          id: string
+          is_available: boolean
+          koordinator_id: string | null
+          ktp_url: string | null
+          promoted_at: string | null
+          promoted_by: string | null
+          radius_layanan_km: number
+          rating_avg: number
+          saldo_tersedia: number
+          status: Database["public"]["Enums"]["helper_status"]
+          suspend_reason: string | null
+          tingkat_kepercayaan: Database["public"]["Enums"]["trust_tier"]
+          total_tugas_selesai: number
+          tugas_selesai_berturut: number
+          updated_at: string
+          user_id: string
+          verified_by_admin_fallback: boolean
+          wilayah_domisili: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "helper_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_review_appeal: {
+        Args: {
+          appeal_id: string
+          next_status: Database["public"]["Enums"]["appeal_status"]
+          review_reason: string
+        }
+        Returns: {
+          alasan: string
+          created_at: string
+          direview_at: string | null
+          direview_oleh: string | null
+          id: string
+          review_reason: string | null
+          status: Database["public"]["Enums"]["appeal_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "appeals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_set_account_status: {
         Args: {
           next_status: Database["public"]["Enums"]["account_status"]
           target_user_id: string
         }
-        Returns: Database["public"]["Tables"]["users"]["Row"]
-      }
-      create_extra_service: {
-        Args: {
-          p_biaya: number
-          p_nama_layanan: string
-          p_task_id: string
+        Returns: {
+          account_status: Database["public"]["Enums"]["account_status"]
+          alamat_detail: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          kabupaten_kota: string | null
+          kecamatan: string | null
+          kelurahan: string | null
+          phone: string | null
+          provinsi: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          rt: number | null
+          rw: number | null
+          updated_at: string
+          username: string
         }
-        Returns: Database["public"]["Tables"]["task_extra_services"]["Row"]
-      }
-      create_midtrans_payment: {
-        Args: {
-          p_amount: number
-          p_order_id: string
-          p_snap_token: string
-          p_task_id: string
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: true
+          isSetofReturn: false
         }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      settle_midtrans_payment: {
-        Args: {
-          p_gateway_ref: string
-          p_order_id: string
-          p_payload: Json
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      release_task_payment: {
-        Args: { p_task_id: string }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      refund_midtrans_payment: {
-        Args: {
-          p_gateway_ref: string | null
-          p_payload: Json
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      cancel_task_with_compensation: {
-        Args: {
-          p_cancellation_reason: string
-          p_refund_payload: Json
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      decide_extra_service: {
-        Args: {
-          p_decision: string
-          p_extra_service_id: string
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      submit_task_evidence: {
-        Args: {
-          p_catatan_kondisi: string
-          p_client_submission_id: string
-          p_cerita_hari_ini: string | null
-          p_energi: number
-          p_foto_bukti_url: string
-          p_kualitas_tidur: number
-          p_mobilitas: number
-          p_mood: number
-          p_nafsu_makan: number
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      confirm_task_completion: {
-        Args: {
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      cancel_task: {
-        Args: {
-          p_cancellation_reason: string
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
-      }
-      prepare_midtrans_refund: {
-        Args: { p_task_id: string }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      confirm_midtrans_refund: {
-        Args: {
-          p_gateway_ref: string
-          p_payload: Json
-          p_task_id: string
-        }
-        Returns: Database["public"]["Tables"]["payments"]["Row"]
-      }
-      auto_release_held_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      create_emergency_alert: {
-        Args: { p_task_id: string }
-        Returns: Database["public"]["Tables"]["emergency_alerts"]["Row"]
-      }
-      acknowledge_emergency_alert: {
-        Args: { p_alert_id: string }
-        Returns: Database["public"]["Tables"]["emergency_alerts"]["Row"]
-      }
-      review_report: {
-        Args: {
-          p_decision_reason?: string | null
-          p_helper_status?: Database["public"]["Enums"]["helper_status"] | null
-          p_report_id: string
-          p_status: Database["public"]["Enums"]["report_status"]
-        }
-        Returns: Database["public"]["Tables"]["reports"]["Row"]
       }
       admin_topup_demo_wallet: {
         Args: {
@@ -1322,7 +1409,129 @@ export type Database = {
           topup_amount: number
           topup_reason: string
         }
-        Returns: Database["public"]["Tables"]["demo_wallet_ledger"]["Row"]
+        Returns: {
+          alasan: string
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          saldo_setelah: number
+          user_id: string
+          wallet_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "demo_wallet_ledger"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      assign_admin_fallback: {
+        Args: { p_helper_id: string; p_reason: string }
+        Returns: {
+          bio: string | null
+          created_at: string
+          domisili_lat: number | null
+          domisili_lng: number | null
+          foto_wajah_url: string | null
+          id: string
+          is_available: boolean
+          koordinator_id: string | null
+          ktp_url: string | null
+          promoted_at: string | null
+          promoted_by: string | null
+          radius_layanan_km: number
+          rating_avg: number
+          saldo_tersedia: number
+          status: Database["public"]["Enums"]["helper_status"]
+          suspend_reason: string | null
+          tingkat_kepercayaan: Database["public"]["Enums"]["trust_tier"]
+          total_tugas_selesai: number
+          tugas_selesai_berturut: number
+          updated_at: string
+          user_id: string
+          verified_by_admin_fallback: boolean
+          wilayah_domisili: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "helper_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      auto_release_held_payments: { Args: never; Returns: number }
+      cancel_task: {
+        Args: { p_cancellation_reason: string; p_task_id: string }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_task_with_compensation: {
+        Args: {
+          p_cancellation_reason: string
+          p_refund_payload: Json
+          p_task_id: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       charge_task_with_demo_wallet: {
         Args: {
@@ -1335,49 +1544,506 @@ export type Database = {
           saldo_tersisa: number
         }[]
       }
-      admin_review_appeal: {
-        Args: {
-          appeal_id: string
-          next_status: Database["public"]["Enums"]["appeal_status"]
-          review_reason: string
+      confirm_midtrans_refund: {
+        Args: { p_gateway_ref: string; p_payload: Json; p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
         }
-        Returns: Database["public"]["Tables"]["appeals"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-        confirm_task_cancel_compensation: {
-          Args: {
-            p_refund_payload: Json
-            p_task_id: string
-          }
-          Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      confirm_task_cancel_compensation: {
+        Args: { p_refund_payload: Json; p_task_id: string }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
         }
-        prepare_midtrans_payment_intent: {
-          Args: {
-            p_amount: number
-            p_task_id: string
-          }
-          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
         }
-        prepare_task_cancel_compensation: {
-          Args: {
-            p_cancellation_reason: string
-            p_task_id: string
-          }
-          Returns: Database["public"]["Tables"]["payments"]["Row"]
+      }
+      confirm_task_completion: {
+        Args: { p_task_id: string }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
         }
-        save_midtrans_snap_token: {
-          Args: {
-            p_order_id: string
-            p_snap_token: string
-            p_task_id: string
-          }
-          Returns: Database["public"]["Tables"]["payments"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
         }
-      reschedule_task: {
+      }
+      create_emergency_alert: {
+        Args: { p_task_id: string }
+        Returns: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["emergency_status"]
+          task_id: string
+          triggered_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "emergency_alerts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_extra_service: {
+        Args: { p_biaya: number; p_nama_layanan: string; p_task_id: string }
+        Returns: {
+          biaya: number
+          created_at: string
+          id: string
+          nama_layanan: string
+          status: Database["public"]["Enums"]["extra_service_status"]
+          task_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "task_extra_services"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_midtrans_payment: {
         Args: {
-          p_jadwal_waktu: string
+          p_amount: number
+          p_order_id: string
+          p_snap_token: string
           p_task_id: string
         }
-        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      decide_extra_service: {
+        Args: {
+          p_decision: string
+          p_extra_service_id: string
+          p_task_id: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      expire_pending_tasks: { Args: never; Returns: number }
+      is_admin: { Args: never; Returns: boolean }
+      is_koordinator_or_admin: { Args: never; Returns: boolean }
+      is_scoped_koordinator_for_user: {
+        Args: { p_target_user_id: string }
+        Returns: boolean
+      }
+      is_task_participant: { Args: { p_task_id: string }; Returns: boolean }
+      prepare_midtrans_payment_intent: {
+        Args: { p_amount: number; p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      prepare_midtrans_refund: {
+        Args: { p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      prepare_task_cancel_compensation: {
+        Args: { p_cancellation_reason: string; p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      refund_midtrans_payment: {
+        Args: { p_gateway_ref: string; p_payload: Json; p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      release_task_payment: {
+        Args: { p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reschedule_task: {
+        Args: { p_jadwal_waktu: string; p_task_id: string }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_report: {
+        Args: {
+          p_decision_reason?: string
+          p_helper_status?: Database["public"]["Enums"]["helper_status"]
+          p_report_id: string
+          p_status: Database["public"]["Enums"]["report_status"]
+        }
+        Returns: {
+          alasan: string
+          created_at: string
+          decision_reason: string | null
+          ditindak_oleh: string | null
+          id: string
+          reported_helper_id: string
+          reporter_id: string
+          status: Database["public"]["Enums"]["report_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      save_midtrans_snap_token: {
+        Args: { p_order_id: string; p_snap_token: string; p_task_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      settle_midtrans_payment: {
+        Args: { p_gateway_ref: string; p_order_id: string; p_payload: Json }
+        Returns: {
+          amount: number
+          created_at: string
+          gateway_ref: string | null
+          held_at: string | null
+          helper_share: number
+          id: string
+          jumlah_total: number
+          koordinator_share: number
+          midtrans_order_id: string | null
+          midtrans_snap_token: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          platform_fee: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          task_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_task_evidence: {
+        Args: {
+          p_catatan_kondisi: string
+          p_cerita_hari_ini: string
+          p_client_submission_id: string
+          p_energi: number
+          p_foto_bukti_url: string
+          p_kualitas_tidur: number
+          p_mobilitas: number
+          p_mood: number
+          p_nafsu_makan: number
+          p_task_id: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          catatan: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
+          checkin_time: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string | null
+          harga_dasar: number
+          harga_final: number
+          helper_id: string | null
+          id: string
+          jadwal_waktu: string
+          jadwal_waktu_asli: string | null
+          keluarga_id: string
+          lansia_id: string
+          reschedule_count: number
+          service_category_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
@@ -1412,10 +2078,10 @@ export type Database = {
         | "pending"
         | "held_escrow"
         | "released"
-        | "refunding"
         | "refunded"
         | "disputed"
         | "dibatalkan_kompensasi"
+        | "refunding"
       report_status: "menunggu" | "ditindak" | "selesai"
       task_assignment_mode: "langsung" | "pelamar" | "cepat"
       task_status:
@@ -1599,10 +2265,10 @@ export const Constants = {
         "pending",
         "held_escrow",
         "released",
-        "refunding",
         "refunded",
         "disputed",
         "dibatalkan_kompensasi",
+        "refunding",
       ],
       report_status: ["menunggu", "ditindak", "selesai"],
       task_status: [

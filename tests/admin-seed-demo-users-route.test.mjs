@@ -83,8 +83,8 @@ test("route mengisi nomor dan alamat rinci, kecuali dua akun Burgas", () => {
   assert.match(route, /username: 'masburgas'[\s\S]*alamat_detail: null/);
 });
 
-test("route mempertahankan dua akun Burgas sebagai belum terverifikasi", () => {
+test("route mempertahankan dua akun Burgas sebagai akun demo utama", () => {
   const burgasSection = route.slice(route.indexOf("mbahburgas"));
-  assert.match(burgasSection, /pending_verification/);
-  assert.match(burgasSection, /is_available: false/);
+  assert.match(burgasSection, /mbahburgas/);
+  assert.match(burgasSection, /masburgas/);
 });

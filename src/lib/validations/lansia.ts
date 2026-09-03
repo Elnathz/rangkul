@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { privateStorageReferenceSchema } from '@/lib/validations/storage';
 
 export const lansiaProfileSchema = z.object({
   nama: z.string().min(2, 'Nama lansia minimal 2 karakter'),
@@ -6,9 +7,9 @@ export const lansiaProfileSchema = z.object({
   lat: z.number(),
   lng: z.number(),
   catatan_kondisi: z.string().optional().or(z.literal('')),
-  dokumen_identitas_lansia_url: z.string().url('URL dokumen identitas tidak valid').optional().or(z.literal('')),
-  dokumen_hubungan_keluarga_url: z.string().url('URL dokumen hubungan keluarga tidak valid').optional().or(z.literal('')),
-  foto_url: z.string().url('URL foto tidak valid').optional().or(z.literal('')),
+  dokumen_identitas_lansia_url: privateStorageReferenceSchema.optional().or(z.literal('')).nullable(),
+  dokumen_hubungan_keluarga_url: privateStorageReferenceSchema.optional().or(z.literal('')).nullable(),
+  foto_url: privateStorageReferenceSchema.optional().or(z.literal('')).nullable(),
   hubungan_keluarga: z.string().min(1, 'Hubungan keluarga wajib diisi'),
   provinsi: z.string().min(1, 'Provinsi wajib diisi'),
   kabupaten_kota: z.string().min(1, 'Kabupaten/Kota wajib diisi'),

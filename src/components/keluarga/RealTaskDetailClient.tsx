@@ -60,9 +60,15 @@ export type RealTaskDetail = {
   } | null;
   extraServices: ExtraService[];
   evidence: {
-    foto_bukti_url: string;
+    foto_bukti_url: string | null;
     catatan_kondisi: string;
     created_at: string;
+  } | null;
+  payment: {
+    status: string;
+    payment_method: string | null;
+    held_at: string | null;
+    released_at: string | null;
   } | null;
   healthSnapshot: {
     energi: number;
@@ -391,8 +397,14 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
               </section>
               {task.status === "selesai" && task.evidence && (
                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
-                  <p className="text-sm font-bold text-slate-900">Laporan kunjungan sudah diterima</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">Periksa pembayaran untuk menyelesaikan pencairan dana melalui Midtrans Sandbox.</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {task.payment?.status === "released" ? "Dana kunjungan sudah dicairkan" : "Laporan kunjungan sudah diterima"}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                    {task.payment?.status === "released"
+                      ? "Pembayaran telah diteruskan ke Helper setelah konfirmasi laporan."
+                      : "Periksa pembayaran untuk menyelesaikan pencairan dana melalui Midtrans Sandbox."}
+                  </p>
                   <Link href={`/pembayaran/${task.id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0D47A1] px-4 text-sm font-bold text-white transition hover:bg-[#083578]">Buka pembayaran</Link>
                 </section>
               )}

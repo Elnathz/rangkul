@@ -1,4 +1,5 @@
 import { apiResponse, createApiError } from "@/lib/api-response";
+import { extractOwnedPrivateObjectPath } from "@/lib/storage/private-object";
 import { createClient } from "@/lib/supabase/server";
 import { taskEvidenceSchema } from "@/lib/validations/task-evidence";
 
@@ -40,24 +41,21 @@ export async function POST(request: Request, context: RouteContext) {
       }, 422);
     }
 
-    // Path bukti harus milik actor dan bertipe foto_bukti, bukan signed URL external.
-    const pathParts = validation.data.foto_bukti_url.split("/");
-    const fileOwnerId = pathParts[0];
-    const fileDocType = pathParts[1];
-    if (fileOwnerId !== user.id || fileDocType !== "foto_bukti") {
-      return createApiError("validation_error", "Berkas bukti tidak berasal dari akun Anda", 422);
+    const evidencePath = extractOwnedPrivateObjectPath(validation.data.foto_bukti_url, user.id, "foto_bukti");
+    if (!evidencePath) {
+      return createApiError("validation_error", "Foto bukti harus berasal dari upload akun Anda", 422);
     }
 
     const { data: task, error: submitError } = await supabase.rpc("submit_task_evidence", {
       p_task_id: taskId,
-      p_foto_bukti_url: validation.data.foto_bukti_url,
+      p_foto_bukti_url: evidencePath,
       p_catatan_kondisi: validation.data.catatan_kondisi,
       p_energi: validation.data.skor_energi,
       p_mobilitas: validation.data.skor_mobilitas,
       p_mood: validation.data.skor_mood,
       p_nafsu_makan: validation.data.skor_nafsu_makan,
       p_kualitas_tidur: validation.data.skor_tidur,
-      p_cerita_hari_ini: validation.data.cerita_hari_ini,
+      p_cerita_hari_ini: validation.data.cerita_hari_ini ?? "",
       p_client_submission_id: validation.data.client_submission_id,
     });
 

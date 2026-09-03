@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, MapPin, Image as ImageIcon } from 'lucide-react';
-import { createClient } from '@/lib/supabase/server';
-import { resolvePrivateFileUrl } from '@/lib/storage/read-file';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
+import { resolvePrivatePhotoUrl } from '@/lib/storage/private-object';
 import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
 import HelperVerificationButtons from '@/components/koordinator/HelperVerificationButtons';
 import MapRadiusViewer from '@/components/koordinator/MapRadiusViewer';
@@ -49,10 +49,6 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
     );
   }
 
-  // Dokumen privat hanya ditandatangani bila Koordinator ini berhak (wilayah sama).
-  const fotoWajahUrl = await resolvePrivateFileUrl(helper.foto_wajah_url);
-  const ktpUrl = await resolvePrivateFileUrl(helper.ktp_url);
-
   const { data: pendingPhotoRequest } = await supabase
     .from('helper_photo_change_requests')
     .select('id, foto_wajah_url')
@@ -60,9 +56,16 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
     .eq('status', 'pending')
     .maybeSingle();
 
-  const pendingPhotoUrl = pendingPhotoRequest
-    ? await resolvePrivateFileUrl(pendingPhotoRequest.foto_wajah_url)
-    : null;
+  const privateDocumentReader = await createAdminClient();
+  const signPrivateDocument = async (path: string, expiresIn: number) => {
+    const { data } = await privateDocumentReader.storage.from('dokumen').createSignedUrl(path, expiresIn);
+    return data?.signedUrl ?? null;
+  };
+  const [helperPhotoUrl, helperKtpUrl, pendingPhotoUrl] = await Promise.all([
+    resolvePrivatePhotoUrl(helper.foto_wajah_url, signPrivateDocument),
+    resolvePrivatePhotoUrl(helper.ktp_url, signPrivateDocument),
+    resolvePrivatePhotoUrl(pendingPhotoRequest?.foto_wajah_url, signPrivateDocument),
+  ]);
 
   // Fetch Kategori yang dipilih Helper lewat tabel relasi
   let categories: string[] = [];
@@ -141,7 +144,7 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
 
           <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="space-y-6">
-                {pendingPhotoRequest && <HelperPhotoApprovalButton requestId={pendingPhotoRequest.id} photoUrl={pendingPhotoUrl ?? pendingPhotoRequest.foto_wajah_url} />}
+                {pendingPhotoRequest && pendingPhotoUrl && <HelperPhotoApprovalButton requestId={pendingPhotoRequest.id} photoUrl={pendingPhotoUrl} />}
                 <div>
                    <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Bio Singkat & Pengalaman</h3>
                    <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
@@ -225,15 +228,15 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
              <div className="space-y-6">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Foto Wajah Terkini</h3>
-                  {fotoWajahUrl ? (
+                  {helperPhotoUrl ? (
                     <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden shadow-sm relative group aspect-square max-w-[240px]">
                        <img 
-                         src={fotoWajahUrl}
+                         src={helperPhotoUrl}
                          alt="Foto Wajah Helper" 
                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                        />
                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <a href={fotoWajahUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-3 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center hover:bg-gray-50">
+                        <a href={helperPhotoUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-3 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center hover:bg-gray-50">
                            <ImageIcon className="w-4 h-4 mr-1.5" />
                            Layar Penuh
                          </a>
@@ -248,15 +251,15 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
 
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Dokumen Terlampir (KTP)</h3>
-                  {ktpUrl ? (
+                  {helperKtpUrl ? (
                     <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden shadow-sm relative group aspect-[4/3] w-full max-w-sm">
-                       <img 
-                         src={ktpUrl} 
-                         alt="KTP Helper" 
-                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                       <img
+                         src={helperKtpUrl}
+                         alt="KTP Helper"
+                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                        />
                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <a href={ktpUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg flex items-center hover:bg-gray-50">
+                         <a href={helperKtpUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg flex items-center hover:bg-gray-50">
                            <ImageIcon className="w-4 h-4 mr-2" />
                            Lihat Layar Penuh
                          </a>
