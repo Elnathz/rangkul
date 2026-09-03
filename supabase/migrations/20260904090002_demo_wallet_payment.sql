@@ -59,17 +59,21 @@ BEGIN
     RAISE EXCEPTION 'Tugas belum berada pada tahap pembayaran' USING ERRCODE = '40900';
   END IF;
 
-  -- Idempotensi: payment saldo_demo yang sudah tertahan dengan key sama -> return existing.
-  SELECT * INTO v_payment FROM public.payments WHERE task_id = p_task_id;
-  IF FOUND AND (v_payment.status = 'held_escrow' OR v_payment.status = 'released') THEN
+  -- Idempotensi: payment saldo_demo yang sudah tertahan/released dengan key sama -> return existing.
+  -- Constraint unik task_id memastikan satu task hanya boleh punya satu baris payments,
+  -- jadi bila sudah ada baris dari metode lain (mis. `pending` dari Midtrans), Saldo Demo
+  -- tidak boleh INSERT lagi. Tugas itu masih diproses alur metode yang sedang berjalan.
+  SELECT * INTO v_payment FROM public.payments WHERE task_id = p_task_id FOR UPDATE;
+  IF FOUND THEN
     IF v_payment.payment_method = 'saldo_demo'
+       AND v_payment.status IN ('held_escrow', 'released')
        AND v_payment.idempotency_key IS NOT DISTINCT FROM p_idempotency_key THEN
       SELECT COALESCE(saldo, 0) INTO v_new_balance
       FROM public.demo_wallets WHERE user_id = caller_id;
       RETURN QUERY SELECT v_payment.id, v_payment.status, v_new_balance;
       RETURN;
     END IF;
-    RAISE EXCEPTION 'Tugas ini sudah dibayar' USING ERRCODE = '40900';
+    RAISE EXCEPTION 'Tugas ini sudah memiliki pembayaran berjalan melalui metode lain' USING ERRCODE = '40900';
   END IF;
 
   v_charge := COALESCE(v_task.harga_final, 0);
