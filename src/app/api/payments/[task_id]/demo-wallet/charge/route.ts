@@ -35,7 +35,7 @@ export async function POST(
         return createApiError("forbidden", "Anda tidak memiliki akses ke tugas ini", 403);
       }
       if (code === "40900") {
-        return createApiError("conflict", "Tugas ini sudah dibayar atau belum berada pada tahap pembayaran", 409);
+        return createApiError("conflict", "Tugas ini sudah memiliki pembayaran berjalan melalui metode lain atau berada di tahap yang belum bisa dibayar.", 409);
       }
       if (code === "45001") {
         const balance = Number((error.details || "").split(" = ")[1] || 0);
