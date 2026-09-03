@@ -23,6 +23,7 @@ export const helperProfileSchema = z.object({
 
 export const helperProfileUpdateSchema = z.object({
   bio: z.string().max(500, 'Bio maksimal 500 karakter').nullable().optional(),
+  is_available: z.boolean().optional(),
   wilayah_domisili: z.string().min(3, 'Wilayah domisili wajib diisi minimal 3 karakter').optional(),
   domisili_lat: z.number().finite().nullable().optional(),
   domisili_lng: z.number().finite().nullable().optional(),
