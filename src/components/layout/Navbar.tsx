@@ -1,446 +1,210 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Bell, LogOut, AlertCircle, Coins, MessageSquare } from "lucide-react";
-import SOSDialog from "@/components/ui/SOSDialog";
-import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { Bell, ChevronDown, LogOut, Menu, Pencil, ShieldAlert, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
-function HamburgerIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-5 h-5">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-5 h-5">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
+import { MobileBottomNavigation } from "@/components/layout/MobileBottomNavigation";
+import { NavigationIcon } from "@/components/layout/NavigationIcon";
+import SOSDialog from "@/components/ui/SOSDialog";
+import { Button } from "@/components/ui/button";
+import { ROLE_NAVIGATION, isNavigationItemActive, type AppRole, type NavigationItem } from "@/lib/navigation/role-navigation";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
-// Static fallback links for unauthenticated users
-const defaultNavLinks = [
-  { href: "/#layanan", label: "Layanan" },
-  { href: "/#cara-kerja", label: "Cara Kerja" },
-  { href: "/#peran", label: "Bergabung" },
-  { href: "/help/faq", label: "FAQ" },
+const publicNavigation: readonly NavigationItem[] = [
+  { href: "/#layanan", label: "Layanan", icon: "calendar" },
+  { href: "/#cara-kerja", label: "Cara Kerja", icon: "clipboard" },
+  { href: "/#riwayat-rangkul", label: "Riwayat Rangkul", icon: "file" },
 ];
 
+const liquidTransition = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
+const instantTransition = { duration: 0 };
+
+function isAppRole(value: unknown): value is AppRole {
+  return value === "keluarga" || value === "helper" || value === "koordinator" || value === "admin";
+}
+
+function profileHref(role: AppRole | null) {
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "helper") return "/helper/dashboard";
+  if (role === "koordinator") return "/koordinator/dashboard";
+  return "/beranda";
+}
+
+function editProfileHref(role: AppRole | null) {
+  if (role === "helper") return "/helper/profil/edit";
+  if (role === "koordinator") return "/koordinator/profil/edit";
+  if (role === "keluarga") return "/beranda/profil/edit";
+  return null;
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "R";
+}
+
+function roleLabel(role: AppRole | null) {
+  if (!role) return null;
+  return role[0].toUpperCase() + role.slice(1);
+}
+
 export default function Navbar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [sosOpen, setSosOpen] = useState(false);
+  const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
   const [user, setUser] = useState<User | null>(null);
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [sosOpen, setSosOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [badges, setBadges] = useState<Record<string, number>>({});
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+
+  const role = isAppRole(user?.user_metadata?.role) ? user.user_metadata.role : null;
+  const username = String(user?.user_metadata?.full_name ?? user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Profil");
+  const navigation = role ? ROLE_NAVIGATION[role] : publicNavigation;
+  const profileEditHref = editProfileHref(role);
+  const isConsumerRole = role === "keluarga" || role === "helper";
+  const showInlineNavigation = !role || isConsumerRole;
+  const showMobileDrawerTrigger = !isConsumerRole;
+  const currentPageLabel = navigation.find((item) => isNavigationItemActive(pathname, item))?.label ?? roleLabel(role);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let active = true;
+    const loadNotifications = async () => {
+      try {
+        const response = await fetch("/api/notifications?limit=1", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = await response.json() as { unread_count?: number; badges?: Record<string, number> };
+        if (active) {
+          setUnreadCount(payload.unread_count ?? 0);
+          setBadges(payload.badges ?? {});
+        }
+      } catch {
+        if (active) setBadges({});
+      }
+    };
+
+    void loadNotifications();
+    const intervalId = window.setInterval(loadNotifications, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const menuTrigger = menuTriggerRef.current;
+    const focusableElements = () => Array.from(drawerRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])") ?? []).filter((element) => !element.hasAttribute("disabled"));
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenuOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable = focusableElements();
+      const first = focusable.at(0);
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    const focusTimer = window.setTimeout(() => focusableElements().at(0)?.focus(), 0);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      menuTrigger?.focus();
+    };
+  }, [menuOpen]);
+
+  const getBadgeCount = (item: NavigationItem) => Math.max(
+    badges[item.href] ?? 0,
+    ...(item.aliases ?? []).map((alias) => badges[alias] ?? 0),
+  );
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     localStorage.removeItem("sb-mock-session");
+    setProfileOpen(false);
+    setMenuOpen(false);
     router.push("/login");
     router.refresh();
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!(e.target as Element).closest('.profile-dropdown-container')) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const [isVerified, setIsVerified] = useState<boolean | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
-      if (data.user) {
-        const role = data.user.user_metadata?.role;
-        if (role === 'helper') {
-          const { data: prof } = await supabase.from('helper_profiles').select('id, foto_wajah_url').eq('user_id', data.user.id).single();
-          if (prof) {
-            setIsVerified(true);
-            if (prof.foto_wajah_url) setAvatarUrl(prof.foto_wajah_url);
-          } else {
-            setIsVerified(false);
-          }
-        } else if (role === 'koordinator') {
-          const { data: prof } = await supabase.from('koordinator_profiles').select('id').eq('user_id', data.user.id).single();
-          if (prof) {
-            setIsVerified(true);
-          } else {
-            setIsVerified(false);
-          }
-        } else {
-          setIsVerified(true);
-        }
-      }
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    let isMounted = true;
-    const loadUnreadNotifications = async () => {
-      try {
-        const response = await fetch("/api/notifications?limit=1", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = await response.json() as { unread_count?: number, badges?: Record<string, number> };
-        if (isMounted) {
-          setUnreadNotificationCount(data.unread_count || 0);
-          setBadges(data.badges || {});
-        }
-      } catch {
-        if (isMounted) {
-          setUnreadNotificationCount(0);
-          setBadges({});
-        }
-      }
-    };
-
-    void loadUnreadNotifications();
-    const intervalId = window.setInterval(loadUnreadNotifications, 60000);
-    return () => {
-      isMounted = false;
-      window.clearInterval(intervalId);
-    };
-  }, [user]);
-
-  const role = user?.user_metadata?.role;
-  const username =
-    user?.user_metadata?.username ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "Profil";
-
-  const profileHref =
-    role === "admin"
-      ? "/admin/dashboard"
-      : role === "helper"
-      ? "/helper/dashboard"
-      : role === "koordinator"
-      ? "/koordinator/dashboard"
-      : "/beranda";
-
-  const editProfileHref = 
-    role === "helper" ? "/helper/profil/edit" :
-    role === "koordinator" ? "/koordinator/profil/edit" : 
-    role === "keluarga" ? "/beranda/profil/edit" : "#";
-
-  let currentNavLinks = defaultNavLinks;
-  if (pathname === '/') {
-    currentNavLinks = defaultNavLinks;
-  } else if (role === 'keluarga') {
-    currentNavLinks = [
-      { href: "/beranda", label: "Dashboard" },
-      { href: "/cari-helper", label: "Cari Helper" },
-      { href: "/kunjungan", label: "Kunjungan" },
-      { href: "/beranda/profil", label: "Profil Keluarga" },
-      { href: "/beranda/pesan", label: "Pesan" },
-    ];
-  } else if (role === 'helper') {
-    currentNavLinks = [
-      { href: "/helper/dashboard", label: "Dashboard" },
-      { href: "/helper/tugas/baru", label: "Cari Tugas" },
-      { href: "/tugas", label: "Papan Tugas" },
-      { href: "/helper/pesan", label: "Pesan" },
-      ...(isVerified === false ? [{ href: "/helper/verifikasi", label: "Verifikasi Profil" }] : []),
-    ];
-  } else if (role === 'koordinator') {
-    currentNavLinks = [
-      { href: "/koordinator/dashboard", label: "Dashboard" },
-      { href: "/koordinator/antrean", label: "Antrean Helper" },
-      { href: "/koordinator/helper", label: "Helper Terverifikasi" },
-      { href: "/koordinator/antrean-persetujuan", label: "Persetujuan Tugas" },
-      { href: "/koordinator/darurat", label: "Darurat" },
-      { href: "/koordinator/laporan", label: "Laporan" },
-      ...(isVerified === false ? [{ href: "/koordinator/pengajuan", label: "Data RT/RW" }] : []),
-    ];
-  } else if (role === 'admin') {
-    currentNavLinks = [
-      { href: "/admin/dashboard", label: "Dashboard" },
-      { href: "/admin/users", label: "Pengguna" },
-      { href: "/admin/helpers", label: "Helper" },
-      { href: "/admin/categories", label: "Kategori" },
-      { href: "/admin/reports", label: "Laporan" },
-      { href: "/admin/koordinator/pengajuan", label: "Pengajuan" },
-      { href: "/admin/audit-logs", label: "Audit" },
-    ];
-  }
+  const drawerItems = useMemo(() => navigation, [navigation]);
 
   return (
-    <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-border"
-          : "bg-transparent border-b border-transparent"
-      }`}
-    >
-      <nav className="w-full max-w-7xl mx-auto px-4 lg:px-5 h-20 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center group shrink-0">
-          <img
-            src="/long-logo.svg"
-            alt="Rangkul"
-            width={110}
-            height={32}
-            className="transition-transform group-hover:scale-[1.02]"
-          />
-        </Link>
+    <>
+      <header className={cn("fixed inset-x-0 top-0 z-50 border-b border-border bg-card", role === "koordinator" || role === "admin" ? "lg:left-64" : "")}>
+        <nav className={cn("flex h-[var(--header-height)] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8", showInlineNavigation ? "mx-auto max-w-7xl" : "")} aria-label="Navigasi utama">
+          {showInlineNavigation ? <Link href={role ? profileHref(role) : "/"} className="flex min-h-11 shrink-0 items-center gap-2 rounded-md pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            <Image src="/logo.png" alt="" aria-hidden="true" width={44} height={44} className="size-10 object-contain sm:size-11" priority />
+            <span className="font-heading text-lg font-extrabold tracking-[-0.03em] text-primary sm:text-xl">Rangkul</span>
+          </Link> : <div className="min-w-0"><p className="truncate font-heading text-base font-bold tracking-[-0.02em] text-foreground">{currentPageLabel}</p><p className="hidden text-xs font-medium text-muted-foreground sm:block">{roleLabel(role)} Rangkul</p></div>}
 
-        {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-8 text-base font-semibold text-muted-foreground">
-          {currentNavLinks.map(({ href, label }) => {
-            const isActive = pathname === href;
-            const badgeCount = badges[href] || 0;
-            return (
-              <li key={href}>
-                <Link href={href} className={`relative ${isActive ? "text-[#0D47A1] font-bold" : "hover:text-[#0D47A1] transition-colors"}`}>
-                  {label}
-                  {badgeCount > 0 && (
-                    <span className="absolute -right-3 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white" aria-hidden="true">
-                      {badgeCount > 99 ? "99+" : badgeCount}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+          {showInlineNavigation ? <LayoutGroup id="desktop-navigation"><ul className="hidden min-w-0 items-center gap-1 lg:flex">{navigation.map((item) => {
+            const active = isNavigationItemActive(pathname, item);
+            const badgeCount = getBadgeCount(item);
+            return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined} className={cn("relative inline-flex min-h-11 items-center overflow-hidden rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2", active ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
+              {active ? <motion.span layoutId="desktop-active-navigation" aria-hidden="true" className="absolute inset-0 rounded-md bg-primary/10" transition={prefersReducedMotion ? instantTransition : liquidTransition} /> : null}
+              <span className="relative z-10">{item.label}</span>
+              {badgeCount > 0 ? <span className="relative z-10 ml-1.5 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">{badgeCount > 99 ? "99+" : badgeCount}</span> : null}
+            </Link></li>;
+          })}</ul></LayoutGroup> : <p className="hidden text-sm font-medium text-muted-foreground lg:block">Pilih grup di sidebar untuk membuka menu.</p>}
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          {role === "helper" && (
-            <button 
-              onClick={() => setSosOpen(true)}
-              className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-full flex items-center gap-1.5 font-bold transition-colors border border-red-200 shadow-sm mr-2"
-            >
-              <AlertCircle className="w-4 h-4" />
-              <span>SOS</span>
-            </button>
-          )}
-          {user ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/notifikasi"
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:bg-slate-50 hover:text-[#0D47A1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
-                aria-label={unreadNotificationCount > 0 ? `Notifikasi, ${unreadNotificationCount} belum dibaca` : "Notifikasi"}
-              >
-                <Bell className="h-5 w-5" aria-hidden="true" />
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white" role="status" aria-live="polite">
-                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
-                  </span>
-                )}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {role === "helper" ? <button type="button" onClick={() => setSosOpen(true)} className="hidden min-h-11 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 sm:inline-flex"><ShieldAlert className="size-4" aria-hidden="true" />SOS</button> : null}
+            {user ? <>
+              <Link href="/notifikasi" className="relative inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"}>
+                <Bell className="size-5" aria-hidden="true" />
+                {unreadCount > 0 ? <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}
               </Link>
-              <div className="relative profile-dropdown-container">
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 rounded-full border border-transparent p-1 pl-1 pr-3 transition-colors hover:border-gray-200 hover:bg-gray-100"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`}
-                    alt="Avatar"
-                    className="h-8 w-8 rounded-full border border-gray-200 bg-blue-50 object-cover"
-                  />
-                  <span className="text-sm font-semibold text-gray-700">@{username}</span>
+              <div className="relative hidden sm:block">
+                <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen} aria-controls="profile-menu" className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span><span className="max-w-28 truncate">{username}</span><ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
                 </button>
-
-                {dropdownOpen && (
-                <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{username}</p>
-                    <p className="text-xs text-gray-500 truncate capitalize">{role}</p>
-                  </div>
-                  <Link 
-                    href={profileHref} 
-                    onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Dashboard Anda
-                  </Link>
-                  {role !== "admin" && (
-                    <Link 
-                      href={editProfileHref} 
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                      Edit Profil
-                    </Link>
-                  )}
-                  {role === "koordinator" && (
-                    <>
-                      <Link 
-                        href="/koordinator/komisi" 
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <Coins className="w-4 h-4 text-emerald-600" />
-                        Rincian Komisi (3%)
-                      </Link>
-                      <Link 
-                        href="/koordinator/pesan" 
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <MessageSquare className="w-4 h-4 text-blue-600" />
-                        Pesan & Obrolan
-                      </Link>
-                    </>
-                  )}
-                  <button 
-                    onClick={handleLogout} 
-                    className="flex items-center w-full gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 text-left transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" /> Keluar
-                  </button>
-                </div>
-                )}
+                {profileOpen ? <div id="profile-menu" className="absolute right-0 top-full mt-2 w-56 rounded-md border border-border bg-card p-1.5 shadow-[var(--shadow-overlay)]"><p className="px-3 py-2 text-sm font-semibold text-foreground">{username}</p><p className="px-3 pb-2 text-xs capitalize text-muted-foreground">{role}</p><Link href={profileHref(role)} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">Beranda</Link>{profileEditHref ? <Link href={profileEditHref} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted"><Pencil className="size-4" aria-hidden="true" />Edit profil</Link> : null}<button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button></div> : null}
               </div>
-            </div>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild className="font-medium">
-                <Link href="/login">Masuk</Link>
-              </Button>
-              <Button
-                size="sm"
-                asChild
-                className="bg-brand-gradient hover:opacity-90 text-white font-semibold px-5 shadow-sm"
-              >
-                <Link href="/register">Daftar</Link>
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile SOS & hamburger */}
-        <div className="md:hidden flex items-center gap-2">
-          {role === "helper" && (
-            <button 
-              onClick={() => setSosOpen(true)}
-              className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-full flex items-center justify-center transition-colors border border-red-200 shadow-sm"
-              aria-label="Darurat SOS"
-            >
-              <AlertCircle className="w-5 h-5" />
-            </button>
-          )}
-          <button
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Buka menu navigasi"
-          >
-            <HamburgerIcon open={menuOpen} />
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-border px-6 py-4 flex flex-col gap-4 shadow-lg">
-          {currentNavLinks.map(({ href, label }) => {
-            const badgeCount = badges[href] || 0;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="relative w-fit text-base font-semibold text-foreground hover:text-[#0D47A1] py-1"
-                onClick={() => setMenuOpen(false)}
-              >
-                {label}
-                {badgeCount > 0 && (
-                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black text-white align-middle" aria-hidden="true">
-                    {badgeCount > 99 ? "99+" : badgeCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-          <div className="flex flex-col gap-2 pt-2 border-t border-border">
-            {user ? (
-              <div className="flex flex-col gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex items-center gap-3 p-2 mb-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={avatarUrl || `https://api.dicebear.com/9.x/avataaars/svg?seed=${username}&backgroundColor=b6e3f4`} 
-                    alt="Avatar" 
-                    className="w-10 h-10 rounded-full border border-gray-200 bg-blue-50 object-cover"
-                  />
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="text-sm font-semibold text-gray-900 truncate">@{username}</span>
-                    <span className="text-xs text-gray-500 capitalize">{role}</span>
-                  </div>
-                </div>
-                <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm">
-                  <Link href="/notifikasi" onClick={() => setMenuOpen(false)}>
-                    <Bell className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Notifikasi{unreadNotificationCount > 0 ? ` (${unreadNotificationCount})` : ""}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm">
-                  <Link href={profileHref} onClick={() => setMenuOpen(false)}>
-                    Dashboard
-                  </Link>
-                </Button>
-                {role !== "admin" && (
-                  <Button variant="outline" asChild className="w-full justify-center bg-white shadow-sm gap-2">
-                    <Link href={editProfileHref} onClick={() => setMenuOpen(false)}>
-                      <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                      Edit Profil
-                    </Link>
-                  </Button>
-                )}
-                <Button variant="outline" onClick={handleLogout} className="w-full justify-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-100 shadow-sm gap-2">
-                  <LogOut className="w-4 h-4" />
-                  Keluar
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href="/login" onClick={() => setMenuOpen(false)}>Masuk</Link>
-                </Button>
-                <Button asChild className="w-full bg-brand-gradient text-white hover:opacity-90">
-                  <Link href="/register" onClick={() => setMenuOpen(false)}>Daftar</Link>
-                </Button>
-              </>
-            )}
+            </> : <div className="hidden items-center gap-2 sm:flex"><Button variant="ghost" asChild className="min-h-11"><Link href="/login">Masuk</Link></Button><Button asChild className="min-h-11 bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90"><Link href="/register">Daftar</Link></Button></div>}
+            {showMobileDrawerTrigger ? <button ref={menuTriggerRef} type="button" onClick={() => setMenuOpen(true)} className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden" aria-label="Buka menu"><Menu className="size-5" aria-hidden="true" /></button> : null}
           </div>
-        </div>
-      )}
+        </nav>
+      </header>
+
+      {menuOpen ? <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu navigasi"><button type="button" className="absolute inset-0 bg-slate-950/35" onClick={() => setMenuOpen(false)} aria-label="Tutup menu" /><aside ref={drawerRef} className="relative flex h-full w-[min(21rem,88vw)] flex-col bg-card shadow-[var(--shadow-overlay)]"><div className="flex h-[var(--header-height)] items-center justify-between border-b border-border px-4"><span className="font-heading text-base font-bold text-foreground">Menu {roleLabel(role) ?? "Rangkul"}</span><button type="button" onClick={() => setMenuOpen(false)} className="inline-flex size-11 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Tutup menu"><X className="size-5" aria-hidden="true" /></button></div><nav className="flex-1 overflow-y-auto p-3" aria-label="Menu perangkat kecil"><ul className="space-y-1">{drawerItems.map((item) => { const active = isNavigationItemActive(pathname, item); return <li key={item.href}><Link href={item.href} onClick={() => setMenuOpen(false)} className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><NavigationIcon name={item.icon} className="size-5" />{item.label}</Link></li>; })}</ul></nav><div className="border-t border-border p-3">{user ? <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button> : <div className="grid gap-2"><Button variant="outline" asChild className="min-h-11"><Link href="/login" onClick={() => setMenuOpen(false)}>Masuk</Link></Button><Button asChild className="min-h-11"><Link href="/register" onClick={() => setMenuOpen(false)}>Daftar</Link></Button></div>}</div></aside></div> : null}
+      {role === "keluarga" || role === "helper" ? <MobileBottomNavigation role={role} items={ROLE_NAVIGATION[role]} badges={badges} /> : null}
       <SOSDialog isOpen={sosOpen} onClose={() => setSosOpen(false)} userRole={role} />
-    </header>
+    </>
   );
 }
