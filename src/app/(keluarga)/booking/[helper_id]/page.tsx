@@ -291,16 +291,14 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
                 const selectedCat = categories.find(c => c.id === form.service_category_id);
                 const basePrice = selectedCat?.harga_dasar || 0;
                 const extraTimePrice = (form.tambahan_waktu_menit || 0) * 1000;
-                const serviceFee = 2500;
-                const tax = Math.round((basePrice + extraTimePrice + serviceFee) * 0.11);
-                const total = basePrice + extraTimePrice + serviceFee + tax;
+                const total = basePrice + extraTimePrice;
 
                 return (
                   <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 mt-6 space-y-4">
-                    <p className="text-base font-bold text-foreground border-b border-primary/10 pb-3">Rincian Biaya</p>
+                    <p className="text-base font-bold text-foreground border-b border-primary/10 pb-3">Rincian Biaya (Fix Price)</p>
                     <div className="space-y-2.5 text-sm">
                       <div className="flex justify-between items-center text-muted-foreground">
-                        <span>Harga Dasar Layanan (Best Price)</span>
+                        <span>Harga Dasar Layanan</span>
                         <span className="font-medium text-foreground">Rp {basePrice.toLocaleString("id-ID")}</span>
                       </div>
                       {extraTimePrice > 0 && (
@@ -309,14 +307,6 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
                           <span className="font-medium text-foreground">Rp {extraTimePrice.toLocaleString("id-ID")}</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span>Biaya Layanan Aplikasi</span>
-                        <span className="font-medium text-foreground">Rp {serviceFee.toLocaleString("id-ID")}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span>Pajak (11%)</span>
-                        <span className="font-medium text-foreground">Rp {tax.toLocaleString("id-ID")}</span>
-                      </div>
                     </div>
                     <div className="border-t border-primary/20 pt-4 flex justify-between items-center mt-4">
                       <p className="text-base font-bold text-foreground">Total Pembayaran</p>
