@@ -36,7 +36,7 @@ const roles = [
     description:
       "Jadilah helper terverifikasi di lingkungan RT/RW kamu. Terima tugas dari keluarga sekitar dan tingkatkan pendapatanmu dengan jadwal kerja fleksibel.",
     features: [
-      "Estimasi penghasilan Rp 500rb - 3jt per bulan",
+      "Penghasilan transparan 90% dari harga setiap tugas selesai",
       "Harga fix per kategori, tanpa tawar-menawar",
       "Diverifikasi Koordinator RT/RW domisili",
       "Bisa terima tugas lintas RT dalam radius layanan",

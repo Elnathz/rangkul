@@ -1,27 +1,34 @@
+import CTABannerSection from "@/components/landing/CTABannerSection";
 import HeroSection from "@/components/landing/HeroSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
-import StepsSection from "@/components/landing/StepsSection";
-import ServicesSection from "@/components/landing/ServicesSection";
+import RiwayatRangkulPreview from "@/components/landing/RiwayatRangkulPreview";
 import RolesSection from "@/components/landing/RolesSection";
-import JoinHelperSection from "@/components/landing/JoinHelperSection";
-import JoinKoordinatorSection from "@/components/landing/JoinKoordinatorSection";
-import TopHelpersSection from "@/components/landing/TopHelpersSection";
-import TestimonialsSection from "@/components/landing/TestimonialsSection";
-import CTABannerSection from "@/components/landing/CTABannerSection";
+import ServicesSection from "@/components/landing/ServicesSection";
+import StepsSection from "@/components/landing/StepsSection";
 
 export default function LandingPage() {
   return (
-    <>
+    <main className="w-full max-w-full overflow-x-hidden">
+      {/* 1. Hero with Trust Strip */}
       <HeroSection />
-      <HowItWorksSection />
-      <RolesSection />
+
+      {/* 2. Cara Kerja (3 Langkah) */}
       <StepsSection />
+
+      {/* 3. Layanan (Kategori Jasa & Harga Fix) */}
       <ServicesSection />
-      <JoinHelperSection />
-      <TopHelpersSection />
-      <JoinKoordinatorSection />
-      <TestimonialsSection />
+
+      {/* 4. Riwayat Rangkul WOW Section */}
+      <RiwayatRangkulPreview />
+
+      {/* 5. Verifikasi Komunitas (3 Pilar Kepercayaan RT/RW) */}
+      <HowItWorksSection />
+
+      {/* 6. Pilihan Peran (Keluarga, Helper, Koordinator) */}
+      <RolesSection />
+
+      {/* 7. Final Banner CTA */}
       <CTABannerSection />
-    </>
+    </main>
   );
 }
