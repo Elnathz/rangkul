@@ -37,8 +37,8 @@ export default function QuickBookingForm({
 
     try {
       const now = new Date();
+      const jadwalWaktu = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
       const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
-      const jadwalWaktu = now.toISOString();
 
       const response = await fetch("/api/booking/task", {
         method: "POST",

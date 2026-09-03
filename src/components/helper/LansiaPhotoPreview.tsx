@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Image as ImageIcon, ZoomIn } from "lucide-react";
+import { Image as ImageIcon, Loader2, ZoomIn } from "lucide-react";
 
 import { ImagePreviewModal } from "@/components/ui/ImagePreviewModal";
+import { useSignedFile } from "@/hooks/use-signed-file";
 
 export function LansiaPhotoPreview({
   src,
@@ -14,6 +15,9 @@ export function LansiaPhotoPreview({
 }) {
   const [open, setOpen] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
+  const { url, status } = useSignedFile(src);
+  const resolved = src?.startsWith("http") ? src : url;
+  const readable = Boolean(resolved && status !== "forbidden" && status !== "error");
   const initials = name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "L";
 
   return (
@@ -21,13 +25,17 @@ export function LansiaPhotoPreview({
       <button
         type="button"
         className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-blue-100 via-slate-100 to-emerald-100 text-left shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
-        onClick={() => src && !failed && setOpen(true)}
-        disabled={!src || failed}
-        aria-label={src && !failed ? `Buka foto ${name}` : `Foto ${name} belum tersedia`}
+        onClick={() => readable && !failed && setOpen(true)}
+        disabled={!readable || failed}
+        aria-label={readable && !failed ? `Buka foto ${name}` : `Foto ${name} belum tersedia`}
       >
-        {src && !failed ? (
+        {status === "loading" ? (
+          <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+            <Loader2 className="h-6 w-6 animate-spin" aria-label="Memuat foto" />
+          </div>
+        ) : readable && !failed ? (
           <img
-            src={src}
+            src={resolved ?? undefined}
             alt={`Foto ${name}`}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             onError={() => setFailed(true)}
@@ -38,20 +46,20 @@ export function LansiaPhotoPreview({
             <span className="text-sm font-semibold">Foto lansia belum tersedia</span>
           </div>
         )}
-        {src && !failed && (
+        {readable && !failed && (
           <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-slate-950/75 px-3 py-2 text-xs font-bold text-white backdrop-blur-sm transition group-hover:bg-[#0D47A1]">
             <ZoomIn className="h-4 w-4" aria-hidden="true" />
             Klik untuk memperbesar
           </span>
         )}
-        {!src && !failed && (
+        {!readable && !failed && status !== "loading" && (
           <ImageIcon className="absolute right-4 top-4 h-5 w-5 text-white/70" aria-hidden="true" />
         )}
       </button>
       <ImagePreviewModal
         open={open}
         onOpenChange={setOpen}
-        src={src}
+        src={readable ? resolved : null}
         alt={`Foto ${name}`}
         title={`Foto ${name}`}
       />

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, User, Users, ShieldCheck, Edit } from "lucide-react";
+import { SignedImage } from "@/components/ui/SignedImage";
+import { MapPin, Phone, User, Users, ShieldCheck, Edit, Wallet } from "lucide-react";
 import type { Database } from "@/types/database";
 
 type FamilyProfile = Database["public"]["Tables"]["users"]["Row"] & {
@@ -94,7 +95,7 @@ export default function KeluargaProfilPage() {
               
               <div className="relative pt-8">
                 {profile?.foto_url ? (
-                  <img src={profile.foto_url} alt="Profile" className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white shadow-md bg-white" />
+                  <SignedImage path={profile.foto_url} alt="Profile" className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white shadow-md bg-white" fallbackClassName="w-24 h-24 mx-auto rounded-full bg-blue-50 border-4 border-white shadow-md" />
                 ) : (
                   <div className="w-24 h-24 mx-auto rounded-full bg-blue-50 border-4 border-white shadow-md flex items-center justify-center text-blue-600 text-2xl font-bold">
                     {profile?.full_name?.charAt(0) || "K"}
@@ -131,6 +132,23 @@ export default function KeluargaProfilPage() {
                 </div>
               </div>
             </div>
+
+            {/* Saldo Demo */}
+            <Link
+              href="/saldo"
+              className="flex items-center justify-between rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100/60 px-5 py-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0D47A1]/10">
+                  <Wallet className="h-5 w-5 text-[#0D47A1]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Demo Wallet</p>
+                  <p className="text-sm font-bold text-slate-800">Isi Saldo</p>
+                </div>
+              </div>
+              <svg className="h-5 w-5 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </Link>
           </div>
 
           {/* Kolom Kanan: Daftar Lansia */}

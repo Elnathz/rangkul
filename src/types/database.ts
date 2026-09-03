@@ -746,6 +746,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -764,6 +765,7 @@ export type Database = {
           held_at?: string | null
           helper_share?: number
           id?: string
+          idempotency_key?: string | null
           jumlah_total: number
           koordinator_share?: number
           midtrans_order_id?: string | null
@@ -782,6 +784,7 @@ export type Database = {
           held_at?: string | null
           helper_share?: number
           id?: string
+          idempotency_key?: string | null
           jumlah_total?: number
           koordinator_share?: number
           midtrans_order_id?: string | null
@@ -1107,6 +1110,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1132,6 +1136,7 @@ export type Database = {
           jadwal_waktu_asli?: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id: string
           started_at?: string | null
@@ -1157,6 +1162,7 @@ export type Database = {
           jadwal_waktu_asli?: string | null
           keluarga_id?: string
           lansia_id?: string
+          mode_penugasan?: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count?: number
           service_category_id?: string
           started_at?: string | null
@@ -1526,6 +1532,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      charge_task_with_demo_wallet: {
+        Args: {
+          p_task_id: string
+          p_idempotency_key?: string | null
+        }
+        Returns: {
+          payment_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+          saldo_tersisa: number
+        }[]
       }
       confirm_midtrans_refund: {
         Args: { p_gateway_ref: string; p_payload: Json; p_task_id: string }
@@ -2066,6 +2083,7 @@ export type Database = {
         | "dibatalkan_kompensasi"
         | "refunding"
       report_status: "menunggu" | "ditindak" | "selesai"
+      task_assignment_mode: "langsung" | "pelamar" | "cepat"
       task_status:
         | "diajukan"
         | "menunggu_persetujuan_koordinator"

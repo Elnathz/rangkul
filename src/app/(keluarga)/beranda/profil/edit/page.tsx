@@ -43,6 +43,7 @@ export default function KeluargaEditProfilPage() {
 
   const fotoInputRef = React.useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -55,12 +56,11 @@ export default function KeluargaEditProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      // Set username
       const { data: profile } = await supabase
         .from('users')
         .select('id, full_name, username, phone, alamat_detail, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       const { data: lansiaData } = await supabase
         .from('lansia_profiles')
@@ -81,9 +81,14 @@ export default function KeluargaEditProfilPage() {
           phone: profile.phone?.replace(/^\+62/, "0") || "",
           foto_url: user.user_metadata?.avatar_url || "",
           alamat: profile.alamat_detail?.includes("|") ? parsed.detail : profile.alamat_detail || "",
-          rt: profile.rt?.toString() || parsed.rt,
-          rw: profile.rw?.toString() || parsed.rw,
-          region: { provinsi: profile.provinsi || parsed.provinsi, kota: profile.kabupaten_kota || parsed.kotaKabupaten, kecamatan: profile.kecamatan || parsed.kecamatan, kelurahan: profile.kelurahan || parsed.kelurahan },
+          rt: profile.rt?.toString() || parsed.rt || "",
+          rw: profile.rw?.toString() || parsed.rw || "",
+          region: {
+            provinsi: profile.provinsi || parsed.provinsi || "",
+            kota: profile.kabupaten_kota || parsed.kotaKabupaten || "",
+            kecamatan: profile.kecamatan || parsed.kecamatan || "",
+            kelurahan: profile.kelurahan || parsed.kelurahan || "",
+          },
         };
 
         setForm(nextForm);
@@ -105,30 +110,56 @@ export default function KeluargaEditProfilPage() {
     }
 
     const currentSnapshot = JSON.stringify({ ...form, password: "", confirmPassword: "", foto_url: "" });
-    if (initialSnapshot.current === currentSnapshot && !form.password) {
+    if (initialSnapshot.current === currentSnapshot && !form.password && !fotoFile) {
       showToast("Tidak ada perubahan.", "success");
       setLoading(false);
       return;
     }
 
     try {
-      const alamat_detail = [
-        [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean).join(", "),
-        form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
-        form.alamat,
-      ].filter(Boolean).join(" | ");
+      const regionParts = [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi].filter(Boolean);
+      const regionStr = regionParts.length > 0 ? regionParts.join(", ") : "";
+      const rtrwStr = form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : (form.rt ? `RT ${form.rt}` : (form.rw ? `RW ${form.rw}` : ""));
+      const alamat_detail = [regionStr, rtrwStr, form.alamat].filter(Boolean).join(" | ");
+
+      let avatarPath = form.foto_url;
+      if (fotoFile) {
+        const uploadData = new FormData();
+        uploadData.append("file", fotoFile);
+        uploadData.append("docType", "foto_keluarga");
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: uploadData });
+        const uploaded = await uploadRes.json();
+        if (uploadRes.ok && (uploaded.data?.path || uploaded.path)) {
+          avatarPath = uploaded.data?.path || uploaded.path;
+        }
+      }
+
       const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }),
+        body: JSON.stringify({
+          full_name: form.username,
+          phone: form.phone,
+          alamat_detail,
+          rt: form.rt ? Number(form.rt) : undefined,
+          rw: form.rw ? Number(form.rw) : undefined,
+          kelurahan: form.region.kelurahan || undefined,
+          kecamatan: form.region.kecamatan || undefined,
+          kabupaten_kota: form.region.kota || undefined,
+          provinsi: form.region.provinsi || undefined,
+        }),
       });
+
       const body = await response.json().catch(() => null) as { message?: string } | null;
       if (!response.ok) throw new Error(body?.message || "Profil gagal diperbarui");
+
       if (form.password) {
         const { error } = await createClient().auth.updateUser({ password: form.password });
         if (error) throw new Error(error.message);
       }
-      router.push("/beranda");
+
+      showToast("Profil keluarga berhasil diperbarui!", "success");
+      setTimeout(() => router.push("/beranda/profil"), 1000);
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : "Terjadi kesalahan.");
       setLoading(false);
@@ -234,6 +265,7 @@ export default function KeluargaEditProfilPage() {
                         }
                         setForm({ ...form, foto_url: URL.createObjectURL(file) });
                         setFotoFileName(file.name);
+                        setFotoFile(file);
                       }
                     }}
                   />

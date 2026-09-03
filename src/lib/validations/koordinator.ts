@@ -30,6 +30,26 @@ export const koordinatorRejectSchema = z.object({
 
 export type KoordinatorRejectInput = z.infer<typeof koordinatorRejectSchema>;
 
+export const koordinatorStatusSchema = z
+  .object({
+    status: z.enum(['verified', 'rejected'], {
+      error: 'Status harus verified atau rejected',
+    }),
+    alasan: z.string().min(5).optional(),
+    catatan: z.string().max(500).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === 'rejected' && (!data.alasan || data.alasan.trim().length < 5)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['alasan'],
+        message: 'Alasan penolakan wajib diisi minimal 5 karakter',
+      });
+    }
+  });
+
+export type KoordinatorStatusInput = z.infer<typeof koordinatorStatusSchema>;
+
 export const promoteHelperSchema = z.object({
   identitas_valid: z.literal(true, {
     message: 'Identitas harus divalidasi'

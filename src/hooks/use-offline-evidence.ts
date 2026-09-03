@@ -29,8 +29,8 @@ export function useOfflineEvidence(taskId: string, ownerId: string, syncDraft: S
     draftRef.current = draft;
   }, [draft]);
 
-  const sync = React.useCallback(async (candidate: OfflineEvidenceDraft | null = draftRef.current) => {
-    if (!candidate || !navigator.onLine) return;
+  const sync = React.useCallback(async (candidate: OfflineEvidenceDraft | null = draftRef.current): Promise<boolean> => {
+    if (!candidate || !navigator.onLine) return false;
     setSyncError(null);
     setDraft((current) => current ? { ...current, status: "syncing" } : current);
     const syncing: OfflineEvidenceDraft = { ...candidate, status: "syncing" };
@@ -39,6 +39,8 @@ export function useOfflineEvidence(taskId: string, ownerId: string, syncDraft: S
       await syncDraftRef.current(syncing);
       await deleteEvidenceDraft(syncing.id);
       setDraft(null);
+      setSyncError(null);
+      return true;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Draf belum dapat disinkronkan";
       const failed: OfflineEvidenceDraft = {
@@ -51,6 +53,7 @@ export function useOfflineEvidence(taskId: string, ownerId: string, syncDraft: S
       await saveEvidenceDraft(failed).catch(() => undefined);
       setDraft(failed);
       setSyncError(message);
+      return false;
     }
   }, []);
 

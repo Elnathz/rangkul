@@ -31,7 +31,8 @@ export async function GET(request: Request) {
 
     const adminSupabase = await createAdminClient();
 
-    // Fetch payments with task join
+    // Fetch payments with task join, scoped to Koordinator's wilayah
+    // Chain: payments.task_id → tasks.helper_id → helper_profiles.koordinator_id
     let query = adminSupabase
       .from("payments")
       .select(`
@@ -47,10 +48,12 @@ export async function GET(request: Request) {
           keluarga_id,
           helper_id,
           status,
-          service_categories ( nama )
+          service_categories ( nama ),
+          helper_profiles!inner ( koordinator_id )
         )
       `, { count: "exact" })
-      .eq("status", "released");
+      .eq("status", "released")
+      .eq("tasks.helper_profiles.koordinator_id", profile.id);
 
     if (fromDate) {
       query = query.gte("released_at", fromDate);
@@ -69,7 +72,7 @@ export async function GET(request: Request) {
     }
 
     const items = (payments || []).map((p: Record<string, unknown>) => {
-      const taskObj = p.tasks as { service_categories?: { nama?: string } | null } | null;
+      const taskObj = p.tasks as { service_categories?: { nama?: string } | null; helper_profiles?: { koordinator_id?: string } | null } | null;
       return {
         id: p.id as string,
         task_id: p.task_id as string,

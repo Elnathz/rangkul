@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import KoordinatorStatusGuard from "@/components/koordinator/KoordinatorStatusGuard";
 import { KoordinatorEmergencyClient } from "@/components/koordinator/KoordinatorEmergencyClient";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, TriangleAlert } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,38 @@ export default async function DaruratPage() {
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any[];
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Status Darurat</h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Pantau dan tangani sinyal darurat (SOS) dari Helper di wilayah Anda
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <TriangleAlert className="w-9 h-9 text-red-600 mx-auto mb-3" />
+          <h2 className="font-semibold text-red-700">Gagal memuat data darurat</h2>
+          <p className="text-sm text-red-600/80 mt-1">
+            Data tidak dapat dimuat saat ini. Periksa koneksi Anda lalu coba muat ulang halaman.
+          </p>
+          <Link
+            href="/koordinator/darurat"
+            className="inline-flex items-center justify-center h-11 min-w-11 rounded-xl bg-red-600 text-white text-sm font-medium mt-4 px-5"
+          >
+            Muat ulang
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

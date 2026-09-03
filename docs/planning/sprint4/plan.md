@@ -1,3 +1,4 @@
+
 # Sprint 4: Riwayat Rangkul, Admin, Offline Draft, dan Kesiapan Demo
 
 > **Untuk agent pelaksana:** gunakan `superpowers:executing-plans` atau `superpowers:subagent-driven-development` untuk mengeksekusi rencana ini per task. Gunakan `superpowers:test-driven-development` untuk perubahan kode dan `superpowers:verification-before-completion` sebelum commit. Checkbox di dokumen ini adalah tracker kerja, bukan bukti selesai. Setiap checkbox hanya boleh ditandai setelah evidence yang disebutkan tersedia.
@@ -116,7 +117,7 @@ Mervin memiliki vertical slice berikut sampai migration/RLS dan automated test, 
 | `src/types/database.ts`                            | owner migration terakhir | owner lain     | Regenerasi setelah migration di-apply ke cloud development. Jangan edit manual untuk menyembunyikan schema drift. |
 | `supabase/seed.sql`                                | Farros                   | Mervin         | Mervin mengirim fixture domain sebagai patch kecil; Farros melakukan integrasi dan replay akhir.                  |
 | `src/lib/audit.ts`                                 | Farros                   | Mervin         | Tambahan action dibuat sekali dan digunakan semua route.                                                          |
-| `src/lib/validations/*`                            | owner domain<br />       | owner lain     | Schema browser dan server harus memakai source yang sama bila bentuk input sama.                                  |
+| `src/lib/validations/*`                            | owner domain             | owner lain     | Schema browser dan server harus memakai source yang sama bila bentuk input sama.                                  |
 | `.github/workflows/*`                              | Farros                   | Mervin         | Perubahan jadwal/deploy hanya setelah dry run command lokal lulus.                                                |
 
 Branch kerja mengikuti AGENTS.md: `feature/<scope>-<deskripsi>`. Setiap branch membuat PR ke `develop`. Integrasi akhir Sprint 4 ada di `develop`; `develop` ke `main` hanya melalui PR setelah gate lengkap.

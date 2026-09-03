@@ -144,6 +144,7 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
   }, [router]);
 
   const [evidenceOpen, setEvidenceOpen] = React.useState(false);
+  const evidenceFile = task.evidence?.foto_bukti_url ?? null;
   const [tipAmount, setTipAmount] = React.useState("");
   const [isSubmittingTip, setIsSubmittingTip] = React.useState(false);
   const [feedback, setFeedback] = React.useState<{
@@ -298,12 +299,14 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                     <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Laporan kunjungan</p><h2 className="mt-1 text-lg font-black text-slate-950">Catatan dari Helper</h2></div>
                     <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" aria-hidden="true" />
                   </div>
-                  {task.evidence.foto_bukti_url && (
-                    <button type="button" className="group mt-4 block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1]" onClick={() => setEvidenceOpen(true)} aria-label="Perbesar foto bukti kunjungan">
-                      <img src={task.evidence.foto_bukti_url} alt="Bukti kunjungan lansia" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                    </button>
-                  )}
-                  <ImagePreviewModal open={evidenceOpen} onOpenChange={setEvidenceOpen} src={task.evidence.foto_bukti_url} alt="Bukti kunjungan lansia" title="Bukti kunjungan" />
+                  <button type="button" className="group mt-4 block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1]" onClick={() => evidenceFile && setEvidenceOpen(true)} aria-label="Perbesar foto bukti kunjungan">
+                    {evidenceFile ? (
+                      <img src={evidenceFile} alt="Bukti kunjungan lansia" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">Bukti kunjungan tidak tersedia</div>
+                    )}
+                  </button>
+                  <ImagePreviewModal open={evidenceOpen} onOpenChange={setEvidenceOpen} src={evidenceFile} alt="Bukti kunjungan lansia" title="Bukti kunjungan" />
                   <p className="mt-4 text-sm leading-relaxed text-slate-700">{task.evidence.catatan_kondisi}</p>
                   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
                     {[['Energi', task.healthSnapshot.energi], ['Mobilitas', task.healthSnapshot.mobilitas], ['Mood', task.healthSnapshot.mood], ['Nafsu makan', task.healthSnapshot.nafsu_makan], ['Tidur', task.healthSnapshot.kualitas_tidur]].map(([label, score]) => <div key={String(label)} className="rounded-xl border border-emerald-100 bg-white p-3 text-center"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-lg font-black text-emerald-700">{score}/5</p></div>)}

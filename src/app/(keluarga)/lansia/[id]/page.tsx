@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { SignedImage } from "@/components/ui/SignedImage";
 import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, UserRound, Calendar, MapPin, Stethoscope, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import type { Database } from "@/types/database";
@@ -164,7 +165,7 @@ export default function LansiaProfilPage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="w-32 h-32 rounded-3xl bg-blue-50 flex items-center justify-center shrink-0 border-4 border-white shadow-lg overflow-hidden transform -rotate-3 hover:rotate-0 transition-transform duration-300">
               {lansia.foto_url ? (
-                <img src={lansia.foto_url} alt={lansia.nama} className="w-full h-full object-cover" />
+                <SignedImage path={lansia.foto_url} alt={lansia.nama} className="w-full h-full object-cover" fallbackClassName="h-full w-full" />
               ) : (
                 <UserRound className="w-12 h-12 text-[#0D47A1]/40" />
               )}

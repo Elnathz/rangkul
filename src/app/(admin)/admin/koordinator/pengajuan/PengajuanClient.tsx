@@ -31,10 +31,10 @@ export default function PengajuanClient({ queue, page, pageSize, total }: { queu
   const handleApprove = async (id: string) => {
     try {
       setLoadingId(id);
-      const res = await fetch(`/api/admin/koordinator/${id}/approve`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/koordinator/${id}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catatan: 'Disetujui dari dashboard admin' })
+        body: JSON.stringify({ status: 'verified', catatan: 'Disetujui dari dashboard admin' })
       });
       if (!res.ok) throw new Error('Gagal menyetujui');
       router.refresh();
@@ -52,10 +52,10 @@ export default function PengajuanClient({ queue, page, pageSize, total }: { queu
     if (!rejectId || !alasan) return;
     try {
       setLoadingId(rejectId);
-      const res = await fetch(`/api/admin/koordinator/${rejectId}/reject`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/koordinator/${rejectId}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alasan })
+        body: JSON.stringify({ status: 'rejected', alasan })
       });
       if (!res.ok) throw new Error('Gagal menolak');
       setRejectId(null);
