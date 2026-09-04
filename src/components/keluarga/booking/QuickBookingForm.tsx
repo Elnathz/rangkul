@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
 
 type LansiaOption = { id: string; nama: string };
-type CategoryOption = { id: string; nama: string; harga_dasar: number; estimasi_durasi_menit: number; is_high_risk: boolean };
+type CategoryOption = {
+  id: string;
+  nama: string;
+  tingkat?: string;
+  harga_dasar: number;
+  estimasi_durasi_menit: number;
+  is_high_risk: boolean;
+};
 
 export default function QuickBookingForm({
   lansiaList,
@@ -101,22 +109,16 @@ export default function QuickBookingForm({
         </select>
       </div>
 
-      {/* Select Category */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Kategori Layanan (Non-High Risk)</label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 focus:border-[#0D47A1] focus:outline-none"
-          required
-        >
-          {availableCategories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nama} — Rp {c.harga_dasar.toLocaleString("id-ID")} ({c.estimasi_durasi_menit} mnt)
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Select Category differentiated by Tingkatan */}
+      <CustomServiceTierSelect
+        categories={availableCategories}
+        selectedId={selectedCategory}
+        onSelect={(id) => setSelectedCategory(id)}
+        label="Kategori Layanan (Non-High Risk)"
+        required
+        allowHighRisk={false}
+        helperText="Pilih layanan non-high risk (Tingkat Ringan atau Sedang) untuk penugasan cepat 15 menit."
+      />
 
       {/* Catatan */}
       <div className="space-y-2">

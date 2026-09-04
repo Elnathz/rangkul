@@ -113,8 +113,31 @@ export default function CariHelperPage() {
             <legend className="text-xs font-bold uppercase tracking-wider text-slate-500">Tingkat layanan</legend>
             <div className="mt-2 space-y-1">{["", "ringan", "sedang", "berat"].map((item) => <label key={item || "semua"} className="flex min-h-11 items-center gap-3 text-sm text-slate-700"><input type="radio" checked={tingkat === item} onChange={() => setTingkat(item)} className="h-5 w-5" />{item || "Semua tingkat"}</label>)}</div>
           </fieldset>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Radius maksimal: {radius} km<input type="range" min="1" max="15" value={radius} onChange={(event) => setRadius(Number(event.target.value))} className="mt-3 min-h-11 w-full accent-blue-600" /></label>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Kategori layanan<select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-medium text-slate-800"><option value="">Semua kategori</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            Kategori layanan
+            <select
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+              className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-medium text-slate-800"
+            >
+              <option value="">Semua kategori</option>
+              <optgroup label="Tingkat Ringan (≤30 Menit)">
+                {categories.filter(c => c.tingkat === "ringan" || !c.tingkat).map((item) => (
+                  <option key={item.id} value={item.id}>{item.nama}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Tingkat Sedang (31-60 Menit)">
+                {categories.filter(c => c.tingkat === "sedang").map((item) => (
+                  <option key={item.id} value={item.id}>{item.nama}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Tingkat Berat (>60 Menit)">
+                {categories.filter(c => c.tingkat === "berat").map((item) => (
+                  <option key={item.id} value={item.id}>{item.nama}</option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
         </aside>
 
         <section className="min-w-0 space-y-6">

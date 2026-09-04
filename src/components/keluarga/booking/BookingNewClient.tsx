@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Loader2, Zap, Calendar, Users } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QuickBookingForm from "@/components/keluarga/booking/QuickBookingForm";
+import CustomModeSelect, { type BookingMode } from "@/components/keluarga/booking/CustomModeSelect";
+import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
 
 export type BookingLansia = { id: string; nama: string; alamat: string };
 export type BookingCategory = {
@@ -94,30 +96,6 @@ export default function BookingNewClient({
     }
   };
 
-  const modeMeta: Record<Mode, { label: string; short: string; icon: typeof Calendar; active: string; idle: string }> = {
-    langsung: {
-      label: "Booking Biasa",
-      short: "langsung",
-      icon: Calendar,
-      active: "bg-white text-slate-900 shadow-sm",
-      idle: "text-slate-600 hover:text-slate-900",
-    },
-    pelamar: {
-      label: "Pilih dari Pelamar",
-      short: "pelamar",
-      icon: Users,
-      active: "bg-white text-violet-900 shadow-sm",
-      idle: "text-slate-600 hover:text-slate-900",
-    },
-    cepat: {
-      label: "Cari Cepat (15 Menit)",
-      short: "cepat",
-      icon: Zap,
-      active: "bg-white text-amber-900 shadow-sm",
-      idle: "text-slate-600 hover:text-slate-900",
-    },
-  };
-
   return (
     <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-2xl space-y-6">
@@ -126,37 +104,25 @@ export default function BookingNewClient({
         </Link>
 
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Buat permintaan pendampingan</h1>
-          <p className="mt-2 text-sm text-slate-600">Pilih lansia, kategori aktif, dan mode penugasan.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">Buat permintaan pendampingan</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-600">Pilih lansia tersayang, kategori layanan per tingkatan, dan mode penugasan.</p>
         </div>
 
-        <div className="grid gap-3 rounded-2xl bg-slate-200/60 p-1.5 sm:grid-cols-3">
-          {availableModes.map((m) => {
-            const meta = modeMeta[m];
-            const Icon = meta.icon;
-            return (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold transition ${
-                  mode === m ? meta.active : meta.idle
-                }`}
-              >
-                <Icon className="h-4 w-4 text-[#0D47A1]" /> {meta.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Custom Dropdown Metode Penugasan */}
+        <CustomModeSelect
+          value={mode as BookingMode}
+          onChange={(newMode) => setMode(newMode)}
+          availableModes={availableModes as BookingMode[]}
+        />
 
         {error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
 
         {mode === "cepat" ? (
           <QuickBookingForm lansiaList={lansias} categories={categories} />
         ) : (
-          <form onSubmit={mode === "pelamar" ? submitPelamar : submitDirect} className="space-y-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <form onSubmit={mode === "pelamar" ? submitPelamar : submitDirect} className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             <label className="block text-sm font-bold text-slate-800">
-              Lansia
+              Pilih Lansia
               <select required value={form.lansia_id} onChange={(event) => setForm({ ...form, lansia_id: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal">
                 <option value="">Pilih lansia</option>
                 {lansias.map((item) => (
@@ -164,17 +130,17 @@ export default function BookingNewClient({
                 ))}
               </select>
             </label>
-            <label className="block text-sm font-bold text-slate-800">
-              Kategori layanan
-              <select required value={form.service_category_id} onChange={(event) => setForm({ ...form, service_category_id: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal">
-                <option value="">Pilih kategori</option>
-                {directCategories.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.nama} · {item.tingkat} · Rp {Number(item.harga_dasar).toLocaleString("id-ID")}
-                  </option>
-                ))}
-              </select>
-            </label>
+
+            {/* Kategori Layanan dibedakan per tingkatan */}
+            <CustomServiceTierSelect
+              categories={directCategories}
+              selectedId={form.service_category_id}
+              onSelect={(id) => setForm({ ...form, service_category_id: id })}
+              label="Kategori Layanan"
+              required
+              allowHighRisk={true}
+              helperText="Layanan dikelompokkan berdasarkan tingkatan durasi dan kebutuhan pendampingan."
+            />
             <label className="block text-sm font-bold text-slate-800">
               Jadwal
               <input required type="datetime-local" value={form.jadwal_waktu} onChange={(event) => setForm({ ...form, jadwal_waktu: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" />
