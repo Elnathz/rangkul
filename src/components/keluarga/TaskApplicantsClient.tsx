@@ -9,7 +9,6 @@ import {
   Check,
   CheckCircle2,
   Clock,
-  Loader2,
   MapPin,
   RefreshCw,
   ShieldCheck,
@@ -19,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export type ApplicantItem = {
   application_id: string;
@@ -343,53 +343,25 @@ export default function TaskApplicantsClient({
         </section>
 
         {/* Confirmation Modal */}
-        {confirmModalApplicant && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                <User className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-xl font-black text-slate-950">
-                Konfirmasi Pilihan Helper
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Apakah Anda yakin ingin menugaskan{" "}
-                <strong className="text-slate-900">{confirmModalApplicant.helper.full_name}</strong>{" "}
-                untuk kunjungan ini?
-              </p>
-              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900">
-                Pelamar lain yang sedang menunggu akan ditolak secara otomatis dan status tugas akan dikonfirmasi.
-              </div>
-
-              <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={selectingId !== null}
-                  onClick={() => setConfirmModalApplicant(null)}
-                  className="min-h-[44px] rounded-xl font-bold text-slate-700"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="button"
-                  disabled={selectingId !== null}
-                  onClick={() => handleSelectApplicant(confirmModalApplicant)}
-                  className="min-h-[44px] rounded-xl bg-violet-700 font-bold text-white hover:bg-violet-800"
-                >
-                  {selectingId === confirmModalApplicant.application_id ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Memproses...
-                    </>
-                  ) : (
-                    "Ya, Pilih Helper"
-                  )}
-                </Button>
-              </div>
-            </div>
+        <ConfirmDialog
+          open={Boolean(confirmModalApplicant)}
+          onOpenChange={(open) => !open && !selectingId && setConfirmModalApplicant(null)}
+          title="Konfirmasi Pilihan Helper"
+          description={`Apakah Anda yakin ingin menugaskan ${confirmModalApplicant?.helper.full_name || "Helper ini"} untuk kunjungan pendampingan ini?`}
+          confirmLabel="Terima & Pilih Helper"
+          tone="primary"
+          loading={selectingId !== null}
+          onConfirm={() => {
+            if (confirmModalApplicant) {
+              void handleSelectApplicant(confirmModalApplicant);
+            }
+          }}
+          icon={<User className="h-6 w-6 text-[#0D47A1]" aria-hidden="true" />}
+        >
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900">
+            Pelamar lain yang sedang menunggu akan ditolak secara otomatis dan status tugas akan dikonfirmasi.
           </div>
-        )}
+        </ConfirmDialog>
       </div>
     </main>
   );
