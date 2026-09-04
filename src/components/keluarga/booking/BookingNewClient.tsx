@@ -78,13 +78,15 @@ export default function BookingNewClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          jadwal_waktu: new Date(form.jadwal_waktu).toISOString(),
           mode_penugasan: "pelamar",
           catatan: form.catatan || "Pilih dari Pelamar",
         }),
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(body?.message || "Permintaan booking gagal dibuat");
-      const taskId = body?.data?.id || body?.task?.id;
+      const taskId = body?.task?.id || body?.data?.id || body?.id;
+      if (!taskId) throw new Error("ID tugas tidak ditemukan pada respons");
       router.push(`/kunjungan/${taskId}`);
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : "Permintaan booking gagal dibuat");

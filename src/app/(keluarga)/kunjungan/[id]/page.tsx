@@ -20,6 +20,8 @@ type TaskRow = {
   harga_dasar: number;
   harga_final: number;
   catatan: string | null;
+  mode_penugasan?: string | null;
+  expires_at?: string | null;
   lansia_profiles: Relation<RealTaskDetail["lansia"]>;
   service_categories: Relation<RealTaskDetail["category"]>;
   helper_profiles: Relation<RealTaskDetail["helper"]>;
@@ -51,7 +53,7 @@ export default async function KunjunganDetailPage({ params }: PageProps) {
   const taskReader = await createAdminClient();
   const { data: task, error: taskError } = await taskReader
     .from("tasks")
-    .select("id, status, keluarga_id, lansia_id, jadwal_waktu, harga_dasar, harga_final, catatan, lansia_profiles!inner ( nama, alamat, lat, lng, foto_url, catatan_kondisi ), service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, is_high_risk ), helper_profiles ( id, user_id, foto_wajah_url, rating_avg, total_tugas_selesai, users!inner ( full_name ) ), task_evidence ( foto_bukti_url, catatan_kondisi, created_at ), health_snapshots ( energi, mobilitas, mood, nafsu_makan, kualitas_tidur, cerita_hari_ini, created_at ), payments ( status, payment_method, held_at, released_at )")
+    .select("id, status, keluarga_id, lansia_id, jadwal_waktu, harga_dasar, harga_final, catatan, mode_penugasan, expires_at, lansia_profiles!inner ( nama, alamat, lat, lng, foto_url, catatan_kondisi ), service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, is_high_risk ), helper_profiles ( id, user_id, foto_wajah_url, rating_avg, total_tugas_selesai, users!inner ( full_name ) ), task_evidence ( foto_bukti_url, catatan_kondisi, created_at ), health_snapshots ( energi, mobilitas, mood, nafsu_makan, kualitas_tidur, cerita_hari_ini, created_at ), payments ( status, payment_method, held_at, released_at )")
     .eq("id", id)
     .eq("keluarga_id", user.id)
     .maybeSingle();
@@ -95,6 +97,8 @@ export default async function KunjunganDetailPage({ params }: PageProps) {
         harga_dasar: Number(row.harga_dasar),
         harga_final: Number(row.harga_final),
         catatan: row.catatan,
+        mode_penugasan: row.mode_penugasan ?? null,
+        expires_at: row.expires_at ?? null,
         lansia: { ...lansia, foto_url: lansiaPhotoUrl },
         category,
         helper: helper ? { ...helper, foto_wajah_url: helperPhotoUrl } : null,

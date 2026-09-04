@@ -102,7 +102,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc("accept_quick_task", {
         p_task_id: taskId,
-        p_helper_user_id: user.id,
       });
 
       if (rpcErr) {

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -1023,6 +1023,48 @@ export type Database = {
           },
         ]
       }
+      task_applications: {
+        Row: {
+          diajukan_at: string
+          diputus_at: string | null
+          helper_id: string
+          id: string
+          status: Database["public"]["Enums"]["task_application_status"]
+          task_id: string
+        }
+        Insert: {
+          diajukan_at?: string
+          diputus_at?: string | null
+          helper_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_application_status"]
+          task_id: string
+        }
+        Update: {
+          diajukan_at?: string
+          diputus_at?: string | null
+          helper_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_application_status"]
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_applications_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_applications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_evidence: {
         Row: {
           catatan_kondisi: string
@@ -1297,10 +1339,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_quick_task: {
-        Args: { p_helper_user_id: string; p_task_id: string }
-        Returns: Json
-      }
+      accept_quick_task:
+        | { Args: { p_task_id: string }; Returns: Json }
+        | {
+            Args: { p_helper_user_id: string; p_task_id: string }
+            Returns: Json
+          }
       acknowledge_emergency_alert: {
         Args: { p_alert_id: string }
         Returns: {
@@ -1434,6 +1478,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      apply_to_task: { Args: { p_task_id: string }; Returns: Json }
       assign_admin_fallback: {
         Args: { p_helper_id: string; p_reason: string }
         Returns: {
@@ -1544,14 +1589,11 @@ export type Database = {
         }
       }
       charge_task_with_demo_wallet: {
-        Args: {
-          p_task_id: string
-          p_idempotency_key?: string | null
-        }
+        Args: { p_idempotency_key?: string; p_task_id: string }
         Returns: {
           payment_id: string
-          status: Database["public"]["Enums"]["payment_status"]
           saldo_tersisa: number
+          status: Database["public"]["Enums"]["payment_status"]
         }[]
       }
       confirm_midtrans_refund: {
@@ -2037,6 +2079,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      select_task_application: {
+        Args: { p_application_id: string; p_task_id: string }
+        Returns: Json
+      }
       settle_midtrans_payment: {
         Args: { p_gateway_ref: string; p_order_id: string; p_payload: Json }
         Returns: {
@@ -2111,6 +2157,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      withdraw_task_application: { Args: { p_task_id: string }; Returns: Json }
     }
     Enums: {
       account_status: "active" | "restricted" | "suspended"
@@ -2149,6 +2196,12 @@ export type Database = {
         | "dibatalkan_kompensasi"
         | "refunding"
       report_status: "menunggu" | "ditindak" | "selesai"
+      task_application_status:
+        | "pending"
+        | "selected"
+        | "withdrawn"
+        | "rejected"
+        | "expired"
       task_assignment_mode: "langsung" | "pelamar" | "cepat"
       task_status:
         | "diajukan"
@@ -2337,6 +2390,13 @@ export const Constants = {
         "refunding",
       ],
       report_status: ["menunggu", "ditindak", "selesai"],
+      task_application_status: [
+        "pending",
+        "selected",
+        "withdrawn",
+        "rejected",
+        "expired",
+      ],
       task_assignment_mode: ["langsung", "pelamar", "cepat"],
       task_status: [
         "diajukan",

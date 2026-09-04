@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock3, ExternalLink, MapPinned, ShieldCheck } from "lucide-react";
 
 import { AcceptTaskButton } from "@/components/helper/AcceptTaskButton";
+import { ApplyTaskButton } from "@/components/helper/ApplyTaskButton";
 import { ExtraServiceRequestForm } from "@/components/helper/ExtraServiceRequestForm";
 import { LansiaPhotoPreview } from "@/components/helper/LansiaPhotoPreview";
 import { StartTaskButton } from "@/components/helper/StartTaskButton";
@@ -33,6 +34,7 @@ type RawTask = {
   harga_dasar: number;
   harga_final: number;
   catatan: string | null;
+  mode_penugasan?: string | null;
   lansia_profiles: Relation<{
     nama: string;
     alamat: string;
@@ -96,6 +98,7 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
       harga_dasar,
       harga_final,
       catatan,
+      mode_penugasan,
       task_extra_services ( id, nama_layanan, biaya, status ),
       lansia_profiles!inner ( nama, alamat, kelurahan, kecamatan, kabupaten_kota, lat, lng, foto_url, catatan_kondisi ),
       service_categories!inner ( nama, deskripsi, tingkat, estimasi_durasi_menit, is_high_risk )
@@ -104,6 +107,14 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
     .maybeSingle();
 
   if (error || !task) notFound();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existingApp } = await (taskReader as any)
+    .from("task_applications")
+    .select("id, status")
+    .eq("task_id", id)
+    .eq("helper_id", helper.id)
+    .maybeSingle();
 
   const rawTask = task as unknown as RawTask;
   const lansia = getRelation(rawTask.lansia_profiles);
@@ -143,6 +154,8 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
                 <TaskStatusBadge status={rawTask.status} />
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-600">{category.tingkat}</span>
                 {category.is_high_risk && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">Perlu approval Koordinator</span>}
+                {rawTask.mode_penugasan === "pelamar" && <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-800">Pilih dari Pelamar</span>}
+                {rawTask.mode_penugasan === "cepat" && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">Cari Cepat (15 Menit)</span>}
               </div>
               <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{category.nama}</h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{category.deskripsi}</p>
@@ -210,7 +223,13 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Catatan dari keluarga</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">{privacy.catatan_tugas || "Detail catatan tersedia setelah tugas diterima."}</p>
               </div>
-              {canAccept ? (
+              {rawTask.mode_penugasan === "pelamar" && rawTask.status === "diajukan" && rawTask.helper_id === null ? (
+                <ApplyTaskButton
+                  taskId={rawTask.id}
+                  initialApplied={Boolean(existingApp && existingApp.status !== "withdrawn")}
+                  initialStatus={existingApp?.status ?? null}
+                />
+              ) : canAccept ? (
                 <AcceptTaskButton taskId={rawTask.id} />
               ) : canStart ? (
                 <StartTaskButton taskId={rawTask.id} jadwalWaktu={rawTask.jadwal_waktu} />

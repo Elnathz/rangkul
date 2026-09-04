@@ -191,6 +191,30 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
             </div>
           )}
 
+          {task.mode_penugasan === "pelamar" && task.status === "diajukan" && (
+            <div className="p-6 pb-0 sm:p-8 sm:pb-0">
+              <div className="flex flex-col gap-4 rounded-2xl border border-violet-200 bg-violet-50/80 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+                    <UserRound className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-violet-950">Mode: Pilih dari Pelamar</h3>
+                    <p className="mt-0.5 text-xs leading-relaxed text-violet-800 sm:text-sm">
+                      Tugas ini terbuka untuk diajukan oleh Helper di sekitar lokasi lansia. Tinjau dan tentukan Helper pilihan Anda.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/kunjungan/${task.id}/pelamar`}
+                  className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-800"
+                >
+                  Lihat Antrean Pelamar
+                </Link>
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-6">
               <section>
