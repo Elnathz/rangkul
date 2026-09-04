@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { lansia_id, service_category_id, helper_id, jadwal_waktu, catatan, tambahan_waktu_menit, mode_penugasan, expires_at } = validation.data;
+    const { lansia_id, service_category_id, helper_id, jadwal_waktu, catatan, mode_penugasan, expires_at } = validation.data;
 
     // Fetch category and its tingkat
     const { data: category, error: catError } = await supabase
@@ -144,8 +144,7 @@ export async function POST(request: Request) {
     }
 
     const harga_dasar = category.harga_dasar;
-    const extra_time_price = (tambahan_waktu_menit || 0) * 1000;
-    const harga_final = harga_dasar + extra_time_price;
+    const harga_final = harga_dasar;
 
     let expiry: string;
     if (mode === 'cepat') {
@@ -177,16 +176,6 @@ export async function POST(request: Request) {
 
     if (insertError) {
       return createApiError('server_error', insertError.message, 500);
-    }
-
-    // If extra time is requested upfront, add it to task_extra_services
-    if (tambahan_waktu_menit && tambahan_waktu_menit > 0) {
-      await supabase.from('task_extra_services').insert({
-        task_id: task.id,
-        nama_layanan: `Tambahan Waktu (${tambahan_waktu_menit} Menit)`,
-        biaya: extra_time_price,
-        status: 'disetujui'
-      });
     }
 
     return apiResponse(

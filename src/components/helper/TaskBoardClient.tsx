@@ -216,8 +216,8 @@ export default function TaskBoardClient({
 
                   <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-5 py-4">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Potensi pendapatan</p>
-                      <p className="mt-0.5 text-lg font-black text-[#0D47A1]">Rp {(task.harga_final * 0.9).toLocaleString("id-ID")}</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Harga kunjungan</p>
+                      <p className="mt-0.5 text-lg font-black text-[#0D47A1]">Rp {task.harga_final.toLocaleString("id-ID")}</p>
                     </div>
                     <Button asChild className="rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
                       <Link href={`/tugas/${task.id}`}>

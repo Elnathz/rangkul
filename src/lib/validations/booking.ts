@@ -5,7 +5,6 @@ export const createTaskSchema = z.object({
   service_category_id: z.string().min(1, 'ID Kategori layanan tidak valid'),
   helper_id: z.string().optional().nullable(),
   jadwal_waktu: z.string().datetime({ message: 'Format jadwal waktu ISO 8601 tidak valid' }),
-  tambahan_waktu_menit: z.number().min(0).optional(),
   catatan: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional().or(z.literal('')),
   mode_penugasan: z.enum(['langsung', 'pelamar', 'cepat']).optional(),
   expires_at: z.string().datetime({ message: 'Format expires_at tidak valid' }).optional(),

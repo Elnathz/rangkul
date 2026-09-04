@@ -44,7 +44,6 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
     lansia_id: "",
     service_category_id: "",
     jadwal_waktu: "",
-    tambahan_waktu_menit: 0,
     catatan: "",
   });
 
@@ -238,24 +237,7 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
                     <li><strong>Sedang:</strong> 31 - 60 Menit</li>
                     <li><strong>Berat:</strong> Lebih dari 60 Menit</li>
                   </ul>
-                  <p className="text-xs pt-1 opacity-90">Jika butuh waktu lebih lama, silakan gunakan form <strong>Tambahan Waktu</strong> di bawah (Rp 1.000 / Menit).</p>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="waktu_tambahan" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                  Tambahan Waktu (Rp 1.000 / Menit)
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="waktu_tambahan"
-                    type="number"
-                    min="0"
-                    value={form.tambahan_waktu_menit}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, tambahan_waktu_menit: parseInt(e.target.value) || 0 })}
-                    className="h-11 rounded-xl pl-4 pr-16"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">Menit</span>
+                  <p className="text-xs pt-1 opacity-90">Jika diperlukan layanan tambahan saat kunjungan, Helper akan mengajukan rincian biaya untuk Anda setujui terlebih dahulu.</p>
                 </div>
               </div>
 
@@ -290,9 +272,6 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
               {form.service_category_id && (() => {
                 const selectedCat = categories.find(c => c.id === form.service_category_id);
                 const basePrice = selectedCat?.harga_dasar || 0;
-                const extraTimePrice = (form.tambahan_waktu_menit || 0) * 1000;
-                const total = basePrice + extraTimePrice;
-
                 return (
                   <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 mt-6 space-y-4">
                     <p className="text-base font-bold text-foreground border-b border-primary/10 pb-3">Rincian Biaya (Fix Price)</p>
@@ -301,16 +280,10 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
                         <span>Harga Dasar Layanan</span>
                         <span className="font-medium text-foreground">Rp {basePrice.toLocaleString("id-ID")}</span>
                       </div>
-                      {extraTimePrice > 0 && (
-                        <div className="flex justify-between items-center text-muted-foreground">
-                          <span>Tambahan Waktu ({form.tambahan_waktu_menit} mnt)</span>
-                          <span className="font-medium text-foreground">Rp {extraTimePrice.toLocaleString("id-ID")}</span>
-                        </div>
-                      )}
                     </div>
                     <div className="border-t border-primary/20 pt-4 flex justify-between items-center mt-4">
                       <p className="text-base font-bold text-foreground">Total Pembayaran</p>
-                      <p className="text-2xl font-black text-primary">Rp {total.toLocaleString("id-ID")}</p>
+                      <p className="text-2xl font-black text-primary">Rp {basePrice.toLocaleString("id-ID")}</p>
                     </div>
                   </div>
                 );

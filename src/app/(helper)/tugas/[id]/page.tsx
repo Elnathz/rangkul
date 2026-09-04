@@ -110,7 +110,6 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
   const category = getRelation(rawTask.service_categories);
   if (!lansia || !category) notFound();
   const extraServices = rawTask.task_extra_services ?? [];
-  const helperShare = Math.round(Number(rawTask.harga_final) * 0.9);
   const privacy = projectHelperTaskPrivacy({ helper_id: rawTask.helper_id, catatan: rawTask.catatan, lansia }, helper.id);
   const lansiaPhotoUrl = await resolvePrivatePhotoUrl(privacy.lansia_foto_url, async (path, expiresIn) => {
     const { data } = await taskReader.storage.from("dokumen").createSignedUrl(path, expiresIn);
@@ -148,9 +147,9 @@ export default async function TugasHelperDetailPage({ params }: PageProps) {
               <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{category.nama}</h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{category.deskripsi}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 sm:min-w-48 sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Estimasi pendapatan kamu</p>
-              <p className="mt-1 text-2xl font-black text-emerald-700">Rp {helperShare.toLocaleString("id-ID")}</p>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 sm:min-w-48 sm:text-right">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Harga kunjungan</p>
+              <p className="mt-1 text-2xl font-black text-[#0D47A1]">Rp {Number(rawTask.harga_final).toLocaleString("id-ID")}</p>
             </div>
           </div>
 

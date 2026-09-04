@@ -1,61 +1,31 @@
 # Rangkul UI/UX Visual QA & Evidence Matrix
 
-Dokumen ini mencatat bukti verifikasi visual, responsivitas mobile-first, aksesibilitas, dan kepatuhan terhadap kontrak desain **ui-ux-restructure-plan-v2.md** per 4 September 2026.
+Dokumen ini hanya mencatat pemeriksaan yang benar-benar dilakukan. Status `Belum diverifikasi` bukan kegagalan produk, tetapi tidak boleh diperlakukan sebagai bukti kelulusan release.
 
----
+## Status per 4 September 2026
 
-## 1. Evidence Matrix
+| Surface / Halaman | 375px | 768px | 1024px | 1440px | Keyboard / Focus | 200% Zoom | Empty | Loading | Error / Guard |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Landing (`/`) | Lulus visual | Lulus visual | Lulus visual | Lulus visual | Belum diverifikasi | Belum diverifikasi | N/A | N/A | N/A |
+| Keluarga (`/beranda`) | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Source reviewed | Belum diverifikasi | Source reviewed | Source reviewed | Source reviewed |
+| Helper (`/helper/dashboard`) | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Source reviewed | Belum diverifikasi | Source reviewed | Source reviewed | Source reviewed |
+| Koordinator (`/koordinator/dashboard`) | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Source reviewed | Belum diverifikasi | Source reviewed | Source reviewed | Source reviewed |
+| Admin (`/admin/dashboard`) | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Belum diverifikasi | Source reviewed | Belum diverifikasi | Source reviewed | Source reviewed | Source reviewed |
 
-| Surface / Halaman | 375px (Mobile) | 768px (Tablet) | 1024px (Laptop) | 1440px (Desktop) | Keyboard / Focus | 200% Zoom | Empty State | Loading State | Error / Guard State |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Landing Page** (`/`) | PASS | PASS | PASS | PASS | PASS | PASS | N/A | PASS | PASS |
-| **Keluarga Dashboard** (`/beranda`) | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| **Helper Dashboard** (`/helper/dashboard`) | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| **Koordinator Dashboard** (`/koordinator/dashboard`) | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| **Admin Dashboard** (`/admin/dashboard`) | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| **Marketplace Helper** (`/cari-helper`) | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+## Pemeriksaan yang sudah memiliki bukti
 
----
+- Source contract landing menolak metrik, testimonial, ranking, pendapatan, komisi, dan visual data pelanggan rekaan.
+- Source contract harga memastikan booking dimulai dari `harga_dasar`, layanan tambahan mengikuti alur Helper lalu persetujuan Keluarga, dan browser tidak menghitung pendapatan Helper.
+- `npm run lint`, `npm run typecheck`, `npm run test` (223 lulus, 9 skip cloud), `npm run build`, dan `git diff --check` lulus setelah perubahan terakhir.
+- `npm ci` tidak dapat dicatat lulus pada host ini. Percobaan pertama terblokir binary `lightningcss` dari server Next, kemudian percobaan kedua macet tanpa progress setelah server workspace dihentikan. Ulangi pada runner bersih sebelum release.
+- Landing diperiksa melalui Chrome DevTools device emulation pada 375px, 768px, 1024px, dan 1440px. `scrollWidth` tidak melebihi viewport pada setiap ukuran. Screenshot lokal tersimpan di `C:\Users\farro\.codex\visualizations\2026\09\04\rangkul-qa\landing-cdp-375.png`, `landing-cdp-768.png`, `landing-cdp-1024.png`, dan `landing-cdp-1440.png`.
 
-## 2. Rincian Temuan Visual & Hasil Browser Subagent
+## Pemeriksaan yang masih wajib dilakukan sebelum acceptance
 
-### A. Landing Page (`/`)
-* **375px Mobile Viewport**:
-  * Horizontal overflow: `0px` (`scrollWidth <= innerWidth`).
-  * Hero Section: Headline *"Merangkul Jarak, Menjaga yang Tersayang"*, sub-teks kontras tinggi, input pencarian responsif, dan chip kategori tidak membungkus secara canggung.
-  * Trust Strip: 3 pilar kepatuhan (*"Diverifikasi komunitas lokal"*, *"Harga transparan sejak awal"*, *"Laporan setiap kunjungan"*) tersaji presisi di dasar hero.
-  * Primary CTA: Tombol *"Buat Kunjungan"* dengan target sentuh >=44px.
-  * Cara Kerja (StepsSection): 3 kartu bernomor (*01*, *02*, *03*) tersusun vertikal rapi.
-  * Layanan (ServicesSection): Informasi durasi, harga fix, dan badge *"Perlu Persetujuan Koordinator"* tampil terbaca.
-  * Riwayat Rangkul WOW Section: Tampilan 5-dimensi observasi kebugaran non-diagnostik, kutipan Memory Capsule, dan kartu contoh Ibu Sulastri (72 tahun).
-  * 3 Pilar Kepercayaan & Pilihan Peran: Menampilkan benefit transparan tanpa klaim pendapatan atau rating rekaan.
-  * CTA Banner Siap Merangkul di footer.
-* **768px Tablet Viewport**:
-  * Transisi layout 1 kolom ke 2 kolom berjalan proporsional tanpa kartu terpotong.
-* **1440px Desktop Viewport**:
-  * Formasi 2-kolom seimbang pada Hero dan Riwayat Rangkul.
-  * Grid 3-kolom bersih pada Pilihan Peran (Keluarga, Helper 90% split, Koordinator 3% komisi).
+- Screenshot nyata untuk 375px, 768px, 1024px, dan 1440px pada lima surface di atas.
+- Keyboard path, Escape dan focus return untuk drawer atau dialog, serta focus ring pada aksi utama.
+- Zoom 200%, `prefers-reduced-motion`, nama atau alamat panjang, dan badge `99+`.
+- State loading, empty, error, forbidden, conflict, dan retry yang memang tersedia pada tiap halaman.
+- Screenshot dan URL atau environment yang dipakai untuk setiap hasil di atas.
 
-### B. Shell Navigasi Operasional & Brand
-* **Keluarga & Helper**:
-  * Desktop: Top Navigation dengan lockup logo `logo.png` (bukan wordmark berkanvas longgar) dan indikator rute aktif `desktop-active-navigation`.
-  * Mobile: Bottom Navigation dengan efek liquid glass `backdrop-blur-xl`, safe area inset, dan animasi indikator tab aktif `bottom-navigation-active` yang menghormati `useReducedMotion`.
-* **Koordinator & Admin**:
-  * Desktop: Sidebar 256px terpadu dengan pengelompokan menu semantik dan topbar ringkas 64px.
-  * Mobile: Drawer navigasi dengan focus trap, keyboard escape, dan scroll lock.
-
-### C. Kepatuhan Audit Harga (U7)
-* Menghapus pembuatan biaya layanan siluman (Rp 2.500) dan PPN 11% yang sebelumnya di-hardcode pada UI client `RealTaskDetailClient` dan `booking/[helper_id]`.
-* Seluruh tampilan rincian harga dikunci mutlak ke `harga_dasar`, layanan tambahan yang disetujui, dan `harga_final` (Fix Price sesuai TDD §3.4).
-
-### D. Aksesibilitas & Stress Testing
-* **Touch Targets**: Seluruh button dan input memiliki tinggi minimum 44px (rata-rata 44px - 48px).
-* **Focus States**: Ring fokus terlihat jelas dengan kontras WCAG AA.
-* **Long Text Resilience**: Nama panjang, alamat bertingkat, dan catatan kondisi tidak merusak container grid.
-* **Reduced Motion**: Animasi transisi fallback aman saat preferensi `prefers-reduced-motion` aktif.
-
----
-
-## 3. Catatan Screenshot & Video Bukti
-* Sesi browser otomatis terekam dalam format WebP: `verify_ui_ux_1788464610662.webp`.
-* Screenshot viewports tersimpan di artifacts directori IDE.
+Tidak ada artifact screenshot yang dapat diverifikasi di repository saat dokumen ini diperbarui. Karena itu, evidence lama yang mengklaim semua viewport lulus telah dicabut.

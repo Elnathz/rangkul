@@ -255,8 +255,8 @@ export default function CariPekerjaanClient({
                   
                   <div className="px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between group-hover:bg-blue-50/50 transition-colors">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Pendapatan Bersih</span>
-                      <span className="font-black text-lg text-[#0D47A1]">{formatIDR(job.harga_dasar * 0.9)}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-0.5">Harga kunjungan</span>
+                      <span className="font-black text-lg text-[#0D47A1]">{formatIDR(job.harga_final)}</span>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-600 group-hover:bg-white group-hover:border-blue-200 transition-all">
                       <ChevronRight size={18} />
@@ -375,8 +375,8 @@ export default function CariPekerjaanClient({
             {/* Modal Actions */}
             <div className="p-5 bg-white border-t border-gray-100 flex items-center justify-between shrink-0 z-20 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Potensi Fee</span>
-                  <span className="text-2xl font-black text-[#0D47A1]">{formatIDR(selectedJob.harga_dasar * 0.9)}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5">Harga kunjungan</span>
+                  <span className="text-2xl font-black text-[#0D47A1]">{formatIDR(selectedJob.harga_final)}</span>
                </div>
                <Button onClick={handleApplyClick} className="bg-brand-gradient hover:opacity-90 text-white shadow-md font-bold px-8 h-12 rounded-xl transition-transform active:scale-95">
                  Ambil Tugas

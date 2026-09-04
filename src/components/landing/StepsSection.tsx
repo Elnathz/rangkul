@@ -1,72 +1,53 @@
-import { UserCheck, CalendarCheck, FileHeart } from "lucide-react";
+import { CalendarPlus, FileText, UserRoundCheck } from "lucide-react";
 
 const steps = [
   {
-    icon: UserCheck,
-    num: "01",
-    title: "Daftar & Verifikasi",
-    desc: "Buat akun Keluarga, tambah profil lansia, dan pilih Helper yang sudah diverifikasi Koordinator RT/RW domisilinya.",
-    tag: "Kepercayaan Komunitas",
+    icon: CalendarPlus,
+    title: "Ceritakan kebutuhan kunjungan",
+    description: "Pilih profil lansia, layanan, dan jadwal yang sesuai. Harga dasar terlihat sejak awal agar keluarga dapat mengambil keputusan dengan tenang.",
   },
   {
-    icon: CalendarCheck,
-    num: "02",
-    title: "Booking Helper",
-    desc: "Pilih kategori jasa, tentukan jadwal, dan bayar dengan harga fix yang transparan. Proses booking selesai dalam hitungan menit.",
-    tag: "Fix Price",
+    icon: UserRoundCheck,
+    title: "Pendamping yang sesuai mengambil tugas",
+    description: "Helper yang sudah terverifikasi menerima tugas sesuai layanan, ketersediaan, dan jangkauan layanan yang ditetapkan.",
   },
   {
-    icon: FileHeart,
-    num: "03",
-    title: "Terima Laporan & Pantau",
-    desc: "Setelah kunjungan, terima laporan foto dan catatan kondisi lengkap. Semuanya terkumpul jadi Riwayat Rangkul.",
-    tag: "Riwayat Rangkul",
+    icon: FileText,
+    title: "Ikuti kabar setelah kunjungan",
+    description: "Laporan kunjungan dan Riwayat Rangkul membantu keluarga memahami aktivitas serta perubahan keseharian dari waktu ke waktu.",
   },
 ];
 
 export default function StepsSection() {
   return (
-    <section id="cara-kerja" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h3 className="font-display text-2xl md:text-3xl font-extrabold text-foreground mb-3">
-            Cara Kerjanya
-          </h3>
-          <p className="text-muted-foreground max-w-md mx-auto mb-10">
-            Tiga langkah sederhana untuk menjaga lansia yang kamu sayangi tetap terawat dan terpantau.
+    <section id="cara-kerja" className="bg-white py-14 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="max-w-2xl">
+          <p className="text-sm font-bold text-[#0D47A1]">CARA KERJA</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Dari rasa khawatir menjadi langkah yang jelas.
+          </h2>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+            Rangkul membuat pendampingan tetap terasa dekat, tanpa menghilangkan kendali keluarga atas kunjungan dan informasi yang dibagikan.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 relative">
-          {/* Connector line (desktop only) */}
-          <div className="hidden md:block absolute top-12 left-[calc(33.33%-1rem)] right-[calc(33.33%-1rem)] h-px bg-gradient-to-r from-border via-[#0D47A1]/30 to-border" />
-
-          {steps.map(({ icon: Icon, num, title, desc, tag }) => (
-            <div
-              key={num}
-              className="relative bg-white rounded-2xl p-7 border border-border shadow-sm hover:shadow-[0_8px_32px_rgba(13,71,161,0.09)] transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-sm shrink-0">
-                  <Icon size={20} className="text-white" />
-                </div>
-                <span className="font-display font-black text-3xl text-border">
-                  {num}
+        <ol className="mt-8 grid gap-4 md:mt-12 md:grid-cols-3 md:gap-6">
+          {steps.map(({ icon: Icon, title, description }, index) => (
+            <li key={title} className="relative rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+              <div className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0D47A1]" aria-hidden="true">
+                  <Icon className="h-5 w-5" />
                 </span>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground">LANGKAH {index + 1}</p>
+                  <h3 className="mt-1 text-lg font-bold leading-snug text-foreground">{title}</h3>
+                </div>
               </div>
-
-              <h3 className="font-display font-bold text-base text-foreground mb-2">
-                {title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                {desc}
-              </p>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#0D47A1]/08 text-[#0D47A1] border border-[#0D47A1]/15">
-                {tag}
-              </span>
-            </div>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">{description}</p>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
