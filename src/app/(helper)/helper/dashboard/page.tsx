@@ -2,9 +2,13 @@ import Link from "next/link";
 import {
   BriefcaseBusiness,
   CalendarClock,
+  CheckCircle2,
   CircleCheck,
   MapPin,
+  Search,
+  ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Wallet,
 } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -92,29 +96,71 @@ export default async function HelperDashboardPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
-      {/* Header */}
-      <header className="flex flex-col gap-5 rounded-2xl bg-primary p-6 text-primary-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-7">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-0.5 text-xs font-medium tracking-wide text-white">
-            Workspace Helper
-          </span>
-          <h1 className="mt-2 font-heading text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{helperName}</h1>
-          <p className="mt-1.5 text-sm text-primary-foreground/80">
-            <span className="font-semibold text-primary-foreground">
-              {helperStatusLabel[profile.status] ?? profile.status}
-            </span>
-            {profile.status === "verified" ? ` · Tingkat ${profile.tingkat_kepercayaan}` : ""}
-          </p>
+      {/* Elevated Human-Centered Header */}
+      <header className="relative overflow-hidden rounded-2xl bg-primary bg-gradient-to-br from-[#0D3B82] via-[#0D47A1] to-[#1565C0] p-6 text-primary-foreground shadow-md sm:p-7 border border-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-48 rounded-full bg-blue-400/10 blur-2xl" aria-hidden="true" />
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4 sm:items-center">
+            {/* Avatar Badge with verified ring */}
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl">
+              {helperName.slice(0, 2).toUpperCase()}
+              {profile.status === "verified" ? (
+                <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0D47A1]" title="Terverifikasi">
+                  <CheckCircle2 className="size-2.5 text-white" aria-hidden="true" />
+                </span>
+              ) : null}
+            </div>
+
+            {/* Context & Metadata */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur-xs border border-white/10">
+                  <ShieldCheck className="size-3 text-blue-200" aria-hidden="true" />
+                  Workspace Helper
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[11px] font-bold text-emerald-200 border border-emerald-400/30">
+                  {helperStatusLabel[profile.status] ?? profile.status}
+                </span>
+              </div>
+
+              <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-white sm:text-3xl">
+                {helperName}
+              </h1>
+
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/80">
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="size-3 text-amber-300" aria-hidden="true" />
+                  Tingkat <strong className="text-white capitalize">{profile.tingkat_kepercayaan}</strong>
+                </span>
+                <span className="text-white/40">·</span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3 text-blue-200" aria-hidden="true" />
+                  {profile.wilayah_domisili}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>Radius {serviceCoverage}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Cluster */}
+          <div className="flex shrink-0 items-center gap-3 self-stretch sm:self-auto">
+            {canBrowse ? (
+              <Button asChild className="min-h-11 w-full rounded-xl bg-white font-bold text-[#0D47A1] shadow-sm hover:bg-white/90 sm:w-auto px-6 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <Link href="/helper/tugas/baru" className="flex items-center gap-2">
+                  <Search className="size-4" aria-hidden="true" />
+                  <span>Cari Tugas</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="min-h-11 w-full rounded-xl border-white/40 bg-transparent font-bold text-white hover:bg-white/10 hover:text-white sm:w-auto px-5">
+                <Link href="/helper/verifikasi">Lihat verifikasi</Link>
+              </Button>
+            )}
+          </div>
         </div>
-        {canBrowse ? (
-          <Button asChild className="min-h-11 w-full rounded-xl bg-white text-primary shadow-sm hover:bg-white/90 sm:w-auto">
-            <Link href="/helper/tugas/baru">Cari Tugas</Link>
-          </Button>
-        ) : (
-          <Button asChild variant="outline" className="min-h-11 w-full rounded-xl border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:w-auto">
-            <Link href="/helper/verifikasi">Lihat verifikasi</Link>
-          </Button>
-        )}
       </header>
 
       {/* Ringkasan Kerja (3 Kartu Metrik di Atas) */}

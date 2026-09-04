@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock, HeartPulse, Plus, Sparkles, User, UsersRound } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, Heart, HeartPulse, Plus, Sparkles, User, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,12 @@ export default async function BerandaKeluargaPage() {
       .limit(4),
     supabase
       .from("tasks")
-      .select("id, status, jadwal_waktu, lansia_profiles(nama), service_categories(nama), helper_profiles(users(full_name))")
+      .select(`
+        id, status, jadwal_waktu, started_at,
+        lansia_profiles(nama),
+        service_categories(nama),
+        helper_profiles(users(full_name))
+      `)
       .eq("keluarga_id", user.id)
       .in("status", ["dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga"])
       .order("jadwal_waktu", { ascending: true })
@@ -72,24 +77,52 @@ export default async function BerandaKeluargaPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
-      {/* 1. Compact Context Header */}
-      <header className="rounded-2xl bg-primary p-5 sm:p-6 text-primary-foreground shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary-foreground/90 mb-1">
-              <Sparkles className="size-3.5" />
-              <span>Dashboard Keluarga</span>
+      {/* 1. Elevated Human-Centered Header */}
+      <header className="relative overflow-hidden rounded-2xl bg-primary bg-gradient-to-br from-[#0D3B82] via-[#0D47A1] to-[#1565C0] p-6 text-primary-foreground shadow-md sm:p-7 border border-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-48 rounded-full bg-blue-400/10 blur-2xl" aria-hidden="true" />
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4 sm:items-center">
+            {/* Avatar Badge with warm heart badge */}
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl">
+              {(profile?.full_name || "Keluarga").slice(0, 2).toUpperCase()}
+              <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-[#0D47A1]" title="Keluarga Tercinta">
+                <Heart className="size-2.5 text-white fill-white" aria-hidden="true" />
+              </span>
             </div>
-            <h1 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">
-              Halo, {profile?.full_name || "Keluarga"}
-            </h1>
-            <p className="mt-1 text-sm text-primary-foreground/80">
-              Pantau pendampingan orang tersayang dalam satu tempat.
-            </p>
+
+            {/* Context & Metadata */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur-xs border border-white/10">
+                  <Sparkles className="size-3 text-blue-200" aria-hidden="true" />
+                  Dashboard Keluarga
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/90 border border-white/15">
+                  {(lansias ?? []).length} Orang Tersayang Terdaftar
+                </span>
+              </div>
+
+              <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Halo, {profile?.full_name || "Keluarga"}
+              </h1>
+
+              <p className="mt-1 text-xs text-white/80 sm:text-sm">
+                Pantau pendampingan lansia tersayang dalam lingkungan komunitas yang aman.
+              </p>
+            </div>
           </div>
-          <Button asChild className="min-h-11 bg-card px-5 font-bold text-primary hover:bg-secondary sm:w-auto">
-            <Link href="/booking/new">Buat Kunjungan</Link>
-          </Button>
+
+          {/* Action Cluster */}
+          <div className="flex shrink-0 items-center gap-3 self-stretch sm:self-auto">
+            <Button asChild className="min-h-11 w-full rounded-xl bg-white font-bold text-[#0D47A1] shadow-sm hover:bg-white/90 sm:w-auto px-6 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Link href="/booking/new" className="flex items-center gap-2">
+                <Plus className="size-4" aria-hidden="true" />
+                <span>Buat Kunjungan</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
