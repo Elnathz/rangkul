@@ -50,22 +50,38 @@ export default function HelperEditProfilPage() {
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
 
-  const tiers: { id: ServiceCategory["tingkat"]; title: string; desc: string }[] = [
+  const tiers: {
+    id: ServiceCategory["tingkat"];
+    title: string;
+    desc: string;
+    badge: string;
+    tabActiveClass: string;
+    badgeClass: string;
+  }[] = [
     {
       id: "ringan",
-      title: "Ringan",
-      desc: "Aktivitas harian ringan dan non-medis."
+      title: "Tingkat Ringan",
+      desc: "Pendampingan sosial, empati, dan kehadiran emosional non-medis.",
+      badge: "Mandiri · Risiko Rendah",
+      tabActiveClass: "border-emerald-600 text-emerald-800 bg-emerald-50/70 font-bold",
+      badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
     },
     {
       id: "sedang",
-      title: "Sedang",
-      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri."
+      title: "Tingkat Sedang",
+      desc: "Bantuan rutinitas harian, mobilitas, dan logistik sekitar.",
+      badge: "Bantuan Harian",
+      tabActiveClass: "border-blue-600 text-blue-800 bg-blue-50/70 font-bold",
+      badgeClass: "bg-blue-100 text-blue-800 border-blue-300",
     },
     {
       id: "berat",
-      title: "Berat",
-      desc: "Perawatan khusus dan penanganan medis dasar."
-    }
+      title: "Tingkat Berat",
+      desc: "Perawatan fisik penuh dan kontrol fasilitas kesehatan.",
+      badge: "Persetujuan Koordinator",
+      tabActiveClass: "border-amber-600 text-amber-800 bg-amber-50/70 font-bold",
+      badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+    },
   ];
 
   const getSnapshot = (nextForm = form, nextKategoriIds = kategoriIds) => JSON.stringify({
@@ -388,22 +404,43 @@ export default function HelperEditProfilPage() {
               <div className="space-y-6">
                 <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
                 {/* Preview Tabs */}
-                <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
+                <div className="flex gap-2 border-b border-gray-100 overflow-x-auto hide-scrollbar pb-1">
                    {tiers.map((tier) => (
                      <button
                        key={tier.id}
                        type="button"
                        onClick={() => setCatTab(tier.id)}
-                       className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+                       className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
                          catTab === tier.id 
-                           ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
+                           ? tier.tabActiveClass 
                            : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                        }`}
                      >
-                       {tier.title}
+                       <span>{tier.title}</span>
+                       <span className={`text-[11px] px-2 py-0.5 rounded-full border ${tier.badgeClass}`}>
+                         {tier.badge}
+                       </span>
                      </button>
                    ))}
                 </div>
+
+                {(() => {
+                  const activeTier = tiers.find(t => t.id === catTab);
+                  if (!activeTier) return null;
+                  return (
+                    <div className="mb-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-600 flex items-start gap-2.5">
+                      <ShieldCheck className="size-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-slate-800">{activeTier.desc}</p>
+                        {activeTier.id === "berat" && (
+                          <p className="mt-1 text-amber-800 font-medium">
+                            Kategori tingkat berat mencakup kontrol faskes/kebutuhan khusus dan penugasannya memerlukan persetujuan Koordinator.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 <div className="space-y-4 mb-2">
                   {(() => {
@@ -561,19 +598,22 @@ export default function HelperEditProfilPage() {
               </button>
             </div>
             
-            <div className="flex px-6 border-b border-gray-100 shrink-0 bg-white">
+            <div className="flex px-6 border-b border-gray-100 shrink-0 bg-white gap-2 overflow-x-auto hide-scrollbar py-1">
               {tiers.map(tier => (
                 <button
                   key={tier.id}
                   type="button"
                   onClick={() => setModalActiveTab(tier.id)}
-                  className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
                     modalActiveTab === tier.id 
-                      ? 'border-[#0D47A1] text-[#0D47A1]' 
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                      ? tier.tabActiveClass 
+                      : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  {tier.title}
+                  <span>{tier.title}</span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full border ${tier.badgeClass}`}>
+                    {tier.badge}
+                  </span>
                 </button>
               ))}
             </div>
