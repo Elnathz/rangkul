@@ -75,6 +75,7 @@ export function getApiRouteAccess(pathname: string): ApiRouteAccess | null {
     return ["helper"];
   }
 
+  if (isPathWithin(pathname, "/api/koordinator/by-region")) return ["helper"];
   if (isPathWithin(pathname, "/api/koordinator")) return ["koordinator"];
   if (
     isPathWithin(pathname, "/api/lansia") ||

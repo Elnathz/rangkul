@@ -108,6 +108,7 @@ test("API memakai boundary role eksplisit dan endpoint lain tetap authenticated"
   assert.equal(getApiRouteAccess("/api/auth/login"), "public");
   assert.equal(getApiRouteAccess("/api/payments/webhook"), "public");
   assert.deepEqual(getApiRouteAccess("/api/admin/stats"), ["admin"]);
+  assert.deepEqual(getApiRouteAccess("/api/koordinator/by-region"), ["helper"]);
   assert.deepEqual(getApiRouteAccess("/api/koordinator/helpers"), ["koordinator"]);
   assert.deepEqual(getApiRouteAccess("/api/helper/profile"), ["helper"]);
   assert.deepEqual(getApiRouteAccess("/api/helper/queue"), ["koordinator"]);

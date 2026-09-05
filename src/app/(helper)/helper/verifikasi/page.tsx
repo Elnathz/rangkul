@@ -202,31 +202,28 @@ export default function HelperVerifikasiPage() {
     const fetchKoords = async () => {
       setKoordinatorsLoading(true);
       setKoordinatorsError(false);
-      const supabase = createClient();
-      let query = supabase
-        .from('koordinator_profiles')
-        .select(`
-          id,
-          wilayah,
-          tingkat,
-          users!koordinator_profiles_user_id_fkey!inner(full_name, phone)
-        `)
-        .eq('status', 'verified');
+      try {
+        const params = new URLSearchParams();
+        if (form.region.kelurahan) params.set('kelurahan', form.region.kelurahan);
+        if (form.region.kecamatan) params.set('kecamatan', form.region.kecamatan);
+        if (form.region.kota) params.set('kota', form.region.kota);
+        if (form.region.provinsi) params.set('provinsi', form.region.provinsi);
 
-      for (const wilayahPart of [
-        form.region.kelurahan,
-        form.region.kecamatan,
-        form.region.kota,
-        form.region.provinsi,
-      ].filter(Boolean)) {
-        query = query.ilike('wilayah', `%${wilayahPart}%`);
-      }
+        const response = await fetch(`/api/koordinator/by-region?${params.toString()}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Gagal mencari koordinator');
 
-      const { data, error } = await query;
-      if (!cancelled) {
-        setKoordinators((data ?? []) as unknown as KoordinatorOption[]);
-        setKoordinatorsError(Boolean(error));
-        setKoordinatorsLoading(false);
+        if (!cancelled) {
+          setKoordinators(result.koordinators ?? []);
+          setKoordinatorsError(false);
+          setKoordinatorsLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setKoordinators([]);
+          setKoordinatorsError(true);
+          setKoordinatorsLoading(false);
+        }
       }
     };
 

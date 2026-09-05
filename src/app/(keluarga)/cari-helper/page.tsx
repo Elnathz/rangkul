@@ -6,6 +6,7 @@ import { ArrowUpDown, ChevronDown, Filter, Heart, Loader2, MapPin, Search, Shiel
 import DateTimePicker from "@/components/keluarga/booking/DateTimePicker";
 import LansiaSelect from "@/components/keluarga/booking/LansiaSelect";
 import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
+import CatalogModeSwitcher from "@/components/keluarga/booking/CatalogModeSwitcher";
 
 type Lansia = { id: string; nama: string; alamat: string; lat: number | null; lng: number | null };
 type Category = { id: string; nama: string; tingkat: string; harga_dasar: number; is_high_risk: boolean };
@@ -205,13 +206,53 @@ export default function CariHelperPage() {
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
               </div>
             </div>
+
+            {/* Toggle Ganti Mode Penugasan di sebelah filter search bar */}
+            <div className="flex min-h-11 items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+              <span className="sr-only">Mode Penugasan</span>
+              <CatalogModeSwitcher />
+            </div>
           </div>
 
           {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
           {loading ? (
             <div className="flex min-h-64 items-center justify-center" aria-live="polite"><Loader2 className="h-8 w-8 animate-spin text-[#0D47A1]" aria-hidden="true" /><span className="sr-only">Memuat Helper</span></div>
           ) : sortedHelpers.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600 sm:p-12"><p className="font-bold text-slate-900">Tidak ada Helper yang sesuai.</p><p className="mt-2 text-sm">Ubah jadwal, radius, atau kategori lalu coba lagi.</p></div>
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 text-center shadow-xs">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#0D47A1]">
+                <Search className="h-7 w-7 text-[#0D47A1]" aria-hidden="true" />
+              </div>
+              <h2 className="mt-4 text-lg sm:text-xl font-black text-slate-900">
+                Tidak ada Helper yang sesuai filter saat ini
+              </h2>
+              <p className="mx-auto mt-2 max-w-lg text-xs sm:text-sm leading-relaxed text-slate-600">
+                Belum menemukan Helper langsung di sekitar lansia? Anda tidak perlu menunggu. Buka lowongan agar Helper di sekitar mengajukan diri, atau gunakan pencarian cepat 15 menit.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 max-w-xl mx-auto">
+                <Link
+                  href="/booking/new?mode=pelamar"
+                  className="group flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-violet-200 bg-violet-50/50 p-4 text-center transition hover:border-violet-500 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 min-h-[56px]"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700">Rekomendasi Utama</span>
+                  <span className="text-sm font-black text-slate-900 group-hover:text-violet-900">Buka Lowongan (Pilih dari Pelamar)</span>
+                  <span className="text-xs text-slate-500">Helper di sekitar akan melamar untuk Anda pilih</span>
+                </Link>
+
+                <Link
+                  href="/booking/new?mode=cepat"
+                  className="group flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 text-center transition hover:border-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 min-h-[56px]"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Kebutuhan Hari Ini</span>
+                  <span className="text-sm font-black text-slate-900 group-hover:text-amber-900">Cari Cepat 15 Menit</span>
+                  <span className="text-xs text-slate-500">Sistem otomatis mencocokkan ke Helper aktif</span>
+                </Link>
+              </div>
+
+              <p className="mt-5 text-xs text-slate-400">
+                Atau coba ubah filter jadwal, perluas radius pencarian, atau pilih kategori lain di panel filter.
+              </p>
+            </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {sortedHelpers.map((helper) => <HelperCard key={helper.id} helper={helper} bookingQuery={bookingQuery} />)}

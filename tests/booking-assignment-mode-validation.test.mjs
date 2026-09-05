@@ -42,3 +42,12 @@ test("entry booking umum hanya menampilkan dua mode Sprint 6 saat flag aktif", (
   assert.doesNotMatch(client, /mode_penugasan:\s*"langsung"/);
   assert.match(route, /message: 'Data input tidak valid',[\s\S]*?422\s*\)/);
 });
+
+test("query mode dari katalog menentukan mode awal formulir booking", () => {
+  const page = readFileSync("src/app/(keluarga)/booking/new/page.tsx", "utf8");
+  const client = readFileSync("src/components/keluarga/booking/BookingNewClient.tsx", "utf8");
+
+  assert.match(page, /initialMode=\{initialMode\}/);
+  assert.match(client, /initialMode\?: Mode/);
+  assert.match(client, /useState<Mode>\(initialMode\)/);
+});

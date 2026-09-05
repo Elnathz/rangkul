@@ -8,7 +8,14 @@ import BookingNewClient, {
 
 export const dynamic = "force-dynamic";
 
-export default async function BookingNewPage() {
+export default async function BookingNewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const initialMode = resolvedParams?.mode === "cepat" ? "cepat" : "pelamar";
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -36,6 +43,10 @@ export default async function BookingNewPage() {
   const categories = (categoryResult.data ?? []) as BookingCategory[];
 
   return (
-    <BookingNewClient lansias={lansias} categories={categories} />
+    <BookingNewClient
+      lansias={lansias}
+      categories={categories}
+      initialMode={initialMode}
+    />
   );
 }
