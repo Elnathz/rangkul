@@ -61,6 +61,8 @@ export default function Navbar() {
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const [user, setUser] = useState<User | null>(null);
+  const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
@@ -72,6 +74,7 @@ export default function Navbar() {
 
   const role = isAppRole(user?.user_metadata?.role) ? user.user_metadata.role : null;
   const username = String(user?.user_metadata?.full_name ?? user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Profil");
+  const avatarUrl = customAvatarUrl || (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
   const navigation = isPublicSurface ? publicNavigation : role ? ROLE_NAVIGATION[role] : publicNavigation;
   const profileEditHref = editProfileHref(role);
   const isConsumerRole = role === "keluarga" || role === "helper";
@@ -81,8 +84,36 @@ export default function Navbar() {
 
   useEffect(() => {
     const supabase = createClient();
-    void supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    const loadUserData = async () => {
+      const { data } = await supabase.auth.getUser();
+      const currentUser = data.user;
+      setUser(currentUser);
+      if (currentUser) {
+        const userRole = currentUser.user_metadata?.role;
+        if (!currentUser.user_metadata?.avatar_url) {
+          if (userRole === "helper") {
+            const { data: hp } = await supabase
+              .from("helper_profiles")
+              .select("foto_wajah_url")
+              .eq("user_id", currentUser.id)
+              .maybeSingle();
+            if (hp?.foto_wajah_url) setCustomAvatarUrl(hp.foto_wajah_url);
+          } else if (userRole === "koordinator") {
+            const { data: kp } = await supabase
+              .from("koordinator_profiles")
+              .select("foto_url")
+              .eq("user_id", currentUser.id)
+              .maybeSingle();
+            if (kp?.foto_url) setCustomAvatarUrl(kp.foto_url);
+          }
+        }
+      }
+    };
+    void loadUserData();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setImageError(false);
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
 
@@ -213,9 +244,41 @@ export default function Navbar() {
               />
               <div className="relative hidden sm:block">
                 <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen} aria-controls="profile-menu" className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span><span className="max-w-28 truncate">{username}</span><ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                  {avatarUrl && !imageError ? (
+                    <img
+                      src={avatarUrl}
+                      alt=""
+                      aria-hidden="true"
+                      onError={() => setImageError(true)}
+                      className="size-8 shrink-0 rounded-full border border-primary/20 object-cover"
+                    />
+                  ) : (
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span>
+                  )}
+                  <span className="max-w-28 truncate">{username}</span>
+                  <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
                 </button>
-                {profileOpen ? <div id="profile-menu" className="absolute right-0 top-full mt-2 w-56 rounded-md border border-border bg-card p-1.5 shadow-[var(--shadow-overlay)]"><p className="px-3 py-2 text-sm font-semibold text-foreground">{username}</p><p className="px-3 pb-2 text-xs capitalize text-muted-foreground">{role}</p><Link href={profileHref(role)} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">Beranda</Link>{profileEditHref ? <Link href={profileEditHref} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted"><Pencil className="size-4" aria-hidden="true" />Edit profil</Link> : null}<button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button></div> : null}
+                {profileOpen ? <div id="profile-menu" className="absolute right-0 top-full mt-2 w-56 rounded-md border border-border bg-card p-1.5 shadow-[var(--shadow-overlay)]">
+                  <div className="flex items-center gap-2.5 border-b border-border px-3 py-2">
+                    {avatarUrl && !imageError ? (
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className="size-9 shrink-0 rounded-full border border-border object-cover"
+                      />
+                    ) : (
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{username}</p>
+                      <p className="truncate text-xs capitalize text-muted-foreground">{roleLabel(role)}</p>
+                    </div>
+                  </div>
+                  <Link href={profileHref(role)} onClick={() => setProfileOpen(false)} className="mt-1 flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">Beranda</Link>
+                  {profileEditHref ? <Link href={profileEditHref} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted"><Pencil className="size-4" aria-hidden="true" />Edit profil</Link> : null}
+                  <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button>
+                </div> : null}
               </div>
             </> : <div className="hidden items-center gap-2 sm:flex"><Button variant="ghost" asChild className="min-h-11"><Link href="/login">Masuk</Link></Button><Button asChild className="min-h-11 bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90"><Link href="/register">Daftar</Link></Button></div>}
             {showMobileDrawerTrigger ? <button ref={menuTriggerRef} type="button" onClick={() => setMenuOpen(true)} className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden" aria-label="Buka menu"><Menu className="size-5" aria-hidden="true" /></button> : null}
@@ -223,7 +286,7 @@ export default function Navbar() {
         </nav>
       </header>
 
-      {menuOpen ? <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu navigasi"><button type="button" className="absolute inset-0 bg-slate-950/35" onClick={() => setMenuOpen(false)} aria-label="Tutup menu" /><aside ref={drawerRef} className="relative flex h-full w-[min(21rem,88vw)] flex-col bg-card shadow-[var(--shadow-overlay)]"><div className="flex h-[var(--header-height)] items-center justify-between border-b border-border px-4"><span className="font-heading text-base font-bold text-foreground">Menu {roleLabel(role) ?? "Rangkul"}</span><button type="button" onClick={() => setMenuOpen(false)} className="inline-flex size-11 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Tutup menu"><X className="size-5" aria-hidden="true" /></button></div><nav className="flex-1 overflow-y-auto p-3" aria-label="Menu perangkat kecil"><ul className="space-y-1">{drawerItems.map((item) => { const active = isPublicSurface ? publicActive === item.href.replace("/", "") : isNavigationItemActive(pathname, item); return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMenuOpen(false)} className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><NavigationIcon name={item.icon} className="size-5" />{item.label}</Link></li>; })}</ul></nav><div className="border-t border-border p-3">{user ? <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button> : <div className="grid gap-2"><Button variant="outline" asChild className="min-h-11"><Link href="/login" onClick={() => setMenuOpen(false)}>Masuk</Link></Button><Button asChild className="min-h-11"><Link href="/register" onClick={() => setMenuOpen(false)}>Daftar</Link></Button></div>}</div></aside></div> : null}
+      {menuOpen ? <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu navigasi"><button type="button" className="absolute inset-0 bg-slate-950/35" onClick={() => setMenuOpen(false)} aria-label="Tutup menu" /><aside ref={drawerRef} className="relative flex h-full w-[min(21rem,88vw)] flex-col bg-card shadow-[var(--shadow-overlay)]"><div className="flex h-[var(--header-height)] items-center justify-between border-b border-border px-4"><span className="font-heading text-base font-bold text-foreground">Menu {roleLabel(role) ?? "Rangkul"}</span><button type="button" onClick={() => setMenuOpen(false)} className="inline-flex size-11 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Tutup menu"><X className="size-5" aria-hidden="true" /></button></div>{user ? <div className="flex items-center gap-3 border-b border-border bg-[var(--surface-subtle)] px-4 py-3">{avatarUrl && !imageError ? <img src={avatarUrl} alt="" aria-hidden="true" className="size-10 shrink-0 rounded-full border border-border object-cover" /> : <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span>}<div className="min-w-0"><p className="truncate font-semibold text-foreground text-sm">{username}</p><p className="truncate text-xs text-muted-foreground capitalize">{roleLabel(role)} Workspace</p></div></div> : null}<nav className="flex-1 overflow-y-auto p-3" aria-label="Menu perangkat kecil"><ul className="space-y-1">{drawerItems.map((item) => { const active = isPublicSurface ? publicActive === item.href.replace("/", "") : isNavigationItemActive(pathname, item); return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMenuOpen(false)} className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><NavigationIcon name={item.icon} className="size-5" />{item.label}</Link></li>; })}</ul></nav><div className="border-t border-border p-3">{user ? <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button> : <div className="grid gap-2"><Button variant="outline" asChild className="min-h-11"><Link href="/login" onClick={() => setMenuOpen(false)}>Masuk</Link></Button><Button asChild className="min-h-11"><Link href="/register" onClick={() => setMenuOpen(false)}>Daftar</Link></Button></div>}</div></aside></div> : null}
       {role === "keluarga" || role === "helper" ? <MobileBottomNavigation role={role} items={ROLE_NAVIGATION[role]} badges={badges} /> : null}
       <SOSDialog isOpen={sosOpen} onClose={() => setSosOpen(false)} userRole={role} />
     </>

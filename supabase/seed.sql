@@ -52,6 +52,8 @@ DECLARE
   lansia_4_id UUID;
   lansia_5_id UUID;
   category_id UUID;
+  lansia_5_id UUID;
+  category_id UUID;
   ringan_category_id UUID;
   sedang_category_id UUID;
   berat_category_id UUID;
@@ -62,29 +64,29 @@ BEGIN
   FOR user_data IN
     SELECT *
     FROM (VALUES
-      ('ratnakeluarga@rangkul.id', 'Ratna Wulandari', 'keluarga', 'ratnakeluarga', '081234567801', 'Jl. Pleburan Barat No. 10', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('mayakeluarga@rangkul.id', 'Maya Lestari', 'keluarga', 'mayakeluarga', '081234567802', 'Jl. Pleburan Barat No. 11', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('rintokeluarga@rangkul.id', 'Rinto Prabowo', 'keluarga', 'rintokeluarga', '081234567803', 'Jl. Pleburan Timur No. 12', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('dewikeluarga@rangkul.id', 'Dewi Kartika', 'keluarga', 'dewikeluarga', '081234567804', 'Jl. Pleburan Timur No. 13', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('suryakeluarga@rangkul.id', 'Surya Wijaya', 'keluarga', 'suryakeluarga', '081234567805', 'Jl. Kedungpane Raya No. 8', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah'),
-      ('demoadmin@rangkul.id', 'Admin Demo Rangkul', 'admin', 'demoadmin', '081234567899', 'Jl. Pleburan Tengah No. 99', 9, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('wagimankoordinator@rangkul.id', 'Wagiman Popo', 'koordinator', 'wagimankoordinator', '081234567811', 'Jl. Pleburan Barat No. 18', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('andihelper@rangkul.id', 'Andi Sudarto', 'helper', 'andihelper', '081234567821', 'Jl. Pleburan Barat No. 28', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('budikoordinator@rangkul.id', 'Budi Santoso', 'koordinator', 'budikoordinator', '081234567815', 'Jl. Pleburan Barat No. 19', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('sulikoordinator@rangkul.id', 'Suli Hartini', 'koordinator', 'sulikoordinator', '081234567812', 'Jl. Pleburan Barat No. 20', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('aguskoordinator@rangkul.id', 'Agus Salim', 'koordinator', 'aguskoordinator', '081234567813', 'Jl. Pleburan Barat No. 21', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('rahmatkoordinator@rangkul.id', 'Rahmat Hidayat', 'koordinator', 'rahmatkoordinator', '081234567814', 'Jl. Pleburan Barat No. 22', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('darmokoordinator@rangkul.id', 'Darmo Prasetyo', 'koordinator', 'darmokoordinator', '081234567816', 'Jl. Kedungpane Raya No. 6', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah'),
-      ('rinihelper@rangkul.id', 'Rini Kurniasih', 'helper', 'rinihelper', '081234567822', 'Jl. Pleburan Barat No. 30', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('dedihelper@rangkul.id', 'Dedi Setiawan', 'helper', 'dedihelper', '081234567823', 'Jl. Pleburan Barat No. 31', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('sarihelper@rangkul.id', 'Sari Wulandari', 'helper', 'sarihelper', '081234567824', 'Jl. Pleburan Barat No. 32', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('yusufhelper@rangkul.id', 'Yusuf Maulana', 'helper', 'yusufhelper', '081234567825', 'Jl. Pleburan Barat No. 33', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('dewihelper@rangkul.id', 'Dewi Anggraini', 'helper', 'dewihelper', '081234567826', 'Jl. Pleburan Timur No. 34', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('arifhelper@rangkul.id', 'Arif Pratama', 'helper', 'arifhelper', '081234567827', 'Jl. Pleburan Timur No. 35', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('linahelper@rangkul.id', 'Lina Kurniawan', 'helper', 'linahelper', '081234567828', 'Jl. Pleburan Timur No. 36', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('fajarhelper@rangkul.id', 'Fajar Nugroho', 'helper', 'fajarhelper', '081234567829', 'Jl. Pleburan Barat No. 37', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('bagushelper@rangkul.id', 'Bagus Santoso', 'helper', 'bagushelper', '081234567830', 'Jl. Kedungpane Raya No. 10', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah')
-    ) AS data(email_address, full_name_value, role_value, username_value, phone_value, alamat_detail_value, rt_value, rw_value, kelurahan_value, kecamatan_value, kabupaten_kota_value, provinsi_value)
+      ('ratnakeluarga@rangkul.id', 'Ratna Wulandari', 'keluarga', 'ratnakeluarga', '081234567801', 'Jl. Pleburan Barat No. 10', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-ratna.jpg'),
+      ('mayakeluarga@rangkul.id', 'Maya Lestari', 'keluarga', 'mayakeluarga', '081234567802', 'Jl. Pleburan Barat No. 11', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-ayu.jpg'),
+      ('rintokeluarga@rangkul.id', 'Rinto Prabowo', 'keluarga', 'rintokeluarga', '081234567803', 'Jl. Pleburan Timur No. 12', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('dewikeluarga@rangkul.id', 'Dewi Kartika', 'keluarga', 'dewikeluarga', '081234567804', 'Jl. Pleburan Timur No. 13', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang4.jpeg'),
+      ('suryakeluarga@rangkul.id', 'Surya Wijaya', 'keluarga', 'suryakeluarga', '081234567805', 'Jl. Kedungpane Raya No. 8', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('demoadmin@rangkul.id', 'Admin Demo Rangkul', 'admin', 'demoadmin', '081234567899', 'Jl. Pleburan Tengah No. 99', 9, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-admin.jpg'),
+      ('wagimankoordinator@rangkul.id', 'Wagiman Popo', 'koordinator', 'wagimankoordinator', '081234567811', 'Jl. Pleburan Barat No. 18', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-wagiman.jpg'),
+      ('andihelper@rangkul.id', 'Andi Sudarto', 'helper', 'andihelper', '081234567821', 'Jl. Pleburan Barat No. 28', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-andi.jpg'),
+      ('budikoordinator@rangkul.id', 'Budi Santoso', 'koordinator', 'budikoordinator', '081234567815', 'Jl. Pleburan Barat No. 19', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('sulikoordinator@rangkul.id', 'Suli Hartini', 'koordinator', 'sulikoordinator', '081234567812', 'Jl. Pleburan Barat No. 20', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-sarah.jpg'),
+      ('aguskoordinator@rangkul.id', 'Agus Salim', 'koordinator', 'aguskoordinator', '081234567813', 'Jl. Pleburan Barat No. 21', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('rahmatkoordinator@rangkul.id', 'Rahmat Hidayat', 'koordinator', 'rahmatkoordinator', '081234567814', 'Jl. Pleburan Barat No. 22', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('darmokoordinator@rangkul.id', 'Darmo Prasetyo', 'koordinator', 'darmokoordinator', '081234567816', 'Jl. Kedungpane Raya No. 6', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('rinihelper@rangkul.id', 'Rini Kurniasih', 'helper', 'rinihelper', '081234567822', 'Jl. Pleburan Barat No. 30', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-ayu.jpg'),
+      ('dedihelper@rangkul.id', 'Dedi Setiawan', 'helper', 'dedihelper', '081234567823', 'Jl. Pleburan Barat No. 31', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('sarihelper@rangkul.id', 'Sari Wulandari', 'helper', 'sarihelper', '081234567824', 'Jl. Pleburan Barat No. 32', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-sarah.jpg'),
+      ('yusufhelper@rangkul.id', 'Yusuf Maulana', 'helper', 'yusufhelper', '081234567825', 'Jl. Pleburan Barat No. 33', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('dewihelper@rangkul.id', 'Dewi Anggraini', 'helper', 'dewihelper', '081234567826', 'Jl. Pleburan Timur No. 34', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang4.jpeg'),
+      ('arifhelper@rangkul.id', 'Arif Pratama', 'helper', 'arifhelper', '081234567827', 'Jl. Pleburan Timur No. 35', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('linahelper@rangkul.id', 'Lina Kurniawan', 'helper', 'linahelper', '081234567828', 'Jl. Pleburan Timur No. 36', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang6.jpeg'),
+      ('fajarhelper@rangkul.id', 'Fajar Nugroho', 'helper', 'fajarhelper', '081234567829', 'Jl. Pleburan Barat No. 37', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang1.jpeg'),
+      ('bagushelper@rangkul.id', 'Bagus Santoso', 'helper', 'bagushelper', '081234567830', 'Jl. Kedungpane Raya No. 10', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg')
+    ) AS data(email_address, full_name_value, role_value, username_value, phone_value, alamat_detail_value, rt_value, rw_value, kelurahan_value, kecamatan_value, kabupaten_kota_value, provinsi_value, avatar_url_value)
   LOOP
     IF NOT EXISTS (
       SELECT 1
@@ -122,7 +124,8 @@ BEGIN
         jsonb_build_object(
           'full_name', user_data.full_name_value,
           'role', user_data.role_value,
-          'username', user_data.username_value
+          'username', user_data.username_value,
+          'avatar_url', user_data.avatar_url_value
         ),
         'authenticated',
         'authenticated',
@@ -150,6 +153,12 @@ BEGIN
         recovery_token = '',
         email_change_token_new = '',
         email_change = '',
+        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object(
+          'full_name', user_data.full_name_value,
+          'role', user_data.role_value,
+          'username', user_data.username_value,
+          'avatar_url', user_data.avatar_url_value
+        ),
         updated_at = NOW()
     WHERE LOWER(email) = LOWER(user_data.email_address)
        OR LOWER(raw_user_meta_data ->> 'username') = LOWER(user_data.username_value)
@@ -1215,15 +1224,18 @@ JOIN (VALUES
 WHERE u.id = hp.user_id;
 
 -- Asset demo lokal. Tidak menimpa foto pengguna nyata.
-
 UPDATE public.helper_profiles hp
 SET foto_wajah_url = CASE
-  WHEN LOWER(u.username) = 'andihelper' THEN '/images/helpers/orang1.jpeg'
-  WHEN LOWER(u.username) IN ('rinihelper', 'dedihelper') THEN '/images/helpers/orang2.jpg'
-  WHEN LOWER(u.username) IN ('sarihelper', 'yusufhelper') THEN '/images/helpers/orang4.jpeg'
-  WHEN LOWER(u.username) IN ('dewihelper', 'arifhelper') THEN '/images/helpers/orang6.jpeg'
-  WHEN LOWER(u.username) = 'linahelper' THEN '/images/helpers/orang5.jpeg'
-  WHEN LOWER(u.username) IN ('fajarhelper', 'bagushelper') THEN '/images/helpers/orang3.jpg'
+  WHEN LOWER(u.username) = 'andihelper' THEN '/images/avatars/avatar-andi.jpg'
+  WHEN LOWER(u.username) = 'rinihelper' THEN '/images/helpers/helper-ayu.jpg'
+  WHEN LOWER(u.username) = 'dedihelper' THEN '/images/helpers/orang2.jpg'
+  WHEN LOWER(u.username) = 'sarihelper' THEN '/images/helpers/helper-sarah.jpg'
+  WHEN LOWER(u.username) = 'yusufhelper' THEN '/images/helpers/orang3.jpg'
+  WHEN LOWER(u.username) = 'dewihelper' THEN '/images/helpers/orang4.jpeg'
+  WHEN LOWER(u.username) = 'arifhelper' THEN '/images/helpers/orang5.jpeg'
+  WHEN LOWER(u.username) = 'linahelper' THEN '/images/helpers/orang6.jpeg'
+  WHEN LOWER(u.username) = 'fajarhelper' THEN '/images/helpers/orang1.jpeg'
+  WHEN LOWER(u.username) = 'bagushelper' THEN '/images/helpers/orang2.jpg'
   ELSE '/images/helpers/orang2.jpg'
 END
 FROM public.users u
@@ -1236,7 +1248,12 @@ WHERE u.id = hp.user_id
 
 UPDATE public.koordinator_profiles kp
 SET foto_url = CASE
-  WHEN LOWER(u.username) = 'wagimankoordinator' THEN '/images/helpers/orang1.jpeg'
+  WHEN LOWER(u.username) = 'wagimankoordinator' THEN '/images/avatars/avatar-wagiman.jpg'
+  WHEN LOWER(u.username) = 'budikoordinator' THEN '/images/helpers/orang5.jpeg'
+  WHEN LOWER(u.username) = 'sulikoordinator' THEN '/images/helpers/helper-sarah.jpg'
+  WHEN LOWER(u.username) = 'aguskoordinator' THEN '/images/helpers/orang3.jpg'
+  WHEN LOWER(u.username) = 'rahmatkoordinator' THEN '/images/helpers/orang2.jpg'
+  WHEN LOWER(u.username) = 'darmokoordinator' THEN '/images/helpers/orang5.jpeg'
   ELSE '/images/helpers/orang2.jpg'
 END
 FROM public.users u

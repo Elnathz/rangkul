@@ -75,6 +75,8 @@ export default async function BerandaKeluargaPage() {
     ? activeHelperUser[0]?.full_name
     : activeHelperUser?.full_name;
 
+  const familyAvatarUrl = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
       {/* 1. Elevated Human-Centered Header */}
@@ -85,9 +87,17 @@ export default async function BerandaKeluargaPage() {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4 sm:items-center">
             {/* Avatar Badge with warm heart badge */}
-            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl">
-              {(profile?.full_name || "Keluarga").slice(0, 2).toUpperCase()}
-              <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-[#0D47A1]" title="Keluarga Tercinta">
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl overflow-hidden">
+              {familyAvatarUrl ? (
+                <img
+                  src={familyAvatarUrl}
+                  alt={profile?.full_name || "Keluarga"}
+                  className="size-full object-cover"
+                />
+              ) : (
+                (profile?.full_name || "Keluarga").slice(0, 2).toUpperCase()
+              )}
+              <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-[#0D47A1] z-10" title="Keluarga Tercinta">
                 <Heart className="size-2.5 text-white fill-white" aria-hidden="true" />
               </span>
             </div>

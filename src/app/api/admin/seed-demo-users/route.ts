@@ -18,6 +18,7 @@ type DemoUser = {
   kecamatan: string | null;
   kabupaten_kota: string | null;
   provinsi: string | null;
+  avatar_url?: string | null;
 };
 
 const DEMO_PASSWORD = 'Rangkul2026*';
@@ -45,6 +46,7 @@ const demoUsers = [
     rt: 2,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/avatars/avatar-ratna.jpg',
   },
   {
     email: 'mayakeluarga@rangkul.id',
@@ -56,6 +58,7 @@ const demoUsers = [
     rt: 3,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/helper-ayu.jpg',
   },
   {
     email: 'rintokeluarga@rangkul.id',
@@ -67,6 +70,7 @@ const demoUsers = [
     rt: 4,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang2.jpg',
   },
   {
     email: 'dewikeluarga@rangkul.id',
@@ -78,6 +82,7 @@ const demoUsers = [
     rt: 5,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang4.jpeg',
   },
   {
     email: 'suryakeluarga@rangkul.id',
@@ -89,6 +94,7 @@ const demoUsers = [
     rt: 1,
     rw: 2,
     ...KEDUNGPANE_LOCATION,
+    avatar_url: '/images/helpers/orang3.jpg',
   },
   {
     email: 'wagimankoordinator@rangkul.id',
@@ -103,6 +109,7 @@ const demoUsers = [
     kecamatan: null,
     kabupaten_kota: null,
     provinsi: null,
+    avatar_url: '/images/avatars/avatar-wagiman.jpg',
   },
   {
     email: 'andihelper@rangkul.id',
@@ -117,6 +124,7 @@ const demoUsers = [
     kecamatan: null,
     kabupaten_kota: null,
     provinsi: null,
+    avatar_url: '/images/avatars/avatar-andi.jpg',
   },
   {
     email: 'budikoordinator@rangkul.id',
@@ -128,6 +136,7 @@ const demoUsers = [
     rt: 1,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang5.jpeg',
   },
   {
     email: 'sulikoordinator@rangkul.id',
@@ -139,6 +148,7 @@ const demoUsers = [
     rt: 2,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/helper-sarah.jpg',
   },
   {
     email: 'aguskoordinator@rangkul.id',
@@ -150,6 +160,7 @@ const demoUsers = [
     rt: 4,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang3.jpg',
   },
   {
     email: 'rahmatkoordinator@rangkul.id',
@@ -161,6 +172,7 @@ const demoUsers = [
     rt: 5,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang2.jpg',
   },
   {
     email: 'darmokoordinator@rangkul.id',
@@ -172,6 +184,7 @@ const demoUsers = [
     rt: 1,
     rw: 2,
     ...KEDUNGPANE_LOCATION,
+    avatar_url: '/images/helpers/orang5.jpeg',
   },
   {
     email: 'rinihelper@rangkul.id',
@@ -183,6 +196,7 @@ const demoUsers = [
     rt: 2,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/helper-ayu.jpg',
   },
   {
     email: 'dedihelper@rangkul.id',
@@ -194,6 +208,7 @@ const demoUsers = [
     rt: 3,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang2.jpg',
   },
   {
     email: 'sarihelper@rangkul.id',
@@ -205,6 +220,7 @@ const demoUsers = [
     rt: 4,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/helper-sarah.jpg',
   },
   {
     email: 'yusufhelper@rangkul.id',
@@ -216,6 +232,7 @@ const demoUsers = [
     rt: 5,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang3.jpg',
   },
   {
     email: 'dewihelper@rangkul.id',
@@ -227,6 +244,7 @@ const demoUsers = [
     rt: 2,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang4.jpeg',
   },
   {
     email: 'arifhelper@rangkul.id',
@@ -238,6 +256,7 @@ const demoUsers = [
     rt: 3,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang5.jpeg',
   },
   {
     email: 'linahelper@rangkul.id',
@@ -249,6 +268,7 @@ const demoUsers = [
     rt: 4,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang6.jpeg',
   },
   {
     email: 'fajarhelper@rangkul.id',
@@ -260,6 +280,7 @@ const demoUsers = [
     rt: 1,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/helpers/orang1.jpeg',
   },
   {
     email: 'bagushelper@rangkul.id',
@@ -271,6 +292,7 @@ const demoUsers = [
     rt: 1,
     rw: 2,
     ...KEDUNGPANE_LOCATION,
+    avatar_url: '/images/helpers/orang2.jpg',
   },
   {
     email: 'demoadmin@rangkul.id',
@@ -282,6 +304,7 @@ const demoUsers = [
     rt: 9,
     rw: 5,
     ...DEMO_LOCATION,
+    avatar_url: '/images/avatars/avatar-admin.jpg',
   },
 ] satisfies DemoUser[];
 
@@ -295,6 +318,7 @@ type CoordinatorProfileSeed = {
   domisili_lng: number;
   diverifikasi_oleh: 'demoadmin' | null;
   diverifikasi_at: 'now' | null;
+  foto_url?: string | null;
 };
 
 const coordinatorProfiles: CoordinatorProfileSeed[] = [
@@ -308,6 +332,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.4381,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/avatars/avatar-wagiman.jpg',
   },
   {
     username: 'budikoordinator',
@@ -319,6 +344,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.4375,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/helpers/orang5.jpeg',
   },
   {
     username: 'sulikoordinator',
@@ -330,6 +356,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.4378,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/helpers/helper-sarah.jpg',
   },
   {
     username: 'aguskoordinator',
@@ -341,6 +368,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.4391,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/helpers/orang3.jpg',
   },
   {
     username: 'rahmatkoordinator',
@@ -352,6 +380,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.438,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/helpers/orang2.jpg',
   },
   {
     username: 'darmokoordinator',
@@ -363,6 +392,7 @@ const coordinatorProfiles: CoordinatorProfileSeed[] = [
     domisili_lng: 110.3273,
     diverifikasi_oleh: 'demoadmin',
     diverifikasi_at: 'now',
+    foto_url: '/images/helpers/orang5.jpeg',
   },
 ];
 
@@ -381,6 +411,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'probation',
     tugas_selesai_berturut: 0,
     total_tugas_selesai: 0,
+    foto_wajah_url: '/images/avatars/avatar-andi.jpg',
   },
   {
     username: 'rinihelper',
@@ -396,6 +427,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 7,
     total_tugas_selesai: 7,
+    foto_wajah_url: '/images/helpers/helper-ayu.jpg',
   },
   {
     username: 'dedihelper',
@@ -411,6 +443,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 6,
     total_tugas_selesai: 6,
+    foto_wajah_url: '/images/helpers/orang2.jpg',
   },
   {
     username: 'sarihelper',
@@ -426,6 +459,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 8,
     total_tugas_selesai: 8,
+    foto_wajah_url: '/images/helpers/helper-sarah.jpg',
   },
   {
     username: 'yusufhelper',
@@ -441,6 +475,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 5,
     total_tugas_selesai: 5,
+    foto_wajah_url: '/images/helpers/orang3.jpg',
   },
   {
     username: 'dewihelper',
@@ -456,6 +491,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'probation',
     tugas_selesai_berturut: 1,
     total_tugas_selesai: 1,
+    foto_wajah_url: '/images/helpers/orang4.jpeg',
   },
   {
     username: 'arifhelper',
@@ -471,6 +507,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'probation',
     tugas_selesai_berturut: 0,
     total_tugas_selesai: 0,
+    foto_wajah_url: '/images/helpers/orang5.jpeg',
   },
   {
     username: 'linahelper',
@@ -486,6 +523,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'probation',
     tugas_selesai_berturut: 0,
     total_tugas_selesai: 0,
+    foto_wajah_url: '/images/helpers/orang6.jpeg',
   },
   {
     username: 'fajarhelper',
@@ -501,6 +539,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 5,
     total_tugas_selesai: 5,
+    foto_wajah_url: '/images/helpers/orang1.jpeg',
   },
   {
     username: 'bagushelper',
@@ -516,6 +555,7 @@ const helperProfiles = [
     tingkat_kepercayaan: 'terpercaya',
     tugas_selesai_berturut: 6,
     total_tugas_selesai: 6,
+    foto_wajah_url: '/images/helpers/orang2.jpg',
   },
 ] as const;
 
@@ -547,6 +587,7 @@ async function ensureAuthUser(
         full_name: demo.full_name,
         role: demo.role,
         username: demo.username,
+        avatar_url: demo.avatar_url ?? null,
       },
     });
 
@@ -567,6 +608,7 @@ async function ensureAuthUser(
       full_name: demo.full_name,
       role: demo.role,
       username: demo.username,
+      avatar_url: demo.avatar_url ?? null,
     },
   });
 
@@ -659,6 +701,7 @@ export async function GET() {
             domisili_lng: profile.domisili_lng,
             diverifikasi_oleh: profile.diverifikasi_oleh === 'demoadmin' ? adminId : null,
             diverifikasi_at: profile.diverifikasi_at === 'now' ? profileTimestamp : null,
+            foto_url: profile.foto_url ?? null,
             updated_at: profileTimestamp,
           },
           { onConflict: 'user_id' },
@@ -698,6 +741,7 @@ export async function GET() {
           tingkat_kepercayaan: profile.tingkat_kepercayaan,
           tugas_selesai_berturut: profile.tugas_selesai_berturut,
           total_tugas_selesai: profile.total_tugas_selesai,
+          foto_wajah_url: profile.foto_wajah_url ?? null,
           updated_at: profileTimestamp,
         },
         { onConflict: 'user_id' },

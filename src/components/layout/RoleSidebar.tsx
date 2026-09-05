@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import { NavigationIcon } from "@/components/layout/NavigationIcon";
 import { ROLE_NAVIGATION, isNavigationItemActive, type AppRole, type NavigationItem } from "@/lib/navigation/role-navigation";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 type OperationalRole = Extract<AppRole, "koordinator" | "admin">;
@@ -34,6 +36,28 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
   const groups = groupedNavigation(role);
   const homeHref = role === "admin" ? "/admin/dashboard" : "/koordinator/dashboard";
   const [openGroups, setOpenGroups] = useState(() => new Set(groups.map((group) => group.label)));
+  const [user, setUser] = useState<User | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth.getUser().then(async ({ data }) => {
+      const u = data.user;
+      setUser(u);
+      if (u) {
+        let photo = (u.user_metadata?.avatar_url || u.user_metadata?.foto_url || null) as string | null;
+        if (!photo && role === "koordinator") {
+          const { data: kp } = await supabase
+            .from("koordinator_profiles")
+            .select("foto_url")
+            .eq("user_id", u.id)
+            .maybeSingle();
+          if (kp?.foto_url) photo = kp.foto_url;
+        }
+        setAvatarUrl(photo);
+      }
+    });
+  }, [role]);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border bg-[var(--surface-subtle)] lg:flex" aria-label={`Navigasi ${role}`}>
@@ -59,7 +83,22 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
         </div>
       </nav>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border p-3 space-y-2">
+        {user ? (
+          <div className="flex items-center gap-2.5 rounded-lg border border-border/70 bg-card p-2 shadow-xs">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" aria-hidden="true" className="size-9 rounded-full object-cover border border-primary/20 shrink-0" />
+            ) : (
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">
+                {(user.user_metadata?.full_name || role).slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold text-foreground">{user.user_metadata?.full_name || user.email}</p>
+              <p className="truncate text-[11px] capitalize text-muted-foreground">{role} Rangkul</p>
+            </div>
+          </div>
+        ) : null}
         <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           <NavigationIcon name="home" className="size-5" /> Kembali ke Beranda
         </Link>

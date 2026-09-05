@@ -47,7 +47,7 @@ export default async function HelperDashboardPage() {
       .from("helper_profiles")
       .select(`
         id, status, tingkat_kepercayaan, is_available, saldo_tersedia,
-        total_tugas_selesai, wilayah_domisili, radius_layanan_km,
+        total_tugas_selesai, wilayah_domisili, radius_layanan_km, foto_wajah_url,
         helper_service_categories ( service_categories ( id, nama, tingkat, is_high_risk ) )
       `)
       .eq("user_id", user.id)
@@ -81,6 +81,7 @@ export default async function HelperDashboardPage() {
   const taskStatus = nextTask ? getTaskStatusPresentation(nextTask.status as TaskStatus) : null;
   const canBrowse = profile.status === "verified";
   const helperName = userData?.full_name || "Helper";
+  const helperAvatarUrl = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | undefined);
 
   const helperCategories: ServiceCategoryItem[] = (profile.helper_service_categories ?? [])
     .map((item) => {
@@ -89,9 +90,8 @@ export default async function HelperDashboardPage() {
         : item.service_categories;
       return category as ServiceCategoryItem | null;
     })
-    .filter((cat): cat is ServiceCategoryItem => Boolean(cat && cat.nama));
+    .filter((category): category is ServiceCategoryItem => Boolean(category));
 
-  const serviceCategoryNames = helperCategories.map((c) => c.nama);
   const serviceCoverage = `${Number(profile.radius_layanan_km).toLocaleString("id-ID")} km`;
 
   return (
@@ -104,10 +104,18 @@ export default async function HelperDashboardPage() {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4 sm:items-center">
             {/* Avatar Badge with verified ring */}
-            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl">
-              {helperName.slice(0, 2).toUpperCase()}
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl overflow-hidden">
+              {helperAvatarUrl ? (
+                <img
+                  src={helperAvatarUrl}
+                  alt={helperName}
+                  className="size-full object-cover"
+                />
+              ) : (
+                helperName.slice(0, 2).toUpperCase()
+              )}
               {profile.status === "verified" ? (
-                <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0D47A1]" title="Terverifikasi">
+                <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0D47A1] z-10" title="Terverifikasi">
                   <CheckCircle2 className="size-2.5 text-white" aria-hidden="true" />
                 </span>
               ) : null}
