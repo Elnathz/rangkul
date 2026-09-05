@@ -33,3 +33,10 @@ test("active-route memilih prefix terpanjang dan alias legacy", () => {
   assert.equal(isNavigationItemActive("/helper/tugas/baru", helperNewTasks), true);
   assert.equal(isNavigationItemActive("/helper/tugas-lama", helperTasks), false);
 });
+
+test("halaman /helper/tugas mengarahkan ke implementasi tugas nyata bukan placeholder", async () => {
+  const fs = await import("node:fs");
+  const helperTugasSource = fs.readFileSync("src/app/(helper)/helper/tugas/page.tsx", "utf8");
+  assert.doesNotMatch(helperTugasSource, /tahap pengembangan/i);
+  assert.match(helperTugasSource, /tugas\/page/);
+});
