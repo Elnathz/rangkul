@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import { getFrontendRouteAccess } from "../src/lib/supabase/proxy-routing.ts";
 
 const dropdown = fs.readFileSync(new URL("../src/components/notifications/NotificationDropdown.tsx", import.meta.url), "utf8");
 const navbar = fs.readFileSync(new URL("../src/components/layout/Navbar.tsx", import.meta.url), "utf8");
 const notificationPage = fs.readFileSync(new URL("../src/components/notifications/NotificationPageClient.tsx", import.meta.url), "utf8");
-const proxySource = fs.readFileSync(new URL("../src/proxy.ts", import.meta.url), "utf8");
 const tugasPage = fs.readFileSync(new URL("../src/app/(helper)/tugas/page.tsx", import.meta.url), "utf8");
 
 test("NotificationDropdown menyediakan preview ber-scroll dan aksi navigasi penuh", () => {
@@ -69,9 +69,8 @@ test("halaman /notifikasi menyediakan tabs filter Layanan dan Umum serta tombol 
 });
 
 test("rute /tugas diproteksi agar non-helper tidak dapat melihat task board helper", () => {
-  // Proteksi di proxy middleware
-  assert.match(proxySource, /'\/tugas'/);
-  assert.match(proxySource, /pathname\.startsWith\('\/tugas'\)/);
+  assert.equal(getFrontendRouteAccess("/tugas"), "helper");
+  assert.equal(getFrontendRouteAccess("/tugas/task-id"), "helper");
 
   // Proteksi di server component jika user bukan helper
   assert.match(tugasPage, /if \(!profile\) \{\s*redirect\("\/beranda"\);/);

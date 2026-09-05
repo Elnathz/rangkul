@@ -46,6 +46,54 @@ async function fixtureTask(service, catatan) {
   return data;
 }
 
+async function resetSharedFixtures() {
+  if (!integrationEnabled || !credentialsAvailable) return;
+
+  const service = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const [applicantTask, quickTask] = await Promise.all([
+    fixtureTask(service, marker.applicantOpen),
+    fixtureTask(service, marker.quickActive),
+  ]);
+
+  const [{ error: applicantResetError }, { error: quickResetError }, { error: applicationResetError }] = await Promise.all([
+    service
+      .from("tasks")
+      .update({
+        helper_id: null,
+        status: "diajukan",
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        confirmed_at: null,
+        cancelled_at: null,
+        cancellation_reason: null,
+      })
+      .eq("id", applicantTask.id),
+    service
+      .from("tasks")
+      .update({
+        helper_id: null,
+        status: "diajukan",
+        expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        confirmed_at: null,
+        cancelled_at: null,
+        cancellation_reason: null,
+      })
+      .eq("id", quickTask.id),
+    service
+      .from("task_applications")
+      .update({ status: "pending", diputus_at: null })
+      .eq("task_id", applicantTask.id),
+  ]);
+
+  assert.equal(applicantResetError, null, applicantResetError?.message);
+  assert.equal(quickResetError, null, quickResetError?.message);
+  assert.equal(applicationResetError, null, applicationResetError?.message);
+}
+
+test.before(resetSharedFixtures);
+test.after(resetSharedFixtures);
+
 test(
   "runtime Sprint 6: marketplace tereduksi dan task application tetap role-scoped",
   { skip: !integrationEnabled || !credentialsAvailable },

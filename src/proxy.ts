@@ -1,12 +1,20 @@
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
-import { isPublicRoute } from '@/lib/supabase/proxy-routing';
+import {
+  getApiRouteAccess,
+  getFrontendRouteAccess,
+  getRoleHome,
+  isPublicRoute,
+  type AppRole,
+} from '@/lib/supabase/proxy-routing';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { Database } from '@/types/database';
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const frontendAccess = getFrontendRouteAccess(pathname);
+  const apiAccess = getApiRouteAccess(pathname);
 
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
@@ -37,45 +45,9 @@ export async function proxy(request: NextRequest) {
   // Get user and their role
   const { data: { user } } = await supabase.auth.getUser();
   
-  // Define role-based route protection for API
-  const protectedApiRoutes = [
-    '/api/users/me',
-    '/api/storage/upload',
-    '/api/lansia',
-    '/api/helper',
-    '/api/helpers',
-    '/api/koordinator',
-    '/api/booking',
-  ];
-
-  // Define role-based route protection for Frontend
-  const protectedFrontendRoutes = [
-    '/admin',
-    '/koordinator',
-    '/helper',
-    '/keluarga',
-    '/tugas',
-  ];
-  
-  // API Route Checks
-  const isAdminApiRoute = pathname.startsWith('/api/admin');
-  const isKoordinatorApiRoute = pathname.startsWith('/api/koordinator') || /^\/api\/helper\/[^/]+\/(approve|reject)$/.test(pathname);
-  const isHelperApiRoute =
-    pathname.startsWith('/api/helper/apply') ||
-    pathname.startsWith('/api/helper/profile') ||
-    pathname.startsWith('/api/helper/queue');
-  const isKeluargaApiRoute = pathname.startsWith('/api/lansia');
-  const isBookingApiRoute = pathname.startsWith('/api/booking');
-  
-  // Frontend Route Checks
-  const isAdminFrontendRoute = pathname.startsWith('/admin');
-  const isKoordinatorFrontendRoute = pathname.startsWith('/koordinator');
-  const isHelperFrontendRoute = pathname.startsWith('/helper') || pathname.startsWith('/tugas');
-  const isKeluargaFrontendRoute = pathname.startsWith('/keluarga');
-  
   // Check if route requires authentication
-  const isProtectedApiRoute = protectedApiRoutes.some(route => pathname.startsWith(route));
-  const isProtectedFrontendRoute = protectedFrontendRoutes.some(route => pathname.startsWith(route));
+  const isProtectedApiRoute = apiAccess !== null && apiAccess !== 'public';
+  const isProtectedFrontendRoute = frontendAccess !== null && frontendAccess !== 'public';
   const isProtectedRoute = isProtectedApiRoute || isProtectedFrontendRoute;
   
   // If route requires authentication but user is not logged in
@@ -87,7 +59,9 @@ export async function proxy(request: NextRequest) {
       );
     } else {
       // Redirect to login page for frontend routes
-      return NextResponse.redirect(new URL('/login', request.url));
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
+      return NextResponse.redirect(loginUrl);
     }
   }
   
@@ -111,41 +85,29 @@ export async function proxy(request: NextRequest) {
     }
       
     const metadataRole = user.user_metadata?.role;
-    const userRole = userProfile?.role ?? (
+    const userRole = (userProfile?.role ?? (
       metadataRole === 'keluarga' || metadataRole === 'helper' || metadataRole === 'koordinator' || metadataRole === 'admin'
         ? metadataRole
         : undefined
-    );
+    )) as AppRole | undefined;
     
-    // API Role-based access control
-    if (isAdminApiRoute && userRole !== 'admin') {
-      return NextResponse.json({ error: 'forbidden', message: 'Hanya admin yang dapat mengakses resource ini' }, { status: 403 });
-    }
-    if (isKoordinatorApiRoute && userRole !== 'koordinator' && userRole !== 'admin') {
-      return NextResponse.json({ error: 'forbidden', message: 'Hanya koordinator dan admin yang dapat mengakses resource ini' }, { status: 403 });
-    }
-    if (isHelperApiRoute && userRole !== 'helper' && userRole !== 'admin') {
-      return NextResponse.json({ error: 'forbidden', message: 'Hanya helper dan admin yang dapat mengakses resource ini' }, { status: 403 });
-    }
-    if (isKeluargaApiRoute && userRole !== 'keluarga' && userRole !== 'admin') {
-      return NextResponse.json({ error: 'forbidden', message: 'Hanya keluarga dan admin yang dapat mengakses resource ini' }, { status: 403 });
-    }
-    if (isBookingApiRoute && userRole !== 'keluarga' && userRole !== 'admin') {
-      return NextResponse.json({ error: 'forbidden', message: 'Hanya keluarga dan admin yang dapat membuat pemesanan' }, { status: 403 });
+    // Namespace API yang role-spesifik ditutup sebelum route handler. Ownership dan
+    // scope wilayah tetap diperiksa lagi oleh handler dan RLS.
+    if (Array.isArray(apiAccess) && (!userRole || !apiAccess.includes(userRole))) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'Role Anda tidak memiliki akses ke resource ini' },
+        { status: 403 },
+      );
     }
 
-    // Frontend Role-based access control
-    if (isAdminFrontendRoute && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    if (isKoordinatorFrontendRoute && userRole !== 'koordinator' && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    if (isHelperFrontendRoute && userRole !== 'helper' && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    if (isKeluargaFrontendRoute && userRole !== 'keluarga' && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
+    // Frontend role boundaries are exact. Admin does not impersonate product roles.
+    if (
+      frontendAccess !== null &&
+      frontendAccess !== 'public' &&
+      frontendAccess !== 'authenticated' &&
+      userRole !== frontendAccess
+    ) {
+      return NextResponse.redirect(new URL(userRole ? getRoleHome(userRole) : '/login', request.url));
     }
   }
   
