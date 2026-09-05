@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
-import { Bell, ChevronDown, LogOut, Menu, Pencil, ShieldAlert, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Pencil, ShieldAlert, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 import { MobileBottomNavigation } from "@/components/layout/MobileBottomNavigation";
 import { NavigationIcon } from "@/components/layout/NavigationIcon";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown";
 import SOSDialog from "@/components/ui/SOSDialog";
 import { Button } from "@/components/ui/button";
 import { ROLE_NAVIGATION, isNavigationItemActive, type AppRole, type NavigationItem } from "@/lib/navigation/role-navigation";
@@ -205,10 +206,11 @@ export default function Navbar() {
           <div className="flex shrink-0 items-center gap-1.5">
             {role === "helper" ? <button type="button" onClick={() => setSosOpen(true)} className="hidden min-h-11 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 sm:inline-flex"><ShieldAlert className="size-4" aria-hidden="true" />SOS</button> : null}
             {user ? <>
-              <Link href="/notifikasi" className="relative inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"}>
-                <Bell className="size-5" aria-hidden="true" />
-                {unreadCount > 0 ? <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}
-              </Link>
+              <NotificationDropdown
+                role={role}
+                unreadCount={unreadCount}
+                onUnreadCountChange={setUnreadCount}
+              />
               <div className="relative hidden sm:block">
                 <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen} aria-controls="profile-menu" className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                   <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span><span className="max-w-28 truncate">{username}</span><ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />

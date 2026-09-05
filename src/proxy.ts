@@ -54,6 +54,7 @@ export async function proxy(request: NextRequest) {
     '/koordinator',
     '/helper',
     '/keluarga',
+    '/tugas',
   ];
   
   // API Route Checks
@@ -69,7 +70,7 @@ export async function proxy(request: NextRequest) {
   // Frontend Route Checks
   const isAdminFrontendRoute = pathname.startsWith('/admin');
   const isKoordinatorFrontendRoute = pathname.startsWith('/koordinator');
-  const isHelperFrontendRoute = pathname.startsWith('/helper');
+  const isHelperFrontendRoute = pathname.startsWith('/helper') || pathname.startsWith('/tugas');
   const isKeluargaFrontendRoute = pathname.startsWith('/keluarga');
   
   // Check if route requires authentication
