@@ -9,7 +9,7 @@ import { isNavigationItemActive, type AppRole, type NavigationItem } from "@/lib
 import { cn } from "@/lib/utils";
 
 type MobileBottomNavigationProps = {
-  role: Extract<AppRole, "keluarga" | "helper">;
+  role: Extract<AppRole, "keluarga" | "helper" | "koordinator">;
   items: readonly NavigationItem[];
   badges: Record<string, number>;
 };
@@ -23,6 +23,11 @@ export function MobileBottomNavigation({ role, items, badges }: MobileBottomNavi
   const mobileItems = role === "keluarga"
     ? [...items].sort((left, right) => {
       const order = ["/beranda", "/kunjungan", "/booking/new", "/lansia", "/beranda/pesan"];
+      return order.indexOf(left.href) - order.indexOf(right.href);
+    })
+    : role === "koordinator"
+    ? [...items].sort((left, right) => {
+      const order = ["/koordinator/dashboard", "/koordinator/antrean", "/koordinator/persetujuan", "/koordinator/helper", "/koordinator/pesan"];
       return order.indexOf(left.href) - order.indexOf(right.href);
     })
     : items;

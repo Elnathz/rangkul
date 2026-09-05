@@ -38,7 +38,9 @@ export async function requireAdmin() {
       .maybeSingle()).data;
   }
 
-  if (!resolvedProfile || resolvedProfile.role !== "admin") {
+  const effectiveRole = resolvedProfile?.role || user.user_metadata?.role;
+
+  if (effectiveRole !== "admin") {
     throw new AdminAuthError("forbidden", "Akses ditolak. Hanya Admin.", 403);
   }
 

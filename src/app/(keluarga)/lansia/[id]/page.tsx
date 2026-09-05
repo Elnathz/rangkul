@@ -50,12 +50,23 @@ export default function LansiaProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push("/login");
 
-      const { data: dbData } = await supabase
+      let query = supabase
         .from('lansia_profiles')
         .select('*')
-        .eq('id', id)
-        .eq('keluarga_id', user.id)
-        .single();
+        .eq('id', id);
+
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const userRole = userProfile?.role || user.user_metadata?.role;
+      if (userRole === 'keluarga') {
+        query = query.eq('keluarga_id', user.id);
+      }
+
+      const { data: dbData } = await query.maybeSingle();
         
       const data = dbData as unknown as LansiaDb | null;
         

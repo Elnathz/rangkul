@@ -19,13 +19,26 @@ export async function GET(
 
     const { id } = await params;
 
-    const { data: profile, error } = await supabase
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const role = userProfile?.role || user.user_metadata?.role || 'keluarga';
+
+    let query = supabase
       .from('lansia_profiles')
       .select('*')
       .eq('id', id)
-      .eq('keluarga_id', user.id)
-      .is('deleted_at', null)
-      .single();
+      .is('deleted_at', null);
+
+    // Jika keluarga, pastikan hanya milik lansia miliknya
+    if (role === 'keluarga') {
+      query = query.eq('keluarga_id', user.id);
+    }
+
+    const { data: profile, error } = await query.maybeSingle();
 
     if (error || !profile) {
       return createApiError('not_found', 'Profil lansia tidak ditemukan', 404);

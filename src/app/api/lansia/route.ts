@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { lansiaProfileSchema } from '@/lib/validations/lansia';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import type { Database } from '@/types/database';
@@ -13,12 +13,42 @@ export async function GET() {
       return createApiError('unauthorized', 'Anda harus login', 401);
     }
 
-    const { data: profiles, error } = await supabase
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const role = userProfile?.role || user.user_metadata?.role || 'keluarga';
+
+    if (role !== 'admin' && role !== 'koordinator' && role !== 'keluarga' && role !== 'helper') {
+      return createApiError('forbidden', 'Role Anda tidak memiliki akses ke resource ini', 403);
+    }
+
+    // Gunakan admin client untuk admin & koordinator agar bypass RLS kebijakan privasi
+    const dbClient = (role === 'admin' || role === 'koordinator') ? await createAdminClient() : supabase;
+
+    let query = dbClient
       .from('lansia_profiles')
-      .select('id, nama, alamat, lat, lng, catatan_kondisi, created_at, updated_at')
-      .eq('keluarga_id', user.id)
+      .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+
+    if (role === 'keluarga') {
+      query = query.eq('keluarga_id', user.id);
+    } else if (role === 'koordinator') {
+      const { data: kp } = await supabase
+        .from('koordinator_profiles')
+        .select('wilayah')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (kp?.wilayah) {
+        query = query.ilike('kecamatan', `%${kp.wilayah}%`);
+      }
+    }
+
+    const { data: profiles, error } = await query;
 
     if (error) {
       return createApiError('server_error', error.message, 500);

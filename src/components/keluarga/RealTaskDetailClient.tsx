@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPinned, ShieldCheck, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 import { useRouter } from "next/navigation";
 

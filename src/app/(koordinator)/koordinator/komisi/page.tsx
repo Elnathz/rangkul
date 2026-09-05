@@ -61,9 +61,10 @@ export default function KoordinatorKomisiPage() {
       <div className="mb-8">
         <Link
           href="/koordinator/dashboard"
-          className="mb-4 inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900"
+          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all sm:text-sm"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Dashboard
+          <ArrowLeft className="h-4 w-4 text-slate-600 shrink-0" />
+          <span>Kembali ke Beranda</span>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

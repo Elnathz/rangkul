@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
-import { usePathname, useRouter } from "next/navigation";
-import { Search, Plus, X, Users, MapPin } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Search, Plus, Users } from "lucide-react";
 import Image from "next/image";
 
 export type InboxItem = {
@@ -21,7 +21,6 @@ export type InboxItem = {
 
 export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: string }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [search, setSearch] = useState("");
 
   const filteredInbox = inbox.filter(item => 
@@ -33,7 +32,16 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
     <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
       <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between sticky top-0 z-10 shrink-0">
-        <h2 className="text-xl font-bold text-slate-800">Pesan Tugas</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-slate-800">Pesan Tugas</h2>
+        {basePath.includes("koordinator") && (
+          <Link
+            href="/koordinator/helper"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-blue-800 active:scale-95 transition-all"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Mulai Obrolan</span>
+          </Link>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -55,8 +63,23 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {filteredInbox.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6 text-slate-500">
-            <p className="text-sm mb-4">Belum ada obrolan terkait tugas Anda.</p>
+          <div className="flex flex-col items-center justify-center min-h-[280px] h-full text-center p-6 text-slate-500">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0D47A1] flex items-center justify-center mb-3 shadow-xs">
+              <Users className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-bold text-slate-800 mb-1">Belum ada obrolan aktif</p>
+            <p className="text-xs text-slate-500 max-w-xs mb-5 leading-relaxed">
+              Obrolan tugas otomatis muncul saat Helper atau Keluarga berkomunikasi dengan Anda. Anda juga dapat melihat daftar Helper wilayah.
+            </p>
+            {basePath.includes("koordinator") && (
+              <Link
+                href="/koordinator/helper"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0D47A1] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-blue-800 active:scale-95 transition-all"
+              >
+                <Users className="h-4 w-4" />
+                <span>Lihat Helper Wilayah</span>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -162,6 +164,14 @@ export default function KoordinatorPengajuanPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 md:p-10 mb-20 bg-white rounded-2xl border border-slate-200 shadow-sm mt-8">
+      <Link
+        href="/koordinator/dashboard"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all sm:text-sm"
+      >
+        <ChevronLeft className="w-4 h-4 text-slate-600 shrink-0" />
+        <span>Kembali ke Beranda</span>
+      </Link>
+
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold block text-[#0D47A1]">
           Pengajuan Akses Koordinator
@@ -172,8 +182,18 @@ export default function KoordinatorPengajuanPage() {
       </div>
       
       {errorMsg && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl">
-          {errorMsg}
+        <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl space-y-3">
+          <p>{errorMsg}</p>
+          {errorMsg.toLowerCase().includes("verified") && (
+            <div className="pt-1">
+              <Link
+                href="/koordinator/antrean"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D47A1] text-white font-bold text-xs rounded-xl shadow-xs hover:bg-blue-800 transition-all active:scale-95"
+              >
+                <span>Buka Antrean Verifikasi Helper</span>
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
