@@ -11,7 +11,7 @@ import RegionSelect from "@/components/ui/RegionSelect";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
-import ServiceSelectionModal from "@/components/services/ServiceSelectionModal";
+import HelperCategoryMultiSelect, { type HelperCategoryItem } from "@/components/helper/HelperCategoryMultiSelect";
 
 type KoordinatorOption = {
   id: string;
@@ -59,7 +59,7 @@ export default function HelperVerifikasiPage() {
     setTimeout(() => setToast(null), 4000);
   };
   
-  const [dbCategories, setDbCategories] = useState<ServiceCategoryOption[]>([]);
+  const [dbCategories, setDbCategories] = useState<HelperCategoryItem[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
@@ -109,8 +109,8 @@ export default function HelperVerifikasiPage() {
       // Fetch categories
       const { data: cats } = await supabase
         .from('service_categories')
-        .select('id, nama, tingkat, parent_id, is_active');
-      if (cats) setDbCategories(getSelectableServiceCategories(cats as unknown as ServiceCategoryRow[]));
+        .select('id, nama, tingkat, parent_id, is_active, harga_dasar, estimasi_durasi_menit, is_high_risk');
+      if (cats) setDbCategories(getSelectableServiceCategories(cats as unknown as ServiceCategoryRow[]) as HelperCategoryItem[]);
 
       // Fetch user profile if exists
       const { data: { user } } = await supabase.auth.getUser();
@@ -318,7 +318,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        ktpUrl = uploadData.data?.path;
+        ktpUrl = uploadData.data?.path || uploadData.path;
       } else {
         ktpUrl = form.ktp_url;
       }
@@ -340,7 +340,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        fotoUrl = uploadData.data?.path;
+        fotoUrl = uploadData.data?.path || uploadData.path;
       } else {
         fotoUrl = form.foto_url;
       }
@@ -621,93 +621,21 @@ export default function HelperVerifikasiPage() {
             <div className={step === 2 ? "block animate-in fade-in" : "hidden"}>
               <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 2: Profil & Spesialisasi Layanan</h2>
               
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-4 mt-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2 mt-2">
                 Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
               </Label>
-              <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
+              <p className="text-xs text-slate-500 mb-4">
+                Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.
+              </p>
               <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm leading-6 text-blue-900">
                 <span className="font-semibold">{dbCategories.length} layanan aktif tersedia.</span> Kategori induk nonaktif hanya digunakan untuk pengelompokan katalog dan tidak dapat dipilih sebagai layanan.
               </p>
 
-              {/* Preview Tabs */}
-              <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
-                 {tiers.map((tier) => (
-                   <button
-                     key={tier.id}
-                     type="button"
-                     onClick={() => setActiveTab(tier.id)}
-                     className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
-                       activeTab === tier.id 
-                         ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
-                         : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                     }`}
-                   >
-                     {tier.title}
-                   </button>
-                 ))}
-              </div>
-
-              <div className="space-y-4 mb-2">
-                {(() => {
-                  const activeTier = tiers.find(t => t.id === activeTab);
-                  if (!activeTier) return null;
-                  const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
-
-                  return groupSelectableServiceCategories(filteredDbCats.slice(0, 4)).map((group) => (
-                    <section key={group.key} className="space-y-2">
-                      {group.parentName && <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{group.parentName}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px]">Parent</span></div>}
-                      <div className={group.parentName ? "space-y-2 border-l-2 border-blue-100 pl-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                        {group.items.map((cat) => {
-                          const isSelected = kategoriIds.includes(cat.id);
-                          return (
-                            <label key={cat.id} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
-                              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
-                                {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                              </div>
-                              <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
-                              <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ));
-                })()}
-              </div>
-
-              <div className="mb-6">
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setModalOpen(true);
-                    setModalActiveTab(activeTab); // Langsung buka tab yang sedang dilihat
-                  }} 
-                  className="text-[#0D47A1] text-sm font-semibold hover:underline flex items-center gap-1 mt-3 transition-colors hover:text-blue-800 focus:outline-none"
-                >
-                  {(() => {
-                    const activeTier = tiers.find(t => t.id === activeTab);
-                    const filteredCount = activeTier ? dbCategories.filter(c => c.tingkat === activeTier.id).length : 0;
-                    const rem = Math.max(0, filteredCount - 4);
-                    return `Tampilkan Semua Kategori ${activeTier?.title} (+${rem} lainnya)`;
-                  })()}
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-
-              {kategoriIds.length > 0 && (
-                <div className="mb-6 bg-slate-50 border border-slate-100 p-4 rounded-xl">
-                  <span className="text-xs font-bold text-gray-500 uppercase block mb-2">Kategori Terpilih ({kategoriIds.length}):</span>
-                  <div className="flex flex-wrap gap-2">
-                    {dbCategories.filter(c => kategoriIds.includes(c.id)).map(c => (
-                      <span key={c.id} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-[#0D47A1] border border-blue-200 shadow-sm">
-                        {c.nama}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <HelperCategoryMultiSelect
+                categories={dbCategories}
+                selectedIds={kategoriIds}
+                onChange={setKategoriIds}
+              />
               
               <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
                 Bio Singkat & Pengalaman
@@ -937,17 +865,7 @@ export default function HelperVerifikasiPage() {
         </div>
       </div>
 
-      {/* Universal ServiceSelectionModal */}
-      <ServiceSelectionModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        mode="multiple"
-        categories={dbCategories}
-        selectedIds={kategoriIds}
-        onConfirm={(ids) => setKategoriIds(ids)}
-        title="Kategori Layanan yang Disediakan"
-        subtitle="Pilih ragam tugas pendampingan yang sesuai dengan kemampuan dan pengalaman Anda."
-      />
+
 
       {/* Koordinator Modal */}
       {koordModalOpen && (
