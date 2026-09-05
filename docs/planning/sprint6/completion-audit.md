@@ -10,8 +10,8 @@
 | Migration cloud | Lulus | `supabase migration list --linked` menunjukkan local dan remote sinkron hingga `20260905110000`. |
 | Lint source | Lulus | `npm run lint` exit 0. |
 | Typecheck | Lulus | `npm run typecheck` exit 0. |
-| Test source | Lulus | `npm run test`: 269 pass, 0 fail, 14 runtime test skip tanpa flag cloud. Total 283 test mencakup klasifikasi seluruh halaman dan route handler, role redirect, kontrak API, state machine, serta UI contract. |
-| Matrix runtime cloud | Lulus | `RUN_SUPABASE_INTEGRATION=1 npm run test`: 283 pass, 0 fail, 0 skip. Termasuk RLS, marketplace tereduksi, withdraw, select atomik, race Cari Cepat, expiry, completion, trust safety, dan inventaris route. |
+| Test source | Lulus | `npm run test`: 274 pass, 0 fail, 14 runtime test skip tanpa flag cloud. Total 288 test mencakup klasifikasi seluruh halaman dan route handler, role redirect, dokumentasi OpenAPI, kontrak API, state machine, serta UI contract. |
+| Matrix runtime cloud | Lulus | `RUN_SUPABASE_INTEGRATION=1 npm run test`: 288 pass, 0 fail, 0 skip. Termasuk RLS, marketplace tereduksi, validasi mode booking, dokumentasi API, withdraw, select atomik, race Cari Cepat, expiry, completion, trust safety, dan inventaris route. |
 | Build production | Lulus | `npm run build` selesai, menghasilkan `.next/BUILD_ID`, dan membangun 91 halaman. |
 | Landing mobile publik | Lulus | Browser in-app pada 375px, 768px, 1024px, dan 1440px tidak menemukan horizontal overflow. Hero memakai satu kolom pada mobile dan kontrol footer pendek memiliki ukuran sentuh 44px. |
 | Landing navigation | Lulus | Lima anchor mengikuti urutan cerita. Scroll-spy desktop dan drawer mobile aktif. Escape menutup drawer dan fokus kembali ke tombol pembuka. |
@@ -19,9 +19,13 @@
 | Authenticated role smoke | Lulus | Persona Keluarga, Helper, Koordinator, dan Admin masuk ke dashboard role yang benar. Empat dashboard tidak overflow pada 375px, 768px, 1024px, dan 1440px. |
 | Role route matrix | Lulus | Seluruh 70 halaman diklasifikasikan dari route group. HTTP langsung dengan empat persona membuktikan route canonical tanpa prefix, legacy `/tugas`, dan namespace role mengembalikan `200` untuk role tepat atau `307` ke dashboard aktor untuk role lain. |
 | API authentication matrix | Lulus | Seluruh 86 handler diklasifikasikan. Hanya login, register, dan webhook bertanda tangan yang publik. Uji langsung menghasilkan `401` tanpa sesi, `403` lintas role, dan `200` untuk Keluarga, Helper, Koordinator, atau Admin yang tepat. `/api/helper/queue` dikoreksi sebagai endpoint Koordinator dan `/api/debug` kini memakai `requireAdmin`. |
+| Dokumentasi API | Lulus | Kontrak manusia, indeks domain, dokumentasi booking/Helper, dan OpenAPI 3.1 tersedia. Test memverifikasi spec dapat diparse, route assignment Sprint 6, role, response `409`/`422`, feature flag, serta link dari README. |
+| Runtime repeatability | Lulus | Lima runtime test Sprint 6 dijalankan dua kali berturut-turut tanpa reseed manual dan keduanya lulus 5/5. Hook suite memulihkan fixture shared sebelum dan sesudah test agar race, withdraw, dan selection tidak mencemari run berikutnya. |
+| Entry booking Sprint 6 | Lulus lokal | Browser dengan flag lokal aktif hanya menampilkan `Pilih dari Pelamar` dan `Cari Cepat`. `Booking Biasa` tidak lagi dapat membuat task langsung tanpa Helper. Request HTTP sesi Keluarga mengembalikan `422` sesuai TDD untuk mode langsung tanpa `helper_id` dan mode pelamar dengan `helper_id`, sebelum insert. |
+| Feature flag deployment | Fail-closed | Pemeriksaan read-only Vercel menunjukkan `SPRINT6_MATCHING_ENABLED` tidak disetel pada Production maupun Preview, sehingga implementasi default-off berlaku. `.env.local` aktif hanya untuk QA lokal. |
 | Cloud demo reseed | Lulus | Target project diverifikasi dari link Supabase, lalu `npm run seed:cloud` menyelesaikan SQL dan sinkronisasi empat asset demo privat. |
-| Dependency clean install | Gagal di host | `npm ci` berhenti dengan `ENOSPC`. Dependency inti pulih dan `npm ls --depth=0` lulus, tetapi clean install harus diulang pada runner dengan ruang cukup. |
-| CI revisi saat ini | Belum tersedia | `dev-eln` masih enam commit di depan `origin/dev-eln` dan memiliki perubahan lokal. Tidak ada pull request terbuka, sehingga hasil CI terakhir hanya mewakili revisi Sprint 4 yang sudah di-merge. |
+| Dependency clean install | Lulus di CI | Runner bersih pada run `33956280100` menjalankan `npm ci` dan seluruh quality gate dengan sukses untuk SHA `8749e29`. Host lokal hanya memiliki sekitar 0,11 GB ruang kosong sehingga percobaan lokal berhenti dengan `ENOSPC`; ini keterbatasan host, bukan kegagalan lockfile kandidat. |
+| CI baseline remote | Lulus | `HEAD` `8749e29` sama dengan `origin/dev-eln`. Workflow `CI Quality Gates` run `33956280100` selesai sukses. Perubahan validasi dan entry booking Sprint 6 setelah audit browser masih lokal, sehingga perlu CI baru setelah commit dan push yang disetujui. |
 
 ## Hasil verifikasi Sprint 6
 
@@ -33,7 +37,9 @@
 - Persona demo tersebar pada Pleburan RW 05 dan Kedungpane. Fixture memakai nama dan email yang mudah dibaca tanpa mengubah password demo.
 - Guard lintas peran tidak lagi hanya diuji pada satu URL. Matriks HTTP empat persona mencakup area Keluarga tanpa prefix, Helper canonical dan legacy, Koordinator, Admin, serta endpoint role-spesifik. Pengguna yang salah role kembali ke dashboard miliknya.
 - Proxy memakai matcher batas segmen dan daftar role eksplisit. Admin tidak lagi otomatis dapat memasuki workspace Keluarga, Helper, atau Koordinator hanya karena memiliki role Admin.
-- Gate final source: lint 0 error dengan 60 warning lama, typecheck lulus, 269/283 test source lulus dengan 14 runtime skip tanpa flag, build 91 halaman lulus, dependency inti ter-resolve, dan `git diff --check` lulus.
+- Gate final dengan runtime cloud aktif: lint 0 error dengan 63 warning non-blocking, typecheck lulus, 288/288 test lulus tanpa skip, build 91 halaman lulus, dan `git diff --check` lulus.
+- Browser preview menemukan lalu menutup celah mode langsung tanpa Helper pada `/booking/new`. Booking langsung tetap melalui `/booking/{helper_id}`; entry umum hanya tersedia ketika feature flag aktif dan hanya menawarkan mode pelamar atau cepat.
+- Kegagalan ulang runtime yang sempat muncul dilacak ke fixture shared yang telah termutasi oleh run sebelumnya, bukan ke RPC. Harness diperbaiki untuk reset deterministik dan dibuktikan dengan dua run berurutan tanpa reseed.
 
 ## Temuan non-blocking
 
@@ -41,12 +47,11 @@
 
 ## Bloker release dan tindakan selanjutnya
 
-1. Ulangi `npm ci` pada runner dengan ruang disk cukup.
-2. Simpan screenshot terbaru, uji zoom 200 persen, dan tuntaskan state error, conflict, retry, serta keyboard path yang belum memiliki evidence browser. Forbidden route dan API sudah memiliki evidence HTTP empat role.
-3. Push kandidat yang disetujui ke remote agar workflow CI berjalan pada revisi yang benar. Saat ini belum ada CI untuk enam commit lokal terbaru maupun perubahan working tree.
-4. Biarkan `SPRINT6_MATCHING_ENABLED` tetap `false` di production. Aktifkan hanya pada preview untuk dry run setelah gate di atas lulus.
-5. Production tidak boleh menerima flag `true` sebelum preview dry run dan smoke production semua role berhasil serta hasilnya ditambahkan ke audit ini.
+1. Simpan screenshot terbaru, uji zoom 200 persen, dan tuntaskan state error, conflict, retry, serta keyboard path yang belum memiliki evidence browser. Forbidden route dan API sudah memiliki evidence HTTP empat role.
+2. Commit dan push koreksi booking serta pembaruan evidence setelah disetujui agar CI berjalan pada source terbaru. Baseline `8749e29` hijau, tetapi belum memuat koreksi lokal ini.
+3. Biarkan `SPRINT6_MATCHING_ENABLED` tetap `false` di production. Aktifkan hanya pada preview untuk dry run setelah gate browser lulus.
+4. Production tidak boleh menerima flag `true` sebelum preview dry run dan smoke production semua role berhasil serta hasilnya ditambahkan ke audit ini.
 
 ## Keputusan saat ini
 
-**No-go untuk aktivasi production Sprint 6.** Implementasi, runtime cloud, reseed, dan browser authenticated sudah kuat, tetapi clean install, visual edge-state evidence, preview dry run, serta smoke production belum lengkap. Memaksa flag aktif hari ini akan mengabaikan gate yang sudah ditentukan sendiri.
+**No-go untuk aktivasi production Sprint 6.** Implementasi, clean install CI, runtime cloud, reseed, dan browser authenticated sudah kuat, tetapi visual edge-state evidence, preview dry run, serta smoke production belum lengkap. Memaksa flag aktif hari ini akan mengabaikan gate yang sudah ditentukan sendiri.

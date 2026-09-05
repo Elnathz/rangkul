@@ -1,0 +1,412 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Rangkul API",
+    "version": "2026.09-sprint6",
+    "description": "Kontrak API inti Rangkul dan mode penugasan Sprint 6. Business rule mengikuti docs/TDD_Rangkul.md."
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "variables": {
+        "baseUrl": { "default": "http://localhost:3000" }
+      }
+    }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Tasks" },
+    { "name": "Applications" },
+    { "name": "Marketplace" }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Masuk memakai username atau email",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login berhasil dan cookie sesi dipasang" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Daftar task sesuai role dan relasi actor",
+        "x-rangkul-roles": ["keluarga", "helper", "koordinator", "admin"],
+        "responses": {
+          "200": { "description": "Daftar task yang dapat dilihat actor" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Membuat booking langsung, pelamar, atau cepat",
+        "description": "Mode langsung wajib memiliki helper_id. Mode pelamar dan cepat tidak menerima helper_id. Mode Sprint 6 mengembalikan 404 saat feature flag nonaktif.",
+        "x-rangkul-roles": ["keluarga"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTaskRequest" },
+              "examples": {
+                "langsung": {
+                  "value": {
+                    "mode_penugasan": "langsung",
+                    "helper_id": "11111111-1111-4111-8111-111111111111",
+                    "lansia_id": "22222222-2222-4222-8222-222222222222",
+                    "service_category_id": "33333333-3333-4333-8333-333333333333",
+                    "jadwal_waktu": "2026-09-06T09:00:00+07:00"
+                  }
+                },
+                "pelamar": {
+                  "value": {
+                    "mode_penugasan": "pelamar",
+                    "lansia_id": "22222222-2222-4222-8222-222222222222",
+                    "service_category_id": "33333333-3333-4333-8333-333333333333",
+                    "jadwal_waktu": "2026-09-06T13:00:00+07:00"
+                  }
+                },
+                "cepat": {
+                  "value": {
+                    "mode_penugasan": "cepat",
+                    "lansia_id": "22222222-2222-4222-8222-222222222222",
+                    "service_category_id": "33333333-3333-4333-8333-333333333333",
+                    "jadwal_waktu": "2026-09-05T16:00:00+07:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Task dibuat" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/tasks/{id}": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Detail task sesuai ownership atau assignment",
+        "x-rangkul-roles": ["keluarga", "helper", "koordinator", "admin"],
+        "parameters": [{ "$ref": "#/components/parameters/TaskId" }],
+        "responses": {
+          "200": { "description": "Detail task" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/tasks/marketplace": {
+      "get": {
+        "tags": ["Marketplace"],
+        "summary": "Marketplace tereduksi untuk Helper eligible",
+        "description": "Tidak mengirim nama, foto, alamat lengkap, koordinat, atau catatan kesehatan lansia.",
+        "x-rangkul-roles": ["helper"],
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["pelamar", "cepat"] }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task yang lolos eligibility server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MarketplaceTask" }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/tasks/{id}/accept": {
+      "patch": {
+        "tags": ["Tasks", "Marketplace"],
+        "summary": "Menerima booking langsung atau memenangkan Cari Cepat",
+        "x-rangkul-roles": ["helper"],
+        "parameters": [{ "$ref": "#/components/parameters/TaskId" }],
+        "responses": {
+          "200": { "description": "Assignment berhasil" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/tasks/{id}/applications": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "Keluarga melihat profil publik pelamar task miliknya",
+        "x-rangkul-roles": ["keluarga"],
+        "parameters": [{ "$ref": "#/components/parameters/TaskId" }],
+        "responses": {
+          "200": { "description": "Daftar pelamar" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Applications"],
+        "summary": "Helper mengajukan diri pada task pelamar",
+        "x-rangkul-roles": ["helper"],
+        "parameters": [{ "$ref": "#/components/parameters/TaskId" }],
+        "responses": {
+          "201": { "description": "Application dibuat" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/api/tasks/{id}/applications/me": {
+      "delete": {
+        "tags": ["Applications"],
+        "summary": "Helper menarik application pending miliknya",
+        "x-rangkul-roles": ["helper"],
+        "parameters": [{ "$ref": "#/components/parameters/TaskId" }],
+        "responses": {
+          "200": { "description": "Application ditarik" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/api/tasks/{id}/applications/{application_id}/select": {
+      "patch": {
+        "tags": ["Applications"],
+        "summary": "Keluarga memilih satu pelamar secara atomik",
+        "x-rangkul-roles": ["keluarga"],
+        "parameters": [
+          { "$ref": "#/components/parameters/TaskId" },
+          { "$ref": "#/components/parameters/ApplicationId" }
+        ],
+        "responses": {
+          "200": { "description": "Satu pelamar dipilih dan lainnya ditolak" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase access token. Browser aplikasi umumnya memakai cookie sesi HTTP-only."
+      }
+    },
+    "parameters": {
+      "TaskId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "ApplicationId": {
+        "name": "application_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["identifier", "password"],
+        "properties": {
+          "identifier": { "type": "string", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      },
+      "TaskMode": {
+        "type": "string",
+        "enum": ["langsung", "pelamar", "cepat"]
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": ["diajukan", "menunggu_persetujuan_koordinator", "dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga", "selesai", "dibatalkan"]
+      },
+      "CreateTaskBase": {
+        "type": "object",
+        "required": ["lansia_id", "service_category_id", "jadwal_waktu", "mode_penugasan"],
+        "properties": {
+          "lansia_id": { "type": "string", "format": "uuid" },
+          "service_category_id": { "type": "string", "format": "uuid" },
+          "jadwal_waktu": { "type": "string", "format": "date-time" },
+          "catatan": { "type": "string", "maxLength": 1000 },
+          "mode_penugasan": { "$ref": "#/components/schemas/TaskMode" }
+        }
+      },
+      "CreateTaskRequest": {
+        "oneOf": [
+          {
+            "allOf": [
+              { "$ref": "#/components/schemas/CreateTaskBase" },
+              {
+                "type": "object",
+                "required": ["helper_id"],
+                "properties": {
+                  "mode_penugasan": { "const": "langsung" },
+                  "helper_id": { "type": "string", "format": "uuid" }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              { "$ref": "#/components/schemas/CreateTaskBase" },
+              {
+                "type": "object",
+                "properties": {
+                  "mode_penugasan": { "const": "pelamar" },
+                  "helper_id": { "type": "null" }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              { "$ref": "#/components/schemas/CreateTaskBase" },
+              {
+                "type": "object",
+                "properties": {
+                  "mode_penugasan": { "const": "cepat" },
+                  "helper_id": { "type": "null" }
+                }
+              }
+            ]
+          }
+        ],
+        "discriminator": { "propertyName": "mode_penugasan" }
+      },
+      "MarketplaceTask": {
+        "type": "object",
+        "required": ["task_id", "mode_penugasan", "kategori", "jadwal_waktu", "harga_dasar", "lokasi_ringkas", "expires_at"],
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" },
+          "mode_penugasan": { "type": "string", "enum": ["pelamar", "cepat"] },
+          "kategori": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "nama": { "type": "string" },
+              "estimasi_durasi_menit": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["id", "nama", "estimasi_durasi_menit"]
+          },
+          "jadwal_waktu": { "type": "string", "format": "date-time" },
+          "harga_dasar": { "type": "number", "minimum": 0 },
+          "lokasi_ringkas": {
+            "type": "object",
+            "properties": {
+              "kelurahan": { "type": "string" },
+              "kecamatan": { "type": "string" },
+              "jarak_km": { "type": "number", "minimum": 0 }
+            },
+            "required": ["kelurahan", "kecamatan", "jarak_km"]
+          },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "application_status": {
+            "type": ["string", "null"],
+            "enum": ["pending", "selected", "withdrawn", "rejected", "expired", null]
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "fieldErrors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Request tidak dapat dibaca",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "Unauthorized": {
+        "description": "Sesi tidak tersedia",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "Forbidden": {
+        "description": "Actor tidak berwenang",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "NotFound": {
+        "description": "Resource atau feature tidak tersedia",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "Conflict": {
+        "description": "State berubah atau terjadi race condition",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "ValidationError": {
+        "description": "Kombinasi field atau aturan domain tidak valid",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}

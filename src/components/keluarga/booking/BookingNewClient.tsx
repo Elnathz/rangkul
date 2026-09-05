@@ -23,50 +23,22 @@ export type BookingCategory = {
   jarak_max_km: number | null;
 };
 
-type Mode = "langsung" | "pelamar" | "cepat";
+type Mode = "pelamar" | "cepat";
 
 export default function BookingNewClient({
   lansias,
   categories,
-  allowsPelamar,
 }: {
   lansias: BookingLansia[];
   categories: BookingCategory[];
-  allowsPelamar: boolean;
 }) {
   const router = useRouter();
-  const availableModes: Mode[] = ["langsung", "cepat"];
-  if (allowsPelamar) availableModes.splice(1, 0, "pelamar");
+  const availableModes: Mode[] = ["pelamar", "cepat"];
 
-  const [mode, setMode] = useState<Mode>(availableModes[0] ?? "langsung");
+  const [mode, setMode] = useState<Mode>("pelamar");
   const [form, setForm] = useState({ lansia_id: "", service_category_id: "", jadwal_waktu: "", catatan: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const directCategories = categories.filter((c) => c.jarak_min_km == null && c.jarak_max_km == null);
-
-  const submitDirect = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!form.lansia_id || !form.service_category_id) {
-      setError("Pilih lansia dan kategori layanan terlebih dahulu.");
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, mode_penugasan: "langsung", jadwal_waktu: new Date(form.jadwal_waktu).toISOString() }),
-      });
-      const body = (await response.json().catch(() => null)) as { task?: { id: string }; message?: string } | null;
-      if (!response.ok || !body?.task) throw new Error(body?.message || "Permintaan booking gagal dibuat");
-      router.push(`/kunjungan/${body.task.id}`);
-    } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : "Permintaan booking gagal dibuat");
-      setSaving(false);
-    }
-  };
 
   const submitPelamar = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -112,9 +84,11 @@ export default function BookingNewClient({
 
         {/* Custom Dropdown Metode Penugasan */}
         <CustomModeSelect
-          value={mode as BookingMode}
-          onChange={(newMode) => setMode(newMode)}
-          availableModes={availableModes as BookingMode[]}
+          value={mode}
+          onChange={(newMode: BookingMode) => {
+            if (newMode !== "langsung") setMode(newMode);
+          }}
+          availableModes={availableModes}
         />
 
         {error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
@@ -122,7 +96,7 @@ export default function BookingNewClient({
         {mode === "cepat" ? (
           <QuickBookingForm lansiaList={lansias} categories={categories} />
         ) : (
-          <form onSubmit={mode === "pelamar" ? submitPelamar : submitDirect} className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <form onSubmit={submitPelamar} className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             {/* Lansia Selection */}
             <LansiaSelect
               lansiaList={lansias}
@@ -135,7 +109,7 @@ export default function BookingNewClient({
 
             {/* Kategori Layanan dibedakan per tingkatan */}
             <CustomServiceTierSelect
-              categories={directCategories}
+              categories={categories}
               selectedId={form.service_category_id}
               onSelect={(id) => setForm({ ...form, service_category_id: id })}
               label="Kategori Layanan"
@@ -158,7 +132,7 @@ export default function BookingNewClient({
               <textarea value={form.catatan} onChange={(event) => setForm({ ...form, catatan: event.target.value })} maxLength={1000} rows={4} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" placeholder="Kebutuhan khusus lansia atau detail lokasi" />
             </label>
             <Button type="submit" disabled={saving || !form.lansia_id || !form.service_category_id || !form.jadwal_waktu} className="w-full h-12 rounded-xl bg-[#0D47A1] hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-all">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat permintaan pendampingan"}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buka permintaan untuk pelamar"}
             </Button>
           </form>
         )}

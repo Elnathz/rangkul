@@ -54,7 +54,7 @@ export async function POST(request: Request) {
           message: 'Data input tidak valid',
           fieldErrors: validation.error.flatten().fieldErrors,
         },
-        400
+        422
       );
     }
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       .eq('is_active', true);
 
     if (catError || !validCategories || validCategories.length !== kategori_ids.length) {
-      return createApiError('validation_error', 'Satu atau lebih kategori tidak valid', 400);
+      return createApiError('validation_error', 'Satu atau lebih kategori tidak valid', 422);
     }
 
     // Update atau Insert helper_profiles

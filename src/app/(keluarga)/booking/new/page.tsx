@@ -15,6 +15,7 @@ export default async function BookingNewPage() {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/booking/new");
+  if (!isSprint6MatchingEnabled()) redirect("/cari-helper");
 
   const [lansiaResult, categoryResult] = await Promise.all([
     supabase
@@ -35,10 +36,6 @@ export default async function BookingNewPage() {
   const categories = (categoryResult.data ?? []) as BookingCategory[];
 
   return (
-    <BookingNewClient
-      lansias={lansias}
-      categories={categories}
-      allowsPelamar={isSprint6MatchingEnabled()}
-    />
+    <BookingNewClient lansias={lansias} categories={categories} />
   );
 }
