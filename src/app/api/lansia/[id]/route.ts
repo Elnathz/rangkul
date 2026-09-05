@@ -54,14 +54,13 @@ export async function GET(
     if (profile.keluarga_id) {
       const { data: familyUser } = await admin
         .from('users')
-        .select('full_name, email, phone_number')
+        .select('full_name, email, phone')
         .eq('id', profile.keluarga_id)
         .maybeSingle();
       if (familyUser) {
-        const u = familyUser as Record<string, unknown>;
-        nama_keluarga = (u.full_name as string) || null;
-        email_keluarga = (u.email as string) || null;
-        telepon_keluarga = (u.phone_number as string) || null;
+        nama_keluarga = familyUser.full_name || null;
+        email_keluarga = familyUser.email || null;
+        telepon_keluarga = familyUser.phone || null;
       }
     }
 
