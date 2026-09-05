@@ -18,8 +18,8 @@ test("demo seed includes the TDD role and trust matrix", () => {
   assert.match(migration, /Laporan pertama untuk moderasi Helper/);
   assert.match(migration, /Laporan kedua untuk memicu under_review/);
   assert.match(migration, /ON CONFLICT \(user_id\) DO UPDATE/);
-  assert.match(migration, /LOWER\(username\) = 'mbahburgas'/);
-  assert.match(migration, /LOWER\(u\.username\) = 'masburgas'/);
+  assert.match(migration, /LOWER\(username\) = 'wagimankoordinator'/);
+  assert.match(migration, /LOWER\(u\.username\) = 'andihelper'/);
   assert.match(migration, /Kelurahan Pleburan, Kecamatan Semarang Selatan/);
 });
 
@@ -44,7 +44,7 @@ test("demo seed covers task statuses and declining snapshots", () => {
 
 test("demo seed resolves the main Helper profile by username before using it", () => {
   assert.match(migration, /existing_helper_id UUID;/);
-  assert.match(migration, /SELECT hp\.id INTO existing_helper_id[\s\S]*LOWER\(u\.username\) = 'masburgas'/);
+  assert.match(migration, /SELECT hp\.id INTO existing_helper_id[\s\S]*LOWER\(u\.username\) = 'andihelper'/);
   assert.match(migration, /IF existing_helper_id IS NULL THEN[\s\S]*existing_helper_id := helper_1_id;/);
 });
 
@@ -75,8 +75,8 @@ test("demo seed memakai akun Admin marker dan tidak mengambil Admin pertama", ()
   assert.doesNotMatch(migration, /WHERE role = 'admin'\s+ORDER BY created_at\s+LIMIT 1/);
 });
 
-test("fixture utama Keluarga adalah mbakburgas dengan lansia Giorno", () => {
-  assert.match(migration, /'demokeluarga@rangkul\.id'[\s\S]*?'mbakburgas'/);
+test("fixture utama Keluarga adalah Ratna dengan lansia Giorno", () => {
+  assert.match(migration, /'ratnakeluarga@rangkul\.id'[\s\S]*?'ratnakeluarga'/);
   assert.match(migration, /'Giorno'/);
   assert.match(migration, /demo\/identitas_lansia\/identitas-lansia-demo\.png/);
   assert.match(migration, /demo\/hubungan_keluarga\/hubungan-keluarga-demo\.pdf/);

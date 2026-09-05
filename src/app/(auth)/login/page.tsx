@@ -93,7 +93,13 @@ export default function LoginPage() {
         koordinator: '/koordinator/dashboard',
         admin: '/admin/dashboard',
       };
-      const targetRoute = roleRoutes[data.user?.role] || '/beranda';
+      const requestedRoute = new URLSearchParams(window.location.search).get("next");
+      const safeRequestedRoute = requestedRoute?.startsWith("/") && !requestedRoute.startsWith("//")
+        ? requestedRoute
+        : null;
+      const targetRoute = data.user?.role === "keluarga" && safeRequestedRoute
+        ? safeRequestedRoute
+        : roleRoutes[data.user?.role] || '/beranda';
       window.location.href = targetRoute;
     } catch {
       setApiError("Terjadi kesalahan jaringan.");

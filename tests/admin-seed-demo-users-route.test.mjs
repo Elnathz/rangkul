@@ -4,10 +4,15 @@ import { test } from "node:test";
 
 const route = await readFile("src/app/api/admin/seed-demo-users/route.ts", "utf8");
 
-test("route memakai akun demo dengan email utama tanpa underscore", () => {
-  assert.match(route, /demokeluarga@rangkul\.id/);
-  assert.match(route, /mbahburgas@gmail\.com/);
-  assert.match(route, /masburgas@gmail\.com/);
+test("route seed hanya dapat dijalankan oleh Admin yang terautentikasi", () => {
+  assert.match(route, /await requireAdmin\(\)/);
+  assert.match(route, /adminAuthErrorResponse/);
+});
+
+test("route memakai persona demo utama dengan username dan email yang mudah dibaca", () => {
+  assert.match(route, /ratnakeluarga@rangkul\.id/);
+  assert.match(route, /wagimankoordinator@rangkul\.id/);
+  assert.match(route, /andihelper@rangkul\.id/);
   assert.doesNotMatch(route, /demo_keluarga@rangkul\.id/);
   assert.doesNotMatch(route, /demo_helper@rangkul\.id/);
   assert.doesNotMatch(route, /demo_koordinator@rangkul\.id/);
@@ -15,22 +20,27 @@ test("route memakai akun demo dengan email utama tanpa underscore", () => {
 
 test("route memiliki matrix akun demo dan password yang sama", () => {
   for (const email of [
-    "demokeluarga@rangkul.id",
-    "demokeluarga2@rangkul.id",
-    "demokeluarga3@rangkul.id",
-    "demokeluarga4@rangkul.id",
-    "mbahburgas@gmail.com",
-    "demokoordinator2@rangkul.id",
-    "demokoordinator3@rangkul.id",
-    "demokoordinator4@rangkul.id",
-    "masburgas@gmail.com",
-    "demohelper2@rangkul.id",
-    "demohelper3@rangkul.id",
-    "demohelper4@rangkul.id",
-    "demohelper5@rangkul.id",
-    "demohelper6@rangkul.id",
-    "demohelper7@rangkul.id",
-    "demohelper8@rangkul.id",
+    "ratnakeluarga@rangkul.id",
+    "mayakeluarga@rangkul.id",
+    "rintokeluarga@rangkul.id",
+    "dewikeluarga@rangkul.id",
+    "suryakeluarga@rangkul.id",
+    "wagimankoordinator@rangkul.id",
+    "budikoordinator@rangkul.id",
+    "sulikoordinator@rangkul.id",
+    "aguskoordinator@rangkul.id",
+    "rahmatkoordinator@rangkul.id",
+    "darmokoordinator@rangkul.id",
+    "andihelper@rangkul.id",
+    "rinihelper@rangkul.id",
+    "dedihelper@rangkul.id",
+    "sarihelper@rangkul.id",
+    "yusufhelper@rangkul.id",
+    "dewihelper@rangkul.id",
+    "arifhelper@rangkul.id",
+    "linahelper@rangkul.id",
+    "fajarhelper@rangkul.id",
+    "bagushelper@rangkul.id",
     "demoadmin@rangkul.id",
   ]) {
     assert.match(route, new RegExp(email.replaceAll(".", "\\.")));
@@ -45,20 +55,27 @@ test("route memiliki matrix akun demo dan password yang sama", () => {
 
 test("route memakai username demo tanpa underscore", () => {
   for (const username of [
-    "demokeluarga",
-    "demokeluarga2",
-    "demokeluarga3",
-    "demokeluarga4",
-    "demokoordinator2",
-    "demokoordinator3",
-    "demokoordinator4",
-    "demohelper2",
-    "demohelper3",
-    "demohelper4",
-    "demohelper5",
-    "demohelper6",
-    "demohelper7",
-    "demohelper8",
+    "ratnakeluarga",
+    "mayakeluarga",
+    "rintokeluarga",
+    "dewikeluarga",
+    "suryakeluarga",
+    "budikoordinator",
+    "sulikoordinator",
+    "aguskoordinator",
+    "rahmatkoordinator",
+    "darmokoordinator",
+    "wagimankoordinator",
+    "andihelper",
+    "rinihelper",
+    "dedihelper",
+    "sarihelper",
+    "yusufhelper",
+    "dewihelper",
+    "arifhelper",
+    "linahelper",
+    "fajarhelper",
+    "bagushelper",
     "demoadmin",
   ]) {
     assert.match(route, new RegExp(`username: '${username}'`));
@@ -67,7 +84,7 @@ test("route memakai username demo tanpa underscore", () => {
   assert.doesNotMatch(route, /demo_(keluarga|helper|koord|admin)/);
 });
 
-test("route mengisi nomor dan alamat rinci, kecuali dua akun Burgas", () => {
+test("route mengisi nomor dan alamat rinci, kecuali Helper dan Koordinator utama", () => {
   assert.match(route, /phone: '08\d+'/);
   assert.match(route, /const authPhone = toAuthPhone\(demo\.phone\)/);
   assert.match(route, /phone: authPhone/);
@@ -79,12 +96,12 @@ test("route mengisi nomor dan alamat rinci, kecuali dua akun Burgas", () => {
   assert.match(route, /kecamatan:/);
   assert.match(route, /kabupaten_kota:/);
   assert.match(route, /provinsi:/);
-  assert.match(route, /username: 'mbahburgas'[\s\S]*alamat_detail: null/);
-  assert.match(route, /username: 'masburgas'[\s\S]*alamat_detail: null/);
+  assert.match(route, /username: 'wagimankoordinator'[\s\S]*alamat_detail: null/);
+  assert.match(route, /username: 'andihelper'[\s\S]*alamat_detail: null/);
 });
 
-test("route mempertahankan dua akun Burgas sebagai akun demo utama", () => {
-  const burgasSection = route.slice(route.indexOf("mbahburgas"));
-  assert.match(burgasSection, /mbahburgas/);
-  assert.match(burgasSection, /masburgas/);
+test("route mempertahankan persona utama keluarga, Helper, dan Koordinator", () => {
+  assert.match(route, /Ratna Wulandari/);
+  assert.match(route, /Andi Sudarto/);
+  assert.match(route, /Wagiman Popo/);
 });
