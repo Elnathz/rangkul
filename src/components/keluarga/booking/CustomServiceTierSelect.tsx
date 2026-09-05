@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Check, Clock, AlertCircle, Sparkles, X, Search } from "lucide-react";
+import { ChevronDown, Check, Clock, AlertCircle, Sparkles, X, Search, LayoutGrid } from "lucide-react";
+import ServiceSelectionModal from "@/components/services/ServiceSelectionModal";
 
 export type ServiceCategoryItem = {
   id: string;
@@ -10,6 +11,8 @@ export type ServiceCategoryItem = {
   harga_dasar: number;
   estimasi_durasi_menit?: number;
   is_high_risk?: boolean;
+  parent_id?: string | null;
+  parentName?: string | null;
 };
 
 type TingkatTabKey = "semua" | "ringan" | "sedang" | "berat";
@@ -48,7 +51,7 @@ const TIER_META: Record<
     badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80",
     dotClass: "bg-amber-500",
     activeTabClass: "bg-amber-700 text-white shadow-xs",
-    desc: "Aktivitas intensif atau faskes (butuh persetujuan Koordinator).",
+    desc: "Aktivitas intensif atau pendampingan ke fasilitas kesehatan. Persetujuan Koordinator diperlukan sebelum kunjungan dijalankan.",
   },
 };
 
@@ -60,6 +63,9 @@ interface CustomServiceTierSelectProps {
   required?: boolean;
   allowHighRisk?: boolean;
   helperText?: string;
+  allowEmpty?: boolean;
+  emptyLabel?: string;
+  emptyDescription?: string;
 }
 
 export default function CustomServiceTierSelect({
@@ -70,8 +76,12 @@ export default function CustomServiceTierSelect({
   required = false,
   allowHighRisk = true,
   helperText,
+  allowEmpty = false,
+  emptyLabel = "Semua Kategori",
+  emptyDescription = "Semua kategori aktif",
 }: CustomServiceTierSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [openUpward, setOpenUpward] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -229,19 +239,19 @@ export default function CustomServiceTierSelect({
   // Render search box
   const renderSearchBox = () => (
     <div className="relative shrink-0">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
       <input
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Cari layanan (obat, belanja, mengobrol)..."
-        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 py-1.5 pl-8 pr-7 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0D47A1] focus:bg-white focus:outline-none"
+        placeholder="Cari layanan, misalnya obat, belanja, atau mengobrol"
+        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 py-2 pl-10.5 pr-8 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0D47A1] focus:bg-white focus:outline-none transition-colors"
       />
       {searchQuery && (
         <button
           type="button"
           onClick={() => setSearchQuery("")}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
           aria-label="Hapus pencarian"
         >
           <X className="size-3.5" />
@@ -312,7 +322,7 @@ export default function CustomServiceTierSelect({
       );
     }
 
-    return itemsInActiveTab.map((cat) => {
+    const renderedItems = itemsInActiveTab.map((cat) => {
       const isSelected = cat.id === selectedId;
       const tierKey = (cat.tingkat || "ringan") as TingkatKey;
       const catMeta = TIER_META[tierKey] ?? TIER_META.ringan;
@@ -368,6 +378,51 @@ export default function CustomServiceTierSelect({
         </button>
       );
     });
+
+    if (allowEmpty && activeTab === "semua" && !searchQuery.trim()) {
+      return (
+        <>
+          <button
+            key="all-categories-empty-option"
+            type="button"
+            onClick={() => {
+              onSelect("");
+              setIsOpen(false);
+            }}
+            className={`flex min-h-[50px] w-full items-center justify-between gap-3 rounded-xl border p-2.5 text-left transition-all ${
+              !selectedId
+                ? "border-2 border-[#0D47A1] bg-blue-50/80 shadow-xs ring-1 ring-[#0D47A1]/20"
+                : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/80"
+            }`}
+          >
+            <div className="min-w-0 flex-1">
+              <p
+                className={`text-xs font-bold leading-snug ${
+                  !selectedId ? "text-[#0D47A1]" : "text-slate-900"
+                }`}
+              >
+                {emptyLabel}
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                {emptyDescription}
+              </p>
+            </div>
+            <div
+              className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-all ${
+                !selectedId
+                  ? "border-[#0D47A1] bg-[#0D47A1] text-white"
+                  : "border-slate-300 bg-white"
+              }`}
+            >
+              {!selectedId && <Check className="size-3 stroke-[3]" />}
+            </div>
+          </button>
+          {renderedItems}
+        </>
+      );
+    }
+
+    return renderedItems;
   };
 
   // Render Berat warning notice
@@ -442,6 +497,20 @@ export default function CustomServiceTierSelect({
                 {selectedTierMeta.title}
               </span>
             </div>
+          ) : allowEmpty ? (
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-xl bg-blue-50 text-[#0D47A1]">
+                <Sparkles className="size-4" />
+              </div>
+              <div>
+                <p className="truncate text-sm font-bold text-slate-900">
+                  {emptyLabel}
+                </p>
+                <p className="text-[11px] text-slate-500 font-normal">
+                  {emptyDescription}
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center gap-2.5 text-sm font-medium text-slate-400">
               <Sparkles className="size-4 text-slate-300" />
@@ -507,8 +576,14 @@ export default function CustomServiceTierSelect({
                 </div>
 
                 {/* Inner Scroll List of Services */}
-                <div className="mt-2 flex-1 min-h-0 space-y-1.5 overflow-y-auto pr-1 pb-4">
+                <div className="mt-2 flex-1 min-h-0 space-y-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
                   {renderServiceItems()}
+                </div>
+
+                {/* Mobile Drawer Footer Info */}
+                <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs text-slate-500">
+                  <span>Menampilkan {itemsInActiveTab.length} layanan</span>
+                  <span className="text-[11px] text-slate-400">Ketuk kartu untuk memilih</span>
                 </div>
 
                 {/* Special Notice for Berat */}
@@ -518,7 +593,7 @@ export default function CustomServiceTierSelect({
 
             {/* ========================================================================= */}
             {/* DESKTOP: Contained Dropdown Popover (Viewport >= sm / 640px)              */}
-            {/* Auto-flip (Dropup/Dropdown) + Compact Inner Scroll (Max-H ~200px)         */}
+            {/* Auto-flip (Dropup/Dropdown) + Max 5 Items Inner Scroll (~275px)           */}
             {/* ========================================================================= */}
             <div
               className={`hidden sm:block absolute left-0 z-40 w-full rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xl animate-in fade-in-0 zoom-in-95 duration-150 ${
@@ -540,9 +615,25 @@ export default function CustomServiceTierSelect({
                 {renderContextBanner()}
               </div>
 
-              {/* Compact Inner Scroll List: Exactly 3.5 items visible (~180px), never overflowing page */}
-              <div className="mt-2 max-h-48 space-y-1.5 overflow-y-auto pr-1">
+              {/* Inner Scroll List: Exactly 5 items visible (~270px) before scrolling */}
+              <div className="mt-2 max-h-[275px] space-y-1.5 overflow-y-auto custom-scrollbar pr-1">
                 {renderServiceItems()}
+              </div>
+
+              {/* Desktop Link to Open Modal */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 font-bold text-[#0D47A1] hover:underline"
+                >
+                  <LayoutGrid className="size-3.5" />
+                  <span>Buka modal katalog lengkap</span>
+                </button>
+                <span className="text-[11px] text-slate-400">Maks. 5 item ditampilkan</span>
               </div>
 
               {/* Special Notice for Berat */}
@@ -551,6 +642,75 @@ export default function CustomServiceTierSelect({
           </>
         )}
       </div>
+
+      {/* Direct Trigger to Open Modal or Bottom Sheet from Form Surface */}
+      <div className="flex items-center justify-between px-1 pt-0.5">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.innerWidth < 640) {
+              setIsOpen(true);
+            } else {
+              setIsModalOpen(true);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D47A1] hover:text-blue-800 hover:underline transition-colors"
+        >
+          <LayoutGrid className="size-3.5" />
+          <span>Lihat semua layanan</span>
+        </button>
+        <span className="text-[11px] text-slate-400">
+          {filteredCategories.length} layanan tersedia
+        </span>
+      </div>
+
+      {selectedCategory && (
+        <section
+          aria-label="Ringkasan layanan terpilih"
+          className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3.5"
+        >
+          <p className="text-sm font-bold text-slate-900">Layanan terpilih</p>
+          <div className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
+            <div>
+              <p className="text-slate-500">Tingkat layanan</p>
+              <p className="mt-0.5 font-semibold text-slate-900">{selectedTierMeta.title}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Estimasi durasi</p>
+              <p className="mt-0.5 font-semibold text-slate-900">
+                {selectedCategory.estimasi_durasi_menit ?? 30} menit
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500">Harga dasar</p>
+              <p className="mt-0.5 font-semibold text-[#0D47A1]">
+                Rp {Number(selectedCategory.harga_dasar).toLocaleString("id-ID")}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 border-t border-blue-100 pt-2.5 text-xs leading-relaxed text-slate-600">
+            {selectedTierMeta.desc}
+            {selectedCategory.is_high_risk && (
+              <span className="font-semibold text-amber-800"> Perlu persetujuan Koordinator sebelum kunjungan dapat dimulai.</span>
+            )}
+          </p>
+        </section>
+      )}
+
+      {/* Universal ServiceSelectionModal */}
+      <ServiceSelectionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        mode="single"
+        categories={categories}
+        selectedIds={selectedId ? [selectedId] : []}
+        onConfirm={(ids) => {
+          if (ids[0]) onSelect(ids[0]);
+        }}
+        allowHighRisk={allowHighRisk}
+        title="Katalog Pilihan Layanan"
+        subtitle="Pilih kategori layanan pendampingan lansia yang paling sesuai kebutuhan."
+      />
     </div>
   );
 }

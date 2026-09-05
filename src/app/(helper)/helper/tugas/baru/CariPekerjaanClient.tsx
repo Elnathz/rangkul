@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Search, MapPin, Filter, ArrowUpDown, Clock, ChevronRight, AlertCircle, X, Map, ExternalLink, HeartHandshake, ShieldCheck } from "lucide-react";
+import { Search, MapPin, Filter, ArrowUpDown, Clock, ChevronRight, AlertCircle, X, Map, ExternalLink, HeartHandshake, ShieldCheck, ChevronDown } from "lucide-react";
 
 export type JobData = {
   id: string;
@@ -136,20 +136,37 @@ export default function CariPekerjaanClient({
   
           <div className="space-y-6">
             <div>
-              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Tingkat Kesulitan</Label>
-              <div className="space-y-2">
-                {["Semua", "Ringan", "Sedang", "Berat"].map((cat) => (
-                  <label key={cat} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2 transition-colors">
-                    <input 
-                      type="radio" 
-                      name="cat" 
-                      className="w-4 h-4 text-blue-600" 
-                      checked={category === cat}
-                      onChange={() => setCategory(cat)}
-                    />
-                    <span className="text-sm font-medium text-slate-700">{cat}</span>
-                  </label>
-                ))}
+              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 block">Tingkat Kesulitan</Label>
+              <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100/90 p-1.5">
+                {[
+                  { key: "Semua", label: "Semua", dot: null, activeClass: "bg-[#0D47A1] text-white shadow-xs" },
+                  { key: "Ringan", label: "Ringan", dot: "bg-emerald-500", activeClass: "bg-emerald-700 text-white shadow-xs" },
+                  { key: "Sedang", label: "Sedang", dot: "bg-[#0D47A1]", activeClass: "bg-[#0D47A1] text-white shadow-xs" },
+                  { key: "Berat", label: "Berat", dot: "bg-amber-600", activeClass: "bg-amber-700 text-white shadow-xs" },
+                ].map((tier) => {
+                  const isActive = category === tier.key;
+                  return (
+                    <button
+                      key={tier.key}
+                      type="button"
+                      onClick={() => setCategory(tier.key)}
+                      className={`flex h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold transition-all ${
+                        isActive
+                          ? tier.activeClass
+                          : "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 shadow-2xs"
+                      }`}
+                    >
+                      {tier.dot && (
+                        <span
+                          className={`size-2 rounded-full shrink-0 ${
+                            isActive ? "bg-white" : tier.dot
+                          }`}
+                        />
+                      )}
+                      <span>{tier.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
@@ -168,23 +185,26 @@ export default function CariPekerjaanClient({
               <input 
                 type="text" 
                 placeholder="Cari nama klien atau layanan..."
-                className="w-full bg-transparent border-0 focus:ring-0 text-slate-700 placeholder:text-slate-400 h-10 outline-none"
+                className="w-full bg-transparent border-0 focus:ring-0 text-slate-700 placeholder:text-slate-400 h-10 outline-none text-sm"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
             <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pl-2 pr-2">
-              <ArrowUpDown size={16} className="text-slate-400" />
-              <select 
-                className="bg-transparent text-sm font-semibold text-slate-700 border-0 outline-none cursor-pointer p-0 pr-6 ring-0"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="terbaru">Terbaru Ditambahkan</option>
-                <option value="waktu">Jadwal Terdekat</option>
-                <option value="jarak">Jarak Terdekat</option>
-              </select>
+              <ArrowUpDown size={16} className="text-slate-400 shrink-0" />
+              <div className="relative w-full sm:w-auto">
+                <select
+                  className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl pl-3 pr-8 py-2 text-xs sm:text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#0D47A1]/20 cursor-pointer transition-colors w-full"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="terbaru">Terbaru Ditambahkan</option>
+                  <option value="waktu">Jadwal Terdekat</option>
+                  <option value="jarak">Jarak Terdekat</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 

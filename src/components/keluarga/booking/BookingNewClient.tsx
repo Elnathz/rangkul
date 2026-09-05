@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import QuickBookingForm from "@/components/keluarga/booking/QuickBookingForm";
 import CustomModeSelect, { type BookingMode } from "@/components/keluarga/booking/CustomModeSelect";
 import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
+import LansiaSelect from "@/components/keluarga/booking/LansiaSelect";
+import DateTimePicker from "@/components/keluarga/booking/DateTimePicker";
 
 export type BookingLansia = { id: string; nama: string; alamat: string };
 export type BookingCategory = {
@@ -121,15 +123,15 @@ export default function BookingNewClient({
           <QuickBookingForm lansiaList={lansias} categories={categories} />
         ) : (
           <form onSubmit={mode === "pelamar" ? submitPelamar : submitDirect} className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-            <label className="block text-sm font-bold text-slate-800">
-              Pilih Lansia
-              <select required value={form.lansia_id} onChange={(event) => setForm({ ...form, lansia_id: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal">
-                <option value="">Pilih lansia</option>
-                {lansias.map((item) => (
-                  <option key={item.id} value={item.id}>{item.nama} · {item.alamat}</option>
-                ))}
-              </select>
-            </label>
+            {/* Lansia Selection */}
+            <LansiaSelect
+              lansiaList={lansias}
+              selectedId={form.lansia_id}
+              onSelect={(id) => setForm({ ...form, lansia_id: id })}
+              label="Pilih Lansia"
+              required
+              helperText="Pilih anggota keluarga lansia yang akan menerima pendampingan."
+            />
 
             {/* Kategori Layanan dibedakan per tingkatan */}
             <CustomServiceTierSelect
@@ -141,16 +143,22 @@ export default function BookingNewClient({
               allowHighRisk={true}
               helperText="Layanan dikelompokkan berdasarkan tingkatan durasi dan kebutuhan pendampingan."
             />
-            <label className="block text-sm font-bold text-slate-800">
-              Jadwal
-              <input required type="datetime-local" value={form.jadwal_waktu} onChange={(event) => setForm({ ...form, jadwal_waktu: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" />
-            </label>
+
+            {/* Custom DateTimePicker */}
+            <DateTimePicker
+              value={form.jadwal_waktu}
+              onChange={(newVal) => setForm({ ...form, jadwal_waktu: newVal })}
+              label="Jadwal Kunjungan"
+              required
+              helperText="Tentukan tanggal dan waktu Helper tiba di lokasi lansia."
+            />
+
             <label className="block text-sm font-bold text-slate-800">
               Catatan keluarga
               <textarea value={form.catatan} onChange={(event) => setForm({ ...form, catatan: event.target.value })} maxLength={1000} rows={4} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" placeholder="Kebutuhan khusus lansia atau detail lokasi" />
             </label>
-            <Button type="submit" disabled={saving || !form.lansia_id || !form.service_category_id} className="w-full bg-[#0D47A1]">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat permintaan"}
+            <Button type="submit" disabled={saving || !form.lansia_id || !form.service_category_id || !form.jadwal_waktu} className="w-full h-12 rounded-xl bg-[#0D47A1] hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-all">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat permintaan pendampingan"}
             </Button>
           </form>
         )}

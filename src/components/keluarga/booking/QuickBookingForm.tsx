@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Zap, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
+import LansiaSelect from "@/components/keluarga/booking/LansiaSelect";
 
 type LansiaOption = { id: string; nama: string };
 type CategoryOption = {
@@ -80,7 +81,7 @@ export default function QuickBookingForm({
       <div className="flex items-center gap-3 rounded-2xl bg-amber-50 p-4 text-amber-900 border border-amber-100">
         <Zap className="h-6 w-6 text-amber-600 shrink-0" />
         <div className="text-xs">
-          <p className="font-bold">Mode Cari Cepat (Sistem Pencarian Otomatis)</p>
+          <p className="font-bold">Cari Cepat</p>
           <p className="mt-0.5 text-amber-700">
             Sistem akan mencarikan Helper Terpercaya dalam radius Anda dalam waktu 15 menit. Tanpa komitmen pembayaran jika Helper tidak ditemukan.
           </p>
@@ -95,29 +96,24 @@ export default function QuickBookingForm({
       )}
 
       {/* Select Lansia */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Anggota Keluarga (Lansia)</label>
-        <select
-          value={selectedLansia}
-          onChange={(e) => setSelectedLansia(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 focus:border-[#0D47A1] focus:outline-none"
-          required
-        >
-          {lansiaList.map((l) => (
-            <option key={l.id} value={l.id}>{l.nama}</option>
-          ))}
-        </select>
-      </div>
+      <LansiaSelect
+        lansiaList={lansiaList}
+        selectedId={selectedLansia}
+        onSelect={(id) => setSelectedLansia(id)}
+        label="Pilih Anggota Keluarga (Lansia)"
+        required
+        helperText="Pilih lansia yang membutuhkan pendampingan cepat."
+      />
 
       {/* Select Category differentiated by Tingkatan */}
       <CustomServiceTierSelect
         categories={availableCategories}
         selectedId={selectedCategory}
         onSelect={(id) => setSelectedCategory(id)}
-        label="Kategori Layanan (Non-High Risk)"
+        label="Kategori Layanan untuk Cari Cepat"
         required
         allowHighRisk={false}
-        helperText="Pilih layanan non-high risk (Tingkat Ringan atau Sedang) untuk penugasan cepat 15 menit."
+        helperText="Cari Cepat tersedia untuk layanan tingkat ringan dan sedang. Sistem mencari Helper yang memenuhi syarat selama 15 menit."
       />
 
       {/* Catatan */}

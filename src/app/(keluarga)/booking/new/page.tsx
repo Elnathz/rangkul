@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
 import BookingNewClient, {
   type BookingLansia,
@@ -13,7 +14,7 @@ export default async function BookingNewPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user) redirect("/login?next=/booking/new");
 
   const [lansiaResult, categoryResult] = await Promise.all([
     supabase
