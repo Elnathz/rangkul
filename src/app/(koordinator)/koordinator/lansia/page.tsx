@@ -82,7 +82,7 @@ export default function KoordinatorLansiaVerificationPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-24">
+    <div className="mx-auto max-w-7xl space-y-6 pb-32 px-3 sm:px-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Operasional Wilayah</p>
@@ -139,33 +139,33 @@ export default function KoordinatorLansiaVerificationPage() {
             <p className="mt-3 font-semibold text-slate-800">Tidak ada lansia di wilayah Anda saat ini.</p>
           </div>
         ) : (
-          <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 p-3 sm:p-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((item) => {
               const status = item.verified_status ?? "verified";
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs transition hover:shadow-md"
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:shadow-md min-w-0"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-11 shrink-0 overflow-hidden rounded-full bg-blue-50 border border-slate-200">
+                  <div className="space-y-3 min-w-0">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="size-10 shrink-0 overflow-hidden rounded-full bg-blue-50 border border-slate-200">
                           {item.foto_url ? (
                             <SignedImage path={item.foto_url} alt={item.nama} className="h-full w-full object-cover" />
                           ) : (
                             <UserRound className="h-full w-full p-2 text-slate-400" />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate font-bold text-slate-900 text-sm sm:text-base">{item.nama}</h3>
-                          <p className="truncate text-xs text-slate-500">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-bold text-slate-900 text-sm">{item.nama}</h3>
+                          <p className="truncate text-[11px] text-slate-500">
                             {item.kelurahan ? `Kel. ${item.kelurahan}` : "Wilayah terdaftar"}
                           </p>
                         </div>
                       </div>
                       <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-bold ${
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                           status === "verified"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : status === "rejected"
@@ -177,12 +177,12 @@ export default function KoordinatorLansiaVerificationPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-slate-600">
-                      <p className="flex items-start gap-1.5">
+                    <div className="space-y-1.5 text-xs text-slate-600 min-w-0">
+                      <p className="flex items-start gap-1.5 min-w-0">
                         <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
-                        <span className="line-clamp-2">{item.alamat || "Alamat belum diisi"}</span>
+                        <span className="break-words line-clamp-2 min-w-0">{item.alamat || "Alamat belum diisi"}</span>
                       </p>
-                      <p className="text-slate-500 line-clamp-2">
+                      <p className="text-slate-500 line-clamp-2 break-words min-w-0">
                         Catatan: <span className="italic">{item.catatan_kondisi || "Tidak ada catatan khusus"}</span>
                       </p>
                     </div>

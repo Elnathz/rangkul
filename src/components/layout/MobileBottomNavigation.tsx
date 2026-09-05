@@ -40,7 +40,7 @@ export function MobileBottomNavigation({ role, items, badges }: MobileBottomNavi
   return (
     <nav
       aria-label={`Navigasi utama ${role}`}
-      className="fixed inset-x-3 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-50 rounded-[1.4rem] border border-white/70 bg-card/80 p-1 shadow-[0_12px_32px_rgba(13,71,161,0.18)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-3 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-40 rounded-[1.4rem] border border-white/70 bg-card/90 p-1 shadow-[0_12px_32px_rgba(13,71,161,0.18)] backdrop-blur-xl md:hidden"
     >
       <LayoutGroup id="bottom-navigation">
         <ul className="mx-auto grid max-w-lg grid-cols-5">
