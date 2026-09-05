@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RANGKUL_LANDING_PAGE_UIUX_MASTER_REDESIGN_V2_NO_IMPECCABLE.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/*
+
+Arduino® Light Theme - Stefania Mellai <s.mellai@arduino.cc>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #FFFFFF;
+}
+
+.hljs,
+.hljs-subst {
+  color: #434f54;
+}
+
+.hljs-keyword,
+.hljs-attribute,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: #00979D;
+}
+
+.hljs-built_in,
+.hljs-literal,
+.hljs-bullet,
+.hljs-code,
+.hljs-addition {
+  color: #D35400;
+}
+
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #00979D;
+}
+
+.hljs-type,
+.hljs-string,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-quote,
+.hljs-template-tag,
+.hljs-deletion {
+  color: #005C5F;
+}
+
+.hljs-title,
+.hljs-section {
+  color: #880000;
+  font-weight: bold;
+}
+
+.hljs-comment {
+  color: rgba(149,165,166,.8);
+}
+
+.hljs-meta-keyword {
+  color: #728E00;
+}
+
+.hljs-meta {
+  color: #434f54;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-function {
+  color: #728E00;
+}
+
+.hljs-number {
+  color: #8A7B52;  
+}
+
+</style>
+
+<style>
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family:   "HelveticaNeue-Light", sans-serif, "宋体","Segoe WPC", "Segoe UI", "SFUIText-Light","Droid Sans Fallback";
+	font-size: 18px;
+	padding: 0 12px;
+	line-height: 1.6;
+	word-wrap: break-word;
+	color: #333333;
+}
+
+.content-wrapper{
+	max-width: 860px;
+    margin: 0 auto;
+    padding: 0 30px;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	color: #4080D0;
+	text-decoration: none;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom: 1px solid #eee;
+}
+
+
+h2{
+	padding-bottom: .3em;
+    font-size: 2em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+h3{
+	font-size: 1.75em;
+    line-height: 1.225;
+}
+
+h1, h2, h3 {
+	font-weight: bold;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code {
+	font-size: inherit;
+	line-height: auto;
+}
+
+a:hover {
+	color: #4080D0;
+	text-decoration: underline;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left: 5px solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 14px;
+	line-height: 19px;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+.mac code {
+	font-size: 12px;
+	line-height: 18px;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+/** Theming */
+
+.vscode-light,
+.vscode-light pre code {
+	color: rgb(30, 30, 30);
+}
+
+.vscode-dark,
+.vscode-dark pre code {
+	color: #DDD;
+}
+
+.vscode-high-contrast,
+.vscode-high-contrast pre code {
+	color: white;
+}
+
+.vscode-light code {
+	color: #A31515;
+}
+
+.vscode-dark code {
+	color: #D7BA7D;
+}
+
+.vscode-light pre:not(.hljs),
+.vscode-light code > div {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre:not(.hljs),
+.vscode-dark code > div {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre:not(.hljs),
+.vscode-high-contrast code > div {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vscode-light blockquote,
+.vscode-dark blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.vscode-high-contrast blockquote {
+	background: transparent;
+	border-color: #fff;
+}
+</style>
+
+<style>
+/* Obsidian syntax defaults for legacy export (PDF / HTML / DOCX) */
+
+.callout {
+	--callout-accent: #0969da;
+	margin: 12px 0;
+	border-radius: 6px;
+	border-left: 4px solid var(--callout-accent);
+	background: rgba(9, 105, 218, 0.08);
+	color: #333333;
+	overflow: hidden;
+}
+
+.callout[data-callout="note"],
+.callout[data-callout="abstract"],
+.callout[data-callout="info"],
+.callout[data-callout="todo"],
+.callout[data-subtype="note"],
+.callout[data-subtype="abstract"],
+.callout[data-subtype="info"],
+.callout[data-subtype="todo"],
+.callout[data-callout="note" i],
+.callout[data-callout="abstract" i],
+.callout[data-callout="info" i],
+.callout[data-callout="todo" i],
+.callout[data-subtype="note" i],
+.callout[data-subtype="abstract" i],
+.callout[data-subtype="info" i],
+.callout[data-subtype="todo" i] {
+	--callout-accent: #0969da;
+	border-left-color: #0969da;
+	background: rgba(9, 105, 218, 0.08);
+}
+
+.callout[data-callout="tip"],
+.callout[data-callout="hint"],
+.callout[data-subtype="tip"],
+.callout[data-subtype="hint"],
+.callout[data-callout="tip" i],
+.callout[data-callout="hint" i],
+.callout[data-subtype="tip" i],
+.callout[data-subtype="hint" i] {
+	--callout-accent: #116329;
+	border-left-color: #116329;
+	background: rgba(17, 99, 41, 0.08);
+}
+
+.callout[data-callout="important"],
+.callout[data-subtype="important"],
+.callout[data-callout="important" i],
+.callout[data-subtype="important" i] {
+	--callout-accent: #8250df;
+	border-left-color: #8250df;
+	background: rgba(130, 80, 223, 0.08);
+}
+
+.callout[data-callout="warning"],
+.callout[data-subtype="warning"],
+.callout[data-callout="warning" i],
+.callout[data-subtype="warning" i] {
+	--callout-accent: #bc4c00;
+	border-left-color: #bc4c00;
+	background: rgba(188, 76, 0, 0.08);
+}
+
+.callout[data-callout="caution"],
+.callout[data-callout="danger"],
+.callout[data-callout="error"],
+.callout[data-callout="bug"],
+.callout[data-callout="fail"],
+.callout[data-subtype="caution"],
+.callout[data-subtype="danger"],
+.callout[data-subtype="error"],
+.callout[data-subtype="bug"],
+.callout[data-subtype="fail"],
+.callout[data-callout="caution" i],
+.callout[data-callout="danger" i],
+.callout[data-callout="error" i],
+.callout[data-callout="bug" i],
+.callout[data-callout="fail" i],
+.callout[data-subtype="caution" i],
+.callout[data-subtype="danger" i],
+.callout[data-subtype="error" i],
+.callout[data-subtype="bug" i],
+.callout[data-subtype="fail" i] {
+	--callout-accent: #cf222e;
+	border-left-color: #cf222e;
+	background: rgba(207, 34, 46, 0.08);
+}
+
+.callout[data-callout="question"],
+.callout[data-callout="help"],
+.callout[data-callout="faq"],
+.callout[data-subtype="question"],
+.callout[data-subtype="help"],
+.callout[data-subtype="faq"],
+.callout[data-callout="question" i],
+.callout[data-callout="help" i],
+.callout[data-callout="faq" i],
+.callout[data-subtype="question" i],
+.callout[data-subtype="help" i],
+.callout[data-subtype="faq" i] {
+	--callout-accent: #9a6700;
+	border-left-color: #9a6700;
+	background: rgba(154, 103, 0, 0.08);
+}
+
+.callout .callout-title,
+.callout .callout-info {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 14px 0;
+	margin-bottom: 10px;
+	color: var(--callout-accent);
+}
+
+.callout .callout-title-icon,
+.callout .callout-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	color: var(--callout-accent);
+}
+
+.callout .callout-title-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.callout .callout-title-inner,
+.callout .callout-info > .callout-title {
+	font-weight: 700;
+	font-size: 0.95em;
+	line-height: 1.35;
+	color: var(--callout-accent);
+}
+
+.callout .callout-content {
+	padding: 6px 14px 12px;
+	color: #333333;
+}
+
+.callout .callout-content > :first-child {
+	margin-top: 0;
+}
+
+.callout .callout-content > :last-child {
+	margin-bottom: 0;
+}
+
+.obsidian-wikilink {
+	color: #7c3aed;
+	text-decoration: underline;
+}
+
+.obsidian-wikilink-embed {
+	display: inline-block;
+	padding: 2px 8px;
+	border: 1px dashed #d0d7de;
+	border-radius: 4px;
+	color: #7c3aed;
+}
+
+.obsidian-tag {
+	color: #7c3aed;
+	background: rgba(124, 58, 237, 0.12);
+	border-radius: 4px;
+	padding: 0 4px;
+}
+
+mark {
+	background: rgba(154, 103, 0, 0.35);
+	color: inherit;
+	padding: 0 2px;
+	border-radius: 2px;
+}
+
+[data-type="yaml-front-matter"] {
+	margin: 0 0 16px;
+}
+
+.vditor-properties {
+	border: 1px solid #d0d7de;
+	border-radius: 8px;
+	background: #f6f8fa;
+	overflow: hidden;
+}
+
+.vditor-properties__heading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid #d0d7de;
+	background: #f3f4f6;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #6b7280;
+}
+
+.vditor-properties__heading-icon::before {
+	content: "☰";
+	opacity: 0.75;
+}
+
+.vditor-properties__table {
+	display: flex;
+	flex-direction: column;
+}
+
+.vditor-properties__row {
+	display: grid;
+	grid-template-columns: minmax(120px, 34%) 1fr;
+	gap: 8px 12px;
+	align-items: start;
+	padding: 8px 12px;
+	border-top: 1px solid rgba(208, 215, 222, 0.45);
+}
+
+.vditor-properties__row:first-child {
+	border-top: none;
+}
+
+.vditor-properties__key {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	color: #6b7280;
+	font-size: 0.85rem;
+}
+
+.vditor-properties__key-icon {
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	opacity: 0.72;
+	text-align: center;
+}
+
+.vditor-properties__key-icon[data-icon="tag"]::before { content: "#"; }
+.vditor-properties__key-icon[data-icon="alias"]::before { content: "⛓"; }
+.vditor-properties__key-icon[data-icon="date"]::before { content: "📅"; }
+.vditor-properties__key-icon[data-icon="toggle"]::before { content: "◉"; }
+.vditor-properties__key-icon[data-icon="number"]::before { content: "#"; }
+.vditor-properties__key-icon[data-icon="list"]::before { content: "≡"; }
+.vditor-properties__key-icon[data-icon="text"]::before { content: "T"; }
+
+.vditor-properties__key-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vditor-properties__value {
+	min-width: 0;
+	font-size: 0.92rem;
+	color: #333333;
+	word-break: break-word;
+}
+
+.vditor-properties__value--tags,
+.vditor-properties__value--aliases {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.vditor-properties__value--aliases {
+	gap: 6px;
+}
+
+.vditor-properties__list {
+	margin: 0;
+	padding-left: 1.1rem;
+}
+
+.vditor-properties__checkbox {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	margin-right: 6px;
+	border: 1px solid #d0d7de;
+	border-radius: 3px;
+	vertical-align: -2px;
+	background: #ffffff;
+}
+
+.vditor-properties__checkbox[is-checked="true"] {
+	background: #7c3aed;
+	border-color: #7c3aed;
+	box-shadow: inset 0 0 0 2px #ffffff;
+}
+
+.vditor-properties__empty {
+	opacity: 0.45;
+}
+
+</style>
+
+<style>
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+.table-of-contents li{
+	list-style-type: initial;
+}
+
+</style>
+
+<style>
+@font-face{font-display:block;font-family:KaTeX_AMS;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_AMS-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_AMS-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_AMS-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Caligraphic;font-style:normal;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Bold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Bold.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Bold.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Caligraphic;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Caligraphic-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Fraktur;font-style:normal;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Bold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Bold.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Bold.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Fraktur;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Fraktur-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Main;font-style:normal;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Bold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Bold.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Bold.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Main;font-style:italic;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-BoldItalic.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-BoldItalic.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-BoldItalic.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Main;font-style:italic;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Italic.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Italic.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Italic.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Main;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Main-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Math;font-style:italic;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-BoldItalic.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-BoldItalic.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-BoldItalic.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Math;font-style:italic;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-Italic.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-Italic.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Math-Italic.ttf") format("truetype")}@font-face{font-display:block;font-family:"KaTeX_SansSerif";font-style:normal;font-weight:700;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Bold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Bold.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Bold.ttf") format("truetype")}@font-face{font-display:block;font-family:"KaTeX_SansSerif";font-style:italic;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Italic.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Italic.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Italic.ttf") format("truetype")}@font-face{font-display:block;font-family:"KaTeX_SansSerif";font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_SansSerif-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Script;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Script-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Script-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Script-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Size1;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size1-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size1-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size1-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Size2;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size2-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size2-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size2-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Size3;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size3-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size3-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size3-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Size4;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size4-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size4-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Size4-Regular.ttf") format("truetype")}@font-face{font-display:block;font-family:KaTeX_Typewriter;font-style:normal;font-weight:400;src:url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Typewriter-Regular.woff2") format("woff2"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Typewriter-Regular.woff") format("woff"),url("https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/fonts/KaTeX_Typewriter-Regular.ttf") format("truetype")}.katex{font:normal 1.21em KaTeX_Main,Times New Roman,serif;line-height:1.2;position:relative;text-indent:0;text-rendering:auto}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:"0.16.47"}.katex .katex-mathml{border:0;-webkit-clip-path:inset(50%);clip-path:inset(50%);height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.newline{display:block}.katex .base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .base,.katex .strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathboldfrak,.katex .textboldfrak{font-family:KaTeX_Fraktur;font-weight:700}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .mathsfit,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .hbox{width:100%}.katex .hbox,.katex .thinbox{display:inline-flex;flex-direction:row}.katex .thinbox{max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline,.katex .hline,.katex .mfrac .frac-line,.katex .overline .overline-line,.katex .rule,.katex .underline .underline-line{min-height:1px}.katex .mspace{display:inline-block}.katex .smash{display:inline;line-height:0}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.inner,.katex .llap>.inner,.katex .rlap>.inner{position:absolute}.katex .clap>.fix,.katex .llap>.fix,.katex .rlap>.fix{display:inline-block}.katex .llap>.inner{right:0}.katex .clap>.inner,.katex .rlap>.inner{left:0}.katex .clap>.inner>span{margin-left:-50%;margin-right:50%}.katex .rule{border:0 solid;display:inline-block;position:relative}.katex .hline,.katex .overline .overline-line,.katex .underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.root{margin-left:.2777777778em;margin-right:-.5555555556em}.katex .fontsize-ensurer.reset-size1.size1,.katex .sizing.reset-size1.size1{font-size:1em}.katex .fontsize-ensurer.reset-size1.size2,.katex .sizing.reset-size1.size2{font-size:1.2em}.katex .fontsize-ensurer.reset-size1.size3,.katex .sizing.reset-size1.size3{font-size:1.4em}.katex .fontsize-ensurer.reset-size1.size4,.katex .sizing.reset-size1.size4{font-size:1.6em}.katex .fontsize-ensurer.reset-size1.size5,.katex .sizing.reset-size1.size5{font-size:1.8em}.katex .fontsize-ensurer.reset-size1.size6,.katex .sizing.reset-size1.size6{font-size:2em}.katex .fontsize-ensurer.reset-size1.size7,.katex .sizing.reset-size1.size7{font-size:2.4em}.katex .fontsize-ensurer.reset-size1.size8,.katex .sizing.reset-size1.size8{font-size:2.88em}.katex .fontsize-ensurer.reset-size1.size9,.katex .sizing.reset-size1.size9{font-size:3.456em}.katex .fontsize-ensurer.reset-size1.size10,.katex .sizing.reset-size1.size10{font-size:4.148em}.katex .fontsize-ensurer.reset-size1.size11,.katex .sizing.reset-size1.size11{font-size:4.976em}.katex .fontsize-ensurer.reset-size2.size1,.katex .sizing.reset-size2.size1{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size2.size2,.katex .sizing.reset-size2.size2{font-size:1em}.katex .fontsize-ensurer.reset-size2.size3,.katex .sizing.reset-size2.size3{font-size:1.1666666667em}.katex .fontsize-ensurer.reset-size2.size4,.katex .sizing.reset-size2.size4{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size2.size5,.katex .sizing.reset-size2.size5{font-size:1.5em}.katex .fontsize-ensurer.reset-size2.size6,.katex .sizing.reset-size2.size6{font-size:1.6666666667em}.katex .fontsize-ensurer.reset-size2.size7,.katex .sizing.reset-size2.size7{font-size:2em}.katex .fontsize-ensurer.reset-size2.size8,.katex .sizing.reset-size2.size8{font-size:2.4em}.katex .fontsize-ensurer.reset-size2.size9,.katex .sizing.reset-size2.size9{font-size:2.88em}.katex .fontsize-ensurer.reset-size2.size10,.katex .sizing.reset-size2.size10{font-size:3.4566666667em}.katex .fontsize-ensurer.reset-size2.size11,.katex .sizing.reset-size2.size11{font-size:4.1466666667em}.katex .fontsize-ensurer.reset-size3.size1,.katex .sizing.reset-size3.size1{font-size:.7142857143em}.katex .fontsize-ensurer.reset-size3.size2,.katex .sizing.reset-size3.size2{font-size:.8571428571em}.katex .fontsize-ensurer.reset-size3.size3,.katex .sizing.reset-size3.size3{font-size:1em}.katex .fontsize-ensurer.reset-size3.size4,.katex .sizing.reset-size3.size4{font-size:1.1428571429em}.katex .fontsize-ensurer.reset-size3.size5,.katex .sizing.reset-size3.size5{font-size:1.2857142857em}.katex .fontsize-ensurer.reset-size3.size6,.katex .sizing.reset-size3.size6{font-size:1.4285714286em}.katex .fontsize-ensurer.reset-size3.size7,.katex .sizing.reset-size3.size7{font-size:1.7142857143em}.katex .fontsize-ensurer.reset-size3.size8,.katex .sizing.reset-size3.size8{font-size:2.0571428571em}.katex .fontsize-ensurer.reset-size3.size9,.katex .sizing.reset-size3.size9{font-size:2.4685714286em}.katex .fontsize-ensurer.reset-size3.size10,.katex .sizing.reset-size3.size10{font-size:2.9628571429em}.katex .fontsize-ensurer.reset-size3.size11,.katex .sizing.reset-size3.size11{font-size:3.5542857143em}.katex .fontsize-ensurer.reset-size4.size1,.katex .sizing.reset-size4.size1{font-size:.625em}.katex .fontsize-ensurer.reset-size4.size2,.katex .sizing.reset-size4.size2{font-size:.75em}.katex .fontsize-ensurer.reset-size4.size3,.katex .sizing.reset-size4.size3{font-size:.875em}.katex .fontsize-ensurer.reset-size4.size4,.katex .sizing.reset-size4.size4{font-size:1em}.katex .fontsize-ensurer.reset-size4.size5,.katex .sizing.reset-size4.size5{font-size:1.125em}.katex .fontsize-ensurer.reset-size4.size6,.katex .sizing.reset-size4.size6{font-size:1.25em}.katex .fontsize-ensurer.reset-size4.size7,.katex .sizing.reset-size4.size7{font-size:1.5em}.katex .fontsize-ensurer.reset-size4.size8,.katex .sizing.reset-size4.size8{font-size:1.8em}.katex .fontsize-ensurer.reset-size4.size9,.katex .sizing.reset-size4.size9{font-size:2.16em}.katex .fontsize-ensurer.reset-size4.size10,.katex .sizing.reset-size4.size10{font-size:2.5925em}.katex .fontsize-ensurer.reset-size4.size11,.katex .sizing.reset-size4.size11{font-size:3.11em}.katex .fontsize-ensurer.reset-size5.size1,.katex .sizing.reset-size5.size1{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size5.size2,.katex .sizing.reset-size5.size2{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size5.size3,.katex .sizing.reset-size5.size3{font-size:.7777777778em}.katex .fontsize-ensurer.reset-size5.size4,.katex .sizing.reset-size5.size4{font-size:.8888888889em}.katex .fontsize-ensurer.reset-size5.size5,.katex .sizing.reset-size5.size5{font-size:1em}.katex .fontsize-ensurer.reset-size5.size6,.katex .sizing.reset-size5.size6{font-size:1.1111111111em}.katex .fontsize-ensurer.reset-size5.size7,.katex .sizing.reset-size5.size7{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size5.size8,.katex .sizing.reset-size5.size8{font-size:1.6em}.katex .fontsize-ensurer.reset-size5.size9,.katex .sizing.reset-size5.size9{font-size:1.92em}.katex .fontsize-ensurer.reset-size5.size10,.katex .sizing.reset-size5.size10{font-size:2.3044444444em}.katex .fontsize-ensurer.reset-size5.size11,.katex .sizing.reset-size5.size11{font-size:2.7644444444em}.katex .fontsize-ensurer.reset-size6.size1,.katex .sizing.reset-size6.size1{font-size:.5em}.katex .fontsize-ensurer.reset-size6.size2,.katex .sizing.reset-size6.size2{font-size:.6em}.katex .fontsize-ensurer.reset-size6.size3,.katex .sizing.reset-size6.size3{font-size:.7em}.katex .fontsize-ensurer.reset-size6.size4,.katex .sizing.reset-size6.size4{font-size:.8em}.katex .fontsize-ensurer.reset-size6.size5,.katex .sizing.reset-size6.size5{font-size:.9em}.katex .fontsize-ensurer.reset-size6.size6,.katex .sizing.reset-size6.size6{font-size:1em}.katex .fontsize-ensurer.reset-size6.size7,.katex .sizing.reset-size6.size7{font-size:1.2em}.katex .fontsize-ensurer.reset-size6.size8,.katex .sizing.reset-size6.size8{font-size:1.44em}.katex .fontsize-ensurer.reset-size6.size9,.katex .sizing.reset-size6.size9{font-size:1.728em}.katex .fontsize-ensurer.reset-size6.size10,.katex .sizing.reset-size6.size10{font-size:2.074em}.katex .fontsize-ensurer.reset-size6.size11,.katex .sizing.reset-size6.size11{font-size:2.488em}.katex .fontsize-ensurer.reset-size7.size1,.katex .sizing.reset-size7.size1{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size7.size2,.katex .sizing.reset-size7.size2{font-size:.5em}.katex .fontsize-ensurer.reset-size7.size3,.katex .sizing.reset-size7.size3{font-size:.5833333333em}.katex .fontsize-ensurer.reset-size7.size4,.katex .sizing.reset-size7.size4{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size7.size5,.katex .sizing.reset-size7.size5{font-size:.75em}.katex .fontsize-ensurer.reset-size7.size6,.katex .sizing.reset-size7.size6{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size7.size7,.katex .sizing.reset-size7.size7{font-size:1em}.katex .fontsize-ensurer.reset-size7.size8,.katex .sizing.reset-size7.size8{font-size:1.2em}.katex .fontsize-ensurer.reset-size7.size9,.katex .sizing.reset-size7.size9{font-size:1.44em}.katex .fontsize-ensurer.reset-size7.size10,.katex .sizing.reset-size7.size10{font-size:1.7283333333em}.katex .fontsize-ensurer.reset-size7.size11,.katex .sizing.reset-size7.size11{font-size:2.0733333333em}.katex .fontsize-ensurer.reset-size8.size1,.katex .sizing.reset-size8.size1{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size8.size2,.katex .sizing.reset-size8.size2{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size8.size3,.katex .sizing.reset-size8.size3{font-size:.4861111111em}.katex .fontsize-ensurer.reset-size8.size4,.katex .sizing.reset-size8.size4{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size8.size5,.katex .sizing.reset-size8.size5{font-size:.625em}.katex .fontsize-ensurer.reset-size8.size6,.katex .sizing.reset-size8.size6{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size8.size7,.katex .sizing.reset-size8.size7{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size8.size8,.katex .sizing.reset-size8.size8{font-size:1em}.katex .fontsize-ensurer.reset-size8.size9,.katex .sizing.reset-size8.size9{font-size:1.2em}.katex .fontsize-ensurer.reset-size8.size10,.katex .sizing.reset-size8.size10{font-size:1.4402777778em}.katex .fontsize-ensurer.reset-size8.size11,.katex .sizing.reset-size8.size11{font-size:1.7277777778em}.katex .fontsize-ensurer.reset-size9.size1,.katex .sizing.reset-size9.size1{font-size:.2893518519em}.katex .fontsize-ensurer.reset-size9.size2,.katex .sizing.reset-size9.size2{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size9.size3,.katex .sizing.reset-size9.size3{font-size:.4050925926em}.katex .fontsize-ensurer.reset-size9.size4,.katex .sizing.reset-size9.size4{font-size:.462962963em}.katex .fontsize-ensurer.reset-size9.size5,.katex .sizing.reset-size9.size5{font-size:.5208333333em}.katex .fontsize-ensurer.reset-size9.size6,.katex .sizing.reset-size9.size6{font-size:.5787037037em}.katex .fontsize-ensurer.reset-size9.size7,.katex .sizing.reset-size9.size7{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size9.size8,.katex .sizing.reset-size9.size8{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size9.size9,.katex .sizing.reset-size9.size9{font-size:1em}.katex .fontsize-ensurer.reset-size9.size10,.katex .sizing.reset-size9.size10{font-size:1.2002314815em}.katex .fontsize-ensurer.reset-size9.size11,.katex .sizing.reset-size9.size11{font-size:1.4398148148em}.katex .fontsize-ensurer.reset-size10.size1,.katex .sizing.reset-size10.size1{font-size:.2410800386em}.katex .fontsize-ensurer.reset-size10.size2,.katex .sizing.reset-size10.size2{font-size:.2892960463em}.katex .fontsize-ensurer.reset-size10.size3,.katex .sizing.reset-size10.size3{font-size:.337512054em}.katex .fontsize-ensurer.reset-size10.size4,.katex .sizing.reset-size10.size4{font-size:.3857280617em}.katex .fontsize-ensurer.reset-size10.size5,.katex .sizing.reset-size10.size5{font-size:.4339440694em}.katex .fontsize-ensurer.reset-size10.size6,.katex .sizing.reset-size10.size6{font-size:.4821600771em}.katex .fontsize-ensurer.reset-size10.size7,.katex .sizing.reset-size10.size7{font-size:.5785920926em}.katex .fontsize-ensurer.reset-size10.size8,.katex .sizing.reset-size10.size8{font-size:.6943105111em}.katex .fontsize-ensurer.reset-size10.size9,.katex .sizing.reset-size10.size9{font-size:.8331726133em}.katex .fontsize-ensurer.reset-size10.size10,.katex .sizing.reset-size10.size10{font-size:1em}.katex .fontsize-ensurer.reset-size10.size11,.katex .sizing.reset-size10.size11{font-size:1.1996142719em}.katex .fontsize-ensurer.reset-size11.size1,.katex .sizing.reset-size11.size1{font-size:.2009646302em}.katex .fontsize-ensurer.reset-size11.size2,.katex .sizing.reset-size11.size2{font-size:.2411575563em}.katex .fontsize-ensurer.reset-size11.size3,.katex .sizing.reset-size11.size3{font-size:.2813504823em}.katex .fontsize-ensurer.reset-size11.size4,.katex .sizing.reset-size11.size4{font-size:.3215434084em}.katex .fontsize-ensurer.reset-size11.size5,.katex .sizing.reset-size11.size5{font-size:.3617363344em}.katex .fontsize-ensurer.reset-size11.size6,.katex .sizing.reset-size11.size6{font-size:.4019292605em}.katex .fontsize-ensurer.reset-size11.size7,.katex .sizing.reset-size11.size7{font-size:.4823151125em}.katex .fontsize-ensurer.reset-size11.size8,.katex .sizing.reset-size11.size8{font-size:.578778135em}.katex .fontsize-ensurer.reset-size11.size9,.katex .sizing.reset-size11.size9{font-size:.6945337621em}.katex .fontsize-ensurer.reset-size11.size10,.katex .sizing.reset-size11.size10{font-size:.8336012862em}.katex .fontsize-ensurer.reset-size11.size11,.katex .sizing.reset-size11.size11{font-size:1em}.katex .delimsizing.size1{font-family:KaTeX_Size1}.katex .delimsizing.size2{font-family:KaTeX_Size2}.katex .delimsizing.size3{font-family:KaTeX_Size3}.katex .delimsizing.size4{font-family:KaTeX_Size4}.katex .delimsizing.mult .delim-size1>span{font-family:KaTeX_Size1}.katex .delimsizing.mult .delim-size4>span{font-family:KaTeX_Size4}.katex .nulldelimiter{display:inline-block;width:.12em}.katex .delimcenter,.katex .op-symbol{position:relative}.katex .op-symbol.small-op{font-family:KaTeX_Size1}.katex .op-symbol.large-op{font-family:KaTeX_Size2}.katex .accent>.vlist-t,.katex .op-limits>.vlist-t{text-align:center}.katex .accent .accent-body{position:relative}.katex .accent .accent-body:not(.accent-full){width:0}.katex .overlay{display:block}.katex .mtable .vertical-separator{display:inline-block;min-width:1px}.katex .mtable .arraycolsep{display:inline-block}.katex .mtable .col-align-c>.vlist-t{text-align:center}.katex .mtable .col-align-l>.vlist-t{text-align:left}.katex .mtable .col-align-r>.vlist-t{text-align:right}.katex .svg-align{text-align:left}.katex svg{fill:currentColor;stroke:currentColor;display:block;height:inherit;position:absolute;width:100%}.katex svg path{stroke:none}.katex svg{fill-rule:nonzero;fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1}.katex img{border-style:none;max-height:none;max-width:none;min-height:0;min-width:0}.katex .stretchy{display:block;overflow:hidden;position:relative;width:100%}.katex .stretchy:after,.katex .stretchy:before{content:""}.katex .hide-tail{overflow:hidden;position:relative;width:100%}.katex .halfarrow-left{left:0;overflow:hidden;position:absolute;width:50.2%}.katex .halfarrow-right{overflow:hidden;position:absolute;right:0;width:50.2%}.katex .brace-left{left:0;overflow:hidden;position:absolute;width:25.1%}.katex .brace-center{left:25%;overflow:hidden;position:absolute;width:50%}.katex .brace-right{overflow:hidden;position:absolute;right:0;width:25.1%}.katex .x-arrow-pad{padding:0 .5em}.katex .cd-arrow-pad{padding:0 .55556em 0 .27778em}.katex .mover,.katex .munder,.katex .x-arrow{text-align:center}.katex .boxpad{padding:0 .3em}.katex .fbox,.katex .fcolorbox{border:.04em solid;box-sizing:border-box}.katex .cancel-pad{padding:0 .2em}.katex .cancel-lap{margin-left:-.2em;margin-right:-.2em}.katex .sout{border-bottom-style:solid;border-bottom-width:.08em}.katex .angl{border-right:.049em solid;border-top:.049em solid;box-sizing:border-box;margin-right:.03889em}.katex .anglpad{padding:0 .03889em}.katex .eqn-num:before{content:"(" counter(katexEqnNo) ")";counter-increment:katexEqnNo}.katex .mml-eqn-num:before{content:"(" counter(mmlEqnNo) ")";counter-increment:mmlEqnNo}.katex .mtr-glue{width:50%}.katex .cd-vert-arrow{display:inline-block;position:relative}.katex .cd-label-left{display:inline-block;position:absolute;right:calc(50% + .3em);text-align:left}.katex .cd-label-right{display:inline-block;left:calc(50% + .3em);position:absolute;text-align:right}.katex-display{display:block;margin:1em 0;text-align:center}.katex-display>.katex{display:block;text-align:center;white-space:nowrap}.katex-display>.katex>.katex-html{display:block;position:relative}.katex-display>.katex>.katex-html>.tag{position:absolute;right:0}.katex-display.leqno>.katex>.katex-html>.tag{left:0;right:auto}.katex-display.fleqn>.katex{padding-left:2em;text-align:left}body{counter-reset:katexEqnNo mmlEqnNo}
+
+</style>
+<style>
+body {
+    padding-top: 25px;
+}
+</style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1 id="rangkul-%E2%80%94-landing-page-ui%2Fux-master-redesign-specification-v2" tabindex="-1">RANGKUL — Landing Page UI/UX Master Redesign Specification v2</h1>
+<blockquote>
+<p><strong>Audience:</strong> Antigravity and Codex<br>
+<strong>Scope:</strong> Landing page only: navbar, hero, trust strip, &quot;Apa itu Rangkul?&quot;, cara kerja, layanan, Riwayat Rangkul, community trust, role explorer, final CTA, footer, responsive behavior, interaction, animation, accessibility, performance, and visual QA.<br>
+<strong>Target repository:</strong> <code>Elnathz/rangkul</code><br>
+<strong>Target branch:</strong> <code>develop</code><br>
+<strong>Primary product specification:</strong> <code>docs/TDD_Rangkul.md</code><br>
+<strong>Design goal:</strong> make Rangkul immediately understandable, visually memorable, emotionally relevant, and polished enough to be judged as a serious product rather than a generic competition website.</p>
+</blockquote>
+<hr>
+<h1 id="0.-executive-design-decision" tabindex="-1">0. Executive Design Decision</h1>
+<p>The landing page MUST follow this story:</p>
+<pre class='hljs'><code><div>NAVBAR
+↓
+HERO
+&quot;Kenapa saya harus peduli?&quot;
+↓
+TRUST STRIP
+&quot;Apakah ini aman dan jelas?&quot;
+↓
+APA ITU RANGKUL?
+&quot;Produk ini sebenarnya apa?&quot;
+↓
+CARA KERJA
+&quot;Kalau saya pakai, alurnya bagaimana?&quot;
+↓
+LAYANAN
+&quot;Apa saja yang bisa dilakukan?&quot;
+↓
+RIWAYAT RANGKUL
+&quot;Apa pembeda produknya?&quot;
+↓
+COMMUNITY TRUST
+&quot;Kenapa saya bisa percaya?&quot;
+↓
+PILIH PERAN
+&quot;Saya masuk sebagai siapa?&quot;
+↓
+FINAL CTA
+&quot;Apa langkah berikutnya?&quot;
+↓
+FOOTER
+</div></code></pre>
+<p>This order is intentional.</p>
+<p>Do NOT move &quot;Apa itu Rangkul?&quot; below services.</p>
+<p>The section exists to establish the user's mental model before explaining workflows and features.</p>
+<hr>
+<h1 id="1.-mandatory-execution-rules" tabindex="-1">1. Mandatory Execution Rules</h1>
+<p>Before touching code:</p>
+<ol>
+<li>Read FULL <code>docs/TDD_Rangkul.md</code>.</li>
+<li>Read all current landing components under <code>src/components/landing/</code>.</li>
+<li>Inspect current navbar/header implementation.</li>
+<li>Inspect current footer.</li>
+<li>Inspect <code>src/app/page.tsx</code>.</li>
+<li>Inspect current typography, colors, radius, spacing, shadows, and motion usage.</li>
+<li>Inspect auth-aware behavior.</li>
+<li>Inspect whether Framer Motion is already present.</li>
+<li>Inspect actual routes before adding navigation or footer links.</li>
+<li>Never invent:</li>
+</ol>
+<ul>
+<li>testimonial,</li>
+<li>rating,</li>
+<li>user count,</li>
+<li>response time,</li>
+<li>GMV,</li>
+<li>service fee,</li>
+<li>fake tax,</li>
+<li>fake income,</li>
+<li>medical claims.</li>
+</ul>
+<p>Do not stop after an audit. Implement the redesign after documenting the audit.</p>
+<hr>
+<h1 id="2.-mandatory-design-skills" tabindex="-1">2. Mandatory Design Skills</h1>
+<p>Before major UI work, use/apply:</p>
+<ul>
+<li><code>ui-ux-pro-max</code></li>
+<li><code>gpt-taste</code></li>
+<li><code>design-taste-frontend</code> if available</li>
+</ul>
+<p>These skills must influence actual decisions for:</p>
+<ul>
+<li>information hierarchy,</li>
+<li>composition,</li>
+<li>visual rhythm,</li>
+<li>spacing,</li>
+<li>padding,</li>
+<li>corner radius,</li>
+<li>typography,</li>
+<li>density,</li>
+<li>motion,</li>
+<li>responsive behavior,</li>
+<li>interaction,</li>
+<li>accessibility,</li>
+<li>anti-template review.</li>
+</ul>
+<p>If unavailable, state it honestly in the final handoff.</p>
+<hr>
+<h1 id="3.-jury-level-diagnosis-of-the-current-landing" tabindex="-1">3. Jury-Level Diagnosis of the Current Landing</h1>
+<p>The existing page is already:</p>
+<ul>
+<li>clean,</li>
+<li>legible,</li>
+<li>calm,</li>
+<li>consistent,</li>
+<li>truthful,</li>
+<li>visually coherent,</li>
+<li>materially better than a default competition landing page.</li>
+</ul>
+<p>However, it still has three major weaknesses.</p>
+<h2 id="3.1-repetitive-visual-grammar" tabindex="-1">3.1 Repetitive Visual Grammar</h2>
+<p>Too many sections use:</p>
+<pre class='hljs'><code><div>heading
+paragraph
+3 equal cards
+</div></code></pre>
+<p>Examples include:</p>
+<ul>
+<li>Cara Kerja,</li>
+<li>trust/control section,</li>
+<li>role section,</li>
+<li>scenario section.</li>
+</ul>
+<p>This creates visual fatigue.</p>
+<p>The page looks polished but predictable.</p>
+<hr>
+<h2 id="3.2-product-mental-model-is-underexplained" tabindex="-1">3.2 Product Mental Model Is Underexplained</h2>
+<p>The current hero explains the emotional promise, but users may still not immediately understand:</p>
+<ul>
+<li>what Rangkul actually is,</li>
+<li>who Helper is,</li>
+<li>why Koordinator exists,</li>
+<li>how family remains in control,</li>
+<li>what makes Rangkul different from a caregiver marketplace.</li>
+</ul>
+<p>This is why the new <strong>&quot;Apa itu Rangkul?&quot;</strong> section is mandatory.</p>
+<hr>
+<h2 id="3.3-hero-is-product-ui-heavy-but-human-light" tabindex="-1">3.3 Hero Is Product-UI Heavy but Human-Light</h2>
+<p>Current floating snapshot cards are visually neat, but they feel like:</p>
+<blockquote>
+<p>UI component showcase</p>
+</blockquote>
+<p>Rangkul is about people, care, trust, and distance.</p>
+<p>The hero needs a <strong>human focal point</strong>.</p>
+<p>The redesign should combine:</p>
+<blockquote>
+<p><strong>3D elderly character + Rangkul product snapshot</strong></p>
+</blockquote>
+<p>not card-only composition.</p>
+<hr>
+<h1 id="4.-final-landing-structure-%E2%80%94-locked" tabindex="-1">4. Final Landing Structure — LOCKED</h1>
+<pre class='hljs'><code><div>1. Sticky Navbar
+
+2. Hero
+   - emotional value proposition
+   - concise copy
+   - 3D elderly character
+   - product snapshot
+   - primary CTA
+
+3. Trust Strip
+   - community verification
+   - transparent price
+   - visit report
+
+4. Apa itu Rangkul?
+   - product definition
+   - problem → solution explanation
+   - product ecosystem diagram
+   - compact proof points
+
+5. Cara Kerja
+   - connected 3-step journey
+
+6. Layanan
+   - 6 normal service cards
+   - special Kontrol Kesehatan panel
+
+7. Riwayat Rangkul
+   - interactive product demo
+
+8. Community Trust
+   - Helper → Koordinator → Keluarga trust mechanism
+
+9. Pilih Peran
+   - interactive role explorer
+
+10. Final CTA
+   - auth-aware
+
+11. Footer
+</div></code></pre>
+<p>Do not add another generic 3-card section unless it serves a genuinely different information structure.</p>
+<hr>
+<h1 id="5.-global-layout-system" tabindex="-1">5. Global Layout System</h1>
+<h2 id="5.1-main-container" tabindex="-1">5.1 Main Container</h2>
+<pre class='hljs'><code><div>max-width: 1200–1240px
+preferred: 1220px
+margin-inline: auto
+</div></code></pre>
+<p>Do not stretch content to full browser width on large screens.</p>
+<hr>
+<h2 id="5.2-horizontal-padding" tabindex="-1">5.2 Horizontal Padding</h2>
+<pre class='hljs'><code><div>375px     16px
+640px     20px
+768px     24px
+1024px    28px
+1280px+   32px
+</div></code></pre>
+<hr>
+<h2 id="5.3-section-spacing" tabindex="-1">5.3 Section Spacing</h2>
+<p>Desktop:</p>
+<pre class='hljs'><code><div>default: 96px vertical
+compact: 72px
+hero: 80–96px top, 88–104px bottom
+</div></code></pre>
+<p>Tablet:</p>
+<pre class='hljs'><code><div>72–80px
+</div></code></pre>
+<p>Mobile:</p>
+<pre class='hljs'><code><div>56–64px
+</div></code></pre>
+<p>Important:</p>
+<ul>
+<li>not every section must have identical height,</li>
+<li>avoid accidental 150–200px blank areas,</li>
+<li>visual breathing room must look intentional.</li>
+</ul>
+<hr>
+<h1 id="6.-spacing-scale" tabindex="-1">6. Spacing Scale</h1>
+<p>Use consistent increments:</p>
+<pre class='hljs'><code><div>4
+8
+12
+16
+20
+24
+28
+32
+40
+48
+64
+80
+96
+</div></code></pre>
+<p>Recommended use:</p>
+<pre class='hljs'><code><div>icon → text: 10–12px
+title → paragraph: 8–12px
+paragraph → CTA: 20–24px
+section label → H2: 8px
+H2 → intro: 16px
+intro → visual/content: 32–48px
+card padding: 20–24px
+large product panel padding: 28–32px
+</div></code></pre>
+<hr>
+<h1 id="7.-radius-%2F-corner-system" tabindex="-1">7. Radius / Corner System</h1>
+<p>Use:</p>
+<pre class='hljs'><code><div>small control: 10px
+button: 10–12px
+default card: 16px
+step/process card: 18px
+large panel: 22–24px
+hero visual surface: 24–28px
+chip/badge: pill or 8px
+</div></code></pre>
+<p>Rules:</p>
+<ul>
+<li>do not use <code>rounded-3xl</code> everywhere,</li>
+<li>nested surfaces should not visually fight their parent radius,</li>
+<li>buttons do not need to be pills,</li>
+<li>pills are for compact semantic states.</li>
+</ul>
+<hr>
+<h1 id="8.-typography" tabindex="-1">8. Typography</h1>
+<p>Fonts:</p>
+<ul>
+<li>Plus Jakarta Sans — headings</li>
+<li>Instrument Sans — body</li>
+</ul>
+<p>Recommended:</p>
+<pre class='hljs'><code><div>H1 desktop:
+56–64px
+line-height 1.05–1.10
+max-width ~620px
+
+H1 mobile:
+38–44px
+
+H2 desktop:
+38–44px
+
+H2 mobile:
+28–32px
+
+Body intro:
+16–18px
+line-height 1.6–1.7
+
+Body card:
+14–16px
+
+Eyebrow:
+12–13px
+font-weight 700
+letter spacing restrained
+</div></code></pre>
+<p>Avoid:</p>
+<ul>
+<li>tiny body copy,</li>
+<li>excessive uppercase,</li>
+<li>overly gray body text.</li>
+</ul>
+<hr>
+<h1 id="9.-color-rules" tabindex="-1">9. Color Rules</h1>
+<p>Primary:
+<code>#0D47A1</code></p>
+<p>Sky:
+<code>#90CAF9</code></p>
+<p>Background:
+<code>#F5F8FC</code></p>
+<p>Main text:
+<code>#16233A</code></p>
+<p>Muted:
+<code>#6B7A90</code></p>
+<p>Border:
+<code>#DCE6F1</code></p>
+<p>Semantic:</p>
+<ul>
+<li>green = success / verified / completed</li>
+<li>amber = attention / approval / waiting</li>
+<li>red = danger / destructive / emergency</li>
+</ul>
+<p>Do not use random accent colors only for decoration.</p>
+<hr>
+<h1 id="10.-navbar" tabindex="-1">10. NAVBAR</h1>
+<h1 id="10.1-goal" tabindex="-1">10.1 Goal</h1>
+<p>Navbar must communicate:</p>
+<ol>
+<li>where users can learn,</li>
+<li>what the main action is,</li>
+<li>who the logged-in user is.</li>
+</ol>
+<p>The navbar should not only be an anchor list.</p>
+<hr>
+<h1 id="10.2-logged-in-keluarga-desktop" tabindex="-1">10.2 Logged-In Keluarga Desktop</h1>
+<p>Recommended structure:</p>
+<pre class='hljs'><code><div>┌────────────────────────────────────────────────────────────────────────┐
+│ Rangkul     Layanan   Cara Kerja   Riwayat Rangkul                    │
+│                                 🔔  Mbak Burgas  [Buat Kunjungan]      │
+└────────────────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<p>Layout:</p>
+<p>LEFT:</p>
+<ul>
+<li>logo</li>
+</ul>
+<p>CENTER:</p>
+<ul>
+<li>Layanan</li>
+<li>Cara Kerja</li>
+<li>Riwayat Rangkul</li>
+</ul>
+<p>RIGHT:</p>
+<ul>
+<li>notification</li>
+<li>avatar/name dropdown</li>
+<li>primary CTA</li>
+</ul>
+<hr>
+<h1 id="10.3-guest-desktop" tabindex="-1">10.3 Guest Desktop</h1>
+<pre class='hljs'><code><div>Rangkul     Layanan   Cara Kerja   Riwayat Rangkul
+
+                                      Masuk   [Mulai Sekarang]
+</div></code></pre>
+<hr>
+<h1 id="10.4-navbar-dimensions" tabindex="-1">10.4 Navbar Dimensions</h1>
+<pre class='hljs'><code><div>height: 68–72px
+preferred: 70px
+
+logo visual height: 34–38px
+link target height: &gt;=44px
+CTA height: 42–44px
+</div></code></pre>
+<hr>
+<h1 id="10.5-sticky-state" tabindex="-1">10.5 Sticky State</h1>
+<p>Navbar is sticky.</p>
+<p>Initial:</p>
+<ul>
+<li>white,</li>
+<li>subtle bottom border.</li>
+</ul>
+<p>Scrolled:</p>
+<ul>
+<li>rgba white 0.88–0.94,</li>
+<li>backdrop blur 10–12px,</li>
+<li>slightly stronger border,</li>
+<li>very subtle shadow.</li>
+</ul>
+<p>Do not create obvious glassmorphism.</p>
+<hr>
+<h1 id="10.6-scroll-spy" tabindex="-1">10.6 Scroll Spy</h1>
+<p>Active nav item changes based on visible section.</p>
+<p>Use:</p>
+<ul>
+<li>2px underline,</li>
+<li>animated indicator,</li>
+<li>text color shift.</li>
+</ul>
+<p>Do not use giant active pills.</p>
+<p>Duration:
+<code>180–220ms</code>.</p>
+<hr>
+<h1 id="11.-hero" tabindex="-1">11. HERO</h1>
+<h1 id="11.1-hero-responsibility" tabindex="-1">11.1 Hero Responsibility</h1>
+<p>Hero only needs to answer:</p>
+<blockquote>
+<p>&quot;Kenapa saya harus peduli?&quot;</p>
+</blockquote>
+<p>Do NOT force the hero to explain the entire product.</p>
+<p>The detailed explanation belongs in <strong>Apa itu Rangkul?</strong></p>
+<p>This is important to avoid copy repetition.</p>
+<hr>
+<h1 id="11.2-hero-copy" tabindex="-1">11.2 Hero Copy</h1>
+<p>H1:</p>
+<blockquote>
+<p><strong>Merangkul Jarak, Menjaga yang Tersayang</strong></p>
+</blockquote>
+<p>Recommended body:</p>
+<blockquote>
+<p>Pendamping lokal terverifikasi untuk membantu keluarga tetap dekat, mengikuti kabar, dan menjaga orang tersayang dari mana saja.</p>
+</blockquote>
+<p>This is intentionally shorter than the old explanation.</p>
+<p>Primary CTA:
+<code>Buat Kunjungan</code></p>
+<p>Secondary:
+<code>Lihat Cara Kerja</code></p>
+<hr>
+<h1 id="11.3-desktop-composition" tabindex="-1">11.3 Desktop Composition</h1>
+<pre class='hljs'><code><div>LEFT 45–47%
+RIGHT 53–55%
+</div></code></pre>
+<p>Concept:</p>
+<pre class='hljs'><code><div>LEFT                                RIGHT
+
+eyebrow                             Memory Capsule
+H1                                     ╲
+short description
+CTA row                           [3D Ibu Ratna]
+                                        ╲
+                                  [Rangkul Snapshot]
+
+                              [Verified Community]
+</div></code></pre>
+<p>Hero height:
+<code>650–720px</code> excluding navbar.</p>
+<hr>
+<h1 id="11.4-3d-human-focal-point" tabindex="-1">11.4 3D Human Focal Point</h1>
+<p>Use a premium stylized 3D elderly Indonesian woman.</p>
+<p>Recommended fictional identity:
+<code>Ibu Ratna</code></p>
+<p>Visual direction:</p>
+<ul>
+<li>60–70 years old,</li>
+<li>friendly,</li>
+<li>relaxed,</li>
+<li>modest home clothing,</li>
+<li>warm natural expression,</li>
+<li>seated on comfortable chair/sofa,</li>
+<li>no hospital environment,</li>
+<li>no medical equipment,</li>
+<li>no exaggerated cartoon proportions.</li>
+</ul>
+<p>This is an illustration, not a real user.</p>
+<hr>
+<h1 id="11.5-hero-product-snapshot" tabindex="-1">11.5 Hero Product Snapshot</h1>
+<p>Use actual HTML/CSS UI, not baked image text.</p>
+<p>Example:</p>
+<pre class='hljs'><code><div>CONTOH TAMPILAN
+
+Ibu Ratna
+
+Kunjungan hari ini
+Menemani Mengobrol
+Selesai · 16.53
+
+Health Snapshot
+Energi        Stabil
+Mood          Tenang
+Mobilitas     Tercatat
+
+Cerita hari ini
+&quot;Ibu Ratna menikmati waktu mengobrol...&quot;
+</div></code></pre>
+<p>Keep <code>Contoh Tampilan</code> visible.</p>
+<p>Do not make medical claims.</p>
+<hr>
+<h1 id="11.6-3d-asset-strategy" tabindex="-1">11.6 3D Asset Strategy</h1>
+<p>Preferred:</p>
+<blockquote>
+<p>custom prerendered transparent 3D asset.</p>
+</blockquote>
+<p>Use:</p>
+<ul>
+<li>WebP/AVIF,</li>
+<li>transparent,</li>
+<li>2x,</li>
+<li>optimized,</li>
+<li>preferably under ~300–450 KB.</li>
+</ul>
+<p>Do NOT scrape random assets from unknown websites.</p>
+<p>If third-party:</p>
+<ul>
+<li>verify license,</li>
+<li>store locally if allowed,</li>
+<li>document source,</li>
+<li>optimize.</li>
+</ul>
+<hr>
+<h1 id="11.7-spline-%2F-live-3d" tabindex="-1">11.7 Spline / Live 3D</h1>
+<p>Do not use Spline merely because it looks impressive.</p>
+<p>Only use if:</p>
+<ul>
+<li>asset materially benefits,</li>
+<li>load cost acceptable,</li>
+<li>mobile smooth,</li>
+<li>fallback exists,</li>
+<li>reduced-motion works,</li>
+<li>static image fallback exists.</li>
+</ul>
+<p>Preferred competition strategy:
+<strong>prerendered 3D + Framer Motion.</strong></p>
+<hr>
+<h1 id="11.8-hero-layers" tabindex="-1">11.8 Hero Layers</h1>
+<p>Use max:</p>
+<ol>
+<li>soft background orb,</li>
+<li>3D elderly character,</li>
+<li>main product snapshot,</li>
+<li>one Memory Capsule chip,</li>
+<li>one verification/status chip.</li>
+</ol>
+<p>Do NOT add 7–10 floating cards.</p>
+<hr>
+<h1 id="11.9-hero-motion" tabindex="-1">11.9 Hero Motion</h1>
+<p>Entrance:</p>
+<pre class='hljs'><code><div>copy:
+opacity 0→1
+y 16→0
+450ms
+
+character:
+opacity 0→1
+scale .97→1
+600ms
+
+snapshot:
+opacity 0→1
+y 20→0
+rotate 2deg→0
+650ms
+
+chips:
+stagger 80ms
+</div></code></pre>
+<p>Pointer parallax:</p>
+<ul>
+<li>±6–10px movement,</li>
+<li>±1.5deg rotation max.</li>
+</ul>
+<p>Reduced motion:</p>
+<ul>
+<li>no transforms,</li>
+<li>immediate final state.</li>
+</ul>
+<hr>
+<h1 id="12.-trust-strip" tabindex="-1">12. TRUST STRIP</h1>
+<p>Keep exactly three product truths:</p>
+<pre class='hljs'><code><div>Diverifikasi komunitas lokal
+Harga transparan sejak awal
+Laporan setiap kunjungan
+</div></code></pre>
+<p>Visual:</p>
+<ul>
+<li>no card,</li>
+<li>inline row,</li>
+<li>icon 18px,</li>
+<li>text 14px semibold,</li>
+<li>subtle divider.</li>
+</ul>
+<p>Desktop:
+3 equal groups.</p>
+<p>Mobile:
+stack or horizontally scroll only if necessary.</p>
+<hr>
+<h1 id="13.-apa-itu-rangkul%3F-%E2%80%94-new-mandatory-section" tabindex="-1">13. APA ITU RANGKUL? — NEW MANDATORY SECTION</h1>
+<p>This is the major new addition.</p>
+<h1 id="13.1-purpose" tabindex="-1">13.1 Purpose</h1>
+<p>Answer:</p>
+<blockquote>
+<p>&quot;Website/platform ini sebenarnya tentang apa?&quot;</p>
+</blockquote>
+<p>A first-time jury member should understand the product without needing to infer it from later sections.</p>
+<hr>
+<h1 id="13.2-placement" tabindex="-1">13.2 Placement</h1>
+<p>Immediately after Trust Strip.</p>
+<p>Order:</p>
+<pre class='hljs'><code><div>Hero
+Trust Strip
+Apa itu Rangkul?
+Cara Kerja
+</div></code></pre>
+<p>Do NOT place it after services.</p>
+<hr>
+<h1 id="13.3-section-headline" tabindex="-1">13.3 Section Headline</h1>
+<p>Eyebrow:</p>
+<p><code>APA ITU RANGKUL?</code></p>
+<p>Headline:</p>
+<blockquote>
+<p><strong>Pendampingan lansia yang tetap terasa dekat, meski keluarga berada jauh.</strong></p>
+</blockquote>
+<p>Body:</p>
+<blockquote>
+<p>Rangkul adalah platform pendampingan lansia berbasis komunitas yang menghubungkan keluarga dengan Helper lokal terverifikasi. Keluarga dapat membuat kunjungan sesuai kebutuhan, sementara setiap hasil pendampingan dicatat menjadi Riwayat Rangkul agar kondisi dan cerita orang tersayang tetap dapat diikuti dari waktu ke waktu.</p>
+</blockquote>
+<p>Do not use:</p>
+<ul>
+<li>&quot;ecosystem&quot;,</li>
+<li>&quot;holistic&quot;,</li>
+<li>&quot;seamless&quot;,</li>
+<li>generic startup jargon.</li>
+</ul>
+<hr>
+<h1 id="13.4-visual-structure" tabindex="-1">13.4 Visual Structure</h1>
+<p>Do NOT make three generic cards.</p>
+<p>Use split layout.</p>
+<p>Desktop:</p>
+<pre class='hljs'><code><div>┌──────────────────────────────────────────────────────────────────┐
+
+ LEFT 44%                                RIGHT 56%
+
+ APA ITU RANGKUL?                        [ecosystem diagram]
+
+ Pendampingan lansia yang                KELUARGA
+ tetap terasa dekat...                       ●
+                                             │
+ paragraph                              ┌────▼────┐
+                                        │ RANGKUL │
+ ✓ Helper lokal terverifikasi           └────┬────┘
+ ✓ Keluarga tetap memegang keputusan         │
+ ✓ Setiap kunjungan menjadi catatan          ▼
+                                        HELPER / KOORDINATOR
+                                             │
+                                             ▼
+                                      ORANG TERSAYANG
+
+ [Lihat Cara Kerja ↓]
+
+└──────────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<hr>
+<h1 id="13.5-better-ecosystem-diagram" tabindex="-1">13.5 Better Ecosystem Diagram</h1>
+<p>Use a more refined composition:</p>
+<pre class='hljs'><code><div>                       KELUARGA
+                          ●
+                         ╱ ╲
+                        ╱   ╲
+                       ╱     ╲
+             ┌────────────────────┐
+             │       RANGKUL      │
+             │                    │
+             │  Jadwal Kunjungan  │
+             │  Pendampingan      │
+             │  Riwayat Rangkul   │
+             └────────────────────┘
+                  ╱          ╲
+                 ╱            ╲
+                ●              ●
+             HELPER       KOORDINATOR
+                ╲              ╱
+                 ╲            ╱
+                  ▼          ▼
+                  ORANG TERSAYANG
+</div></code></pre>
+<p>Do not make it too technical.</p>
+<p>The diagram should explain:</p>
+<ul>
+<li>family,</li>
+<li>helper,</li>
+<li>coordinator,</li>
+<li>elderly,</li>
+<li>Rangkul as the orchestration layer.</li>
+</ul>
+<hr>
+<h1 id="13.6-inline-proof-points" tabindex="-1">13.6 Inline Proof Points</h1>
+<p>Use inline list, not cards:</p>
+<pre class='hljs'><code><div>✓ Helper lokal terverifikasi komunitas
+✓ Keluarga tetap memegang keputusan penting
+✓ Setiap kunjungan menjadi Riwayat Rangkul
+</div></code></pre>
+<p>Use check icon 18px.</p>
+<p>Spacing:</p>
+<ul>
+<li>12–14px between rows.</li>
+</ul>
+<hr>
+<h1 id="13.7-animation" tabindex="-1">13.7 Animation</h1>
+<p>On viewport entry:</p>
+<ol>
+<li>central Rangkul node appears,</li>
+<li>Family node appears,</li>
+<li>Helper and Coordinator appear,</li>
+<li>connecting lines draw,</li>
+<li>elderly node appears,</li>
+<li>proof points fade in.</li>
+</ol>
+<p>Total:
+<code>700–1000ms</code>.</p>
+<p>Do not loop.</p>
+<p>Reduced motion:</p>
+<ul>
+<li>show complete diagram instantly.</li>
+</ul>
+<hr>
+<h1 id="13.8-mobile-layout" tabindex="-1">13.8 Mobile Layout</h1>
+<p>Order:</p>
+<pre class='hljs'><code><div>Eyebrow
+Headline
+Paragraph
+Proof points
+Diagram
+CTA
+</div></code></pre>
+<p>Diagram may simplify to:</p>
+<pre class='hljs'><code><div>Keluarga
+   ↓
+Rangkul
+↙     ↘
+Helper Koordinator
+   ↓
+Orang Tersayang
+</div></code></pre>
+<p>No horizontal overflow.</p>
+<hr>
+<h1 id="14.-cara-kerja" tabindex="-1">14. CARA KERJA</h1>
+<p>Do not use three visually isolated cards.</p>
+<p>Use connected progression.</p>
+<p>Desktop:</p>
+<pre class='hljs'><code><div>01                       02                       03
+
+Ceritakan kebutuhan ───▶ Pendamping menerima ───▶ Pantau kabar
+kunjungan                tugas                     &amp; Riwayat
+</div></code></pre>
+<p>Each step may still have a surface, but the connector is mandatory.</p>
+<hr>
+<h1 id="14.1-animation" tabindex="-1">14.1 Animation</h1>
+<p>On entry:</p>
+<ul>
+<li>step 1 appears,</li>
+<li>line animates,</li>
+<li>step 2 appears,</li>
+<li>line animates,</li>
+<li>step 3 appears.</li>
+</ul>
+<p>Total under <code>1.2s</code>.</p>
+<p>Do not hijack scroll.</p>
+<hr>
+<h1 id="14.2-copy" tabindex="-1">14.2 Copy</h1>
+<p>Step 1:
+<code>Ceritakan kebutuhan kunjungan</code></p>
+<p>Step 2:
+<code>Pendamping yang sesuai menerima tugas</code></p>
+<p>Step 3:
+<code>Pantau kabar dan Riwayat Rangkul</code></p>
+<p>Keep descriptions concise.</p>
+<hr>
+<h1 id="15.-layanan" tabindex="-1">15. LAYANAN</h1>
+<h1 id="15.1-existing-problem" tabindex="-1">15.1 Existing Problem</h1>
+<p>There are 7 services.</p>
+<p>A 3-column grid creates:</p>
+<pre class='hljs'><code><div>3
+3
+1
+</div></code></pre>
+<p>Leaving <code>Kontrol Kesehatan</code> alone.</p>
+<p>This looks unfinished.</p>
+<hr>
+<h1 id="15.2-new-layout" tabindex="-1">15.2 New Layout</h1>
+<p>Use:</p>
+<pre class='hljs'><code><div>ROW 1
+Antar Obat
+Pengingat Obat
+Belanja Kebutuhan
+
+ROW 2
+Menemani Mengobrol
+Bersih Rumah Ringan
+Bantuan Teknologi
+
+SPECIAL ROW
+Kontrol Kesehatan
+</div></code></pre>
+<hr>
+<h1 id="15.3-special-kontrol-kesehatan-panel" tabindex="-1">15.3 Special Kontrol Kesehatan Panel</h1>
+<p>Full width or 2/3 width.</p>
+<p>Desktop horizontal layout:</p>
+<pre class='hljs'><code><div>┌──────────────────────────────────────────────────────────────┐
+│ icon   Kontrol Kesehatan                                    │
+│        Pendampingan ke fasilitas kesehatan                  │
+│                                                              │
+│        [Perlu Persetujuan Koordinator]                       │
+│                                       Rp120.000 · 90 menit   │
+└──────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<p>This visual difference must communicate actual business-rule difference.</p>
+<p>Use amber/info tone.</p>
+<p>Not danger red.</p>
+<hr>
+<h1 id="15.4-card-interaction" tabindex="-1">15.4 Card Interaction</h1>
+<p>Hover:</p>
+<ul>
+<li>border blue shift,</li>
+<li>shadow increases slightly,</li>
+<li>icon moves 1–2px,</li>
+<li>arrow moves 3–4px.</li>
+</ul>
+<p>Maximum translate:
+<code>-2px</code>.</p>
+<p>No scaling.</p>
+<hr>
+<h1 id="16.-riwayat-rangkul-%E2%80%94-second-wow-moment" tabindex="-1">16. RIWAYAT RANGKUL — SECOND WOW MOMENT</h1>
+<p>After hero, this must be the most memorable product section.</p>
+<hr>
+<h1 id="16.1-layout" tabindex="-1">16.1 Layout</h1>
+<p>Desktop:</p>
+<pre class='hljs'><code><div>LEFT 42%
+copy
+benefits
+CTA
+
+RIGHT 58%
+interactive product mockup
+</div></code></pre>
+<p>Use soft sky background.</p>
+<hr>
+<h1 id="16.2-headline" tabindex="-1">16.2 Headline</h1>
+<p>Eyebrow:
+<code>RIWAYAT RANGKUL</code></p>
+<p>Headline:</p>
+<blockquote>
+<p><strong>Bukan sekadar kunjungan. Lihat perubahan dari waktu ke waktu.</strong></p>
+</blockquote>
+<p>Keep this.</p>
+<hr>
+<h1 id="16.3-interactive-mockup" tabindex="-1">16.3 Interactive Mockup</h1>
+<p>Use:</p>
+<pre class='hljs'><code><div>CONTOH TAMPILAN
+Ibu Ratna                         27 Agustus 2026
+
+Health Snapshot
+
+Energi
+Membaik          mini trend
+
+Mood
+Stabil           mini trend
+
+Mobilitas
+Perlu perhatian  mini trend
+
+CERITA HARI INI
+
+&quot;Hari ini Ibu menikmati waktu mengobrol...&quot;
+
+[Hari Ini] [7 Hari] [30 Hari]
+</div></code></pre>
+<hr>
+<h1 id="16.4-interaction" tabindex="-1">16.4 Interaction</h1>
+<p>Tabs:</p>
+<ul>
+<li>Hari Ini</li>
+<li>7 Hari</li>
+<li>30 Hari</li>
+</ul>
+<p>Click changes:</p>
+<ul>
+<li>indicator status,</li>
+<li>mini trend,</li>
+<li>summary copy.</li>
+</ul>
+<p>Do not imply live data.</p>
+<p>All example data stays clearly marked.</p>
+<hr>
+<h1 id="16.5-motion" tabindex="-1">16.5 Motion</h1>
+<p>On section entry:</p>
+<ul>
+<li>mockup reveals,</li>
+<li>trend lines draw,</li>
+<li>chips appear.</li>
+</ul>
+<p>On tab change:</p>
+<ul>
+<li>180–260ms crossfade,</li>
+<li>subtle number transition.</li>
+</ul>
+<p>No endless animation.</p>
+<hr>
+<h1 id="17.-community-trust-%E2%80%94-replace-generic-trust-cards" tabindex="-1">17. COMMUNITY TRUST — REPLACE GENERIC TRUST CARDS</h1>
+<p>The goal is to explain:</p>
+<blockquote>
+<p>&quot;Kenapa Rangkul bisa dipercaya?&quot;</p>
+</blockquote>
+<p>Use a mechanism diagram.</p>
+<hr>
+<h1 id="17.1-headline" tabindex="-1">17.1 Headline</h1>
+<p>Eyebrow:
+<code>KEPERCAYAAN KOMUNITAS</code></p>
+<p>Headline:</p>
+<blockquote>
+<p><strong>Kepercayaan tidak hanya datang dari profil.</strong></p>
+</blockquote>
+<p>Body:</p>
+<blockquote>
+<p>Helper diverifikasi di komunitas domisilinya, Koordinator membantu menjaga proses verifikasi dan tindakan tertentu, sementara keluarga tetap memegang keputusan penting.</p>
+</blockquote>
+<hr>
+<h1 id="17.2-flow-diagram" tabindex="-1">17.2 Flow Diagram</h1>
+<pre class='hljs'><code><div>HELPER                KOORDINATOR                  KELUARGA
+  ●                         ●                          ●
+  │                         │                          │
+  └──── profil ───────────▶ │                          │
+                            └──── diverifikasi ───────▶│
+                                                       │
+                 tindakan tertentu ◀──── approval ─────┘
+</div></code></pre>
+<p>Or:</p>
+<pre class='hljs'><code><div>[Helper]
+   ↓ verification
+[Koordinator]
+   ↓ trusted availability
+[Keluarga]
+   ↓ decides / approves
+[Pendampingan]
+</div></code></pre>
+<p>Use actual business model.</p>
+<hr>
+<h1 id="17.3-animation" tabindex="-1">17.3 Animation</h1>
+<p>Scroll reveal:</p>
+<ul>
+<li>nodes appear,</li>
+<li>line draws,</li>
+<li>verification marker appears.</li>
+</ul>
+<p>No looping.</p>
+<hr>
+<h1 id="18.-pilih-peran-%E2%80%94-role-explorer" tabindex="-1">18. PILIH PERAN — ROLE EXPLORER</h1>
+<p>Replace static three equal cards.</p>
+<hr>
+<h1 id="18.1-desktop" tabindex="-1">18.1 Desktop</h1>
+<p>Use interactive selector:</p>
+<pre class='hljs'><code><div>┌──────────────────┬──────────────────────────────────────────────┐
+│ ● Keluarga       │                                              │
+│   Helper         │ KELUARGA                                    │
+│   Koordinator    │                                              │
+│                  │ Atur kunjungan dan pantau orang tersayang.  │
+│                  │                                              │
+│                  │ ✓ Buat kunjungan                            │
+│                  │ ✓ Pantau Riwayat                            │
+│                  │ ✓ Kendali persetujuan                       │
+│                  │                                              │
+│                  │ [Daftar sebagai Keluarga]                   │
+└──────────────────┴──────────────────────────────────────────────┘
+</div></code></pre>
+<hr>
+<h1 id="18.2-mobile" tabindex="-1">18.2 Mobile</h1>
+<p>Segmented tabs:</p>
+<pre class='hljs'><code><div>[Keluarga] [Helper] [Koordinator]
+</div></code></pre>
+<p>One detail panel below.</p>
+<hr>
+<h1 id="18.3-accent" tabindex="-1">18.3 Accent</h1>
+<p>Keluarga:
+subtle teal</p>
+<p>Helper:
+subtle amber</p>
+<p>Koordinator:
+subtle indigo</p>
+<p>Do not recolor the entire panel.</p>
+<hr>
+<h1 id="19.-remove-%22contoh-skenario-demo%22-as-a-large-section" tabindex="-1">19. REMOVE &quot;CONTOH SKENARIO DEMO&quot; AS A LARGE SECTION</h1>
+<p>Do not retain a large section that says:</p>
+<blockquote>
+<p>&quot;Bukan klaim pengalaman pengguna...&quot;</p>
+</blockquote>
+<p>It sounds defensive and interrupts product storytelling.</p>
+<p>If a demo explanation is needed:</p>
+<ul>
+<li>use small label <code>Ilustrasi alur</code>,</li>
+<li>merge content into Community Trust or Role Explorer.</li>
+</ul>
+<hr>
+<h1 id="20.-final-cta" tabindex="-1">20. FINAL CTA</h1>
+<p>Use the blue section as a strong visual stop.</p>
+<hr>
+<h1 id="20.1-logged-in-keluarga" tabindex="-1">20.1 Logged-In Keluarga</h1>
+<p>Headline:</p>
+<blockquote>
+<p><strong>Mulai dari satu kunjungan yang lebih tenang.</strong></p>
+</blockquote>
+<p>Body:</p>
+<blockquote>
+<p>Pilih layanan, atur jadwal, dan tetap ikuti kabar orang tersayang melalui Rangkul.</p>
+</blockquote>
+<p>CTA:
+<code>Buat Kunjungan</code></p>
+<p>Secondary:
+<code>Lihat Layanan →</code></p>
+<hr>
+<h1 id="20.2-guest" tabindex="-1">20.2 Guest</h1>
+<p>Primary:
+<code>Mulai sebagai Keluarga</code></p>
+<p>Secondary:
+<code>Daftar sebagai Helper</code></p>
+<p>Do not display irrelevant CTAs based on known user role.</p>
+<hr>
+<h1 id="21.-footer" tabindex="-1">21. FOOTER</h1>
+<h1 id="21.1-current-issues-to-fix" tabindex="-1">21.1 Current Issues to Fix</h1>
+<ul>
+<li>too sparse,</li>
+<li>competition credit too prominent,</li>
+<li>limited information architecture,</li>
+<li>missing product closure.</li>
+</ul>
+<hr>
+<h1 id="21.2-recommended-structure" tabindex="-1">21.2 Recommended Structure</h1>
+<pre class='hljs'><code><div>RANGKUL
+
+Pendampingan lokal untuk membantu
+keluarga tetap dekat dengan orang tersayang.
+
+Produk                 Bergabung              Bantuan
+Layanan                Keluarga               ...
+Cara Kerja             Helper
+Riwayat Rangkul        Koordinator
+
+────────────────────────────────────────────────────────────
+
+© 2026 Rangkul
+</div></code></pre>
+<p>Only add help/legal links if actual routes exist.</p>
+<hr>
+<h1 id="21.3-competition-credit" tabindex="-1">21.3 Competition Credit</h1>
+<p>If needed:</p>
+<p><code>Dikembangkan untuk ITechno Cup 2026.</code></p>
+<p>Display as small secondary text.</p>
+<p>Do not make competition identity stronger than product identity.</p>
+<hr>
+<h1 id="22.-motion-system" tabindex="-1">22. Motion System</h1>
+<p>Use one primary animation system.</p>
+<p>Preferred:</p>
+<ul>
+<li>Framer Motion if already installed.</li>
+</ul>
+<p>Do not mix multiple libraries unnecessarily.</p>
+<hr>
+<h1 id="22.1-motion-tokens" tabindex="-1">22.1 Motion Tokens</h1>
+<pre class='hljs'><code><div>fast: 160ms
+default: 220ms
+medium: 360ms
+reveal: 450–650ms
+sequence max: 1200ms
+</div></code></pre>
+<hr>
+<h1 id="22.2-scroll-reveal" tabindex="-1">22.2 Scroll Reveal</h1>
+<p>Animate only important moments:</p>
+<ul>
+<li>hero,</li>
+<li>Apa itu Rangkul diagram,</li>
+<li>Cara Kerja connector,</li>
+<li>Riwayat mockup,</li>
+<li>Community Trust flow,</li>
+<li>Role Explorer content switch.</li>
+</ul>
+<p>Do not animate every paragraph.</p>
+<hr>
+<h1 id="22.3-hover" tabindex="-1">22.3 Hover</h1>
+<p>Card:</p>
+<ul>
+<li>translateY max <code>-2px</code></li>
+</ul>
+<p>Arrow:</p>
+<ul>
+<li>translateX <code>3–4px</code></li>
+</ul>
+<p>Border:</p>
+<ul>
+<li>subtle brand shift</li>
+</ul>
+<p>Shadow:</p>
+<ul>
+<li>small increase</li>
+</ul>
+<p>No:</p>
+<ul>
+<li>1.05 scale,</li>
+<li>excessive spring,</li>
+<li>bouncing.</li>
+</ul>
+<hr>
+<h1 id="22.4-reduced-motion" tabindex="-1">22.4 Reduced Motion</h1>
+<p>Respect:</p>
+<pre class='hljs'><code><div><span class="hljs-keyword">@media</span> (<span class="hljs-attribute">prefers-reduced-motion</span>: reduce)
+</div></code></pre>
+<p>Disable:</p>
+<ul>
+<li>parallax,</li>
+<li>sequential line drawing,</li>
+<li>entrance transforms.</li>
+</ul>
+<p>Keep content immediately available.</p>
+<hr>
+<h1 id="23.-interactive-system" tabindex="-1">23. Interactive System</h1>
+<p>Add purposeful interactivity:</p>
+<ol>
+<li>sticky navbar scroll spy</li>
+<li>subtle hero parallax</li>
+<li>Apa itu Rangkul diagram reveal</li>
+<li>Cara Kerja line animation</li>
+<li>service hover</li>
+<li>Riwayat period switch</li>
+<li>Community Trust flow reveal</li>
+<li>Role Explorer tabs</li>
+<li>CTA arrow microinteraction</li>
+</ol>
+<p>Do not add interactivity where it does not help understanding.</p>
+<hr>
+<h1 id="24.-hero-3d-performance-rules" tabindex="-1">24. Hero 3D Performance Rules</h1>
+<p>Requirements:</p>
+<ul>
+<li>H1 must render before 3D asset completion,</li>
+<li>no blocking external scene,</li>
+<li>known image dimensions,</li>
+<li>responsive <code>sizes</code>,</li>
+<li>no 4K PNG,</li>
+<li>no autoplay video,</li>
+<li>no large WebGL payload,</li>
+<li>static fallback.</li>
+</ul>
+<p>Target asset:
+<code>300–450 KB preferred</code>, not a strict claim.</p>
+<hr>
+<h1 id="25.-mobile-layout" tabindex="-1">25. Mobile Layout</h1>
+<h1 id="25.1-hero" tabindex="-1">25.1 Hero</h1>
+<p>Order:</p>
+<pre class='hljs'><code><div>eyebrow
+H1
+body
+CTA
+3D visual
+trust strip
+</div></code></pre>
+<p>3D visual height:
+<code>320–390px</code>.</p>
+<p>Keep:</p>
+<ul>
+<li>one main snapshot,</li>
+<li>one secondary chip.</li>
+</ul>
+<p>Remove extra floating objects.</p>
+<hr>
+<h1 id="25.2-apa-itu-rangkul" tabindex="-1">25.2 Apa itu Rangkul</h1>
+<p>Order:</p>
+<pre class='hljs'><code><div>label
+headline
+paragraph
+proof points
+diagram
+CTA
+</div></code></pre>
+<hr>
+<h1 id="25.3-cara-kerja" tabindex="-1">25.3 Cara Kerja</h1>
+<p>Convert horizontal process to vertical:</p>
+<pre class='hljs'><code><div>01
+│
+02
+│
+03
+</div></code></pre>
+<p>Connector runs vertically.</p>
+<hr>
+<h1 id="25.4-services" tabindex="-1">25.4 Services</h1>
+<pre class='hljs'><code><div>1 column
+special panel stacked
+</div></code></pre>
+<hr>
+<h1 id="25.5-riwayat" tabindex="-1">25.5 Riwayat</h1>
+<p>Copy first.
+Interactive panel below.</p>
+<p>No tiny side-by-side layout.</p>
+<hr>
+<h1 id="25.6-role-explorer" tabindex="-1">25.6 Role Explorer</h1>
+<p>Tabs above.
+Single panel below.</p>
+<hr>
+<h1 id="26.-accessibility" tabindex="-1">26. Accessibility</h1>
+<p>Mandatory:</p>
+<ul>
+<li>one H1,</li>
+<li>logical heading order,</li>
+<li>skip link,</li>
+<li>sticky anchor offset,</li>
+<li>visible focus,</li>
+<li>44x44 targets,</li>
+<li>semantic nav,</li>
+<li>semantic tabs,</li>
+<li>keyboard accessible role explorer,</li>
+<li>keyboard accessible Riwayat tabs,</li>
+<li>proper aria selected,</li>
+<li>reduced motion,</li>
+<li>WCAG AA contrast,</li>
+<li>200% zoom,</li>
+<li>no horizontal page clipping.</li>
+</ul>
+<hr>
+<h1 id="27.-anti-template-gate" tabindex="-1">27. Anti-Template Gate</h1>
+<p>Reject:</p>
+<ul>
+<li>repeated 3-card sections,</li>
+<li>random glow,</li>
+<li>random blobs,</li>
+<li>fake testimonials,</li>
+<li>fake metrics,</li>
+<li>random 3D decorations,</li>
+<li>meaningless charts,</li>
+<li>giant gradients,</li>
+<li>excessive pills,</li>
+<li>every card <code>rounded-3xl</code>,</li>
+<li>micro text,</li>
+<li>overuse of uppercase,</li>
+<li>hover animation on everything.</li>
+</ul>
+<p>The page must feel specifically designed for Rangkul.</p>
+<hr>
+<h1 id="28.-anti-overdesign-gate" tabindex="-1">28. Anti-Overdesign Gate</h1>
+<p>Do not solve &quot;boring&quot; by adding too many effects.</p>
+<p>A good hierarchy:</p>
+<pre class='hljs'><code><div>Hero             = strongest visual
+Riwayat Rangkul  = second strongest visual
+Apa itu Rangkul  = strongest explanatory visual
+Community Trust  = strongest trust visual
+Everything else  = support
+</div></code></pre>
+<hr>
+<h1 id="29.-exact-transformation-matrix" tabindex="-1">29. Exact Transformation Matrix</h1>
+<table>
+<thead>
+<tr>
+<th>Current area</th>
+<th>New decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Navbar</td>
+<td>sticky + scroll spy + primary CTA</td>
+</tr>
+<tr>
+<td>Hero</td>
+<td>3D elderly + HTML product snapshot</td>
+</tr>
+<tr>
+<td>Trust Strip</td>
+<td>retain, refine</td>
+</tr>
+<tr>
+<td>Apa itu Rangkul</td>
+<td>NEW split storytelling + ecosystem diagram</td>
+</tr>
+<tr>
+<td>Cara Kerja</td>
+<td>connected animated journey</td>
+</tr>
+<tr>
+<td>Services</td>
+<td>6 normal + 1 special panel</td>
+</tr>
+<tr>
+<td>Riwayat</td>
+<td>interactive demo</td>
+</tr>
+<tr>
+<td>Trust cards</td>
+<td>replace with mechanism flow</td>
+</tr>
+<tr>
+<td>Role cards</td>
+<td>replace with role explorer</td>
+</tr>
+<tr>
+<td>Scenario demo</td>
+<td>remove/merge</td>
+</tr>
+<tr>
+<td>CTA</td>
+<td>auth-aware</td>
+</tr>
+<tr>
+<td>Footer</td>
+<td>fuller but only real links</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="30.-antigravity-implementation-instructions" tabindex="-1">30. Antigravity Implementation Instructions</h1>
+<p>Antigravity MUST perform actual browser inspection.</p>
+<p>For each section:</p>
+<ol>
+<li>open local page,</li>
+<li>inspect at 1440x900,</li>
+<li>inspect at 375x812,</li>
+<li>inspect at 768x1024,</li>
+<li>inspect at 1024x768,</li>
+<li>inspect spacing,</li>
+<li>inspect alignment,</li>
+<li>inspect radius,</li>
+<li>inspect text wrapping,</li>
+<li>inspect hover,</li>
+<li>inspect sticky navbar,</li>
+<li>inspect scroll-spy,</li>
+<li>inspect animation smoothness,</li>
+<li>inspect reduced motion,</li>
+<li>inspect 200% zoom,</li>
+<li>fix issues rather than only report them.</li>
+</ol>
+<p>Mandatory three-pass review:</p>
+<h3 id="pass-1" tabindex="-1">Pass 1</h3>
+<p>Visual structure:</p>
+<ul>
+<li>layout,</li>
+<li>spacing,</li>
+<li>padding,</li>
+<li>radius,</li>
+<li>typography.</li>
+</ul>
+<h3 id="pass-2" tabindex="-1">Pass 2</h3>
+<p>Interaction:</p>
+<ul>
+<li>hover,</li>
+<li>tabs,</li>
+<li>scroll,</li>
+<li>animation,</li>
+<li>CTA.</li>
+</ul>
+<h3 id="pass-3" tabindex="-1">Pass 3</h3>
+<p>Responsive/accessibility:</p>
+<ul>
+<li>mobile,</li>
+<li>keyboard,</li>
+<li>zoom,</li>
+<li>reduced motion.</li>
+</ul>
+<hr>
+<h1 id="31.-codex-implementation-instructions" tabindex="-1">31. Codex Implementation Instructions</h1>
+<p>Codex MUST:</p>
+<ol>
+<li>inspect existing code,</li>
+<li>avoid rewriting working backend,</li>
+<li>reuse components when clean,</li>
+<li>split oversized landing components,</li>
+<li>avoid unnecessary <code>use client</code>,</li>
+<li>keep demo data isolated,</li>
+<li>preserve real pricing/service data,</li>
+<li>validate routes,</li>
+<li>use local licensed/custom assets,</li>
+<li>avoid large dependency additions,</li>
+<li>run lint/typecheck/test/build,</li>
+<li>document any deviation.</li>
+</ol>
+<hr>
+<h1 id="32.-suggested-components" tabindex="-1">32. Suggested Components</h1>
+<pre class='hljs'><code><div>src/components/landing/
+  LandingNavbar.tsx
+  HeroSection.tsx
+  HeroVisual.tsx
+  HeroSnapshotCard.tsx
+  TrustStrip.tsx
+  AboutRangkulSection.tsx
+  RangkulEcosystemDiagram.tsx
+  JourneySection.tsx
+  ServicesSection.tsx
+  SpecialServiceCard.tsx
+  RiwayatDemoSection.tsx
+  RiwayatDemoPanel.tsx
+  CommunityTrustSection.tsx
+  RoleExplorerSection.tsx
+  FinalCTASection.tsx
+
+src/components/layout/
+  Footer.tsx
+
+src/lib/
+  landing-demo-data.ts
+</div></code></pre>
+<p>Adapt filenames to existing architecture where appropriate.</p>
+<hr>
+<h1 id="33.-suggested-demo-data-separation" tabindex="-1">33. Suggested Demo Data Separation</h1>
+<p>Example:</p>
+<pre class='hljs'><code><div><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-variable constant_">RIWAYAT_DEMO_DATA</span> = {
+  <span class="hljs-attr">personName</span>: <span class="hljs-string">&quot;Ibu Ratna&quot;</span>,
+  ...
+};
+</div></code></pre>
+<p>Never mix demo state into actual API response.</p>
+<hr>
+<h1 id="34.-visual-qa-checklist" tabindex="-1">34. Visual QA Checklist</h1>
+<p>Before accepting each section:</p>
+<h2 id="hierarchy" tabindex="-1">Hierarchy</h2>
+<ul>
+<li>is first glance correct?</li>
+<li>is primary action obvious?</li>
+<li>does section support the page story?</li>
+</ul>
+<h2 id="padding" tabindex="-1">Padding</h2>
+<ul>
+<li>is internal spacing consistent?</li>
+<li>does content feel cramped or loose?</li>
+</ul>
+<h2 id="radius" tabindex="-1">Radius</h2>
+<ul>
+<li>are surfaces appropriately rounded?</li>
+<li>are pills only used where semantically appropriate?</li>
+</ul>
+<h2 id="typography" tabindex="-1">Typography</h2>
+<ul>
+<li>clear hierarchy?</li>
+<li>readable body?</li>
+<li>line length controlled?</li>
+</ul>
+<h2 id="color" tabindex="-1">Color</h2>
+<ul>
+<li>semantic?</li>
+<li>not over-blue?</li>
+<li>warning/success meaningful?</li>
+</ul>
+<h2 id="motion" tabindex="-1">Motion</h2>
+<ul>
+<li>helps comprehension?</li>
+<li>not distracting?</li>
+<li>reduced-motion compatible?</li>
+</ul>
+<h2 id="responsive" tabindex="-1">Responsive</h2>
+<ul>
+<li>375?</li>
+<li>768?</li>
+<li>1024?</li>
+<li>1440?</li>
+</ul>
+<p>If any answer is no, section is not accepted.</p>
+<hr>
+<h1 id="35.-required-qa-states" tabindex="-1">35. Required QA States</h1>
+<p>Test:</p>
+<ul>
+<li>guest</li>
+<li>logged-in Keluarga</li>
+<li>long username</li>
+<li>99+ notification</li>
+<li>slow asset load</li>
+<li>missing optional image</li>
+<li>reduced motion</li>
+<li>keyboard only</li>
+<li>200% zoom</li>
+</ul>
+<hr>
+<h1 id="36.-performance-rules" tabindex="-1">36. Performance Rules</h1>
+<p>Before completion:</p>
+<ul>
+<li>hero H1 not blocked,</li>
+<li>no CLS,</li>
+<li>local 3D asset optimized,</li>
+<li>below-fold assets lazy-load,</li>
+<li>no unnecessary JS,</li>
+<li>no animation running forever,</li>
+<li>scroll remains smooth.</li>
+</ul>
+<p>If Lighthouse is run, report measured values honestly.</p>
+<p>Do not fabricate scores.</p>
+<hr>
+<h1 id="37.-build-%2F-quality-commands" tabindex="-1">37. Build / Quality Commands</h1>
+<p>Run available equivalents:</p>
+<pre class='hljs'><code><div>npm run lint
+npm run typecheck
+npm run <span class="hljs-built_in">test</span>
+npm run build
+git diff --check
+</div></code></pre>
+<p>Do not silently ignore failures.</p>
+<hr>
+<h1 id="38.-final-acceptance-criteria" tabindex="-1">38. Final Acceptance Criteria</h1>
+<p>Landing is NOT done until:</p>
+<ul>
+<li><input type="checkbox" id="checkbox0"><label for="checkbox0">Hero is concise, not over-explaining.</label></li>
+<li><input type="checkbox" id="checkbox1"><label for="checkbox1">3D human focal point is present.</label></li>
+<li><input type="checkbox" id="checkbox2"><label for="checkbox2">Hero product snapshot is HTML-based and readable.</label></li>
+<li><input type="checkbox" id="checkbox3"><label for="checkbox3">Trust strip remains concise.</label></li>
+<li><input type="checkbox" id="checkbox4"><label for="checkbox4">&quot;Apa itu Rangkul?&quot; exists directly after Trust Strip.</label></li>
+<li><input type="checkbox" id="checkbox5"><label for="checkbox5">&quot;Apa itu Rangkul?&quot; explains product clearly.</label></li>
+<li><input type="checkbox" id="checkbox6"><label for="checkbox6">&quot;Apa itu Rangkul?&quot; uses ecosystem storytelling, not another 3-card grid.</label></li>
+<li><input type="checkbox" id="checkbox7"><label for="checkbox7">Cara Kerja shows a connected journey.</label></li>
+<li><input type="checkbox" id="checkbox8"><label for="checkbox8">Services grid no longer leaves one lonely card.</label></li>
+<li><input type="checkbox" id="checkbox9"><label for="checkbox9">Kontrol Kesehatan has special layout based on actual business logic.</label></li>
+<li><input type="checkbox" id="checkbox10"><label for="checkbox10">Riwayat Rangkul is interactive.</label></li>
+<li><input type="checkbox" id="checkbox11"><label for="checkbox11">Community trust is shown as a mechanism.</label></li>
+<li><input type="checkbox" id="checkbox12"><label for="checkbox12">Role selection is interactive.</label></li>
+<li><input type="checkbox" id="checkbox13"><label for="checkbox13">Scenario demo section is removed or merged.</label></li>
+<li><input type="checkbox" id="checkbox14"><label for="checkbox14">Final CTA is auth-aware.</label></li>
+<li><input type="checkbox" id="checkbox15"><label for="checkbox15">Footer contains only real links.</label></li>
+<li><input type="checkbox" id="checkbox16"><label for="checkbox16">No fake metrics.</label></li>
+<li><input type="checkbox" id="checkbox17"><label for="checkbox17">No fake testimonial.</label></li>
+<li><input type="checkbox" id="checkbox18"><label for="checkbox18">No fake medical claim.</label></li>
+<li><input type="checkbox" id="checkbox19"><label for="checkbox19">Navbar scroll spy works.</label></li>
+<li><input type="checkbox" id="checkbox20"><label for="checkbox20">All click targets &gt;=44px.</label></li>
+<li><input type="checkbox" id="checkbox21"><label for="checkbox21">Keyboard navigation works.</label></li>
+<li><input type="checkbox" id="checkbox22"><label for="checkbox22">Reduced motion works.</label></li>
+<li><input type="checkbox" id="checkbox23"><label for="checkbox23">200% zoom works.</label></li>
+<li><input type="checkbox" id="checkbox24"><label for="checkbox24">375 / 768 / 1024 / 1440 visually reviewed.</label></li>
+<li><input type="checkbox" id="checkbox25"><label for="checkbox25">lint passes.</label></li>
+<li><input type="checkbox" id="checkbox26"><label for="checkbox26">typecheck passes.</label></li>
+<li><input type="checkbox" id="checkbox27"><label for="checkbox27">tests pass.</label></li>
+<li><input type="checkbox" id="checkbox28"><label for="checkbox28">build passes.</label></li>
+</ul>
+<hr>
+<h1 id="39.-final-handoff-required-from-antigravity%2Fcodex" tabindex="-1">39. Final Handoff Required from Antigravity/Codex</h1>
+<p>Provide:</p>
+<h2 id="a.-ux-audit" tabindex="-1">A. UX audit</h2>
+<p>What problems were found.</p>
+<h2 id="b.-final-section-structure" tabindex="-1">B. Final section structure</h2>
+<p>Exact order.</p>
+<h2 id="c.-%22apa-itu-rangkul%3F%22-implementation" tabindex="-1">C. &quot;Apa itu Rangkul?&quot; implementation</h2>
+<p>Explain:</p>
+<ul>
+<li>layout,</li>
+<li>diagram,</li>
+<li>copy,</li>
+<li>animation,</li>
+<li>mobile behavior.</li>
+</ul>
+<h2 id="d.-hero-3d-strategy" tabindex="-1">D. Hero 3D strategy</h2>
+<ul>
+<li>source,</li>
+<li>license,</li>
+<li>file type,</li>
+<li>size,</li>
+<li>fallback.</li>
+</ul>
+<h2 id="e.-motion-system" tabindex="-1">E. Motion system</h2>
+<p>List all interactions.</p>
+<h2 id="f.-files-changed" tabindex="-1">F. Files changed</h2>
+<p>Important files.</p>
+<h2 id="g.-visual-qa" tabindex="-1">G. Visual QA</h2>
+<p>375 / 768 / 1024 / 1440.</p>
+<h2 id="h.-accessibility" tabindex="-1">H. Accessibility</h2>
+<p>Keyboard, focus, zoom, reduced motion.</p>
+<h2 id="i.-performance" tabindex="-1">I. Performance</h2>
+<p>Measured results if available.</p>
+<h2 id="j.-test-results" tabindex="-1">J. Test results</h2>
+<p>lint, typecheck, test, build.</p>
+<h2 id="k.-remaining-risk" tabindex="-1">K. Remaining risk</h2>
+<p>Only actual unresolved issues.</p>
+<hr>
+<h1 id="40.-final-design-standard" tabindex="-1">40. Final Design Standard</h1>
+<p>The landing should create five clear memories:</p>
+<ol>
+<li><strong>&quot;Merangkul Jarak, Menjaga yang Tersayang.&quot;</strong></li>
+<li><strong>3D Ibu Ratna + Rangkul snapshot.</strong></li>
+<li><strong>&quot;Oh, jadi Rangkul itu platform pendampingan lansia berbasis komunitas.&quot;</strong></li>
+<li><strong>Riwayat Rangkul is more than a visit log.</strong></li>
+<li><strong>Trust comes from Helper + Koordinator + Family control.</strong></li>
+</ol>
+<p>The strongest judge reaction should be:</p>
+<blockquote>
+<p>&quot;Saya paham produknya, saya tahu bedanya, dan visualnya memang dibuat khusus untuk konsep ini.&quot;</p>
+</blockquote>
+<p>Not:</p>
+<blockquote>
+<p>&quot;Ini landing page yang bersih.&quot;</p>
+</blockquote>
+<p>The target is <strong>clarity + trust + memorability + product-specific visual storytelling</strong>.</p>
+
+    </div>
+</body>
+</html>

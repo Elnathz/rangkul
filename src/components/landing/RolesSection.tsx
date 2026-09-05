@@ -1,75 +1,22 @@
-import Link from "next/link";
-import { BriefcaseBusiness, Check, ShieldCheck, UsersRound, Waypoints } from "lucide-react";
+"use client";
 
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import Link from "next/link";
+import { BriefcaseBusiness, Check, MapPin, NotebookTabs, ShieldCheck, UsersRound } from "lucide-react";
+import { motion } from "framer-motion";
 
 const roles = [
-  {
-    title: "Keluarga",
-    description: "Atur kunjungan untuk orang tersayang dan ikuti perkembangannya dari laporan yang tersusun rapi.",
-    features: ["Buat kunjungan sesuai kebutuhan", "Pantau laporan dan Riwayat Rangkul", "Tetap memegang kendali atas persetujuan layanan"],
-    href: "/register?role=keluarga",
-    action: "Daftar sebagai Keluarga",
-    icon: UsersRound,
-  },
-  {
-    title: "Helper",
-    description: "Dampingi lansia di sekitar domisili Anda setelah profil dan layanan Anda diverifikasi komunitas.",
-    features: ["Atur radius dan ketersediaan layanan", "Pilih tugas sesuai layanan yang aktif", "Catat hasil kunjungan dengan jelas"],
-    href: "/register?role=helper",
-    action: "Daftar sebagai Helper",
-    icon: BriefcaseBusiness,
-  },
-  {
-    title: "Koordinator",
-    description: "Jaga kepercayaan komunitas dengan meninjau Helper dan tindakan penting dalam wilayah Anda.",
-    features: ["Verifikasi Helper di wilayah domisili", "Tinjau antrean yang membutuhkan keputusan", "Pantau layanan secara bertanggung jawab"],
-    href: "/register?role=koordinator",
-    action: "Daftar sebagai Koordinator",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Admin",
-    description: "Menjaga tata kelola platform melalui moderasi, banding, dan jejak audit yang dapat ditinjau.",
-    features: ["Tinjau laporan serta banding yang masuk", "Pantau pengajuan dan kondisi platform", "Catat keputusan penting secara akuntabel"],
-    href: "/login",
-    action: "Masuk sebagai Admin",
-    icon: Waypoints,
-  },
-];
+  { title: "Keluarga", description: "Atur kunjungan untuk orang tersayang dan ikuti kabarnya dari laporan yang tersusun rapi.", detail: "Satu tempat untuk membuat kunjungan, memantau status, dan membaca Riwayat Rangkul.", features: ["Tentukan kebutuhan kunjungan", "Pilih Helper yang tersedia", "Terima cerita setiap kunjungan"], href: "/register?role=keluarga", action: "Daftar sebagai Keluarga", icon: UsersRound, tone: "bg-blue-50 text-primary", panel: "from-blue-50 via-white to-white" },
+  { title: "Helper", description: "Dampingi lansia di sekitar domisili setelah profil dan layanan Anda diverifikasi komunitas.", detail: "Atur layanan dan jangkauan sendiri. Tugas yang sesuai baru ditampilkan saat Anda siap menerima kunjungan.", features: ["Atur radius dan ketersediaan", "Pilih tugas sesuai layanan aktif", "Catat hasil kunjungan dengan jelas"], href: "/register?role=helper", action: "Daftar sebagai Helper", icon: BriefcaseBusiness, tone: "bg-sky-50 text-sky-800", panel: "from-sky-50 via-white to-white" },
+  { title: "Koordinator", description: "Jaga kepercayaan komunitas dengan meninjau Helper dan tindakan penting di wilayah Anda.", detail: "Fokus pada keputusan yang memang membutuhkan pengawasan agar pendampingan tetap bertanggung jawab.", features: ["Verifikasi Helper di wilayah domisili", "Tinjau antrean yang butuh keputusan", "Pantau layanan bertanggung jawab"], href: "/register?role=koordinator", action: "Daftar sebagai Koordinator", icon: ShieldCheck, tone: "bg-indigo-50 text-indigo-800", panel: "from-indigo-50 via-white to-white" },
+] as const;
+
+const featureIcons = [MapPin, ShieldCheck, NotebookTabs];
 
 export default function RolesSection() {
-  return (
-    <section id="peran" className="bg-[var(--surface-subtle)] py-14 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <h2 className="font-heading text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">Satu ekosistem, empat peran yang saling menjaga</h2>
-          <p className="mt-4 text-base leading-7 text-[var(--ink-secondary)]">Setiap peran memiliki tanggung jawab yang jelas agar pendampingan tetap hangat, transparan, dan dapat dipercaya.</p>
-        </div>
+  const [active, setActive] = useState(0);
+  const role = roles[active];
+  const Icon = role.icon;
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {roles.map(({ title, description, features, href, action, icon: Icon }) => (
-            <article key={title} className="flex min-h-full flex-col rounded-lg border border-border bg-white p-5 shadow-[var(--shadow-card)] sm:p-6">
-              <span className="flex size-11 items-center justify-center rounded-md bg-[var(--info-bg)] text-primary">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <h3 className="mt-5 font-heading text-xl font-bold text-foreground">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-secondary)]">{description}</p>
-              <ul className="mt-5 space-y-3" aria-label={`Manfaat untuk ${title}`}>
-                {features.map((feature) => (
-                  <li key={feature} className="flex gap-2 text-sm leading-6 text-foreground">
-                    <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button asChild variant="outline" className="mt-6 min-h-11 w-full rounded-md border-primary/25 font-semibold text-primary hover:bg-[var(--info-bg)]">
-                <Link href={href}>{action}</Link>
-              </Button>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <section id="peran" className="overflow-hidden bg-[radial-gradient(circle_at_8%_45%,rgba(144,202,249,.34),transparent_22%),linear-gradient(150deg,#f8fbff_0%,#e9f5ff_52%,#fff_100%)] py-16 sm:py-20 lg:py-24"><div className="mx-auto max-w-[1220px] px-4 sm:px-6 lg:px-8"><div className="max-w-2xl"><p className="text-xs font-extrabold tracking-[.14em] text-primary">PILIH PERAN</p><h2 className="mt-3 font-heading text-3xl font-bold tracking-[-.035em] text-foreground sm:text-4xl">Tiga peran yang saling menjaga.</h2><p className="mt-4 text-base leading-7 text-muted-foreground">Pilih peran untuk melihat cara Rangkul mendukung aktivitasnya.</p></div><div className="mt-9 overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_20px_54px_rgba(13,71,161,.12)] lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]"><div role="tablist" aria-label="Peran di ekosistem Rangkul" className="flex gap-2 overflow-x-auto border-b border-blue-100 bg-white/80 p-3 lg:block lg:border-b-0 lg:border-r lg:p-4">{roles.map((item, index) => <button key={item.title} id={`role-tab-${index}`} role="tab" type="button" onClick={() => setActive(index)} aria-selected={active === index} aria-controls={`role-panel-${index}`} tabIndex={active === index ? 0 : -1} className={`relative flex min-h-12 shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition lg:mb-2 lg:w-full ${active === index ? "text-white" : "text-muted-foreground hover:bg-blue-50 hover:text-primary"}`}>{active === index ? <motion.span layoutId="role-active" className="absolute inset-0 rounded-xl bg-primary shadow-[0_10px_20px_rgba(13,71,161,.20)]" transition={{ type: "spring", stiffness: 380, damping: 30 }} /> : null}<item.icon className="relative size-4" aria-hidden="true" /><span className="relative">{item.title}</span></button>)}</div><motion.div id={`role-panel-${active}`} role="tabpanel" aria-labelledby={`role-tab-${active}`} key={role.title} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .34, ease: [0.16, 1, 0.3, 1] }} className={`bg-gradient-to-br ${role.panel} p-6 sm:p-8 lg:p-10`}><span className={`flex size-12 items-center justify-center rounded-2xl ${role.tone}`}><Icon className="size-6" aria-hidden="true" /></span><p className="mt-7 text-xs font-extrabold tracking-[.14em] text-primary">UNTUK {role.title.toUpperCase()}</p><h3 className="mt-3 max-w-3xl font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">{role.description}</h3><p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">{role.detail}</p><div className="mt-7 grid gap-3 sm:grid-cols-3">{role.features.map((feature, index) => { const FeatureIcon = featureIcons[index]; return <div key={feature} className="rounded-2xl border border-blue-100 bg-white/85 p-4 shadow-[0_8px_18px_rgba(13,71,161,.05)]"><FeatureIcon className="size-4 text-primary" aria-hidden="true" /><p className="mt-3 text-sm font-bold leading-5 text-foreground">{feature}</p></div>; })}</div><Link href={role.href} className="mt-8 inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-bold text-white transition hover:bg-[#083578] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{role.action}<Check className="ml-2 size-4" aria-hidden="true" /></Link></motion.div></div></div></section>;
 }

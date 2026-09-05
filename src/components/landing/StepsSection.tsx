@@ -20,8 +20,8 @@ const steps = [
 
 export default function StepsSection() {
   return (
-    <section id="cara-kerja" className="bg-white py-14 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section id="cara-kerja" className="bg-white py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-[1220px] px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <p className="text-sm font-bold text-[#0D47A1]">CARA KERJA</p>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -34,7 +34,7 @@ export default function StepsSection() {
 
         <ol className="mt-8 grid gap-4 md:mt-12 md:grid-cols-3 md:gap-6">
           {steps.map(({ icon: Icon, title, description }, index) => (
-            <li key={title} className="relative rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <li key={title} className="relative rounded-2xl border border-border bg-[linear-gradient(145deg,#fff,#f5faff)] p-5 shadow-[0_10px_26px_rgba(13,71,161,0.06)] sm:p-6">
               <div className="flex items-start gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0D47A1]" aria-hidden="true">
                   <Icon className="h-5 w-5" />
@@ -45,6 +45,7 @@ export default function StepsSection() {
                 </div>
               </div>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">{description}</p>
+              {index < steps.length - 1 ? <span className="absolute -bottom-4 left-8 z-10 h-4 w-px bg-primary/30 md:-bottom-auto md:-right-6 md:left-auto md:top-1/2 md:h-px md:w-6" aria-hidden="true" /> : null}
             </li>
           ))}
         </ol>

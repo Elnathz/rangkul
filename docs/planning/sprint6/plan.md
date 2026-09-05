@@ -10,6 +10,48 @@
 
 **Spec:** `docs/TDD_Rangkul.md` §3.1-§3.4, §3.14, §4.5, §5.5, §6-§9, §11, §14 Sprint 6, §16, §19.8, dan Amendment Mode Penugasan Sprint 6; `docs/GUIDEBOOK_ITechno.md` §4.2, §5, §6.
 
+## Amendemen Eksekusi 4 September 2026
+
+Bagian ini adalah catatan eksekusi, bukan pengganti checklist rencana di bawah. Checkbox hanya ditandai setelah ada bukti yang dapat diulang.
+
+- [x] Kontrak source mode `langsung`, `pelamar`, dan `cepat`, feature flag fail-closed, migration assignment, API role-scoped, dan UI booking/job board sudah ada di branch `dev-eln`.
+- [x] Remote Supabase yang tertaut memiliki seluruh migration Sprint 6 hingga `20260904130200`.
+- [x] RPC `accept_quick_task` kini memvalidasi mode, trust, availability, kategori, koordinat, radius, jadwal, dan race secara server-side. Ia memakai enum notifikasi `task` yang valid, sementara overload legacy yang tidak aman telah dihapus.
+- [x] Seed cloud berhasil memakai persona fiktif yang mudah dibaca tanpa mengubah password, role matrix, koordinat, trust tier, status, ataupun relasi yang dibutuhkan test. Akun utama: `ratnakeluarga@rangkul.id`, `andihelper@rangkul.id`, dan `wagimankoordinator@rangkul.id`.
+- [x] Pemilih layanan menampilkan ringkasan pilihan setelah pengguna memilih: layanan, tingkat, estimasi durasi, harga dasar, dan kebutuhan approval bila relevan. Nama kategori canonical TDD tidak diubah di database.
+- [x] CLI `browser-use` tidak tersedia pada host ini, tetapi browser in-app yang dapat dikendalikan dipakai untuk QA landing publik. Pada 375px, 768px, 1024px, dan 1440px tidak ada horizontal overflow setelah hero dikunci ke satu kolom mobile. Tautan footer pendek juga memiliki hit area minimal 44px.
+- [ ] Walkthrough browser authenticated masih memerlukan otorisasi eksplisit untuk memasukkan kredensial akun demo ke `http://localhost:3000/login`. Ini dibutuhkan untuk melengkapi bukti empat role, konflik, forbidden, dan state loading di browser nyata.
+- [x] Runtime RLS baseline lulus setelah policy Helper publik yang bocor ditutup. Runtime Sprint 6 juga lulus untuk projection marketplace tereduksi, RLS lamaran, apply-withdraw, pemilihan pelamar atomik, race Cari Cepat, dan expiry lamaran.
+- [x] Quality gate source pada 5 September: `npm ci`, lint, typecheck, test, dan production build selesai hijau. Matrix runtime cloud penuh juga lulus 263/263 tanpa test skipped.
+- [ ] Reseed cloud setelah matrix runtime belum dapat dijalankan dari host ini karena `.env.local` tidak menyediakan `SUPABASE_DEMO_PROJECT_REF` dan `NEXT_PUBLIC_SUPABASE_URL`. Script berhenti aman sebelum menyentuh database. Konfigurasi target demo harus dipulihkan, lalu `npm run seed:cloud` dijalankan ulang sebelum demo final.
+- [ ] Empat viewport authenticated dan feature-flag deployment masih belum memiliki evidence. Sprint 6 tidak boleh diberi status release-ready sebelum semuanya memiliki evidence.
+
+### Amendemen persona dan wilayah seed, 4 September 2026
+
+- [x] Ganti seluruh identitas akun fixture yang masih bernama generik menjadi persona fiktif yang mudah diingat, dengan username dan email berbasis nama tanpa underscore. Password demo tetap `Rangkul2026*`.
+- [x] Pertahankan Pleburan RW 05 sebagai area demo utama, dengan Keluarga, Helper, dan Koordinator tersebar pada RT 01 sampai RT 05 agar scope RT dan fallback RW bisa didemokan.
+- [x] Tambahkan persona Keluarga, Helper, dan Koordinator pada kelurahan pembanding Kedungpane, Kecamatan Mijen, dengan RT/RW berbeda. Area ini hanya melengkapi coverage wilayah, bukan membuka akses lintas wilayah.
+- [x] Seed SQL, route reseed Admin, profile Helper/Koordinator, kategori, dan test matrix memakai daftar persona yang sama. Matriks TDD memuat lebih dari lima Helper terpercaya, dua probation, satu under review, dan satu verified by Admin fallback.
+- [x] Cloud seed dijalankan ulang idempoten setelah perubahan dan runtime RLS diulang sehingga akun baru tetap memisahkan boundary Pleburan dan Kedungpane.
+
+## Amendemen landing storytelling, 5 September 2026
+
+- Scope: landing publik saja. Backend, dashboard peran, route bisnis, harga, dan kontrak Sprint 6 tidak diubah.
+- Acuan: `RANGKUL_LANDING_PAGE_UIUX_MASTER_REDESIGN_V2_NO_IMPECCABLE.md`, TDD, serta keputusan pengguna untuk tetap bekerja di `dev-eln`, menggunakan `ui-ux-pro-max` dan `gpt-taste`, tanpa Impeccable atau GSAP.
+- Struktur: Hero, trust strip, Apa itu Rangkul, cara kerja, layanan, Riwayat interaktif, mekanisme trust, role explorer, CTA, dan footer.
+- Asset: ilustrasi 3D fiktif Ibu Ratna disimpan lokal di `public/images/landing/ibu-ratna-hero-v1.png`. Tidak ada foto pengguna, testimoni, atau metrik rekaan.
+- Motion: Framer Motion yang sudah ada. Visual interaktif aktif secara default sesuai arahan pengguna. Tidak menambah animasi yang mengubah business state atau memperlambat konten utama.
+- QA: mobile-first pada 375px, lalu 768px, 1024px, dan 1440px; cek scroll spy, tab, fokus keyboard, target 44px, overflow, serta build quality gate.
+
+Status implementasi amendemen, 5 September 2026:
+
+- [x] Hero memakai komposisi white-blue-white, snapshot HTML berlabel contoh, dan ilustrasi 3D fiktif lokal. Asset tidak mewakili pelanggan sebenarnya.
+- [x] Narasi landing kini mengikuti urutan cerita produk. Section "Apa itu Rangkul" dan mekanisme trust menjelaskan peran Keluarga, Helper, serta Koordinator sebelum ajakan mendaftar.
+- [x] Layanan risiko tinggi dibuat sebagai panel terpisah dengan syarat persetujuan Koordinator. Tidak ada klaim, ranking, atau testimoni rekaan.
+- [x] Riwayat Rangkul memakai tab interaktif dan contoh non-diagnostik. Role explorer hanya menampilkan tiga peran publik dan memakai pola tab yang dapat diakses keyboard.
+- [x] `npm ci`, typecheck, test (249 lulus, 14 runtime cloud skip tanpa kredensial), dan build lulus. Lint lulus tanpa error, dengan 61 warning lama di luar perubahan landing.
+- [ ] QA screenshot aktual pada 375px, 768px, 1024px, dan 1440px tetap perlu dicatat ke evidence sebelum kandidat release. Ini bukan alasan untuk mengaktifkan feature flag Sprint 6.
+
 ## Global Constraints
 
 - Sprint 6 berlangsung 3-5 September 2026. Deadline teknis internal adalah 5 September pukul 18.00 WIB.

@@ -1,0 +1,21 @@
+"use client";
+
+import Link from "next/link";
+import { Check, Heart, MapPin, NotebookTabs, UsersRound } from "lucide-react";
+import { motion } from "framer-motion";
+
+const proofPoints = ["Helper lokal terverifikasi komunitas", "Keluarga tetap memegang keputusan penting", "Setiap kunjungan menjadi Riwayat Rangkul"];
+const journey = [
+  { title: "Keluarga memilih kebutuhan", description: "Buat kunjungan untuk pendampingan yang benar-benar diperlukan.", icon: UsersRound, tone: "bg-blue-50 text-primary" },
+  { title: "Helper mendampingi di sekitar", description: "Peluang ditampilkan sesuai layanan dan jangkauan yang tersedia.", icon: MapPin, tone: "bg-sky-50 text-sky-800" },
+  { title: "Cerita kunjungan kembali tersimpan", description: "Keluarga menerima catatan yang membantu tetap terhubung.", icon: NotebookTabs, tone: "bg-indigo-50 text-indigo-800" },
+];
+
+export default function AboutRangkulSection() {
+  return <section id="apa-itu-rangkul" className="relative overflow-hidden bg-[radial-gradient(circle_at_78%_20%,rgba(144,202,249,.28),transparent_25%),linear-gradient(180deg,#fff_0%,#f5faff_50%,#fff_100%)] py-16 sm:py-20 lg:py-24">
+    <div className="relative mx-auto grid max-w-[1220px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,.86fr)_minmax(0,1.14fr)] lg:items-center lg:px-8">
+      <div><p className="text-xs font-extrabold tracking-[.14em] text-primary">APA ITU RANGKUL?</p><h2 className="mt-3 max-w-xl font-heading text-3xl font-bold tracking-[-.035em] text-foreground sm:text-4xl lg:text-[2.7rem] lg:leading-[1.1]">Pendampingan lansia yang tetap terasa dekat, meski keluarga berada jauh.</h2><p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">Rangkul menghubungkan keluarga dengan Helper lokal terverifikasi. Keluarga membuat kunjungan sesuai kebutuhan, lalu mengikuti cerita dan observasi keseharian orang tersayang dari waktu ke waktu.</p><ul className="mt-7 space-y-3" aria-label="Dasar Rangkul">{proofPoints.map((point) => <li key={point} className="flex items-start gap-3 text-sm font-semibold leading-6 text-foreground"><span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><Check className="size-3.5" aria-hidden="true" /></span>{point}</li>)}</ul><Link href="#cara-kerja" className="mt-8 inline-flex min-h-11 items-center rounded-md text-sm font-bold text-primary underline-offset-4 transition hover:underline active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">Lihat cara kerja</Link></div>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .25 }} transition={{ duration: .55, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden rounded-[24px] border border-blue-100 bg-white/80 p-4 shadow-[0_24px_64px_rgba(13,71,161,.10)] backdrop-blur-sm sm:p-6"><div className="flex items-center justify-between border-b border-blue-100 pb-4"><div><p className="font-heading text-lg font-bold text-foreground">Dari kebutuhan menjadi kabar</p><p className="mt-1 text-sm text-muted-foreground">Satu alur yang terlihat oleh keluarga.</p></div><span className="flex size-10 items-center justify-center rounded-2xl bg-blue-50 text-primary"><Heart className="size-5" aria-hidden="true" /></span></div><ol className="mt-5 grid gap-3 sm:grid-cols-3">{journey.map(({ title, description, icon: Icon, tone }, index) => <motion.li key={title} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: .1 + index * .09, duration: .4 }} className="group rounded-2xl border border-blue-100/80 bg-[linear-gradient(145deg,rgba(255,255,255,.98),rgba(239,248,255,.82))] p-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(13,71,161,.10)]"><span className={`flex size-10 items-center justify-center rounded-xl ${tone}`}><Icon className="size-5" aria-hidden="true" /></span><p className="mt-4 text-xs font-extrabold tracking-[.12em] text-primary">0{index + 1}</p><h3 className="mt-2 text-sm font-bold leading-5 text-foreground">{title}</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">{description}</p></motion.li>)}</ol></motion.div>
+    </div>
+  </section>;
+}

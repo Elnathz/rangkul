@@ -37,7 +37,7 @@ export default function Footer() {
             <div key={group.title}>
               <h2 className="text-sm font-bold text-white">{group.title}</h2>
               <ul className="mt-4 space-y-1">
-                {group.items.map((item) => <li key={item.href}><Link href={item.href} className="inline-flex min-h-11 items-center text-sm text-blue-100 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#083578]">{item.label}</Link></li>)}
+                {group.items.map((item) => <li key={item.href}><Link href={item.href} className="inline-flex min-h-11 min-w-11 items-center text-sm text-blue-100 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#083578]">{item.label}</Link></li>)}
               </ul>
             </div>
           ))}

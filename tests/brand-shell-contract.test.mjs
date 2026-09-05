@@ -12,6 +12,37 @@ test("shell menampilkan lockup brand Rangkul yang terbaca dan tidak bergantung p
   assert.doesNotMatch(navbar, /src="\/long-logo\.svg"/);
 });
 
+test("navbar membedakan navigasi landing dari workspace peran yang sudah login", () => {
+  const navbar = readFileSync("src/components/layout/Navbar.tsx", "utf8");
+
+  assert.match(navbar, /const isPublicSurface = pathname === "\/"/);
+  assert.match(navbar, /Navigasi landing/);
+  assert.match(navbar, /Navigasi workspace/);
+  assert.match(navbar, /bg-white\/80 backdrop-blur-xl/);
+  assert.match(navbar, /Workspace/);
+});
+
+test("navbar publik mengikuti lima bab utama landing dan memakai scroll spy di desktop serta drawer", () => {
+  const navbar = readFileSync("src/components/layout/Navbar.tsx", "utf8");
+
+  for (const section of ["apa-itu-rangkul", "cara-kerja", "layanan", "riwayat-rangkul", "peran"]) {
+    assert.match(navbar, new RegExp(`/#${section}`));
+  }
+
+  assert.match(navbar, /new IntersectionObserver/);
+  assert.match(navbar, /publicActive === item\.href\.replace\("\/", ""\)/);
+});
+
+test("pengunjung yang membuka booking diarahkan ke login dan kembali setelah autentikasi Keluarga", () => {
+  const booking = readFileSync("src/app/(keluarga)/booking/new/page.tsx", "utf8");
+  const login = readFileSync("src/app/(auth)/login/page.tsx", "utf8");
+
+  assert.match(booking, /redirect\("\/login\?next=\/booking\/new"\)/);
+  assert.match(login, /get\("next"\)/);
+  assert.match(login, /data\.user\?\.role === "keluarga" && safeRequestedRoute/);
+  assert.match(login, /!requestedRoute\.startsWith\("\/\/"\)/);
+});
+
 test("beranda Keluarga memakai permukaan brand biru sebagai puncak hierarki aksi", () => {
   const page = readFileSync("src/app/(keluarga)/beranda/page.tsx", "utf8");
 

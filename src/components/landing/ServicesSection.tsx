@@ -2,44 +2,14 @@ import Link from "next/link";
 import { ArrowRight, HeartPulse, House, MessageCircleHeart, PackageCheck, Pill, ShoppingBasket, Smartphone } from "lucide-react";
 
 const services = [
-  { name: "Antar Obat", duration: "30 menit", price: "Rp35.000", description: "Mengambil dan mengantarkan obat ke rumah lansia.", icon: Pill },
-  { name: "Pengingat Obat", duration: "30 menit", price: "Rp25.000", description: "Mendampingi pengingat minum obat sesuai catatan keluarga.", icon: HeartPulse },
-  { name: "Belanja Kebutuhan", duration: "60 menit", price: "Rp40.000", description: "Membantu belanja kebutuhan harian lansia.", icon: ShoppingBasket },
-  { name: "Menemani Mengobrol", duration: "60 menit", price: "Rp50.000", description: "Menemani percakapan dan aktivitas ringan di rumah.", icon: MessageCircleHeart },
-  { name: "Bersih Rumah Ringan", duration: "90 menit", price: "Rp70.000", description: "Membantu merapikan area rumah yang ringan.", icon: House },
-  { name: "Bantuan Teknologi", duration: "45 menit", price: "Rp30.000", description: "Membantu komunikasi digital dengan keluarga.", icon: Smartphone },
-  { name: "Kontrol Kesehatan", duration: "90 menit", price: "Rp120.000", description: "Mendampingi perjalanan ke fasilitas kesehatan.", icon: PackageCheck, highRisk: true },
+  { name: "Antar Obat", duration: "30 menit", price: "Rp35.000", description: "Mengambil dan mengantarkan obat ke rumah lansia.", icon: Pill, surface: "from-blue-50 via-white to-white", iconTone: "bg-blue-100 text-primary", span: "lg:col-span-2" },
+  { name: "Pengingat Obat", duration: "30 menit", price: "Rp25.000", description: "Mendampingi pengingat minum obat sesuai catatan keluarga.", icon: HeartPulse, surface: "from-sky-50 via-white to-white", iconTone: "bg-sky-100 text-sky-800", span: "lg:col-span-2" },
+  { name: "Belanja Kebutuhan", duration: "60 menit", price: "Rp40.000", description: "Membantu belanja kebutuhan harian lansia.", icon: ShoppingBasket, surface: "from-indigo-50 via-white to-white", iconTone: "bg-indigo-100 text-indigo-800", span: "lg:col-span-2" },
+  { name: "Menemani Mengobrol", duration: "60 menit", price: "Rp50.000", description: "Menemani percakapan dan aktivitas ringan di rumah.", icon: MessageCircleHeart, surface: "from-cyan-50 via-white to-white", iconTone: "bg-cyan-100 text-cyan-800", span: "lg:col-span-2" },
+  { name: "Bersih Rumah Ringan", duration: "90 menit", price: "Rp70.000", description: "Membantu merapikan area rumah yang ringan.", icon: House, surface: "from-blue-50 via-white to-white", iconTone: "bg-blue-100 text-primary", span: "lg:col-span-2" },
+  { name: "Bantuan Teknologi", duration: "45 menit", price: "Rp30.000", description: "Membantu komunikasi digital dengan keluarga.", icon: Smartphone, surface: "from-sky-50 via-white to-white", iconTone: "bg-sky-100 text-sky-800", span: "lg:col-span-2" },
 ];
 
 export default function ServicesSection() {
-  return (
-    <section id="layanan" className="bg-[#F5F8FC] py-14 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-bold text-[#0D47A1]">LAYANAN</p>
-            <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Bantuan yang jelas untuk kebutuhan sehari-hari.</h2>
-          </div>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">Setiap layanan memiliki harga dasar dan durasi yang dapat dilihat sebelum kunjungan dibuat.</p>
-        </div>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map(({ name, duration, price, description, icon: Icon, highRisk }) => (
-            <Link key={name} href={`/cari-helper?kategori=${encodeURIComponent(name)}`} className="group flex min-h-44 flex-col rounded-2xl border border-border bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2">
-              <div className="flex items-start justify-between gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#0D47A1]" aria-hidden="true"><Icon className="h-5 w-5" /></span>
-                {highRisk && <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900">Perlu persetujuan Koordinator</span>}
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-foreground">{name}</h3>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
-              <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-                <div><p className="text-base font-bold text-[#0D47A1]">{price}</p><p className="mt-0.5 text-xs text-muted-foreground">{duration}</p></div>
-                <ArrowRight className="h-5 w-5 text-[#0D47A1] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <section id="layanan" className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#f2f8ff_18%,#edf6ff_78%,#fff_100%)] py-16 sm:py-20 lg:py-24"><div className="mx-auto max-w-[1220px] px-4 sm:px-6 lg:px-8"><div className="max-w-2xl"><p className="text-xs font-extrabold tracking-[.14em] text-primary">LAYANAN</p><h2 className="mt-3 font-heading text-3xl font-bold tracking-[-.035em] text-foreground sm:text-4xl">Bantuan yang jelas untuk kebutuhan sehari-hari.</h2><p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">Setiap layanan menampilkan harga dasar dan durasinya sebelum kunjungan dibuat.</p></div><div className="mt-9 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">{services.map(({ name, duration, price, description, icon: Icon, surface, iconTone, span }) => <Link key={name} href={`/cari-helper?kategori=${encodeURIComponent(name)}`} className={`group ${span} flex min-h-52 flex-col overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br ${surface} p-5 shadow-[0_12px_28px_rgba(13,71,161,.07)] transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_20px_38px_rgba(13,71,161,.13)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}><span className={`flex size-11 items-center justify-center rounded-xl ${iconTone}`} aria-hidden="true"><Icon className="size-5" /></span><h3 className="mt-5 text-lg font-bold text-foreground">{name}</h3><p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">{description}</p><div className="mt-auto flex items-end justify-between gap-3 pt-6"><div><p className="text-base font-bold text-primary">{price}</p><p className="mt-0.5 text-xs text-muted-foreground">{duration}</p></div><ArrowRight className="size-5 text-primary transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" /></div></Link>)}</div><Link href="/cari-helper?kategori=Kontrol%20Kesehatan" className="group mt-4 flex min-h-36 flex-col gap-5 rounded-[22px] border border-amber-200 bg-[linear-gradient(105deg,#fffaf0,#fff_50%,#eff8ff)] p-5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_16px_30px_rgba(180,120,20,.10)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2 sm:flex-row sm:items-center sm:p-6"><span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800"><PackageCheck className="size-5" aria-hidden="true" /></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-bold text-foreground">Kontrol Kesehatan</h3><span className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-bold text-amber-900">Perlu persetujuan Koordinator</span></div><p className="mt-1 text-sm leading-6 text-muted-foreground">Mendampingi perjalanan ke fasilitas kesehatan. Harga dasar Rp120.000 untuk 90 menit.</p></div><ArrowRight className="size-5 text-amber-800 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" /></Link></div></section>;
 }

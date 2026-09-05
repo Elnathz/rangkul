@@ -1,7 +1,7 @@
 import CTABannerSection from "@/components/landing/CTABannerSection";
-import DemoScenariosSection from "@/components/landing/DemoScenariosSection";
+import AboutRangkulSection from "@/components/landing/AboutRangkulSection";
+import CommunityTrustSection from "@/components/landing/CommunityTrustSection";
 import HeroSection from "@/components/landing/HeroSection";
-import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import RiwayatRangkulPreview from "@/components/landing/RiwayatRangkulPreview";
 import RolesSection from "@/components/landing/RolesSection";
 import ServicesSection from "@/components/landing/ServicesSection";
@@ -11,12 +11,12 @@ export default function LandingPage() {
   return (
     <main className="w-full max-w-full overflow-x-hidden">
       <HeroSection />
+      <AboutRangkulSection />
       <StepsSection />
       <ServicesSection />
       <RiwayatRangkulPreview />
-      <HowItWorksSection />
+      <CommunityTrustSection />
       <RolesSection />
-      <DemoScenariosSection />
       <CTABannerSection />
     </main>
   );
