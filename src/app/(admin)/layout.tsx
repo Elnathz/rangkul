@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Navbar />
       <RoleSidebar role="admin" />
       <main className="min-h-screen bg-background pt-[var(--header-height)] lg:pl-64">
-        <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8">{children}</div>
+        <div className="px-4 py-5 pb-28 sm:px-6 sm:py-6 lg:px-8 lg:pb-8">{children}</div>
       </main>
     </>
   );
