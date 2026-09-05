@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Check, Edit3, Plus, Search, ShieldAlert, Trash2, UserRound, X } from "lucide-react";
+import { Check, ChevronDown, Edit3, Plus, Search, ShieldAlert, Trash2, UserRound, X } from "lucide-react";
+import { LayoutGroup, motion } from "framer-motion";
 import { AdminLoadingRows, AdminModal, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { createAdminUserSchema, updateAdminUserSchema } from "@/lib/validations/admin-users";
 
@@ -11,6 +12,68 @@ type UserForm = { email: string; password: string; full_name: string; username: 
 
 const emptyForm: UserForm = { email: "", password: "", full_name: "", username: "", phone: "", role: "keluarga", account_status: "active", rt: "", rw: "", kelurahan: "", kecamatan: "", kabupaten_kota: "", provinsi: "" };
 const roleTabs: Array<{ value: Role; label: string }> = [{ value: "all", label: "Semua" }, { value: "keluarga", label: "Keluarga" }, { value: "helper", label: "Helper" }, { value: "koordinator", label: "Koordinator" }, { value: "admin", label: "Admin" }];
+
+function StatusSelectPopover({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointer = (event: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointer);
+    return () => window.removeEventListener("pointerdown", handlePointer);
+  }, [open]);
+
+  const options = [
+    { value: "all", label: "Semua status" },
+    { value: "active", label: "Aktif" },
+    { value: "restricted", label: "Dibatasi" },
+    { value: "suspended", label: "Ditangguhkan" },
+  ];
+
+  const currentOption = options.find((opt) => opt.value === value) ?? options[0];
+
+  return (
+    <div ref={containerRef} className="relative w-full sm:w-[180px]">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 active:scale-95 transition-all"
+      >
+        <span className="truncate">{currentOption.label}</span>
+        <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-30 mt-1.5 w-full min-w-[180px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 duration-150">
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold transition-all active:scale-95 ${
+                  isSelected ? "bg-blue-50 text-blue-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{option.label}</span>
+                {isSelected && <Check className="h-3.5 w-3.5 text-blue-700" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -75,12 +138,64 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Direktori akses</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Pengguna</h1><p className="mt-1 text-sm leading-6 text-slate-500">Kelola akun, status akses, dan alamat dasar tanpa mengubah role atau email akun yang sudah ada.</p></div><button type="button" onClick={openCreate} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"><Plus className="h-4 w-4" /> Tambah pengguna</button></header>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Direktori akses</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Pengguna</h1><p className="mt-1 text-sm leading-6 text-slate-500">Kelola akun, status akses, dan alamat dasar tanpa mengubah role atau email akun yang sudah ada.</p></div><button type="button" onClick={openCreate} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-bold text-white shadow-xs transition hover:bg-blue-800 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"><Plus className="h-4 w-4" /> Tambah pengguna</button></header>
 
       {notice ? <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><Check className="h-4 w-4" />{notice}<button type="button" onClick={() => setNotice("")} className="ml-auto" aria-label="Tutup notifikasi"><X className="h-4 w-4" /></button></div> : null}
       {error ? <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"><ShieldAlert className="h-4 w-4" />{error}<button type="button" onClick={() => setError("")} className="ml-auto" aria-label="Tutup error"><X className="h-4 w-4" /></button></div> : null}
 
-      <section className="space-y-3 rounded-2xl border border-blue-100 bg-white/75 p-3 shadow-sm backdrop-blur-sm sm:p-4"><div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Filter role pengguna">{roleTabs.map((tab) => <button key={tab.value} type="button" role="tab" aria-selected={role === tab.value} onClick={() => { setRole(tab.value); setPage(1); }} className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${role === tab.value ? "bg-blue-700 text-white shadow-sm" : "text-slate-600 hover:bg-blue-50 hover:text-blue-800"}`}>{tab.label}</button>)}</div><div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]"><label className="relative block"><span className="sr-only">Cari pengguna</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Cari nama, username, atau email" className="min-h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" /></label><label className="sr-only" htmlFor="status-filter">Status akun</label><select id="status-filter" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"><option value="all">Semua status</option><option value="active">Aktif</option><option value="restricted">Dibatasi</option><option value="suspended">Ditangguhkan</option></select></div></section>
+      <section className="space-y-3 rounded-2xl border border-blue-100 bg-white/75 p-3 shadow-xs backdrop-blur-sm sm:p-4">
+        <LayoutGroup id="admin-user-roles">
+          <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Filter role pengguna">
+            {roleTabs.map((tab) => {
+              const active = role === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setRole(tab.value);
+                    setPage(1);
+                  }}
+                  className={`relative min-h-11 shrink-0 rounded-xl px-4 text-sm font-bold transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
+                    active ? "text-white shadow-xs" : "text-slate-600 hover:bg-blue-50/70 hover:text-blue-800"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="active-role-tab"
+                      aria-hidden="true"
+                      className="absolute inset-0 rounded-xl bg-blue-700"
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </LayoutGroup>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <label className="relative block">
+            <span className="sr-only">Cari pengguna</span>
+            <Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+              placeholder="Cari nama, username, atau email"
+              className="min-h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
+            />
+          </label>
+          <StatusSelectPopover
+            value={status}
+            onChange={(nextStatus) => {
+              setStatus(nextStatus);
+              setPage(1);
+            }}
+          />
+        </div>
+      </section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6"><p className="text-sm font-semibold text-slate-600">{total.toLocaleString("id-ID")} pengguna ditemukan</p><p className="text-xs text-slate-400">Halaman {page}</p></div>{loading ? <AdminLoadingRows columns={5} /> : users.length === 0 ? <EmptyState onCreate={openCreate} /> : <><div className="hidden overflow-x-auto md:block"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-6 py-3 font-bold">Pengguna</th><th className="px-6 py-3 font-bold">Role</th><th className="px-6 py-3 font-bold">Kontak</th><th className="px-6 py-3 font-bold">Status</th><th className="px-6 py-3 text-right font-bold">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{users.map((user) => <tr key={user.id} className="transition hover:bg-slate-50/80"><td className="px-6 py-4"><p className="font-semibold text-slate-950">{user.full_name}</p><p className="mt-1 text-xs text-slate-500">@{user.username}</p></td><td className="px-6 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold capitalize text-slate-700">{user.role}</span></td><td className="px-6 py-4"><p className="max-w-[220px] truncate text-slate-700">{user.email}</p><p className="mt-1 text-xs text-slate-500">{user.phone ?? "Tanpa nomor"}</p></td><td className="px-6 py-4"><AdminStatusBadge status={user.account_status} /></td><td className="px-6 py-4"><Actions user={user} onEdit={openEdit} onDelete={deleteUser} /></td></tr>)}</tbody></table></div><div className="divide-y divide-slate-100 md:hidden">{users.map((user) => <article key={user.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><UserRound className="h-5 w-5" /></span><div className="min-w-0"><p className="truncate font-semibold text-slate-950">{user.full_name}</p><p className="truncate text-xs text-slate-500">@{user.username}</p></div></div><AdminStatusBadge status={user.account_status} /></div><div className="grid grid-cols-2 gap-2 text-xs text-slate-500"><span className="capitalize">Role: <b className="text-slate-800">{user.role}</b></span><span className="truncate">{user.phone ?? "Tanpa nomor"}</span></div><Actions user={user} onEdit={openEdit} onDelete={deleteUser} /></article>)}</div></>}</section>
       <div className="flex justify-end gap-2"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 disabled:opacity-40">Sebelumnya</button><button type="button" disabled={page * pageSize >= total || loading} onClick={() => setPage((current) => current + 1)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 disabled:opacity-40">Berikutnya</button></div>

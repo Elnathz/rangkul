@@ -294,10 +294,10 @@ export default function NotificationDropdown({
                 type="button"
                 onClick={() => setTab("all")}
                 className={cn(
-                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all",
+                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all duration-200 active:scale-95",
                   tab === "all"
                     ? "bg-card text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                 )}
               >
                 <span>Semua</span>
@@ -312,10 +312,10 @@ export default function NotificationDropdown({
                 type="button"
                 onClick={() => setTab("service")}
                 className={cn(
-                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all",
+                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all duration-200 active:scale-95",
                   tab === "service"
                     ? "bg-card text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                 )}
               >
                 <span>Layanan</span>
@@ -330,10 +330,10 @@ export default function NotificationDropdown({
                 type="button"
                 onClick={() => setTab("general")}
                 className={cn(
-                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all",
+                  "flex h-8 items-center justify-center gap-1 rounded-lg font-bold transition-all duration-200 active:scale-95",
                   tab === "general"
                     ? "bg-card text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                 )}
               >
                 <span>Umum</span>
@@ -359,7 +359,7 @@ export default function NotificationDropdown({
                 <button
                   type="button"
                   onClick={() => void fetchPreviewNotifications()}
-                  className="mt-2 text-xs font-bold text-primary underline"
+                  className="mt-2 text-xs font-bold text-primary underline active:scale-95 transition-transform"
                 >
                   Coba lagi
                 </button>
@@ -432,7 +432,7 @@ export default function NotificationDropdown({
                             type="button"
                             onClick={(event) => void handleMarkAsRead(item.id, event)}
                             disabled={markingId === item.id}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary active:scale-95 transition-all"
                             aria-label="Tandai sudah dibaca"
                           >
                             {markingId === item.id ? (
@@ -467,7 +467,7 @@ export default function NotificationDropdown({
               className={cn(
                 "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl",
                 "bg-card border border-border text-xs font-bold text-foreground",
-                "hover:bg-muted hover:text-primary transition-all",
+                "hover:bg-muted hover:text-primary active:scale-95 transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               )}
             >

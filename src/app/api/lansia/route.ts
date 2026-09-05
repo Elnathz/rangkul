@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { lansiaProfileSchema } from '@/lib/validations/lansia';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import type { Database } from '@/types/database';
@@ -13,12 +13,42 @@ export async function GET() {
       return createApiError('unauthorized', 'Anda harus login', 401);
     }
 
-    const { data: profiles, error } = await supabase
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const role = userProfile?.role || user.user_metadata?.role || 'keluarga';
+
+    if (role !== 'admin' && role !== 'koordinator' && role !== 'keluarga' && role !== 'helper') {
+      return createApiError('forbidden', 'Role Anda tidak memiliki akses ke resource ini', 403);
+    }
+
+    // Gunakan admin client untuk admin & koordinator agar bypass RLS kebijakan privasi
+    const dbClient = (role === 'admin' || role === 'koordinator') ? await createAdminClient() : supabase;
+
+    let query = dbClient
       .from('lansia_profiles')
-      .select('id, nama, alamat, lat, lng, catatan_kondisi, created_at, updated_at')
-      .eq('keluarga_id', user.id)
+      .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+
+    if (role === 'keluarga') {
+      query = query.eq('keluarga_id', user.id);
+    } else if (role === 'koordinator') {
+      const { data: kp } = await supabase
+        .from('koordinator_profiles')
+        .select('wilayah')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (kp?.wilayah) {
+        query = query.ilike('kecamatan', `%${kp.wilayah}%`);
+      }
+    }
+
+    const { data: profiles, error } = await query;
 
     if (error) {
       return createApiError('server_error', error.message, 500);
@@ -107,7 +137,45 @@ export async function POST(request: Request) {
       return createApiError('server_error', insertError.message, 500);
     }
 
-    return apiResponse({ message: 'Profil lansia berhasil ditambahkan', profile }, 201);
+    // Cek apakah ada Koordinator di wilayah pendaftaran lansia
+    if (kecamatan) {
+      const { data: matchedKoordinators } = await supabase
+        .from('koordinator_profiles')
+        .select('user_id, id')
+        .ilike('wilayah', `%${kecamatan}%`)
+        .eq('status', 'verified');
+
+      if (matchedKoordinators && matchedKoordinators.length > 0) {
+        // Ada koordinator di wilayah ini -> kirimkan notifikasi ke Koordinator
+        const notifInserts = matchedKoordinators.map((k) => ({
+          user_id: k.user_id,
+          title: 'Pengajuan Lansia Baru di Wilayah Anda',
+          body: `Lansia baru bernama ${nama} di ${kelurahan ? 'Kel. ' + kelurahan : 'wilayah Anda'} membutuhkan verifikasi persetujuan.`,
+          type: 'lansia_verification',
+          is_read: false,
+        }));
+        await supabase.from('notifications').insert(notifInserts as unknown as Database['public']['Tables']['notifications']['Insert'][]);
+      } else {
+        // Belum ada koordinator di wilayah ini -> ditampung oleh Admin
+        const { data: adminUsers } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin');
+
+        if (adminUsers && adminUsers.length > 0) {
+          const adminNotifs = adminUsers.map((a) => ({
+            user_id: a.id,
+            title: 'Penampungan Lansia (Wilayah Tanpa Koordinator)',
+            body: `Lansia ${nama} didaftarkan di Kec. ${kecamatan} (Belum ada Koordinator). Membutuhkan peninjauan Admin.`,
+            type: 'lansia_verification_admin',
+            is_read: false,
+          }));
+          await supabase.from('notifications').insert(adminNotifs as unknown as Database['public']['Tables']['notifications']['Insert'][]);
+        }
+      }
+    }
+
+    return apiResponse({ message: 'Profil lansia berhasil ditambahkan dan diajukan untuk verifikasi', profile }, 201);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }

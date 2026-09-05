@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { messageSchema } from "@/lib/validations/communication";
 import { revalidatePath } from "next/cache";
 
@@ -47,9 +47,10 @@ type TaskInfo = {
 };
 
 type InboxMessageRecord = {
+  id: string;
   sender_id: string;
   receiver_id: string;
-  task_id: string;
+  task_id: string | null;
   message: string;
   created_at: string;
   read_at: string | null;
@@ -63,19 +64,20 @@ export async function getInbox(): Promise<InboxItem[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data: messages, error } = await supabase
+  const admin = await createAdminClient();
+
+  const { data: messages, error } = await admin
     .from("messages")
     .select(`
       *,
       sender:sender_id (id, full_name),
       receiver:receiver_id (id, full_name),
-      task:tasks!inner (
+      task:tasks (
         id, keluarga_id, helper_id,
         category:service_categories (nama)
       )
     `)
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .not('task_id', 'is', null)
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -85,8 +87,6 @@ export async function getInbox(): Promise<InboxItem[]> {
   const inboxMessages = (messages ?? []) as unknown as InboxMessageRecord[];
 
   inboxMessages.forEach((msg) => {
-    if (!msg.task_id) return;
-    
     const isSender = msg.sender_id === user.id;
     const sender = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
     const receiver = Array.isArray(msg.receiver) ? msg.receiver[0] : msg.receiver;
@@ -94,13 +94,16 @@ export async function getInbox(): Promise<InboxItem[]> {
 
     if (!otherUser) return;
 
-    if (!inboxMap.has(msg.task_id)) {
+    // Use task_id if present, otherwise group by direct conversation with otherUser.id
+    const key = msg.task_id || otherUser.id;
+
+    if (!inboxMap.has(key)) {
       const task = Array.isArray(msg.task) ? msg.task[0] : msg.task;
       const category = task?.category ? (Array.isArray(task.category) ? task.category[0] : task.category) : null;
       
-      inboxMap.set(msg.task_id, {
-        taskId: msg.task_id,
-        taskTitle: category?.nama || "Tugas Rangkul",
+      inboxMap.set(key, {
+        taskId: key,
+        taskTitle: msg.task_id ? (category?.nama || "Tugas Rangkul") : "Obrolan Langsung",
         otherUserId: otherUser.id,
         otherUserName: otherUser.full_name || "Pengguna Rangkul",
         otherUserPhoto: null,
@@ -111,7 +114,7 @@ export async function getInbox(): Promise<InboxItem[]> {
     }
 
     if (!isSender && !msg.read_at) {
-      const item = inboxMap.get(msg.task_id)!;
+      const item = inboxMap.get(key)!;
       item.unreadCount++;
     }
   });
@@ -124,38 +127,33 @@ export async function getChatMessages(taskId: string): Promise<ChatMessage[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data: task, error: taskError } = await supabase
+  const admin = await createAdminClient();
+
+  // 1. Coba cari apakah taskId merupakan ID tugas yang valid di tabel tasks
+  const { data: task } = await admin
     .from("tasks")
-    .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
+    .select("id, keluarga_id, helper_id")
     .eq("id", taskId)
-    .single();
-    
-  if (taskError || !task) throw new Error("Tugas tidak ditemukan");
-  
-  const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
-  const helperUserId = helperProfile?.user_id ?? null;
-  
-  if (task.keluarga_id !== user.id && helperUserId !== user.id) {
-    const { data: koordinator } = await supabase
-      .from("koordinator_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-      
-    if (!koordinator) throw new Error("Anda tidak berhak melihat pesan ini");
+    .maybeSingle();
+
+  let query = admin.from("messages").select(`
+    *,
+    sender:sender_id (full_name),
+    receiver:receiver_id (full_name)
+  `);
+
+  if (task) {
+    query = query.eq("task_id", taskId);
+  } else {
+    // taskId adalah ID pengguna (direct user-to-user chat)
+    query = query.or(
+      `and(sender_id.eq.${user.id},receiver_id.eq.${taskId}),and(sender_id.eq.${taskId},receiver_id.eq.${user.id})`
+    );
   }
 
-  const { data, error } = await supabase
-    .from("messages")
-    .select(`
-      *,
-      sender:sender_id (full_name),
-      receiver:receiver_id (full_name)
-    `)
-    .eq("task_id", taskId)
-    .order("created_at", { ascending: true });
+  const { data, error } = await query.order("created_at", { ascending: true });
 
-  if (error) throw error;
+  if (error) return [];
   return (data ?? []) as unknown as ChatMessage[];
 }
 
@@ -167,39 +165,56 @@ export async function sendMessage(taskId: string, message: string) {
   const validation = messageSchema.safeParse({ task_id: taskId, message });
   if (!validation.success) throw new Error("Pesan belum valid");
 
-  const { data: task, error: taskError } = await supabase
+  const admin = await createAdminClient();
+
+  // 1. Cek apakah taskId merujuk ke record tasks
+  const { data: task } = await admin
     .from("tasks")
-    .select("keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
+    .select("id, keluarga_id, helper_id, helper_profile:helper_profiles(user_id)")
     .eq("id", taskId)
-    .single();
+    .maybeSingle();
 
-  if (taskError || !task) throw new Error("Tugas tidak ditemukan");
+  let receiverId: string | null = null;
+  let targetTaskId: string | null = null;
 
-  const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
-  const helperUserId = helperProfile?.user_id ?? null;
-  if (task.keluarga_id !== user.id && helperUserId !== user.id) {
-    throw new Error("Anda bukan partisipan tugas ini");
+  if (task) {
+    targetTaskId = task.id;
+    const helperProfile = Array.isArray(task.helper_profile) ? task.helper_profile[0] : task.helper_profile;
+    const helperUserId = helperProfile?.user_id ?? null;
+
+    if (user.id === task.keluarga_id) {
+      receiverId = helperUserId;
+    } else if (user.id === helperUserId) {
+      receiverId = task.keluarga_id;
+    } else {
+      // Koordinator atau Admin yang mengirim pesan di tugas ini
+      receiverId = helperUserId || task.keluarga_id;
+    }
+  } else {
+    // taskId adalah ID penerima langsung (Direct Message)
+    receiverId = taskId;
+    targetTaskId = null;
   }
-  
-  const receiverId = user.id === task.keluarga_id ? helperUserId : task.keluarga_id;
-  if (!receiverId) throw new Error("Tugas ini belum memiliki Helper");
 
-  const { data, error } = await supabase
+  if (!receiverId) throw new Error("Penerima pesan tidak ditemukan.");
+
+  const { data, error } = await admin
     .from("messages")
     .insert({
       sender_id: user.id,
       receiver_id: receiverId,
-      task_id: taskId,
+      task_id: targetTaskId,
       message,
     })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(error.message || "Gagal mengirim pesan");
 
   revalidatePath("/(keluarga)/beranda/pesan", "layout");
   revalidatePath("/(helper)/helper/pesan", "layout");
   revalidatePath("/(koordinator)/koordinator/pesan", "layout");
+  revalidatePath("/(admin)/admin/pesan", "layout");
   return data;
 }
 
@@ -208,10 +223,12 @@ export async function markMessagesAsRead(taskId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
+  const admin = await createAdminClient();
+
+  await admin
     .from("messages")
     .update({ read_at: new Date().toISOString() })
-    .eq("task_id", taskId)
+    .or(`task_id.eq.${taskId},sender_id.eq.${taskId}`)
     .eq("receiver_id", user.id)
     .is("read_at", null);
 }

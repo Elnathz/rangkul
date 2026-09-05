@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Clock, CheckCircle2, XCircle, AlertTriangle, FileCheck } from 'lucide-react';
+import { Clock, XCircle, AlertTriangle, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 type KoordinatorProfile = {
   id: string;

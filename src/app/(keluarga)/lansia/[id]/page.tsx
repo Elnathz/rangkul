@@ -7,17 +7,6 @@ import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/ui/SignedImage";
 import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, UserRound, Calendar, MapPin, Stethoscope, HeartPulse } from "lucide-react";
 import Link from "next/link";
-import type { Database } from "@/types/database";
-
-type LansiaDb = Database["public"]["Tables"]["lansia_profiles"]["Row"] & {
-  umur?: number | null;
-  kondisi_medis?: string | null;
-  tingkat_mobilitas?: string | null;
-  kebutuhan_khusus?: string | null;
-  wilayah_domisili?: string | null;
-  domisili_lat?: number | null;
-  domisili_lng?: number | null;
-};
 
 type Lansia = {
   id: string;
@@ -42,66 +31,65 @@ export default function LansiaProfilPage() {
   
   const [lansia, setLansia] = useState<Lansia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLansia = async () => {
       setLoading(true);
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push("/login");
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return router.push("/login");
 
-      const { data: dbData } = await supabase
-        .from('lansia_profiles')
-        .select('*')
-        .eq('id', id)
-        .eq('keluarga_id', user.id)
-        .single();
-        
-      const data = dbData as unknown as LansiaDb | null;
-        
-      if (data) {
-        // mock parsing
-        let region: Lansia["region"] = null;
-        let rt = "", rw = "", alamat = data.alamat || "";
-        
-        if (data.wilayah_domisili) {
-          const parts = data.wilayah_domisili.split(' | ');
-          if (parts.length >= 3) {
-             const adminParts = parts[0].split(', ');
-             if (adminParts.length >= 4) {
-                region = {
-                  kelurahan: adminParts[0],
-                  kecamatan: adminParts[1],
-                  kota: adminParts[2],
-                  provinsi: adminParts[3]
-                };
-             }
-             const rtrw = parts[1].match(/RT (\d+)\/RW (\d+)/);
-             if (rtrw) {
-                rt = rtrw[1];
-                rw = rtrw[2];
-             }
-             alamat = parts[2];
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const role = userProfile?.role || user.user_metadata?.role || 'keluarga';
+        setUserRole(role);
+
+        const response = await fetch(`/api/lansia/${id}`, { cache: "no-store" });
+        const payload = await response.json();
+
+        if (response.ok && payload.profile) {
+          const data = payload.profile;
+          let region: Lansia["region"] = null;
+          const rt = data.rt ? String(data.rt) : "";
+          const rw = data.rw ? String(data.rw) : "";
+          const alamat = data.alamat || "";
+          
+          if (data.kelurahan || data.kecamatan) {
+            region = {
+              kelurahan: data.kelurahan || "",
+              kecamatan: data.kecamatan || "",
+              kota: data.kabupaten_kota || "",
+              provinsi: data.provinsi || ""
+            };
           }
-        }
 
-        setLansia({
-          id: data.id,
-          nama: data.nama,
-          umur: data.umur ?? 0,
-          kondisi_medis: data.kondisi_medis || "-",
-          tingkat_mobilitas: data.tingkat_mobilitas || "-",
-          kebutuhan_khusus: data.kebutuhan_khusus || "-",
-          foto_url: data.foto_url || "",
-          alamat,
-          rt,
-          rw,
-          region,
-          domisili_lat: data.domisili_lat ?? null,
-          domisili_lng: data.domisili_lng ?? null
-        });
+          setLansia({
+            id: data.id,
+            nama: data.nama,
+            umur: data.umur ?? 0,
+            kondisi_medis: data.kondisi_medis || "-",
+            tingkat_mobilitas: data.tingkat_mobilitas || "-",
+            kebutuhan_khusus: data.kebutuhan_khusus || "-",
+            foto_url: data.foto_url || "",
+            alamat,
+            rt,
+            rw,
+            region,
+            domisili_lat: data.lat ?? null,
+            domisili_lng: data.lng ?? null
+          });
+        }
+      } catch {
+        // handle error
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (id) fetchLansia();
@@ -125,6 +113,8 @@ export default function LansiaProfilPage() {
     );
   }
 
+  const backHref = userRole === 'admin' ? '/admin/lansia' : userRole === 'koordinator' ? '/koordinator/lansia' : '/beranda';
+
   return (
     <div className="min-h-screen bg-[#F5F8FC] pb-24">
       {/* Dynamic Header */}
@@ -134,9 +124,9 @@ export default function LansiaProfilPage() {
         <div className="absolute top-12 -left-12 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
         
         <div className="max-w-3xl mx-auto relative z-10">
-          <Link href="/beranda" className="inline-flex items-center text-white/80 hover:text-white mb-6 text-sm font-semibold transition-colors">
+          <button type="button" onClick={() => router.push(backHref)} className="inline-flex items-center text-white/80 hover:text-white mb-6 text-sm font-semibold transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
-          </Link>
+          </button>
           <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">Profil Lansia</h1>
