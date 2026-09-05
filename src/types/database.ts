@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -1339,12 +1339,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_quick_task:
-        | { Args: { p_task_id: string }; Returns: Json }
-        | {
-            Args: { p_helper_user_id: string; p_task_id: string }
-            Returns: Json
-          }
+      accept_quick_task: { Args: { p_task_id: string }; Returns: Json }
       acknowledge_emergency_alert: {
         Args: { p_alert_id: string }
         Returns: {
@@ -1804,7 +1799,7 @@ export type Database = {
       expire_pending_tasks: { Args: never; Returns: number }
       expire_unassigned_tasks: { Args: never; Returns: number }
       get_task_marketplace: {
-        Args: { p_helper_user_id: string; p_limit?: number; p_mode?: string }
+        Args: { p_limit?: number; p_mode?: string }
         Returns: {
           estimasi_durasi_menit: number
           expires_at: string

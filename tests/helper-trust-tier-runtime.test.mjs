@@ -71,14 +71,14 @@ test("runtime cloud: completion concurrent, duplicate update, dan laporan mengub
   const createdTaskIds = [];
   const createdReportIds = [];
 
-  const { data: helperUser, error: helperUserError } = await service.from("users").select("id").eq("email", "demohelper7@rangkul.id").single();
+  const { data: helperUser, error: helperUserError } = await service.from("users").select("id").eq("email", "arifhelper@rangkul.id").single();
   assert.equal(helperUserError, null, helperUserError?.message);
   const { data: helper, error: helperError } = await service.from("helper_profiles").select("id, status, tingkat_kepercayaan, tugas_selesai_berturut, total_tugas_selesai").eq("user_id", helperUser.id).single();
   assert.equal(helperError, null, helperError?.message);
   const backup = { status: helper.status, tingkat_kepercayaan: helper.tingkat_kepercayaan, tugas_selesai_berturut: helper.tugas_selesai_berturut, total_tugas_selesai: helper.total_tugas_selesai };
 
   try {
-    const { data: family, error: familyError } = await service.from("users").select("id").eq("email", "demokeluarga@rangkul.id").single();
+    const { data: family, error: familyError } = await service.from("users").select("id").eq("email", "ratnakeluarga@rangkul.id").single();
     assert.equal(familyError, null, familyError?.message);
     const [{ data: lansia, error: lansiaError }, { data: category, error: categoryError }] = await Promise.all([
       service.from("lansia_profiles").select("id").eq("keluarga_id", family.id).limit(1).single(),

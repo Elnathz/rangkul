@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
 import { marketplaceQuerySchema } from "@/lib/validations/task-marketplace";
 import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
@@ -16,6 +16,20 @@ export async function GET(request: Request) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 
+    const { data: userProfile, error: profileError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      return createApiError("server_error", "Profil pengguna tidak dapat dibaca", 500);
+    }
+
+    if (userProfile?.role !== "helper") {
+      return createApiError("forbidden", "Marketplace hanya tersedia untuk Helper", 403);
+    }
+
     const { searchParams } = new URL(request.url);
     const modeParam = searchParams.get("mode") || undefined;
     const limitParam = searchParams.get("limit") || undefined;
@@ -30,13 +44,8 @@ export async function GET(request: Request) {
     }
 
     const { mode, limit } = validation.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const adminSupabase = (await createAdminClient()) as any;
-
-    // Call Marketplace RPC function
-    const { data: tasks, error: rpcError } = await adminSupabase.rpc("get_task_marketplace", {
-      p_helper_user_id: user.id,
-      p_mode: mode || null,
+    const { data: tasks, error: rpcError } = await supabase.rpc("get_task_marketplace", {
+      p_mode: mode,
       p_limit: limit,
     });
 

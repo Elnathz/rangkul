@@ -27,6 +27,24 @@ test("Sprint 6 database migration and atomic RPCs contract", () => {
   assert.match(migration, /UPDATE public\.task_applications.*SET status = CASE WHEN id = p_application_id THEN 'selected'/s);
 });
 
+test("quick acceptance only writes a notification type defined by the database", () => {
+  const quickMigration = read("supabase/migrations/20260904090000_sprint6_quick_assignment.sql");
+  const hardenedMigration = read("supabase/migrations/20260904120000_sprint6_task_applications.sql");
+  const repairMigration = read("supabase/migrations/20260904130000_fix_quick_task_notification_type.sql");
+  const overloadRepairMigration = read("supabase/migrations/20260904130100_drop_legacy_quick_task_overload.sql");
+
+  assert.match(repairMigration, /CREATE OR REPLACE FUNCTION public\.accept_quick_task/);
+  assert.match(repairMigration, /'task'/);
+  assert.match(repairMigration, /v_task\.mode_penugasan != 'cepat'/);
+  assert.match(repairMigration, /public\.helper_service_categories/);
+  assert.match(repairMigration, /location_incomplete/);
+  assert.match(repairMigration, /public\.haversine_distance_km/);
+  assert.doesNotMatch(repairMigration, /task_accepted/);
+  assert.match(quickMigration, /task_accepted/);
+  assert.match(hardenedMigration, /task_accepted/);
+  assert.match(overloadRepairMigration, /DROP FUNCTION IF EXISTS public\.accept_quick_task\(uuid, uuid\)/);
+});
+
 test("Sprint 6 API routes contract and feature flag protection", () => {
   const applyRoute = read("src/app/api/tasks/[id]/applications/route.ts");
   const withdrawRoute = read("src/app/api/tasks/[id]/applications/me/route.ts");
