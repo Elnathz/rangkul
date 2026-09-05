@@ -31,10 +31,10 @@ export default function PengajuanClient({ queue, page, pageSize, total }: { queu
   const handleApprove = async (id: string) => {
     try {
       setLoadingId(id);
-      const res = await fetch(`/api/admin/koordinator/${id}/approve`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/koordinator/${id}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catatan: 'Disetujui dari dashboard admin' })
+        body: JSON.stringify({ status: 'verified', catatan: 'Disetujui dari dashboard admin' })
       });
       if (!res.ok) throw new Error('Gagal menyetujui');
       router.refresh();
@@ -52,10 +52,10 @@ export default function PengajuanClient({ queue, page, pageSize, total }: { queu
     if (!rejectId || !alasan) return;
     try {
       setLoadingId(rejectId);
-      const res = await fetch(`/api/admin/koordinator/${rejectId}/reject`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/koordinator/${rejectId}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alasan })
+        body: JSON.stringify({ status: 'rejected', alasan })
       });
       if (!res.ok) throw new Error('Gagal menolak');
       setRejectId(null);
@@ -98,16 +98,24 @@ export default function PengajuanClient({ queue, page, pageSize, total }: { queu
                   <p className="text-sm font-medium text-gray-700 mb-1">Tingkat: Pengurus {koord.tingkat.toUpperCase()}</p>
                   <p className="text-sm text-gray-500 mb-3">{koord.wilayah}</p>
                   
-                  <div className="flex gap-3">
-                    {koord.dokumen_url && (
+                  <div className="flex flex-wrap gap-2">
+                    {koord.dokumen_url ? (
                       <a href={koord.dokumen_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[#0D47A1] hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg">
-                        <FileCheck className="w-4 h-4" /> SK Jabatan <ExternalLink className="w-3 h-3" />
+                        <FileCheck className="w-4 h-4" /> Lihat SK Jabatan <ExternalLink className="w-3 h-3" />
                       </a>
+                    ) : (
+                      <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        SK Belum Diunggah
+                      </span>
                     )}
-                    {koord.ktp_url && (
-                      <a href={koord.ktp_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-slate-600 hover:underline flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-lg">
-                        <FileCheck className="w-4 h-4" /> KTP <ExternalLink className="w-3 h-3" />
+                    {koord.ktp_url ? (
+                      <a href={koord.ktp_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-slate-700 hover:underline flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-lg">
+                        <FileCheck className="w-4 h-4" /> Lihat KTP <ExternalLink className="w-3 h-3" />
                       </a>
+                    ) : (
+                      <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        KTP Belum Diunggah
+                      </span>
                     )}
                   </div>
                 </div>

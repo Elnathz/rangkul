@@ -13,7 +13,6 @@ export default async function AdminReportsPage() {
     redirect("/login");
   }
 
-  // Verifikasi status admin
   const { data: profile } = await supabase
     .from("users")
     .select("role")
@@ -41,24 +40,42 @@ export default async function AdminReportsPage() {
       reported_helper_id,
       reporter_id,
       ditindak_oleh,
+      decision_reason,
       helper:users!reports_reported_helper_id_fkey(
         full_name,
-        email,
-        phone
+        helper_profiles(status)
       ),
       reporter:users!reports_reporter_id_fkey(
-        full_name,
-        email
-      )
+        full_name
+      ),
+      reviewer:users!reports_ditindak_oleh_fkey(full_name)
     `)
     .order("created_at", { ascending: false });
 
-  // Restructure for the client component
-  const mappedReports = (reports || []).map(r => ({
-    ...r,
-    helper: r.helper ? { user: Array.isArray(r.helper) ? r.helper[0] : r.helper } : null,
-    reporter: Array.isArray(r.reporter) ? r.reporter[0] : r.reporter
-  }));
+  const counts = new Map<string, number>();
+  for (const report of reports || []) counts.set(report.reported_helper_id, (counts.get(report.reported_helper_id) ?? 0) + 1);
+
+  // Supabase query builder narrows the row type to only scalar columns it can prove
+  // are in the select string. decision_reason exists in the DB types but is not surfaced
+  // in the inferred type here, so we extract every field explicitly.
+  const mappedReports = (reports || []).map(r => {
+    const row = r as typeof r & { decision_reason?: string | null };
+    return {
+      id: row.id,
+      alasan: row.alasan,
+      status: row.status,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      reported_helper_id: row.reported_helper_id,
+      reporter_id: row.reporter_id,
+      ditindak_oleh: row.ditindak_oleh,
+      decision_reason: row.decision_reason ?? null,
+      report_count: counts.get(row.reported_helper_id) ?? 1,
+      helper: row.helper ? { user: Array.isArray(row.helper) ? row.helper[0] : row.helper } : null,
+      reporter: Array.isArray(row.reporter) ? row.reporter[0] : row.reporter,
+      reviewer: Array.isArray(row.reviewer) ? row.reviewer[0] : row.reviewer,
+    };
+  });
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -74,7 +91,8 @@ export default async function AdminReportsPage() {
         </div>
       </div>
 
-      <ReportListClient initialReports={mappedReports} isAdmin={true} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <ReportListClient initialReports={mappedReports as any} isAdmin={true} />
     </div>
   );
 }

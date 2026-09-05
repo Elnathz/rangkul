@@ -157,21 +157,21 @@ export default function LansiaEditProfilPage() {
       const file = croppedFile || fotoInputRef.current?.files?.[0];
 
       if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/lansia/${id}/${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('dokumen')
-          .upload(fileName, file, { upsert: true });
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("docType", "foto_lansia");
 
-        if (uploadError) throw uploadError;
+        const uploadRes = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-        const { data: signedUrlData } = await supabase.storage
-          .from('dokumen')
-          .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
-
-        if (signedUrlData) {
-           finalFotoUrl = signedUrlData.signedUrl;
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.message || "Gagal mengunggah foto lansia");
         }
+
+        finalFotoUrl = uploadData.data.path;
       }
 
       // Format alamat lengkap

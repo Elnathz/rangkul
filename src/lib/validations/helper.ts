@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { privateStorageReferenceSchema } from '@/lib/validations/storage';
 
 export const helperProfileSchema = z.object({
   bio: z.string().max(500, 'Bio maksimal 500 karakter').optional().or(z.literal('')),
@@ -6,8 +7,8 @@ export const helperProfileSchema = z.object({
   domisili_lat: z.number({ message: 'Koordinat latitude wajib diisi' }),
   domisili_lng: z.number({ message: 'Koordinat longitude wajib diisi' }),
   radius_layanan_km: z.number().min(1, 'Radius minimal 1 km').max(25, 'Radius maksimal 25 km').default(5),
-  ktp_url: z.string().url('URL KTP tidak valid'),
-  foto_wajah_url: z.string().url('URL Foto Wajah tidak valid'),
+  ktp_url: privateStorageReferenceSchema,
+  foto_wajah_url: privateStorageReferenceSchema,
   kategori_ids: z
     .array(z.string({ message: 'ID kategori tidak valid' }))
     .min(1, 'Pilih minimal 1 kategori layanan'),
@@ -39,7 +40,7 @@ export type HelperApproveInput = z.infer<typeof helperApproveSchema>;
 
 export const helperRejectSchema = z.object({
   alasan: z.string().min(5, 'Alasan penolakan wajib diisi minimal 5 karakter'),
-  foto_url: z.string().url('URL foto tidak valid').optional().nullable(),
+  foto_url: privateStorageReferenceSchema.optional().nullable(),
 });
 
 export type HelperRejectInput = z.infer<typeof helperRejectSchema>;

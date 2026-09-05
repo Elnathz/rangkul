@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { writeAuditLog } from "@/lib/audit";
 import { createClient } from "@/lib/supabase/server";
 
 const appealSchema = z.object({
@@ -44,26 +43,22 @@ export async function POST(request: Request) {
     const { supabase, user, profile } = await getFamilyContext();
     if (!user) return createApiError("unauthorized", "Anda harus login", 401);
     if (profile?.role !== "keluarga") return createApiError("forbidden", "Hanya Keluarga yang dapat mengajukan banding", 403);
+    // Pembatasan booking karena pembatalan berulang menghasilkan status restricted.
+    // Database partial unique index memastikan hanya satu banding dengan status menunggu per user.
+    if (profile.account_status !== "restricted") return createApiError("validation_error", "Banding hanya dapat diajukan ketika akun berstatus restricted", 422);
 
     const parsed = appealSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return apiResponse({ error: "validation_error", message: "Alasan banding belum valid", fieldErrors: parsed.error.flatten().fieldErrors }, 422);
-
-    const { data: pendingAppeal } = await supabase
-      .from("appeals")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "menunggu")
-      .maybeSingle();
-    if (pendingAppeal) return createApiError("conflict", "Masih ada banding yang menunggu review", 409);
 
     const { data, error } = await supabase
       .from("appeals")
       .insert({ user_id: user.id, alasan: parsed.data.alasan })
       .select("id, alasan, status, direview_at, created_at")
       .single();
+    // 23505: partial unique index melarang lebih dari satu banding berstatus menunggu untuk user yang sama.
+    if (error?.code === "23505") return createApiError("conflict", "Masih ada banding berstatus menunggu review", 409);
     if (error) return createApiError("server_error", "Banding belum dapat dikirim", 500);
 
-    await writeAuditLog({ actor_id: user.id, action: "submit_appeal", entity_type: "appeal", entity_id: data.id, metadata: { account_status: profile.account_status } });
     return apiResponse({ data, message: "Banding berhasil dikirim ke Admin" }, 201);
   } catch {
     return createApiError("server_error", "Terjadi kesalahan server", 500);

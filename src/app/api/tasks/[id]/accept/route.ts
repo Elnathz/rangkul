@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
 import {
   canHelperAcceptTask,
@@ -71,10 +71,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("not_found", "Profil Helper tidak ditemukan", 404);
     }
 
-    const { data: taskRow, error: taskError } = await supabase
+    const taskWriter = await createAdminClient();
+    const { data: taskRow, error: taskError } = await taskWriter
       .from("tasks")
       .select(`
-        id, status, helper_id, expires_at,
+        id, status, helper_id, expires_at, mode_penugasan,
         lansia_profiles ( lat, lng ),
         service_categories ( is_high_risk )
       `)
@@ -82,14 +83,38 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (taskError) {
-      return createApiError("server_error", taskError.message, 500);
+      return createApiError("server_error", "Tugas belum dapat diperiksa", 500);
     }
 
     if (!taskRow) {
       return createApiError("not_found", "Tugas tidak ditemukan atau sudah tidak tersedia", 404);
     }
 
-    const task = taskRow as unknown as TaskRelations;
+    const task = taskRow as unknown as TaskRelations & { mode_penugasan?: string };
+
+    // Mode Cepat handling via RPC
+    if (task.mode_penugasan === "cepat") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc("accept_quick_task", {
+        p_task_id: taskId,
+        p_helper_user_id: user.id,
+      });
+
+      if (rpcErr) {
+        return createApiError("server_error", rpcErr.message, 500);
+      }
+
+      const res = (rpcResult || {}) as { success: boolean; code?: string; message: string };
+      if (!res.success) {
+        const httpStatus = res.code === "race_condition_lost" || res.code === "task_already_assigned" || res.code === "task_expired" ? 409 : 403;
+        return createApiError(res.code || "forbidden", res.message, httpStatus);
+      }
+
+      return apiResponse({
+        message: res.message,
+        task: { id: taskId, status: "dikonfirmasi", helper_id: helper.id },
+      }, 200);
+    }
 
     if (
       !canHelperAcceptTask(task.status, task.helper_id, helper.id) ||
@@ -127,7 +152,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("forbidden", "Helper belum memenuhi syarat menerima tugas", 403);
     }
 
-    let acceptQuery = supabase
+    let acceptQuery = taskWriter
       .from("tasks")
       .update({
         helper_id: helper.id,
@@ -145,7 +170,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (acceptError) {
-      return createApiError("server_error", acceptError.message, 500);
+      return createApiError("server_error", "Tugas belum dapat diterima", 500);
     }
 
     if (!acceptedTask) {
@@ -158,11 +183,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         : "Tugas berhasil diterima",
       task: acceptedTask,
     }, 200);
-  } catch (error: unknown) {
-    return createApiError(
-      "server_error",
-      error instanceof Error ? error.message : "Terjadi kesalahan server",
-      500,
-    );
+  } catch {
+    return createApiError("server_error", "Tugas belum dapat diterima", 500);
   }
 }

@@ -12,7 +12,7 @@ export async function GET() {
     const tasks = await supabase.from("tasks").select("id", { count: "exact", head: true });
     const reports = await supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "menunggu");
     const taskRows = await supabase.from("tasks").select("status");
-    const completedTasks = await supabase.from("tasks").select("harga_final").eq("status", "selesai");
+    const releasedPayments = await supabase.from("payments").select("jumlah_total").eq("status", "released");
     const auditLogs = await supabase
       .from("audit_logs")
       .select("id, action, entity_type, entity_id, metadata, created_at, actor:actor_id ( full_name )")
@@ -22,7 +22,7 @@ export async function GET() {
     const countErrors = [users, activeUsers, helpers, verifiedHelpers, tasks, reports].filter(
       (result) => result.error,
     );
-    const rowErrors = [taskRows, completedTasks, auditLogs].filter((result) => result.error);
+    const rowErrors = [taskRows, releasedPayments, auditLogs].filter((result) => result.error);
     if (countErrors.length || rowErrors.length) {
       return createApiError("server_error", "Gagal mengambil ringkasan data Admin", 500);
     }
@@ -32,8 +32,9 @@ export async function GET() {
       return result;
     }, {});
 
-    const gmv = (completedTasks.data ?? []).reduce(
-      (total, row) => total + Number(row.harga_final ?? 0),
+    // GMV hanya menghitung transaksi yang benar-benar released/settled, bukan tugas selesai tanpa pembayaran.
+    const gmv = (releasedPayments.data ?? []).reduce(
+      (total, row) => total + Number(row.jumlah_total ?? 0),
       0,
     );
 

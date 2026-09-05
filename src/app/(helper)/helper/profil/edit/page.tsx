@@ -215,12 +215,13 @@ export default function HelperEditProfilPage() {
         uploadData.append("docType", "foto_helper");
         const uploadResponse = await fetch("/api/storage/upload", { method: "POST", body: uploadData });
         const uploaded = await uploadResponse.json();
-        if (!uploadResponse.ok || !uploaded.url) throw new Error(uploaded.message || "Gagal mengunggah foto profil");
+        const uploadedUrl = uploaded.data?.path || uploaded.path;
+        if (!uploadResponse.ok || !uploadedUrl) throw new Error(uploaded.message || "Gagal mengunggah foto profil");
 
         const photoResponse = await fetch("/api/helpers/profile/photo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ foto_wajah_url: uploaded.url }),
+          body: JSON.stringify({ foto_wajah_url: uploadedUrl }),
         });
         const photoResult = await photoResponse.json();
         if (!photoResponse.ok) throw new Error(photoResult.message || "Gagal mengirim foto untuk verifikasi");

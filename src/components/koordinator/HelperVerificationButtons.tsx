@@ -93,7 +93,7 @@ export default function HelperVerificationButtons({ helperId }: { helperId: stri
         if (!uploadRes.ok) {
           throw new Error(uploadData.message || "Gagal mengunggah foto bukti");
         }
-        uploadedUrl = uploadData.url;
+        uploadedUrl = uploadData.data?.path || uploadData.path;
       }
       
       const res = await fetch(`/api/helper/${helperId}/reject`, {

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const status = url.searchParams.get("status");
     let query = supabase
       .from("appeals")
-      .select("id, user_id, alasan, status, direview_oleh, direview_at, created_at, user:users!appeals_user_id_fkey(id, full_name, email, account_status)")
+      .select("id, user_id, alasan, status, review_reason, direview_oleh, direview_at, created_at, user:users!appeals_user_id_fkey(id, full_name, email, account_status), reviewer:users!appeals_direview_oleh_fkey(full_name)")
       .order("created_at", { ascending: false });
     if (status && ["menunggu", "disetujui", "ditolak"].includes(status)) {
       query = query.eq("status", status as "menunggu" | "disetujui" | "ditolak");

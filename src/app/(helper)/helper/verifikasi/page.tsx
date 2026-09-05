@@ -16,11 +16,26 @@ type KoordinatorOption = {
   id: string;
   wilayah: string;
   tingkat: string;
-  ktp_url: string | null;
   users: {
     full_name: string | null;
     phone: string | null;
   } | null;
+};
+type OwnHelperProfile = {
+  id: string;
+  bio: string | null;
+  domisili_lat: number | null;
+  domisili_lng: number | null;
+  radius_layanan_km: number;
+  ktp_url: string | null;
+  foto_wajah_url: string | null;
+  koordinator_id: string | null;
+  suspend_reason: string | null;
+  status: string;
+  wilayah_domisili: string;
+  helper_service_categories: Array<{
+    service_categories: { id: string } | Array<{ id: string }> | null;
+  }> | null;
 };
 type ServiceCategoryOption = ServiceCategoryRow & { parentName: string | null };
 
@@ -101,11 +116,12 @@ export default function HelperVerifikasiPage() {
       // Fetch user profile if exists
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('helper_profiles')
-          .select('id, bio, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, koordinator_id, suspend_reason, status, wilayah_domisili')
-          .eq('user_id', user.id)
-          .single();
+        const profileResponse = await fetch('/api/helper/profile', { cache: 'no-store' });
+        const profilePayload = await profileResponse.json().catch(() => null) as {
+          data?: { profile?: OwnHelperProfile };
+          profile?: OwnHelperProfile;
+        } | null;
+        const profile = profileResponse.ok ? (profilePayload?.data?.profile ?? profilePayload?.profile ?? null) : null;
 
         if (profile) {
           if ((profile.status as string) === 'rejected') {
@@ -151,6 +167,7 @@ export default function HelperVerifikasiPage() {
             domisili_lng: profile.domisili_lng,
             radius_layanan_km: profile.radius_layanan_km || 1,
             ktp_url: profile.ktp_url || "",
+            foto_url: profile.foto_wajah_url || "",
             koordinator_id: profile.koordinator_id || "",
             region,
             rt,
@@ -158,14 +175,12 @@ export default function HelperVerifikasiPage() {
             alamat
           }));
 
-          const { data: helperCats } = await supabase
-            .from('helper_service_categories')
-            .select('service_category_id')
-            .eq('helper_id', profile.id);
-            
-          if (helperCats) {
-            setKategoriIds(helperCats.map(c => c.service_category_id));
-          }
+          const helperCategoryIds = (profile.helper_service_categories ?? [])
+            .map((relation) => Array.isArray(relation.service_categories)
+              ? relation.service_categories[0]?.id
+              : relation.service_categories?.id)
+            .filter((categoryId): categoryId is string => Boolean(categoryId));
+          setKategoriIds(helperCategoryIds);
         }
       }
     };
@@ -193,7 +208,6 @@ export default function HelperVerifikasiPage() {
           id,
           wilayah,
           tingkat,
-          ktp_url,
           users!koordinator_profiles_user_id_fkey!inner(full_name, phone)
         `)
         .eq('status', 'verified');
@@ -295,7 +309,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        ktpUrl = uploadData.url;
+        ktpUrl = uploadData.data?.path;
       } else {
         ktpUrl = form.ktp_url;
       }
@@ -317,7 +331,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        fotoUrl = uploadData.url;
+        fotoUrl = uploadData.data?.path;
       } else {
         fotoUrl = form.foto_url;
       }
@@ -564,7 +578,7 @@ export default function HelperVerifikasiPage() {
                                      onClick={() => { setForm({...form, koordinator_id: k.id}); setShowKoordDropdown(false); }}
                                    >
                                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100">
-                                       {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                                       <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                      </div>
                                      <div>
                                        <div className="font-bold text-gray-900 text-sm flex items-center gap-1">
@@ -1066,7 +1080,7 @@ export default function HelperVerifikasiPage() {
                          onClick={() => { setForm({...form, koordinator_id: k.id}); setKoordModalOpen(false); }}
                        >
                          <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border-4 border-white shadow-sm">
-                           {k.ktp_url ? <img src={k.ktp_url} alt="" className="w-full h-full object-cover" /> : <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                           <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                          </div>
                          <div className="flex-1">
                            <div className="flex justify-between items-start">

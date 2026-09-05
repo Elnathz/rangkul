@@ -177,8 +177,31 @@ Sesuai TDD §18. Simpan di `.agents/skills/<nama-skill>/SKILL.md`. Folder `.agen
 **Plugin pihak ketiga:**
 
 - **Superpowers** — dipakai untuk penulisan rencana (§2), siklus TDD merah-hijau-refactor, debugging sistematis. Paling relevan untuk logika rawan bug: state machine (§3.1-3.2), model approval (§3.3.2), pembayaran/kompensasi (§3.4/§3.8).
-- **Impeccable** — jalankan sebagai review setelah tiap fitur UI selesai, sebelum dianggap "done". Instalasi project berada di `.agents/skills/impeccable/` dan design hook aktif melalui `.agents`.
-- **ui-ux-pro-max** — wajib dipakai untuk pekerjaan UI, UX, responsivitas, aksesibilitas, visual review, dan keputusan design system. Simpan hasil design system hanya jika memang dibuat untuk perubahan UI yang sedang dikerjakan.
+- **gpt-taste** — wajib dipanggil pada pekerjaan UI yang membuat atau membentuk ulang surface pemasaran. Terapkan hanya guidance yang sesuai produk trust-first, aksesibilitas, dan aset lokal. Jangan memaksakan AIDA, GSAP, atau visual eksperimen pada dashboard dan form operasional.
+- **design-taste-frontend** — wajib dipanggil pada landing page, redesign visual, dan perubahan identity surface. Mulai dari design read, lalu pertahankan brand dan pola aplikasi yang sudah menjadi sumber kebenaran.
+- **Impeccable** — wajib dipakai pada setiap perubahan UI sebagai review sebelum fitur dianggap selesai. Instalasi project berada di `.agents/skills/impeccable/` dan design hook aktif melalui `.agents`.
+- **@ui-ux-pro-max** — wajib dipakai untuk setiap pekerjaan UI, UX, responsivitas, aksesibilitas, visual review, dan keputusan design system. Panggil skill ini dengan nama `@ui-ux-pro-max`. Simpan hasil design system hanya jika memang dibuat untuk perubahan UI yang sedang dikerjakan.
+
+### Gate UI/UX Wajib
+
+Setiap perubahan yang menyentuh halaman, komponen visual, form, navigasi, state
+loading/error/empty, atau interaksi browser wajib memakai skill yang relevan dari
+empat skill di atas sebelum kode ditulis atau dinilai selesai. Untuk surface
+pemasaran atau redesign visual, gunakan keempatnya. Untuk UI produk operasional,
+gunakan `Impeccable` dan `@ui-ux-pro-max` sebagai gate inti, lalu baca
+`gpt-taste` dan `design-taste-frontend` untuk memastikan batas konteksnya tidak
+diterapkan secara buta pada dashboard, tabel, atau alur berisiko.
+
+Tidak ada perubahan UI yang boleh dianggap selesai tanpa pemeriksaan mobile-first:
+
+- Mulai dari viewport 375px, lalu verifikasi 768px, 1024px, dan 1440px.
+- Tidak boleh ada horizontal overflow, aksi hanya-hover, target sentuh di bawah
+  44x44px, label form yang hanya bergantung pada placeholder, atau fokus keyboard
+  yang tidak terlihat.
+- Verifikasi loading, empty, error, forbidden, conflict, dan retry bila surface
+  memiliki data atau mutation.
+- Catat hasil visual dan aksesibilitas di evidence sprint atau PR. Test source
+  tidak menggantikan pemeriksaan UI nyata.
 
 **Skill kustom (buat sesuai TDD §18.2, prioritaskan sesuai urutan sprint):**
 

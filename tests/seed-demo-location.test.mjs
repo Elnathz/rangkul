@@ -8,7 +8,7 @@ test("seed demo membuat atau memakai akun inti mbahburgas dan masburgas", () => 
   assert.match(alignmentMigration, /username\) = ["']mbahburgas["']/i);
   assert.match(alignmentMigration, /demokoordinator@rangkul\.id/);
   assert.match(alignmentMigration, /demohelper@rangkul\.id/);
-  assert.match(alignmentMigration, /pending_verification/);
+  assert.match(alignmentMigration, /core_koordinator_user_id[\s\S]*'verified'/i);
   assert.match(alignmentMigration, /raw_user_meta_data ->> 'username'/i);
   assert.match(alignmentMigration, /IF .*NULL/i);
   assert.match(alignmentMigration, /IF NOT EXISTS/i);

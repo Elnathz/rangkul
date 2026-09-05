@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { lansiaProfileSchema } from '@/lib/validations/lansia';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import { resolvePrivatePhotoUrl } from '@/lib/storage/private-object';
 import type { Database } from '@/types/database';
 
 // GET /api/lansia/[id] — detail satu lansia milik keluarga yang login
@@ -30,7 +31,33 @@ export async function GET(
       return createApiError('not_found', 'Profil lansia tidak ditemukan', 404);
     }
 
-    return apiResponse({ profile }, 200);
+    const admin = await createAdminClient();
+    const sign = (val: string | null) =>
+      resolvePrivatePhotoUrl(val, async (path, exp) => {
+        const { data, error: signError } = await admin.storage
+          .from('dokumen')
+          .createSignedUrl(path, exp);
+        return signError ? null : data.signedUrl;
+      });
+
+    const [foto_url, dokumen_identitas_lansia_url, dokumen_hubungan_keluarga_url] =
+      await Promise.all([
+        sign(profile.foto_url),
+        sign(profile.dokumen_identitas_lansia_url),
+        sign(profile.dokumen_hubungan_keluarga_url),
+      ]);
+
+    return apiResponse(
+      {
+        profile: {
+          ...profile,
+          foto_url,
+          dokumen_identitas_lansia_url,
+          dokumen_hubungan_keluarga_url,
+        },
+      },
+      200
+    );
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
@@ -87,7 +114,7 @@ export async function PUT(
       .single();
 
     if (updateError) {
-      return createApiError('server_error', updateError.message, 500);
+      return createApiError('server_error', 'Gagal memperbarui profil lansia', 500);
     }
 
     return apiResponse({ message: 'Profil lansia berhasil diperbarui', profile: updated }, 200);
@@ -130,7 +157,7 @@ export async function DELETE(
       .eq('keluarga_id', user.id);
 
     if (deleteError) {
-      return createApiError('server_error', deleteError.message, 500);
+      return createApiError('server_error', 'Gagal menghapus profil lansia', 500);
     }
 
     return apiResponse({ message: 'Profil lansia berhasil dihapus' }, 200);

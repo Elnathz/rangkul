@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
@@ -29,8 +29,10 @@ const money = (value: number | null | undefined) => `Rp ${Number(value || 0).toL
 export default function PembayaranPage({ params }: { params: Promise<{ task_id: string }> }) {
   const router = useRouter();
   const { task_id: taskId } = use(params);
+  const idempotencyKeyRef = useRef(`demo-wallet:${taskId}`);
   const [task, setTask] = useState<Task | null>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [saldo, setSaldo] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [snapReady, setSnapReady] = useState(false);
@@ -38,16 +40,21 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
 
   const loadData = async () => {
     setError(null);
-    const [taskResponse, paymentResponse] = await Promise.all([
+    const [taskResponse, paymentResponse, walletResponse] = await Promise.all([
       fetch(`/api/tasks/${taskId}`, { cache: "no-store" }),
       fetch(`/api/payments/${taskId}/status`, { cache: "no-store" }),
+      fetch(`/api/wallet`, { cache: "no-store" }).catch(() => null),
     ]);
     const taskBody = await taskResponse.json().catch(() => null) as { task?: Task; message?: string } | null;
     const paymentBody = await paymentResponse.json().catch(() => null) as { payment?: Payment; message?: string } | null;
+    const walletBody = walletResponse?.ok
+      ? (await walletResponse.json().catch(() => null) as { saldo?: number } | null)
+      : null;
     if (!taskResponse.ok) throw new Error(taskBody?.message || "Detail tugas tidak dapat dimuat");
     if (!paymentResponse.ok) throw new Error(paymentBody?.message || "Status pembayaran tidak dapat dimuat");
     setTask(taskBody?.task || null);
     setPayment(paymentBody?.payment || null);
+    setSaldo(walletBody?.saldo ?? null);
   };
 
   useEffect(() => {
@@ -112,6 +119,26 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
     }
   };
 
+  const handleDemoWalletPayment = async () => {
+    setProcessing(true);
+    setError(null);
+    try {
+      const idempotencyKey = idempotencyKeyRef.current;
+      const response = await fetch(`/api/payments/${taskId}/demo-wallet/charge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotency_key: idempotencyKey }),
+      });
+      const body = await response.json().catch(() => null) as { message?: string } | null;
+      if (!response.ok) throw new Error(body?.message || "Pembayaran dengan Saldo Demo gagal");
+      await loadData();
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : "Pembayaran Saldo Demo gagal");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) return <div className="mx-auto max-w-xl px-4 py-20 text-center text-slate-500"><Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin" />Memuat pembayaran...</div>;
   if (error && !task) return <div className="mx-auto max-w-xl px-4 py-20 text-center"><p className="mb-5 text-red-600">{error}</p><Button onClick={() => void loadData()} variant="outline">Coba lagi</Button></div>;
   if (!task) return null;
@@ -125,7 +152,7 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
     <div className="mx-auto max-w-xl px-4 py-8">
       <Link href={`/kunjungan/${taskId}`} className="mb-8 inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" />Kembali ke Kunjungan</Link>
       <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-900">Pembayaran Kunjungan</h1>
-      <p className="mb-8 font-medium text-slate-500">Pembayaran diproses melalui Midtrans Sandbox. Status akhir hanya mengikuti webhook server.</p>
+      <p className="mb-8 font-medium text-slate-500">Pembayaran diproses melalui Midtrans Sandbox atau Saldo Demo. Status akhir hanya mengikuti webhook / RPC server.</p>
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0D47A1] to-blue-800 p-6 text-white shadow-xl"><Wallet className="absolute right-8 top-8 h-28 w-28 opacity-10" /><p className="relative text-sm text-blue-100">Total dari server</p><h2 className="relative mt-1 text-4xl font-black tabular-nums">{money(task.harga_final)}</h2><div className="relative mt-6 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm"><ShieldCheck className="h-4 w-4 text-green-300" />{snapReady ? "Midtrans Sandbox siap" : "Menyiapkan Midtrans Sandbox"}</div></div>
       <div className="mb-8 space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm"><h3 className="text-lg font-bold text-slate-900">Rincian Transaksi</h3><div className="flex justify-between text-sm text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">{money(task.harga_dasar)}</span></div>{task.harga_final !== task.harga_dasar && <div className="flex justify-between text-sm text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">{money(task.harga_final - task.harga_dasar)}</span></div>}<div className="flex justify-between border-t border-slate-100 pt-4 text-lg font-black text-slate-900"><span>Total bayar</span><span className="text-[#0D47A1]">{money(task.harga_final)}</span></div>{payment && <p className="text-sm text-slate-500">Status: <span className="font-bold text-slate-900">{payment.status}</span></p>}</div>
       {error && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -133,7 +160,23 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
       {isHeld && !canRelease && <div className="mb-4 rounded-xl bg-blue-50 p-4 text-sm font-medium text-blue-800">Tunggu Helper mengirim laporan kunjungan. Tombol pencairan muncul setelah task berstatus selesai.</div>}
       {isReleased && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah dicairkan ke pihak terkait.</div>}
       {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses refund atau kompensasi.</div>}
-      {!isHeld && !isReleased && !isRefunded && <Button onClick={handlePayment} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">{processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Menyiapkan Midtrans...</> : "Bayar dengan Midtrans"}</Button>}
+      {!isHeld && !isReleased && !isRefunded && (
+        <div className="space-y-3">
+          <Button onClick={handlePayment} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">
+            {processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Menyiapkan Midtrans...</> : "Bayar dengan Midtrans"}
+          </Button>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+            <p className="flex items-center justify-between text-sm font-semibold text-slate-600">
+              <span>Saldo Demo tersedia</span>
+              <span className="font-black text-[#0D47A1]">{money(saldo)}</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Saldo Demo bukan uang nyata dan bukan bukti transaksi gateway. Hanya untuk demo.</p>
+          </div>
+          <Button onClick={() => void handleDemoWalletPayment()} disabled={processing || (saldo !== null && saldo < Number(task.harga_final))} variant="outline" className="h-14 w-full rounded-2xl border-blue-200 bg-blue-50/50 text-base font-bold text-[#0D47A1] hover:bg-blue-100/60 shadow-sm">
+            {processing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Memproses Saldo Demo...</> : "Bayar dengan Saldo Demo (Fallback)"}
+          </Button>
+        </div>
+      )}
       {canRelease && <Button onClick={() => void releasePayment()} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">{processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Mencairkan pembayaran...</> : "Konfirmasi selesai dan cairkan dana"}</Button>}
       {isReleased && <Button onClick={() => router.push(`/kunjungan/${taskId}`)} className="h-14 w-full rounded-2xl bg-brand-gradient font-bold text-white"><CheckCircle2 className="mr-2 h-5 w-5" />Kembali ke Detail Kunjungan</Button>}
       <p className="mt-6 text-center text-xs font-medium text-slate-400">Nominal pembayaran dan pembagian dana ditentukan server Rangkul. Browser tidak dapat mengubahnya.</p>

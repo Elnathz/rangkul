@@ -46,47 +46,56 @@ export async function PUT(
       return createApiError('conflict', `Helper sudah berstatus: ${helperProfile.status}`, 409);
     }
 
-    let koordinatorProfileId: string | null = null;
-    let isAdminFallback = false;
-
-    if (role === 'koordinator') {
-      // Koordinator hanya bisa approve Helper di wilayahnya
-      const { data: koordProfile, error: koordError } = await supabase
-        .from('koordinator_profiles')
-        .select('id, wilayah, status')
-        .eq('user_id', user.id)
-        .single();
-
-      if (koordError || !koordProfile) {
-        return createApiError('not_found', 'Profil koordinator tidak ditemukan', 404);
-      }
-
-      if (koordProfile.status !== 'verified') {
-        return createApiError('forbidden', 'Akun koordinator belum diverifikasi admin', 403);
-      }
-
-      // Format alamat Helper dan Koordinator berbeda, jadi batas approval hanya kelurahan.
-      const kelurahanKoord = extractKelurahan(koordProfile.wilayah);
-      const kelurahanHelper = extractKelurahan(helperProfile.wilayah_domisili);
-
-      if (!kelurahanKoord || !kelurahanHelper || kelurahanKoord !== kelurahanHelper) {
-        return createApiError(
-          'forbidden',
-          'Anda hanya dapat menyetujui helper yang berdomisili di kelurahan/wilayah Anda',
-          403
-        );
-      }
-
-      koordinatorProfileId = koordProfile.id;
-    } else {
-      // Admin approve — fallback, tandai verified_by_admin_fallback
-      isAdminFallback = true;
-    }
-
     const body = await request.json().catch(() => ({}));
     const validation = helperApproveSchema.safeParse(body);
     if (!validation.success) {
       return createApiError('validation_error', 'Data tidak valid', 400);
+    }
+
+    if (role === 'admin') {
+      const { error: fallbackError } = await supabase.rpc('assign_admin_fallback', {
+        p_helper_id: helperId,
+        p_reason: validation.data.catatan || 'Verifikasi fallback Admin',
+      });
+      if (fallbackError) {
+        const status = fallbackError.code === 'P0002' ? 404 : fallbackError.code === 'P0001' ? 409 : fallbackError.code === '42501' ? 403 : fallbackError.code === '22023' ? 422 : 500;
+        const code = status === 404 ? 'not_found' : status === 409 ? 'conflict' : status === 403 ? 'forbidden' : status === 422 ? 'validation_error' : 'server_error';
+        const message = status === 409 ? 'Fallback ditolak karena Koordinator RT/RW aktif tersedia atau status Helper sudah berubah' : status === 404 ? 'Helper tidak ditemukan' : status === 422 ? 'Wilayah Helper atau alasan fallback belum valid' : status === 403 ? 'Aksi ini hanya untuk Admin' : 'Fallback belum dapat ditetapkan';
+        return createApiError(code, message, status);
+      }
+      return apiResponse(
+        {
+          message: 'Helper disetujui oleh Admin (fallback). Ditandai sebagai verifikasi sementara.',
+        },
+        200
+      );
+    }
+
+    // Koordinator hanya bisa approve Helper di wilayahnya
+    const { data: koordProfile, error: koordError } = await supabase
+      .from('koordinator_profiles')
+      .select('id, wilayah, status')
+      .eq('user_id', user.id)
+      .single();
+
+    if (koordError || !koordProfile) {
+      return createApiError('not_found', 'Profil koordinator tidak ditemukan', 404);
+    }
+
+    if (koordProfile.status !== 'verified') {
+      return createApiError('forbidden', 'Akun koordinator belum diverifikasi admin', 403);
+    }
+
+    // Format alamat Helper dan Koordinator berbeda, jadi batas approval hanya kelurahan.
+    const kelurahanKoord = extractKelurahan(koordProfile.wilayah);
+    const kelurahanHelper = extractKelurahan(helperProfile.wilayah_domisili);
+
+    if (!kelurahanKoord || !kelurahanHelper || kelurahanKoord !== kelurahanHelper) {
+      return createApiError(
+        'forbidden',
+        'Anda hanya dapat menyetujui helper yang berdomisili di kelurahan/wilayah Anda',
+        403
+      );
     }
 
     const adminSupabase = await createAdminClient();
@@ -97,8 +106,8 @@ export async function PUT(
       .update({
         status: 'verified',
         tingkat_kepercayaan: 'probation',
-        koordinator_id: koordinatorProfileId,
-        verified_by_admin_fallback: isAdminFallback,
+        koordinator_id: koordProfile.id,
+        verified_by_admin_fallback: false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', helperId);
@@ -110,20 +119,18 @@ export async function PUT(
     // Audit log
     await writeAuditLog({
       actor_id: user.id,
-      action: isAdminFallback ? 'helper_admin_fallback_approved' : 'helper_approved',
+      action: 'helper_approved',
       entity_type: 'helper_profiles',
       entity_id: helperId,
       metadata: {
         catatan: validation.data.catatan ?? null,
-        is_admin_fallback: isAdminFallback,
+        is_admin_fallback: false,
       } as import('@/types/database').Json,
     });
 
     return apiResponse(
       {
-        message: isAdminFallback
-          ? 'Helper disetujui oleh Admin (fallback). Ditandai sebagai verifikasi sementara.'
-          : 'Helper berhasil disetujui. Status: verified, tingkat: probation.',
+        message: 'Helper berhasil disetujui. Status: verified, tingkat: probation.',
       },
       200
     );

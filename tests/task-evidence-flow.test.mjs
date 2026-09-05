@@ -27,11 +27,12 @@ test("laporan Helper memakai endpoint evidence atomic dan validasi lima snapshot
   assert.match(evidenceMigration, /FOR UPDATE/);
 });
 
-test("UI laporan Helper tidak lagi memakai mock atau simulasi timeout", () => {
+test("UI laporan Helper memakai endpoint nyata dan autosave offline, bukan mock", () => {
   assert.doesNotMatch(helperReport, /MOCK_TASKS/);
-  assert.doesNotMatch(helperReport, /setTimeout/);
   assert.match(helperReport, /api\/storage\/upload/);
   assert.match(helperReport, /api\/tasks\/\$\{taskId\}\/evidence/);
+  assert.match(helperReport, /saveEvidenceDraft/);
+  assert.match(helperReport, /useOfflineEvidence/);
 });
 
 test("detail task Helper memakai URL laporan tanpa route group", () => {
@@ -46,6 +47,15 @@ test("daftar kunjungan keluarga membaca task nyata dan detail menampilkan hasil 
   assert.match(familyDetailPage, /health_snapshots/);
   assert.match(confirmRoute, /release_task_payment/);
   assert.match(confirmRoute, /status: "released"/);
+});
+
+test("detail kunjungan menandatangani foto private setelah ownership dan membaca status payment", () => {
+  assert.match(familyDetailPage, /\.eq\("keluarga_id", user\.id\)/);
+  assert.match(familyDetailPage, /resolvePrivatePhotoUrl/);
+  assert.match(familyDetailPage, /createSignedUrl/);
+  assert.match(familyDetailPage, /payments \( status, payment_method, held_at, released_at \)/);
+  assert.match(familyDetail, /task\.payment\?\.status === "released"/);
+  assert.match(familyDetail, /Dana kunjungan sudah dicairkan/);
 });
 
 test("migration demo mengarahkan Helper ke akun masburgas", () => {

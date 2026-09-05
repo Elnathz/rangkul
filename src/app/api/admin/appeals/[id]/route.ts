@@ -19,10 +19,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       review_reason: parsed.data.alasan,
     });
     if (error) {
-      const status = error.code === "P0001" ? 409 : error.code === "42501" ? 403 : 500;
-      return createApiError(status === 409 ? "conflict" : status === 403 ? "forbidden" : "server_error", error.message, status);
+      const status = error.code === "P0002" ? 404 : error.code === "P0001" ? 409 : error.code === "42501" ? 403 : error.code === "22023" ? 422 : 500;
+      const code = status === 404 ? "not_found" : status === 409 ? "conflict" : status === 403 ? "forbidden" : status === 422 ? "validation_error" : "server_error";
+      const message = status === 409 ? "Banding sudah diputus reviewer lain" : status === 404 ? "Banding tidak ditemukan" : status === 403 ? "Aksi ini hanya untuk Admin" : status === 422 ? "Keputusan banding tidak valid" : "Keputusan banding belum dapat disimpan";
+      return createApiError(code, message, status);
     }
-    return apiResponse({ data, message: "Keputusan banding berhasil disimpan" });
+    return apiResponse({ data: { appeal: data }, message: "Keputusan banding berhasil disimpan" });
   } catch (error) {
     return adminAuthErrorResponse(error) ?? createApiError("server_error", "Terjadi kesalahan server", 500);
   }

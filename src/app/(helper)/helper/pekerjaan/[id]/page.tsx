@@ -4,7 +4,8 @@ import { ArrowLeft, Clock, HeartHandshake, Map, MapPin, ShieldAlert } from "luci
 
 import { AcceptTaskButton } from "@/components/helper/AcceptTaskButton";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { projectHelperTaskPrivacy } from "@/lib/helper/task-privacy";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -33,7 +34,10 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const { data: task, error } = await supabase
+  if (!helperProfile) redirect("/helper/verifikasi");
+
+  const taskReader = await createAdminClient();
+  const { data: task, error } = await taskReader
     .from("tasks")
     .select(`
       id,
@@ -43,7 +47,7 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
       harga_dasar,
       harga_final,
       catatan,
-      lansia_profiles!inner ( nama, alamat, catatan_kondisi ),
+      lansia_profiles!inner ( nama, alamat, kelurahan, kecamatan, kabupaten_kota, lat, lng, foto_url, catatan_kondisi ),
       service_categories!inner ( nama, deskripsi, estimasi_durasi_menit, tingkat, is_high_risk )
     `)
     .eq("id", id)
@@ -55,6 +59,8 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
   const category = Array.isArray(task.service_categories) ? task.service_categories[0] : task.service_categories;
 
   if (!lansia || !category) notFound();
+
+  const privacy = projectHelperTaskPrivacy({ helper_id: task.helper_id, catatan: task.catatan, lansia }, helperProfile.id);
 
   const isAvailable = task.status === "diajukan" && (
     task.helper_id === null || task.helper_id === helperProfile?.id
@@ -102,8 +108,8 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
             <div className="flex items-start gap-3">
               <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
               <div>
-                <p className="font-semibold text-sm text-gray-900">{lansia.nama}</p>
-                <p className="text-sm leading-relaxed text-gray-500">{lansia.alamat}</p>
+                <p className="font-semibold text-sm text-gray-900">{privacy.lansia_nama}</p>
+                <p className="text-sm leading-relaxed text-gray-500">{privacy.lansia_alamat}</p>
               </div>
             </div>
           </div>
@@ -128,7 +134,7 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
           <Map className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" aria-hidden="true" />
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Lokasi tugas</p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-700">{lansia.alamat}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-700">{privacy.lansia_alamat}</p>
           </div>
         </div>
 
@@ -137,8 +143,8 @@ export default async function DetailPekerjaanPage({ params }: PageProps) {
             <ShieldAlert className="h-6 w-6 shrink-0 text-blue-600" aria-hidden="true" />
             <div className="space-y-2 text-sm">
               <p className="font-bold">Catatan dari keluarga</p>
-              <p>{task.catatan || "Tidak ada catatan tambahan dari keluarga."}</p>
-              <p className="border-t border-blue-200 pt-2">Kondisi lansia: {lansia.catatan_kondisi || "Tidak ada catatan kondisi khusus."}</p>
+              <p>{privacy.catatan_tugas || "Detail catatan tersedia setelah tugas diterima."}</p>
+              <p className="border-t border-blue-200 pt-2">Kondisi lansia: {privacy.catatan_kondisi || "Detail kondisi tersedia setelah tugas diterima."}</p>
             </div>
           </div>
         </div>

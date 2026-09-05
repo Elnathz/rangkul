@@ -12,7 +12,8 @@ import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useOfflineEvidence } from "@/hooks/use-offline-evidence";
-import type { OfflineEvidenceDraft } from "@/lib/offline/evidence-store";
+import { saveEvidenceDraft, type OfflineEvidenceDraft } from "@/lib/offline/evidence-store";
+import { createClient } from "@/lib/supabase/client";
 
 type TaskSummary = {
   id: string;
@@ -42,11 +43,11 @@ export default function LaporanHelperPage() {
   const [photo, setPhoto] = React.useState<File | null>(null);
   const [form, setForm] = React.useState({
     catatan_kondisi: "",
-    skor_energi: 3,
-    skor_mobilitas: 3,
-    skor_mood: 3,
-    skor_nafsu_makan: 3,
-    skor_tidur: 3,
+    skor_energi: null as number | null,
+    skor_mobilitas: null as number | null,
+    skor_mood: null as number | null,
+    skor_nafsu_makan: null as number | null,
+    skor_tidur: null as number | null,
     cerita_hari_ini: "",
   });
   const [feedback, setFeedback] = React.useState<{ title: string; description: string; tone: "danger" | "info" } | null>(null);
@@ -63,7 +64,7 @@ export default function LaporanHelperPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        foto_bukti_url: uploadPayload.url,
+        foto_bukti_url: uploadPayload.path || uploadPayload.url,
         catatan_kondisi: draft.catatan_kondisi,
         skor_energi: draft.skor_energi,
         skor_mobilitas: draft.skor_mobilitas,
@@ -78,7 +79,16 @@ export default function LaporanHelperPage() {
     if (!reportResponse.ok) throw new Error(reportPayload.message || "Laporan belum dapat disimpan");
   }, [taskId]);
 
-  const { draft, isOnline, isLoading: isDraftLoading, syncError, save: saveDraft, sync } = useOfflineEvidence(taskId, syncDraft);
+  const [userId, setUserId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  const { draft, isOnline, isLoading: isDraftLoading, syncError, save: saveDraft, sync } = useOfflineEvidence(taskId, userId, syncDraft);
 
   React.useEffect(() => {
     let active = true;
@@ -97,7 +107,6 @@ export default function LaporanHelperPage() {
 
   React.useEffect(() => {
     if (!draft || isDraftLoading) return;
-    // Hydration ini membaca snapshot eksternal yang sudah selesai dimuat dari IndexedDB.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       catatan_kondisi: draft.catatan_kondisi,
@@ -113,37 +122,86 @@ export default function LaporanHelperPage() {
 
   const updateScore = (key: ScoreKey, value: number) => setForm((current) => ({ ...current, [key]: value }));
 
+  const areScoresChosen =
+    form.skor_energi !== null &&
+    form.skor_mobilitas !== null &&
+    form.skor_mood !== null &&
+    form.skor_nafsu_makan !== null &&
+    form.skor_tidur !== null;
+
+  const buildDraft = React.useCallback((status: OfflineEvidenceDraft["status"]): OfflineEvidenceDraft => ({
+    id: draft?.id ?? crypto.randomUUID(),
+    owner_user_id: userId,
+    task_id: taskId,
+    client_submission_id: draft?.client_submission_id ?? crypto.randomUUID(),
+    photo: photo as Blob,
+    lansia_nama: task?.lansia_profiles?.nama ?? undefined,
+    kategori_nama: task?.service_categories?.nama ?? undefined,
+    ...form,
+    status,
+    retry_count: draft?.retry_count ?? 0,
+    last_error: null,
+    created_at: draft?.created_at ?? new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }), [draft, userId, taskId, photo, task, form]);
+
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    if (!photo || !userId || !areScoresChosen) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void saveEvidenceDraft(buildDraft("draft")).catch(() => undefined);
+    }, 800);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [form, photo, userId, areScoresChosen, buildDraft]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!photo) {
-      setFeedback({ title: "Foto bukti belum dipilih", description: "Tambahkan foto kunjungan sebelum mengirim laporan.", tone: "info" });
+      setFeedback({ title: "Foto bukti belum dipilih", description: "Tambahkan foto kunjungan sebelum mengirim laporan.", tone: "danger" });
       return;
     }
 
-    const draftPayload = (): OfflineEvidenceDraft => ({
-      id: draft?.id ?? crypto.randomUUID(),
-      task_id: taskId,
-      client_submission_id: draft?.client_submission_id ?? crypto.randomUUID(),
-      photo,
-      ...form,
-      status: "pending_sync",
-      retry_count: draft?.retry_count ?? 0,
-      error_message: null,
-      updated_at: new Date().toISOString(),
-    });
+    if (form.catatan_kondisi.trim().length < 10) {
+      setFeedback({
+        title: "Catatan kondisi belum lengkap",
+        description: `Catatan kondisi lansia wajib diisi minimal 10 karakter (saat ini: ${form.catatan_kondisi.trim().length} karakter).`,
+        tone: "danger",
+      });
+      return;
+    }
+
+    if (form.cerita_hari_ini.trim().length < 10) {
+      setFeedback({
+        title: "Memory Capsule belum lengkap",
+        description: `Cerita Hari Ini (Memory Capsule) wajib diisi minimal 10 karakter untuk dibagikan ke keluarga (saat ini: ${form.cerita_hari_ini.trim().length} karakter).`,
+        tone: "danger",
+      });
+      return;
+    }
+    if (!areScoresChosen) {
+      setFeedback({ title: "Penilaian belum lengkap", description: "Pilih kelima penilaian kondisi lansia sebelum mengirim laporan.", tone: "info" });
+      return;
+    }
 
     if (!navigator.onLine) {
-      await saveDraft(draftPayload());
+      await saveDraft(buildDraft("pending_sync"));
       setFeedback({ title: "Draf tersimpan", description: "Laporan disimpan di perangkat dan akan dikirim otomatis saat koneksi kembali.", tone: "info" });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await sync(draftPayload());
-      router.push(`/tugas/${taskId}`);
+      const sent = await sync(buildDraft("pending_sync"));
+      if (sent) {
+        router.push(`/tugas/${taskId}`);
+        return;
+      }
+      setFeedback({ title: "Laporan belum terkirim", description: "Periksa koneksi lalu coba lagi dari daftar draf.", tone: "danger" });
     } catch (error: unknown) {
-      await saveDraft(draftPayload());
+      await saveDraft(buildDraft("pending_sync"));
       setFeedback({ title: "Laporan belum terkirim", description: error instanceof Error ? error.message : "Periksa koneksi lalu coba lagi.", tone: "danger" });
     } finally {
       setIsSubmitting(false);
@@ -194,8 +252,13 @@ export default function LaporanHelperPage() {
                   <input id="foto-bukti" type="file" accept="image/jpeg,image/png" className="sr-only" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} required />
                 </label>
                 <div className="space-y-2">
-                  <Label htmlFor="catatan-kondisi">Catatan kondisi lansia</Label>
-                  <Textarea id="catatan-kondisi" value={form.catatan_kondisi} onChange={(event) => setForm((current) => ({ ...current, catatan_kondisi: event.target.value }))} placeholder="Jelaskan kondisi, aktivitas, dan hal penting selama kunjungan." minLength={10} required rows={5} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="catatan-kondisi">Catatan kondisi lansia <span className="text-red-500">*</span></Label>
+                    <span className={`text-xs font-semibold ${form.catatan_kondisi.trim().length >= 10 ? "text-emerald-600" : "text-amber-600"}`}>
+                      {form.catatan_kondisi.trim().length}/2000 karakter (min. 10)
+                    </span>
+                  </div>
+                  <Textarea id="catatan-kondisi" value={form.catatan_kondisi} onChange={(event) => setForm((current) => ({ ...current, catatan_kondisi: event.target.value }))} placeholder="Jelaskan kondisi fisik, keaktifan, dan hal penting selama kunjungan (minimal 10 karakter)." minLength={10} required rows={5} />
                 </div>
               </CardContent>
             </Card>
@@ -210,7 +273,7 @@ export default function LaporanHelperPage() {
               <CardContent className="space-y-4 p-6">
                 {scoreLabels.map(({ key, label }) => (
                   <fieldset key={key} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <legend className="px-1 text-sm font-bold text-slate-900">{label}: {form[key]} / 5</legend>
+                    <legend className="px-1 text-sm font-bold text-slate-900">{label}: {form[key] === null ? "belum dipilih" : `${form[key]} / 5`}</legend>
                     <div className="grid grid-cols-5 gap-2">
                       {[1, 2, 3, 4, 5].map((value) => (
                         <button key={value} type="button" aria-pressed={form[key] === value} onClick={() => updateScore(key, value)} className={`min-h-11 rounded-xl text-sm font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] ${form[key] === value ? "bg-[#0D47A1] text-white shadow-sm" : "border border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-[#0D47A1]"}`}>{value}</button>
@@ -219,15 +282,25 @@ export default function LaporanHelperPage() {
                   </fieldset>
                 ))}
                 <div className="space-y-2 pt-2">
-                  <Label htmlFor="cerita-hari-ini" className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#0D47A1]" />Memory Capsule</Label>
-                  <Textarea id="cerita-hari-ini" value={form.cerita_hari_ini} onChange={(event) => setForm((current) => ({ ...current, cerita_hari_ini: event.target.value }))} placeholder="Tuliskan momen atau cerita yang ingin dibaca keluarga." rows={4} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="cerita-hari-ini" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-[#0D47A1]" />Memory Capsule (Cerita Hari Ini) <span className="text-red-500">*</span>
+                    </Label>
+                    <span className={`text-xs font-semibold ${form.cerita_hari_ini.trim().length >= 10 ? "text-emerald-600" : "text-amber-600"}`}>
+                      {form.cerita_hari_ini.trim().length}/2000 karakter (min. 10)
+                    </span>
+                  </div>
+                  <Textarea id="cerita-hari-ini" value={form.cerita_hari_ini} onChange={(event) => setForm((current) => ({ ...current, cerita_hari_ini: event.target.value }))} placeholder="Tuliskan momen manis, percakapan, atau cerita berharga hari ini untuk dibaca keluarga (minimal 10 karakter)." minLength={10} required rows={4} />
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-slate-100 bg-slate-50 p-6">
-                <Button type="submit" className="min-h-12 w-full rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800" disabled={isSubmitting}>
+              <CardFooter className="block border-t border-slate-100 bg-slate-50 p-6">
+                <Button type="submit" className="min-h-12 w-full rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800" disabled={isSubmitting || !areScoresChosen || form.cerita_hari_ini.trim().length < 10}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSubmitting ? "Mengirim laporan..." : "Kirim laporan kunjungan"}
                 </Button>
+                {(!areScoresChosen || form.cerita_hari_ini.trim().length < 10) && (
+                  <p className="mt-3 w-full text-center text-xs font-semibold text-amber-700">Lengkapi kelima penilaian dan Cerita Hari Ini (minimal 10 karakter) sebelum mengirim laporan.</p>
+                )}
               </CardFooter>
             </Card>
           </motion.div>

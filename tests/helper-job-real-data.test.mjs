@@ -22,3 +22,9 @@ test("job board dan detail tidak memakai mock atau gambar random", () => {
   assert.match(jobBoard, /\.from\("tasks"\)/);
   assert.match(detailPage, /\.from\("tasks"\)/);
 });
+
+test("Mas Burgas tersedia di katalog dan tetap verified pada rerun seed", () => {
+  const coreSeed = seed.slice(seed.indexOf("SELECT id INTO core_helper_user_id"));
+  assert.match(coreSeed, /core_helper_user_id[\s\S]*is_available = TRUE/);
+  assert.match(coreSeed, /core_helper_user_id[\s\S]*status = 'verified'/);
+});

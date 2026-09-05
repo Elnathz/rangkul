@@ -101,10 +101,12 @@ export function ImagePreviewModal({
             variant="outline"
             size="sm"
             className="border-slate-200 bg-white text-[#0D47A1] hover:border-blue-200 hover:bg-blue-50 hover:text-[#0D47A1] focus-visible:ring-[#0D47A1]/30"
-            render={<a href={src} target="_blank" rel="noreferrer" />}
+            asChild
           >
-            <ExternalLink />
-            Buka tab baru
+            <a href={src} target="_blank" rel="noreferrer">
+              <ExternalLink />
+              Buka tab baru
+            </a>
           </Button>
         </div>
       </DialogContent>

@@ -2,8 +2,20 @@ import { createClient } from '@/lib/supabase/server';
 import { koordinatorRejectSchema } from '@/lib/validations/koordinator';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { writeAuditLog } from '@/lib/audit';
+import {
+  KoordinatorReviewError,
+  reviewKoordinatorStatus,
+} from '@/lib/admin/koordinator-review';
 
-// PUT /api/admin/koordinator/[id]/reject — Admin reject Koordinator
+function reviewErrorResponse(error: unknown) {
+  if (error instanceof KoordinatorReviewError) {
+    const message = error.status === 500 ? 'Gagal menolak koordinator' : error.message;
+    return createApiError(error.code, message, error.status);
+  }
+  return null;
+}
+
+// PUT /api/admin/koordinator/[id]/reject — alias ke canonical review status
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -28,21 +40,7 @@ export async function PUT(
 
     const { id: koordinatorId } = await params;
 
-    const { data: koordProfile, error: koordError } = await supabase
-      .from('koordinator_profiles')
-      .select('id, status')
-      .eq('id', koordinatorId)
-      .single();
-
-    if (koordError || !koordProfile) {
-      return createApiError('not_found', 'Profil koordinator tidak ditemukan', 404);
-    }
-
-    if (koordProfile.status !== 'pending_verification') {
-      return createApiError('conflict', `Koordinator sudah berstatus: ${koordProfile.status}`, 409);
-    }
-
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const validation = koordinatorRejectSchema.safeParse(body);
 
     if (!validation.success) {
@@ -52,32 +50,28 @@ export async function PUT(
           message: 'Data input tidak valid',
           fieldErrors: validation.error.flatten().fieldErrors,
         },
-        400
+        422
       );
     }
 
-    const { error: updateError } = await supabase
-      .from('koordinator_profiles')
-      .update({
-        status: 'rejected',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', koordinatorId);
-
-    if (updateError) {
-      return createApiError('server_error', updateError.message, 500);
-    }
+    await reviewKoordinatorStatus(supabase, koordinatorId, user.id, {
+      status: 'rejected',
+      alasan: validation.data.alasan,
+    });
 
     await writeAuditLog({
       actor_id: user.id,
       action: 'koordinator_rejected',
       entity_type: 'koordinator_profiles',
       entity_id: koordinatorId,
-      metadata: { alasan: validation.data.alasan } as import('@/types/database').Json,
+      metadata: {
+        alasan: validation.data.alasan,
+        foto_url: validation.data.foto_url ?? null,
+      } as import('@/types/database').Json,
     });
 
     return apiResponse({ message: 'Koordinator berhasil ditolak. Dapat mengajukan ulang.' }, 200);
   } catch (error: unknown) {
-    return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
+    return reviewErrorResponse(error) ?? createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }
 }
