@@ -23,9 +23,10 @@
 | Runtime repeatability | Lulus | Lima runtime test Sprint 6 dijalankan dua kali berturut-turut tanpa reseed manual dan keduanya lulus 5/5. Hook suite memulihkan fixture shared sebelum dan sesudah test agar race, withdraw, dan selection tidak mencemari run berikutnya. |
 | Entry booking Sprint 6 | Lulus lokal | Browser dengan flag lokal aktif hanya menampilkan `Pilih dari Pelamar` dan `Cari Cepat`. `Booking Biasa` tidak lagi dapat membuat task langsung tanpa Helper. Request HTTP sesi Keluarga mengembalikan `422` sesuai TDD untuk mode langsung tanpa `helper_id` dan mode pelamar dengan `helper_id`, sebelum insert. |
 | Feature flag deployment | Fail-closed | Pemeriksaan read-only Vercel menunjukkan `SPRINT6_MATCHING_ENABLED` tidak disetel pada Production maupun Preview, sehingga implementasi default-off berlaku. `.env.local` aktif hanya untuk QA lokal. |
+| Preview fail-closed smoke | Lulus | Vercel deployment PR #31 berhasil. Landing publik dapat dibuka, login persona Keluarga berhasil, lalu `/booking/new` mengalihkan ke `/cari-helper` saat flag preview belum aktif. Halaman tujuan tidak mengalami horizontal overflow. |
 | Cloud demo reseed | Lulus | Target project diverifikasi dari link Supabase, lalu `npm run seed:cloud` menyelesaikan SQL dan sinkronisasi empat asset demo privat. |
 | Dependency clean install | Lulus di CI | Runner bersih pada run `33956280100` menjalankan `npm ci` dan seluruh quality gate dengan sukses untuk SHA `8749e29`. Host lokal hanya memiliki sekitar 0,11 GB ruang kosong sehingga percobaan lokal berhenti dengan `ENOSPC`; ini keterbatasan host, bukan kegagalan lockfile kandidat. |
-| CI baseline remote | Lulus | `HEAD` `8749e29` sama dengan `origin/dev-eln`. Workflow `CI Quality Gates` run `33956280100` selesai sukses. Perubahan validasi dan entry booking Sprint 6 setelah audit browser masih lokal, sehingga perlu CI baru setelah commit dan push yang disetujui. |
+| CI kandidat Sprint 6 | Lulus | PR #31 dari `dev-eln` ke `develop` berstatus mergeable. Workflow `CI Quality Gates` run `33961137858` menyelesaikan clean install, lint, typecheck, test, dan build untuk SHA `33c11e3`. Vercel preview juga berstatus sukses. |
 
 ## Hasil verifikasi Sprint 6
 
@@ -48,10 +49,10 @@
 ## Bloker release dan tindakan selanjutnya
 
 1. Simpan screenshot terbaru, uji zoom 200 persen, dan tuntaskan state error, conflict, retry, serta keyboard path yang belum memiliki evidence browser. Forbidden route dan API sudah memiliki evidence HTTP empat role.
-2. Commit dan push koreksi booking serta pembaruan evidence setelah disetujui agar CI berjalan pada source terbaru. Baseline `8749e29` hijau, tetapi belum memuat koreksi lokal ini.
-3. Biarkan `SPRINT6_MATCHING_ENABLED` tetap `false` di production. Aktifkan hanya pada preview untuk dry run setelah gate browser lulus.
-4. Production tidak boleh menerima flag `true` sebelum preview dry run dan smoke production semua role berhasil serta hasilnya ditambahkan ke audit ini.
+2. Review dan merge PR #31 hanya jika check pada HEAD terbaru tetap hijau.
+3. Biarkan `SPRINT6_MATCHING_ENABLED` tetap `false` di production. Aktifkan hanya pada preview untuk dry run mode `pelamar` dan `cepat` setelah gate browser lulus.
+4. Production tidak boleh menerima flag `true` sebelum preview flag-on dry run dan smoke production semua role berhasil serta hasilnya ditambahkan ke audit ini.
 
 ## Keputusan saat ini
 
-**No-go untuk aktivasi production Sprint 6.** Implementasi, clean install CI, runtime cloud, reseed, dan browser authenticated sudah kuat, tetapi visual edge-state evidence, preview dry run, serta smoke production belum lengkap. Memaksa flag aktif hari ini akan mengabaikan gate yang sudah ditentukan sendiri.
+**No-go untuk aktivasi production Sprint 6.** Implementasi, clean install CI, runtime cloud, reseed, browser authenticated, dan preview fail-closed sudah kuat, tetapi visual edge-state evidence, preview flag-on dry run, serta smoke production belum lengkap. Memaksa flag aktif hari ini akan mengabaikan gate yang sudah ditentukan sendiri.
