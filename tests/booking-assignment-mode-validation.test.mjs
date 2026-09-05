@@ -51,3 +51,13 @@ test("query mode dari katalog menentukan mode awal formulir booking", () => {
   assert.match(client, /initialMode\?: Mode/);
   assert.match(client, /useState<Mode>\(initialMode\)/);
 });
+
+test("CTA mode Sprint 6 di katalog mengikuti feature flag server", () => {
+  const catalogRoute = readFileSync("src/app/api/helpers/route.ts", "utf8");
+  const catalogPage = readFileSync("src/app/(keluarga)/cari-helper/page.tsx", "utf8");
+
+  assert.match(catalogRoute, /isSprint6MatchingEnabled/);
+  assert.match(catalogRoute, /matching_enabled:\s*isSprint6MatchingEnabled\(\)/);
+  assert.match(catalogPage, /setMatchingEnabled\(Boolean\(body\.matching_enabled\)\)/);
+  assert.match(catalogPage, /matchingEnabled\s*&&\s*\(/);
+});

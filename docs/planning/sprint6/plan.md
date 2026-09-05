@@ -22,7 +22,7 @@ Bagian ini adalah catatan eksekusi, bukan pengganti checklist rencana di bawah. 
 - [x] CLI `browser-use` tidak tersedia pada host ini, tetapi browser in-app yang dapat dikendalikan dipakai untuk QA landing publik. Pada 375px, 768px, 1024px, dan 1440px tidak ada horizontal overflow setelah hero dikunci ke satu kolom mobile. Tautan footer pendek juga memiliki hit area minimal 44px.
 - [x] Walkthrough browser authenticated memakai empat persona demo. Keluarga, Helper, Koordinator, dan Admin diarahkan ke dashboard yang benar dan lulus overflow pada 375px, 768px, 1024px, serta 1440px. Conflict, forbidden, zoom, dan screenshot tersimpan tetap menjadi gate terpisah.
 - [x] Runtime RLS baseline lulus setelah policy Helper publik yang bocor ditutup. Runtime Sprint 6 juga lulus untuk projection marketplace tereduksi, RLS lamaran, apply-withdraw, pemilihan pelamar atomik, race Cari Cepat, dan expiry lamaran.
-- [x] Gate source dan runtime terbaru: verifikasi lokal menghasilkan lint 0 error dengan 63 warning non-blocking, typecheck lulus, 274/288 test source lulus dengan 14 runtime skip, 288/288 test cloud lulus tanpa skip, production build 91 halaman, dan `git diff --check` lulus. Runner CI PR #31 pada SHA `33c11e3` menyelesaikan `npm ci`, lint, typecheck, test, dan build. `npm ci` lokal hanya terhambat kapasitas host sekitar 0,11 GB.
+- [x] Gate source dan runtime terbaru setelah sinkronisasi `develop`: `npm ci` lokal lulus, lint 0 error dengan 54 warning non-blocking, typecheck lulus, 281/295 test source lulus dengan 14 runtime skip, 295/295 test cloud lulus tanpa skip, dan production build menghasilkan 96 route. Check PR #31 pada HEAD baru tetap harus dikonfirmasi setelah push.
 - [x] Reseed cloud setelah matrix runtime berhasil. Target ref diambil dari project Supabase yang tertaut hanya untuk proses tersebut, diverifikasi oleh script, lalu SQL dan empat asset demo privat tersinkron.
 - [ ] Empat viewport authenticated sudah memiliki evidence browser. Feature-flag preview dry run, zoom 200 persen, screenshot tersimpan, dan smoke production masih belum memiliki evidence, sehingga Sprint 6 belum release-ready.
 
@@ -69,6 +69,16 @@ Temuan akar masalah: proxy hanya menandai prefix `/admin`, `/koordinator`, `/hel
 - [x] Entry `/booking/new` tidak lagi menawarkan atau membuat booking langsung tanpa Helper. Ketika flag mati halaman kembali ke katalog Helper; ketika flag aktif dropdown hanya menawarkan `Pilih dari Pelamar` dan `Cari Cepat`. Schema server mewajibkan `helper_id` untuk mode langsung dan melarangnya pada dua mode marketplace.
 
 Blocker ini harus hijau sebelum feature flag Sprint 6 dapat dipertimbangkan aktif. Menyembunyikan navigasi tanpa menutup URL dan endpoint langsung tidak memenuhi gate keamanan TDD §8 dan §16.
+
+## Amendemen audit Koordinator wilayah dan feature flag katalog, 5 September 2026
+
+- [x] `GET /api/koordinator/by-region` memeriksa role Helper di handler sebelum memakai admin client. Endpoint tidak lagi bergantung pada proxy sebagai satu-satunya boundary.
+- [x] Kandidat Koordinator memakai wilayah canonical. Koordinator RT yang persis sama diprioritaskan, sedangkan Koordinator RW hanya dikembalikan bila Koordinator RT tidak tersedia.
+- [x] `POST /api/helper/apply` menghitung ulang eligibility Koordinator. `koordinator_id` lintas RT/RW ditolak `422` sebelum profil Helper diubah.
+- [x] Browser hanya menerima nama, tingkat, dan label wilayah Koordinator. Nomor telepon serta field lokasi terstruktur tidak ikut dikirim.
+- [x] Katalog Keluarga membaca `matching_enabled` dari respons server. Dropdown mode, CTA Lowongan, dan CTA Cari Cepat tidak dirender ketika `SPRINT6_MATCHING_ENABLED` nonaktif, sehingga redirect fail-closed tidak membentuk dead end.
+- [x] OpenAPI diperbarui agar role, nama parameter katalog, kontrak feature flag, dan endpoint pencarian Koordinator sama dengan kode.
+- [x] Unit test membuktikan prioritas RT, fallback RW, penolakan Koordinator salah wilayah, dan gating CTA. Matrix runtime cloud lulus 295/295 tanpa skip.
 
 ## Global Constraints
 

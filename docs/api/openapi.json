@@ -266,6 +266,83 @@
         }
       }
     },
+    "/api/koordinator/by-region": {
+      "get": {
+        "tags": [
+          "Koordinator"
+        ],
+        "summary": "Koordinator terverifikasi yang berwenang memverifikasi domisili Helper",
+        "x-rangkul-roles": [
+          "helper"
+        ],
+        "parameters": [
+          {
+            "name": "kelurahan",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kecamatan",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kota",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinsi",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "rw",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Koordinator RT persis, atau Koordinator RW setempat hanya bila Koordinator RT tidak tersedia"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
     "/api/helpers": {
       "get": {
         "tags": [
@@ -273,21 +350,18 @@
         ],
         "summary": "Katalog Helper terverifikasi dengan filter radius dan kategori",
         "x-rangkul-roles": [
-          "keluarga",
-          "helper",
-          "koordinator",
-          "admin"
+          "keluarga"
         ],
         "parameters": [
           {
-            "name": "wilayah",
+            "name": "q",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "kategori",
+            "name": "category_id",
             "in": "query",
             "schema": {
               "type": "string",
@@ -295,16 +369,78 @@
             }
           },
           {
-            "name": "radius",
+            "name": "radius_km",
             "in": "query",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tingkat",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ringan",
+                "sedang",
+                "berat"
+              ]
+            }
+          },
+          {
+            "name": "jadwal_waktu",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Daftar Helper terverifikasi yang melayani wilayah target"
+            "description": "Daftar Helper terverifikasi yang melayani wilayah target dan status feature flag matching Sprint 6",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "matching_enabled",
+                    "total",
+                    "helpers"
+                  ],
+                  "properties": {
+                    "matching_enabled": {
+                      "type": "boolean"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "helpers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"

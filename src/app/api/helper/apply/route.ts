@@ -1,6 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { helperProfileSchema } from '@/lib/validations/helper';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import {
+  validateSelectedCoordinator,
+  type CoordinatorCandidate,
+} from '@/lib/coordinator-region';
 import type { Database } from '@/types/database';
 
 // POST /api/helper/apply — Helper mendaftar untuk verifikasi
@@ -60,6 +64,50 @@ export async function POST(request: Request) {
 
     const { bio, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, ktp_url, foto_wajah_url, kategori_ids, provinsi, kabupaten_kota, kecamatan, kelurahan, rt, rw, koordinator_id } =
       validation.data;
+
+    if (koordinator_id) {
+      const admin = await createAdminClient();
+      const { data: coordinators, error: coordinatorError } = await admin
+        .from('koordinator_profiles')
+        .select(`
+          id,
+          wilayah,
+          tingkat,
+          users!koordinator_profiles_user_id_fkey!inner(
+            full_name,
+            kelurahan,
+            kecamatan,
+            kabupaten_kota,
+            provinsi,
+            rt,
+            rw
+          )
+        `)
+        .eq('status', 'verified')
+        .ilike('users.kelurahan', kelurahan)
+        .ilike('users.kecamatan', kecamatan)
+        .ilike('users.kabupaten_kota', kabupaten_kota)
+        .ilike('users.provinsi', provinsi)
+        .eq('users.rw', rw);
+
+      if (coordinatorError) {
+        return createApiError('server_error', 'Gagal memvalidasi Koordinator wilayah', 500);
+      }
+
+      const isValidCoordinator = validateSelectedCoordinator(
+        (coordinators ?? []) as unknown as CoordinatorCandidate[],
+        { kelurahan, kecamatan, kabupaten_kota, provinsi, rt, rw },
+        koordinator_id,
+      );
+
+      if (!isValidCoordinator) {
+        return createApiError(
+          'validation_error',
+          'Koordinator pilihan tidak sesuai dengan RT/RW domisili Helper',
+          422,
+        );
+      }
+    }
 
     // Update tabel users untuk mengisi lokasi granular
     const { error: userUpdateError } = await supabase

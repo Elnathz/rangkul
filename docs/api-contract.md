@@ -106,7 +106,8 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 ## Katalog, kategori, dan Riwayat Rangkul
 
 - `GET /api/categories` mengembalikan kategori leaf aktif beserta `tingkat`, `harga_dasar`, `is_high_risk`, dan batas jarak jika ada.
-- `GET /api/helpers` menghitung `jarak_km` di server dari koordinat lansia ke domisili Helper, lalu menerapkan radius layanan. Client tidak berwenang menentukan jarak atau harga akhir.
+- `GET /api/helpers` menghitung `jarak_km` di server dari koordinat lansia ke domisili Helper, lalu menerapkan radius layanan. Client tidak berwenang menentukan jarak atau harga akhir. Respons juga mengembalikan `matching_enabled` agar UI hanya menampilkan mode penugasan Sprint 6 ketika feature flag server aktif.
+- `GET /api/koordinator/by-region` hanya dapat dipanggil Helper. Server mengembalikan Koordinator terverifikasi dari RT yang persis sama. Koordinator RW setempat baru menjadi fallback ketika Koordinator RT tidak tersedia. Nomor telepon dan data pribadi Koordinator tidak dikirim ke browser.
 - `GET /api/lansia/:id/riwayat` hanya dapat dibaca Keluarga pemilik dan mengembalikan kunjungan selesai, foto bukti, catatan kondisi, Health Snapshot, Cerita Hari Ini, serta tren rule-based.
 - `POST /api/helpers/profile/photo` menerima `foto_wajah_url` dari Helper dan membuat pengajuan foto berstatus `pending`. Foto publik lama tetap dipakai sampai Koordinator menyetujui perubahan.
 - `PATCH /api/helpers/profile/photo/approve` menerima `request_id` dan hanya dapat dipanggil Koordinator terverifikasi yang menaungi Helper tersebut. Proses memakai conditional update dan mengembalikan `409` bila pengajuan sudah diproses.

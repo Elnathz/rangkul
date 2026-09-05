@@ -38,6 +38,7 @@ export default function CariHelperPage() {
   const [jadwalWaktu, setJadwalWaktu] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matchingEnabled, setMatchingEnabled] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -72,6 +73,7 @@ export default function CariHelperPage() {
         const body = await response.json();
         if (!response.ok) throw new Error(body.message || "Katalog Helper tidak dapat dimuat.");
         setHelpers(body.helpers ?? body.data?.helpers ?? []);
+        setMatchingEnabled(Boolean(body.matching_enabled));
         setError(null);
       } catch (reason: unknown) {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
@@ -207,11 +209,12 @@ export default function CariHelperPage() {
               </div>
             </div>
 
-            {/* Toggle Ganti Mode Penugasan di sebelah filter search bar */}
-            <div className="flex min-h-11 items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-              <span className="sr-only">Mode Penugasan</span>
-              <CatalogModeSwitcher />
-            </div>
+            {matchingEnabled && (
+              <div className="flex min-h-11 items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                <span className="sr-only">Mode Penugasan</span>
+                <CatalogModeSwitcher />
+              </div>
+            )}
           </div>
 
           {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
@@ -226,32 +229,38 @@ export default function CariHelperPage() {
                 Tidak ada Helper yang sesuai filter saat ini
               </h2>
               <p className="mx-auto mt-2 max-w-lg text-xs sm:text-sm leading-relaxed text-slate-600">
-                Belum menemukan Helper langsung di sekitar lansia? Anda tidak perlu menunggu. Buka lowongan agar Helper di sekitar mengajukan diri, atau gunakan pencarian cepat 15 menit.
+                {matchingEnabled
+                  ? "Belum menemukan Helper langsung di sekitar lansia? Buka lowongan agar Helper di sekitar dapat mengajukan diri, atau gunakan pencarian cepat 15 menit."
+                  : "Coba ubah jadwal, perluas radius pencarian, atau pilih kategori layanan lain."}
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 max-w-xl mx-auto">
-                <Link
-                  href="/booking/new?mode=pelamar"
-                  className="group flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-violet-200 bg-violet-50/50 p-4 text-center transition hover:border-violet-500 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 min-h-[56px]"
-                >
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700">Rekomendasi Utama</span>
-                  <span className="text-sm font-black text-slate-900 group-hover:text-violet-900">Buka Lowongan (Pilih dari Pelamar)</span>
-                  <span className="text-xs text-slate-500">Helper di sekitar akan melamar untuk Anda pilih</span>
-                </Link>
+              {matchingEnabled && (
+                <div className="mx-auto mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/booking/new?mode=pelamar"
+                    className="group flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-violet-200 bg-violet-50/50 p-4 text-center transition hover:border-violet-500 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700">Rekomendasi Utama</span>
+                    <span className="text-sm font-black text-slate-900 group-hover:text-violet-900">Buka Lowongan</span>
+                    <span className="text-xs text-slate-500">Helper di sekitar akan melamar untuk Anda pilih</span>
+                  </Link>
 
-                <Link
-                  href="/booking/new?mode=cepat"
-                  className="group flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 text-center transition hover:border-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 min-h-[56px]"
-                >
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Kebutuhan Hari Ini</span>
-                  <span className="text-sm font-black text-slate-900 group-hover:text-amber-900">Cari Cepat 15 Menit</span>
-                  <span className="text-xs text-slate-500">Sistem otomatis mencocokkan ke Helper aktif</span>
-                </Link>
-              </div>
+                  <Link
+                    href="/booking/new?mode=cepat"
+                    className="group flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 text-center transition hover:border-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Kebutuhan Hari Ini</span>
+                    <span className="text-sm font-black text-slate-900 group-hover:text-amber-900">Cari Cepat 15 Menit</span>
+                    <span className="text-xs text-slate-500">Rangkul mencarikan Helper aktif untuk Anda</span>
+                  </Link>
+                </div>
+              )}
 
-              <p className="mt-5 text-xs text-slate-400">
-                Atau coba ubah filter jadwal, perluas radius pencarian, atau pilih kategori lain di panel filter.
-              </p>
+              {matchingEnabled && (
+                <p className="mt-5 text-xs text-slate-400">
+                  Anda juga dapat mengubah filter jadwal, radius pencarian, atau kategori layanan.
+                </p>
+              )}
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

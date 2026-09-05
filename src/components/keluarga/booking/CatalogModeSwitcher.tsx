@@ -8,6 +8,7 @@ export default function CatalogModeSwitcher() {
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
 
   // Close when clicked outside
   React.useEffect(() => {
@@ -22,6 +23,7 @@ export default function CatalogModeSwitcher() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsOpen(false);
+        triggerRef.current?.focus();
       }
     }
     if (isOpen) {
@@ -38,29 +40,31 @@ export default function CatalogModeSwitcher() {
     <div className="relative" ref={containerRef}>
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
-        className={`flex min-h-[42px] items-center gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm font-bold shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 ${
+        className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm font-bold shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 ${
           isOpen
             ? "border-[#0D47A1] bg-blue-100/90 text-[#0D47A1] ring-1 ring-[#0D47A1]/20"
             : "border-blue-200/90 bg-blue-50/80 text-[#0D47A1] hover:bg-blue-100/70 hover:border-blue-300"
         }`}
       >
-        <UserCheck className="size-4 shrink-0 text-[#0D47A1]" />
+        <UserCheck className="size-4 shrink-0 text-[#0D47A1]" aria-hidden="true" />
         <span className="truncate">Mode: Pilih Langsung</span>
         <ChevronDown
           className={`size-3.5 shrink-0 text-[#0D47A1] transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
+          aria-hidden="true"
         />
       </button>
 
       {/* Popover Menu */}
       {isOpen && (
         <div
-          role="listbox"
+          role="menu"
           className="absolute left-0 sm:left-auto sm:right-0 top-full z-50 mt-1.5 w-[280px] sm:w-[320px] max-w-[calc(100vw-32px)] rounded-2xl border border-slate-200/90 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in-0 zoom-in-95 duration-150"
         >
           <div className="px-2.5 py-1.5 mb-1 border-b border-slate-100">
@@ -73,14 +77,14 @@ export default function CatalogModeSwitcher() {
             {/* Opsi 1: Pilih Langsung (Aktif) */}
             <button
               type="button"
-              role="option"
-              aria-selected={true}
+              role="menuitem"
+              aria-current="page"
               onClick={() => setIsOpen(false)}
               className="flex min-h-[48px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200/80 bg-blue-50/80 p-2.5 text-left transition"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#0D47A1] text-white">
-                  <UserCheck className="size-4" />
+                  <UserCheck className="size-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -96,14 +100,13 @@ export default function CatalogModeSwitcher() {
                   </p>
                 </div>
               </div>
-              <Check className="size-4 shrink-0 text-[#0D47A1] stroke-[2.5]" />
+              <Check className="size-4 shrink-0 text-[#0D47A1] stroke-[2.5]" aria-hidden="true" />
             </button>
 
             {/* Opsi 2: Beralih ke Pilih dari Pelamar */}
             <button
               type="button"
-              role="option"
-              aria-selected={false}
+              role="menuitem"
               onClick={() => {
                 setIsOpen(false);
                 router.push("/booking/new?mode=pelamar");
@@ -112,7 +115,7 @@ export default function CatalogModeSwitcher() {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 group-hover:bg-violet-200 transition-colors">
-                  <Users className="size-4" />
+                  <Users className="size-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -133,8 +136,7 @@ export default function CatalogModeSwitcher() {
             {/* Opsi 3: Beralih ke Cari Cepat 15 Menit */}
             <button
               type="button"
-              role="option"
-              aria-selected={false}
+              role="menuitem"
               onClick={() => {
                 setIsOpen(false);
                 router.push("/booking/new?mode=cepat");
@@ -143,7 +145,7 @@ export default function CatalogModeSwitcher() {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 group-hover:bg-amber-200 transition-colors">
-                  <Zap className="size-4" />
+                  <Zap className="size-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">

@@ -19,7 +19,6 @@ type KoordinatorOption = {
   tingkat: string;
   users: {
     full_name: string | null;
-    phone: string | null;
   } | null;
 };
 type OwnHelperProfile = {
@@ -69,7 +68,6 @@ export default function HelperVerifikasiPage() {
   const [koordinatorsError, setKoordinatorsError] = useState(false);
   const [koordinatorsRetry, setKoordinatorsRetry] = useState(0);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
-  const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
 
   const tiers = [
@@ -189,7 +187,14 @@ export default function HelperVerifikasiPage() {
   }, []);
 
   useEffect(() => {
-    if (!form.region.kelurahan) {
+    if (
+      !form.region.kelurahan ||
+      !form.region.kecamatan ||
+      !form.region.kota ||
+      !form.region.provinsi ||
+      !form.rt ||
+      !form.rw
+    ) {
       queueMicrotask(() => {
         setKoordinators([]);
         setKoordinatorsError(false);
@@ -208,13 +213,19 @@ export default function HelperVerifikasiPage() {
         if (form.region.kecamatan) params.set('kecamatan', form.region.kecamatan);
         if (form.region.kota) params.set('kota', form.region.kota);
         if (form.region.provinsi) params.set('provinsi', form.region.provinsi);
+        params.set('rt', form.rt);
+        params.set('rw', form.rw);
 
         const response = await fetch(`/api/koordinator/by-region?${params.toString()}`);
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || 'Gagal mencari koordinator');
 
         if (!cancelled) {
-          setKoordinators(result.koordinators ?? []);
+          const nextCoordinators = (result.koordinators ?? []) as KoordinatorOption[];
+          setKoordinators(nextCoordinators);
+          setForm((current) => current.koordinator_id && !nextCoordinators.some((item) => item.id === current.koordinator_id)
+            ? { ...current, koordinator_id: '' }
+            : current);
           setKoordinatorsError(false);
           setKoordinatorsLoading(false);
         }
@@ -231,7 +242,7 @@ export default function HelperVerifikasiPage() {
     return () => {
       cancelled = true;
     };
-  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi, koordinatorsRetry]);
+  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi, form.rt, form.rw, koordinatorsRetry]);
 
   // Helper to toggle by ID
   const toggleKategori = (catId: string) => {
@@ -438,6 +449,7 @@ export default function HelperVerifikasiPage() {
                   setForm(f => ({
                     ...f,
                     region,
+                    koordinator_id: "",
                     ...(coords ? { 
                       domisili_lat: coords.lat, 
                       domisili_lng: coords.lng,
@@ -452,13 +464,13 @@ export default function HelperVerifikasiPage() {
                   <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                     RT <span className="text-red-500">*</span>
                   </Label>
-                  <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl" />
+                  <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value, koordinator_id: "" })} className="rounded-xl" />
                 </div>
                 <div>
                    <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                     RW <span className="text-red-500">*</span>
                   </Label>
-                  <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl" />
+                  <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value, koordinator_id: "" })} className="rounded-xl" />
                 </div>
               </div>
 
@@ -509,7 +521,7 @@ export default function HelperVerifikasiPage() {
                   ) : (
                     <div className="relative">
                       <p className="mb-3 text-sm leading-6 text-blue-800/80">
-                        {koordinators.length} Koordinator tersedia di Kelurahan {form.region.kelurahan}. Memilih Koordinator akan mempercepat verifikasi akun Anda.
+                        {koordinators.length} Koordinator terverifikasi sesuai RT/RW domisili Anda tersedia.
                       </p>
                       <button
                         type="button"
@@ -530,23 +542,6 @@ export default function HelperVerifikasiPage() {
 
                   {showKoordDropdown && koordinators.length > 0 && (
                       <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
-                        <div className="flex border-b border-gray-100">
-                          <button
-                            type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'kelurahan' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
-                            onClick={() => setKoordTab('kelurahan')}
-                          >
-                            Semua (Kel. {form.region.kelurahan})
-                          </button>
-                          <button
-                            type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'rtrw' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
-                            onClick={() => setKoordTab('rtrw')}
-                          >
-                            RT {form.rt || '-'}/RW {form.rw || '-'} Anda
-                          </button>
-                        </div>
-                        
                         <div className="max-h-64 overflow-y-auto">
                            <button 
                              type="button"
@@ -556,19 +551,7 @@ export default function HelperVerifikasiPage() {
                              -- Saya tidak mengetahui Koordinator saya --
                            </button>
                            
-                           {(() => {
-                             const filtered = koordinators.filter(k => {
-                               if (koordTab === 'kelurahan') return true;
-                               return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
-                             });
-                             
-                             if (filtered.length === 0) {
-                               return <div className="p-4 text-center text-sm text-gray-500">Tidak ada koordinator ditemukan di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : 'kelurahan ini'}.</div>
-                             }
-                             
-                             return (
-                               <>
-                                 {filtered.slice(0, 5).map(k => (
+                           {koordinators.slice(0, 5).map(k => (
                                    <button 
                                      key={k.id}
                                      type="button"
@@ -584,26 +567,22 @@ export default function HelperVerifikasiPage() {
                                          {form.koordinator_id === k.id && <svg className="w-4 h-4 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                        </div>
                                        <div className="text-[10px] uppercase font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded w-max mt-0.5 mb-1">{k.tingkat?.replace('_', ' ') || 'Koordinator'}</div>
-                                       <div className="text-xs text-gray-500 line-clamp-1">{k.wilayah.split('|')[1]?.trim()}</div>
-                                       <div className="text-xs text-gray-400 mt-0.5">{k.users?.phone || '-'}</div>
+                                       <div className="mt-1 text-xs text-gray-500 line-clamp-2">{k.wilayah}</div>
                                      </div>
                                    </button>
                                  ))}
                                  
-                                 {filtered.length > 5 && (
+                                 {koordinators.length > 5 && (
                                    <div className="p-2 border-t border-gray-50 bg-white sticky bottom-0">
                                      <button 
                                        type="button" 
                                        className="w-full py-2 bg-gray-50 hover:bg-blue-50 text-[#0D47A1] text-xs font-bold rounded-lg transition-colors border border-gray-100"
                                        onClick={() => { setKoordModalOpen(true); setShowKoordDropdown(false); }}
                                      >
-                                       Lihat Semua Koordinator ({filtered.length})
+                                       Lihat Semua Koordinator ({koordinators.length})
                                      </button>
                                    </div>
                                  )}
-                               </>
-                             );
-                           })()}
                         </div>
                       </div>
                     )}
@@ -979,7 +958,7 @@ export default function HelperVerifikasiPage() {
              <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                <div>
                   <h3 className="font-bold text-xl text-gray-900">Pilih Koordinator Rangkul</h3>
-                  <p className="text-xs text-gray-500 mt-1">Daftar lengkap koordinator di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : `Kel. ${form.region.kelurahan}`}.</p>
+                  <p className="text-xs text-gray-500 mt-1">Koordinator terverifikasi untuk RT {form.rt}/RW {form.rw}, {form.region.kelurahan}.</p>
                </div>
                <button onClick={() => setKoordModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -989,13 +968,7 @@ export default function HelperVerifikasiPage() {
              {/* Modal Content - List */}
              <div className="p-4 overflow-y-auto bg-slate-50/30 flex-1">
                 <div className="flex flex-col gap-3">
-                  {(() => {
-                    const filtered = koordinators.filter(k => {
-                      if (koordTab === 'kelurahan') return true;
-                      return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
-                    });
-                    
-                    return filtered.map(k => (
+                  {koordinators.map(k => (
                        <button 
                          key={k.id}
                          type="button"
@@ -1017,15 +990,10 @@ export default function HelperVerifikasiPage() {
                                </div>
                              )}
                            </div>
-                           <div className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded-lg">{k.wilayah.split('|')[1]?.trim()}</div>
-                           <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                             {k.users?.phone || 'Nomor tidak tersedia'}
-                           </div>
+                           <div className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded-lg">{k.wilayah}</div>
                          </div>
                        </button>
-                    ));
-                  })()}
+                    ))}
                 </div>
              </div>
           </div>
