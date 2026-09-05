@@ -8,13 +8,21 @@ import BookingNewClient, {
 
 export const dynamic = "force-dynamic";
 
-export default async function BookingNewPage() {
+export default async function BookingNewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const initialMode = resolvedParams?.mode === "cepat" ? "cepat" : "pelamar";
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/booking/new");
+  if (!isSprint6MatchingEnabled()) redirect("/cari-helper");
 
   const [lansiaResult, categoryResult] = await Promise.all([
     supabase
@@ -38,7 +46,7 @@ export default async function BookingNewPage() {
     <BookingNewClient
       lansias={lansias}
       categories={categories}
-      allowsPelamar={isSprint6MatchingEnabled()}
+      initialMode={initialMode}
     />
   );
 }

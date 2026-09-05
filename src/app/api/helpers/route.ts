@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
 import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
+import { isSprint6MatchingEnabled } from '@/lib/features/sprint6-matching';
 
 // GET /api/helpers — Katalog helper verified dengan filter radius dan kategori
 // Query params: lat (float), lng (float), radius_km (float, default 10), category_id (uuid)
@@ -95,6 +96,7 @@ export async function GET(request: Request) {
 
     return apiResponse(
       {
+        matching_enabled: isSprint6MatchingEnabled(),
         total: filtered.length,
         helpers: filtered,
       },

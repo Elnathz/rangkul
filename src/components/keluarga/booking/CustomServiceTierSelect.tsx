@@ -244,7 +244,7 @@ export default function CustomServiceTierSelect({
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Cari layanan, misalnya obat, belanja, atau mengobrol"
+        placeholder="Cari nama layanan..."
         className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 py-2 pl-10.5 pr-8 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0D47A1] focus:bg-white focus:outline-none transition-colors"
       />
       {searchQuery && (
@@ -596,17 +596,30 @@ export default function CustomServiceTierSelect({
             {/* Auto-flip (Dropup/Dropdown) + Max 5 Items Inner Scroll (~275px)           */}
             {/* ========================================================================= */}
             <div
-              className={`hidden sm:block absolute left-0 z-40 w-full rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xl animate-in fade-in-0 zoom-in-95 duration-150 ${
+              className={`hidden sm:block absolute left-0 z-40 w-full rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150 overflow-hidden ${
                 openUpward ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top"
               }`}
             >
+              {/* Header with Title and Close Button */}
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <p className="text-xs font-bold text-slate-800">Pilih Kategori Layanan</p>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  aria-label="Tutup"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
               {/* Header with Search and Active Filter */}
               <div className="mb-2">
                 {renderSearchBox()}
               </div>
 
-              {/* 4-Column Tabs in 1 Clean Horizontal Row */}
-              <div className="flex items-center gap-1.5 rounded-2xl bg-slate-100/90 p-1 shrink-0">
+              {/* 2x2 Grid Tabs to prevent any horizontal overflow */}
+              <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100/90 p-1.5 shrink-0">
                 {renderTabButtons()}
               </div>
 

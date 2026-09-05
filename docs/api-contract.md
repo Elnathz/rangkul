@@ -4,7 +4,7 @@ Dokumen ini menjadi kontrak integrasi antara halaman Rangkul, Route Handler Next
 
 ## Format respons
 
-Respons sukses selalu memakai envelope `{ "data": ... }`. Respons gagal selalu memakai:
+Respons sukses mengikuti kontrak masing-masing endpoint. Endpoint koleksi baru umumnya memakai `{ "data": ... }`, sementara route kompatibilitas dan mutation lama dapat memakai field domain seperti `task`, `profile`, atau `message`. Jangan mengasumsikan envelope global sampai seluruh client dan route dimigrasikan. Respons gagal memakai:
 
 ```json
 {
@@ -106,7 +106,8 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 ## Katalog, kategori, dan Riwayat Rangkul
 
 - `GET /api/categories` mengembalikan kategori leaf aktif beserta `tingkat`, `harga_dasar`, `is_high_risk`, dan batas jarak jika ada.
-- `GET /api/helpers` menghitung `jarak_km` di server dari koordinat lansia ke domisili Helper, lalu menerapkan radius layanan. Client tidak berwenang menentukan jarak atau harga akhir.
+- `GET /api/helpers` menghitung `jarak_km` di server dari koordinat lansia ke domisili Helper, lalu menerapkan radius layanan. Client tidak berwenang menentukan jarak atau harga akhir. Respons juga mengembalikan `matching_enabled` agar UI hanya menampilkan mode penugasan Sprint 6 ketika feature flag server aktif.
+- `GET /api/koordinator/by-region` hanya dapat dipanggil Helper. Server mengembalikan Koordinator terverifikasi dari RT yang persis sama. Koordinator RW setempat baru menjadi fallback ketika Koordinator RT tidak tersedia. Nomor telepon dan data pribadi Koordinator tidak dikirim ke browser.
 - `GET /api/lansia/:id/riwayat` hanya dapat dibaca Keluarga pemilik dan mengembalikan kunjungan selesai, foto bukti, catatan kondisi, Health Snapshot, Cerita Hari Ini, serta tren rule-based.
 - `POST /api/helpers/profile/photo` menerima `foto_wajah_url` dari Helper dan membuat pengajuan foto berstatus `pending`. Foto publik lama tetap dipakai sampai Koordinator menyetujui perubahan.
 - `PATCH /api/helpers/profile/photo/approve` menerima `request_id` dan hanya dapat dipanggil Koordinator terverifikasi yang menaungi Helper tersebut. Proses memakai conditional update dan mengembalikan `409` bila pengajuan sudah diproses.
@@ -116,6 +117,35 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 - `POST /api/tasks` adalah route canonical untuk booking. `POST /api/booking/task` tetap tersedia sebagai alias kompatibilitas.
 - `POST /api/helpers/apply` adalah route canonical pendaftaran Helper. `POST /api/helper/apply` tetap tersedia sebagai alias kompatibilitas.
 - `PATCH /api/helpers/:id/status` menerima `action` `approve`, `reject`, atau `suspend`. Route approve/reject lama tetap tersedia untuk client lama.
+
+## Kontrak Sprint 6
+
+Matching Sprint 6 dikendalikan oleh `SPRINT6_MATCHING_ENABLED`. Flag yang tidak disetel dianggap `false`. Production tetap memakai `false` sampai migration, RLS, quality gate, dan smoke test per role lulus.
+
+### Mode penugasan
+
+`POST /api/tasks` dan alias `POST /api/booking/task` menerima `mode_penugasan` berikut:
+
+- `langsung`: `helper_id` wajib. Entry UI canonical adalah `/booking/{helper_id}`.
+- `pelamar`: `helper_id` harus kosong dan jadwal minimal tiga jam ke depan. Entry UI tersedia di `/booking/new`.
+- `cepat`: `helper_id` harus kosong, jadwal berada pada hari lokal yang sama, kategori bukan risiko tinggi, dan masa penerimaan 15 menit dihitung dari waktu server. Entry UI tersedia di `/booking/new`.
+
+Kombinasi mode dan `helper_id` yang tidak valid menghasilkan `422`. Eligibility Helper tetap diperiksa server berdasarkan status verifikasi, kategori aktif, availability, radius layanan, wilayah, konflik jadwal, dan status akun.
+
+### Marketplace dan aplikasi
+
+- `GET /api/tasks/marketplace`, Helper terverifikasi. Response hanya memuat informasi yang diperlukan untuk menilai peluang dan tidak memuat identitas privat Keluarga atau alamat lengkap.
+- `PATCH /api/tasks/:id/accept`, Helper terverifikasi. Menerima booking `langsung` yang ditujukan kepadanya atau memenangkan mode `cepat`. Keduanya memakai conditional update dan penerima kedua mendapat `409`.
+- `GET /api/tasks/:id/applications`, Keluarga pemilik task. Mengembalikan kandidat pada task mode `pelamar`.
+- `POST /api/tasks/:id/applications`, Helper terverifikasi. Duplikasi aplikasi atau task yang tidak lagi eligible menghasilkan `409`.
+- `DELETE /api/tasks/:id/applications/me`, Helper pemilik aplikasi. Penarikan hanya berlaku sebelum Helper dipilih.
+- `PATCH /api/tasks/:id/applications/:aid/select`, Keluarga pemilik task. ID application berasal dari daftar pelamar dan pemilihan memakai conditional update. Kandidat tidak eligible atau state yang berubah menghasilkan `409`.
+
+### Semantik response
+
+Validasi field menghasilkan `422`, bukan `400`. `400` hanya untuk body atau query yang tidak dapat diparse. Scope role salah menghasilkan `403`. Resource yang tidak boleh diungkap menghasilkan `404`. Konflik state, duplikasi, expiry, atau race condition menghasilkan `409`.
+
+Dokumentasi operasional terdapat di `docs/api/booking.md`. OpenAPI 3.1 yang dapat diimpor ke Postman, Bruno, Insomnia, atau Swagger UI terdapat di `docs/api/openapi.json`.
 
 ## Notifikasi
 

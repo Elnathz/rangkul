@@ -40,7 +40,7 @@ export async function POST(request: Request) {
           message: 'Data input tidak valid',
           fieldErrors: validation.error.flatten().fieldErrors,
         },
-        400
+        422
       );
     }
 
