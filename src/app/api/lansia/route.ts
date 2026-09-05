@@ -137,7 +137,45 @@ export async function POST(request: Request) {
       return createApiError('server_error', insertError.message, 500);
     }
 
-    return apiResponse({ message: 'Profil lansia berhasil ditambahkan', profile }, 201);
+    // Cek apakah ada Koordinator di wilayah pendaftaran lansia
+    if (kecamatan) {
+      const { data: matchedKoordinators } = await supabase
+        .from('koordinator_profiles')
+        .select('user_id, id')
+        .ilike('wilayah', `%${kecamatan}%`)
+        .eq('status', 'verified');
+
+      if (matchedKoordinators && matchedKoordinators.length > 0) {
+        // Ada koordinator di wilayah ini -> kirimkan notifikasi ke Koordinator
+        const notifInserts = matchedKoordinators.map((k) => ({
+          user_id: k.user_id,
+          title: 'Pengajuan Lansia Baru di Wilayah Anda',
+          body: `Lansia baru bernama ${nama} di ${kelurahan ? 'Kel. ' + kelurahan : 'wilayah Anda'} membutuhkan verifikasi persetujuan.`,
+          type: 'lansia_verification',
+          is_read: false,
+        }));
+        await supabase.from('notifications').insert(notifInserts as any);
+      } else {
+        // Belum ada koordinator di wilayah ini -> ditampung oleh Admin
+        const { data: adminUsers } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin');
+
+        if (adminUsers && adminUsers.length > 0) {
+          const adminNotifs = adminUsers.map((a) => ({
+            user_id: a.id,
+            title: 'Penampungan Lansia (Wilayah Tanpa Koordinator)',
+            body: `Lansia ${nama} didaftarkan di Kec. ${kecamatan} (Belum ada Koordinator). Membutuhkan peninjauan Admin.`,
+            type: 'lansia_verification_admin',
+            is_read: false,
+          }));
+          await supabase.from('notifications').insert(adminNotifs as any);
+        }
+      }
+    }
+
+    return apiResponse({ message: 'Profil lansia berhasil ditambahkan dan diajukan untuk verifikasi', profile }, 201);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }

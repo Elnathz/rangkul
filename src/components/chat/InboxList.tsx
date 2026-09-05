@@ -19,9 +19,68 @@ export type InboxItem = {
   unreadCount: number;
 };
 
+import { useRouter } from "next/navigation";
+import { AdminModal } from "@/components/admin/AdminPrimitives";
+import { UserCheck, HeartHandshake, Loader2, X } from "lucide-react";
+
+type ChatTarget = {
+  id: string;
+  user_id: string;
+  nama: string;
+  role: "helper" | "keluarga";
+  foto_url: string | null;
+  info: string;
+};
+
 export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"helper" | "keluarga">("helper");
+  const [helpers, setHelpers] = useState<ChatTarget[]>([]);
+  const [keluarga, setKeluarga] = useState<ChatTarget[]>([]);
+  const [loadingTargets, setLoadingTargets] = useState(false);
+  const [startingChat, setStartingChat] = useState<string | null>(null);
+
+  const openStartChatModal = async () => {
+    setModalOpen(true);
+    setLoadingTargets(true);
+    try {
+      const res = await fetch("/api/chat/start-target", { cache: "no-store" });
+      const payload = await res.json();
+      if (res.ok) {
+        setHelpers(payload.helpers ?? []);
+        setKeluarga(payload.keluarga ?? []);
+      }
+    } catch {
+      // fallback
+    } finally {
+      setLoadingTargets(false);
+    }
+  };
+
+  const handleSelectTarget = async (target: ChatTarget) => {
+    setStartingChat(target.id);
+    try {
+      const res = await fetch("/api/chat/start-target", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_user_id: target.user_id, role: target.role }),
+      });
+      const payload = await res.json();
+      if (res.ok && payload.taskId) {
+        setModalOpen(false);
+        router.push(`${basePath}/${payload.taskId}`);
+      } else {
+        alert(payload.message || "Gagal membuka obrolan");
+      }
+    } catch {
+      alert("Terjadi kesalahan jaringan.");
+    } finally {
+      setStartingChat(null);
+    }
+  };
 
   const filteredInbox = inbox.filter(item => 
     item.otherUserName.toLowerCase().includes(search.toLowerCase()) || 
@@ -32,15 +91,16 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
     <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
       <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between sticky top-0 z-10 shrink-0">
-        <h2 className="text-lg sm:text-xl font-bold text-slate-800">Pesan Tugas</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-slate-800">Pesan Utama</h2>
         {basePath.includes("koordinator") && (
-          <Link
-            href="/koordinator/helper"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-blue-800 active:scale-95 transition-all"
+          <button
+            type="button"
+            onClick={openStartChatModal}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0D47A1] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-blue-800 active:scale-95 transition-all"
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Mulai Obrolan</span>
-          </Link>
+            <Plus className="h-4 w-4" />
+            <span>+ Mulai Obrolan</span>
+          </button>
         )}
       </div>
 
@@ -139,6 +199,79 @@ export function InboxList({ inbox, basePath }: { inbox: InboxItem[], basePath: s
         )}
       </div>
 
+      {modalOpen ? (
+        <AdminModal
+          title="Mulai Obrolan Baru"
+          description="Pilih akun Helper atau Keluarga di wilayah Anda untuk membuka percakapan langsung."
+          onClose={() => setModalOpen(false)}
+        >
+          <div className="space-y-4">
+            <div className="flex border-b border-slate-200">
+              <button
+                type="button"
+                onClick={() => setActiveTab("helper")}
+                className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${
+                  activeTab === "helper" ? "border-blue-700 text-blue-700" : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                Daftar Helper ({helpers.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("keluarga")}
+                className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${
+                  activeTab === "keluarga" ? "border-blue-700 text-blue-700" : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                Daftar Keluarga ({keluarga.length})
+              </button>
+            </div>
+
+            {loadingTargets ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-700" />
+              </div>
+            ) : (
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                {(activeTab === "helper" ? helpers : keluarga).length === 0 ? (
+                  <p className="py-8 text-center text-xs font-semibold text-slate-500">
+                    Tidak ada akun {activeTab} ditemukan di wilayah Anda.
+                  </p>
+                ) : (
+                  (activeTab === "helper" ? helpers : keluarga).map((target) => (
+                    <div
+                      key={target.id}
+                      className="flex items-center justify-between p-3 hover:bg-slate-50 transition-colors rounded-xl"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-10 rounded-full bg-blue-50 border border-slate-200 flex items-center justify-center font-bold text-blue-700 text-xs shrink-0">
+                          {target.nama.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-sm truncate">{target.nama}</p>
+                          <p className="text-xs text-slate-500 truncate">{target.info}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={startingChat === target.id}
+                        onClick={() => handleSelectTarget(target)}
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-700 px-3 text-xs font-bold text-white hover:bg-blue-800 disabled:opacity-50 active:scale-95 transition-all shrink-0"
+                      >
+                        {startingChat === target.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Obrolkan"
+                        )}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </AdminModal>
+      ) : null}
     </div>
   );
 }

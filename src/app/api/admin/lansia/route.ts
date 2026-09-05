@@ -8,15 +8,20 @@ export async function GET() {
     await requireAdmin();
 
     const admin = await createAdminClient();
-    const { data: profiles, error } = await admin
+    const { data: rawProfiles, error } = await admin
       .from('lansia_profiles')
-      .select('*')
+      .select('*, keluarga:users!lansia_profiles_keluarga_id_fkey(full_name)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
       return createApiError('server_error', error.message, 500);
     }
+
+    const profiles = (rawProfiles ?? []).map((p: any) => ({
+      ...p,
+      nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
+    }));
 
     return apiResponse({ profiles: profiles ?? [] }, 200);
   } catch (error: unknown) {

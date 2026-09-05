@@ -9,6 +9,7 @@ import { SignedImage } from "@/components/ui/SignedImage";
 type LansiaItem = {
   id: string;
   nama: string;
+  nama_keluarga?: string | null;
   alamat: string;
   provinsi: string | null;
   kabupaten_kota: string | null;
@@ -133,6 +134,9 @@ export default function AdminLansiaPage() {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-950">{item.nama}</p>
+                            <p className="text-xs font-semibold text-blue-700">
+                              Keluarga: {item.nama_keluarga || "Keluarga Rangkul"}
+                            </p>
                             <p className="mt-0.5 text-xs text-slate-500">
                               Terdaftar: {new Date(item.created_at).toLocaleDateString("id-ID")}
                             </p>
@@ -152,10 +156,10 @@ export default function AdminLansiaPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link
-                          href={`/lansia/${item.id}`}
+                          href={`/admin/lansia/${item.id}`}
                           className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:border-blue-300 hover:text-blue-800"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" /> Detail
+                          <ExternalLink className="h-3.5 w-3.5" /> Detail & Berkas KTP
                         </Link>
                       </td>
                     </tr>
@@ -177,12 +181,15 @@ export default function AdminLansiaPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-slate-950">{item.nama}</p>
+                      <p className="truncate text-xs font-semibold text-blue-700">
+                        Keluarga: {item.nama_keluarga || "Keluarga Rangkul"}
+                      </p>
                       <p className="truncate text-xs text-slate-500">
                         {[item.kecamatan, item.kabupaten_kota].filter(Boolean).join(", ") || "Alamat -"}
                       </p>
                     </div>
                     <Link
-                      href={`/lansia/${item.id}`}
+                      href={`/admin/lansia/${item.id}`}
                       className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-bold text-blue-700"
                     >
                       Detail

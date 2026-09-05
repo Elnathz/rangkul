@@ -27,7 +27,9 @@ export async function GET(
 
     const role = userProfile?.role || user.user_metadata?.role || 'keluarga';
 
-    let query = supabase
+    const dbClient = (role === 'admin' || role === 'koordinator') ? await createAdminClient() : supabase;
+
+    let query = dbClient
       .from('lansia_profiles')
       .select('*')
       .eq('id', id)
@@ -44,7 +46,24 @@ export async function GET(
       return createApiError('not_found', 'Profil lansia tidak ditemukan', 404);
     }
 
+    let nama_keluarga: string | null = null;
+    let email_keluarga: string | null = null;
+    let telepon_keluarga: string | null = null;
+
     const admin = await createAdminClient();
+    if (profile.keluarga_id) {
+      const { data: familyUser } = await admin
+        .from('users')
+        .select('full_name, email, phone_number')
+        .eq('id', profile.keluarga_id)
+        .maybeSingle();
+      if (familyUser) {
+        nama_keluarga = (familyUser as any).full_name || null;
+        email_keluarga = (familyUser as any).email || null;
+        telepon_keluarga = (familyUser as any).phone_number || null;
+      }
+    }
+
     const sign = (val: string | null) =>
       resolvePrivatePhotoUrl(val, async (path, exp) => {
         const { data, error: signError } = await admin.storage
@@ -64,6 +83,9 @@ export async function GET(
       {
         profile: {
           ...profile,
+          nama_keluarga,
+          email_keluarga,
+          telepon_keluarga,
           foto_url,
           dokumen_identitas_lansia_url,
           dokumen_hubungan_keluarga_url,

@@ -26,7 +26,7 @@ export async function GET() {
 
     let query = admin
       .from('lansia_profiles')
-      .select('*')
+      .select('*, keluarga:users!lansia_profiles_keluarga_id_fkey(full_name)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -38,16 +38,19 @@ export async function GET() {
         .maybeSingle();
 
       if (kp?.wilayah) {
-        // Coba query berdasarkan kecamatan/wilayah, jika 0 fallback tampilkan semua agar Koordinator tetap dapat bekerja
         const { data: regionalProfiles } = await admin
           .from('lansia_profiles')
-          .select('*')
+          .select('*, keluarga:users!lansia_profiles_keluarga_id_fkey(full_name)')
           .is('deleted_at', null)
           .ilike('kecamatan', `%${kp.wilayah}%`)
           .order('created_at', { ascending: false });
 
         if (regionalProfiles && regionalProfiles.length > 0) {
-          return apiResponse({ profiles: regionalProfiles }, 200);
+          const formatted = regionalProfiles.map((p: any) => ({
+            ...p,
+            nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
+          }));
+          return apiResponse({ profiles: formatted }, 200);
         }
       }
     }
@@ -58,7 +61,60 @@ export async function GET() {
       return createApiError('server_error', error.message, 500);
     }
 
-    return apiResponse({ profiles: profiles ?? [] }, 200);
+    const formatted = (profiles ?? []).map((p: any) => ({
+      ...p,
+      nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
+    }));
+
+    return apiResponse({ profiles: formatted }, 200);
+  } catch (error: unknown) {
+    return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
+  }
+}
+
+// PATCH /api/koordinator/lansia — verifikasi lansia oleh Koordinator
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return createApiError('unauthorized', 'Anda harus login', 401);
+    }
+
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const role = userProfile?.role || user.user_metadata?.role;
+    if (role !== 'koordinator' && role !== 'admin') {
+      return createApiError('forbidden', 'Hanya Koordinator atau Admin yang dapat memverifikasi lansia', 403);
+    }
+
+    const body = await request.json();
+    const { id, status } = body;
+
+    if (!id || (status !== 'verified' && status !== 'rejected')) {
+      return createApiError('validation_error', 'Parameter id dan status valid wajib diisi', 400);
+    }
+
+    const admin = await createAdminClient();
+    const { data: updated, error: updateError } = await admin
+      .from('lansia_profiles')
+      .update({
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (updateError) {
+      return createApiError('server_error', 'Gagal memperbarui status verifikasi lansia', 500);
+    }
+
+    return apiResponse({ message: `Status verifikasi lansia berhasil diperbarui menjadi ${status}`, profile: updated }, 200);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }

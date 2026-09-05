@@ -9,6 +9,7 @@ import { AdminLoadingRows, AdminModal } from "@/components/admin/AdminPrimitives
 type LansiaVerificationItem = {
   id: string;
   nama: string;
+  nama_keluarga?: string | null;
   alamat: string;
   provinsi: string | null;
   kabupaten_kota: string | null;
@@ -58,6 +59,14 @@ export default function KoordinatorLansiaVerificationPage() {
     setError("");
     setNotice("");
     try {
+      const response = await fetch("/api/koordinator/lansia", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedLansia.id, status }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message ?? "Gagal memproses verifikasi");
+
       setLansiaList((current) =>
         current.map((item) =>
           item.id === selectedLansia.id ? { ...item, verified_status: status } : item
@@ -65,8 +74,8 @@ export default function KoordinatorLansiaVerificationPage() {
       );
       setNotice(`Lansia ${selectedLansia.nama} berhasil di-${status === "verified" ? "verifikasi" : "tolak"}.`);
       setSelectedLansia(null);
-    } catch {
-      setError("Gagal memproses verifikasi");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Gagal memproses verifikasi");
     } finally {
       setVerifying(false);
     }
@@ -159,6 +168,9 @@ export default function KoordinatorLansiaVerificationPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate font-bold text-slate-900 text-sm">{item.nama}</h3>
+                          <p className="truncate text-xs font-semibold text-blue-700">
+                            Keluarga: {item.nama_keluarga || "Keluarga Rangkul"}
+                          </p>
                           <p className="truncate text-[11px] text-slate-500">
                             {item.kelurahan ? `Kel. ${item.kelurahan}` : "Wilayah terdaftar"}
                           </p>
@@ -190,10 +202,10 @@ export default function KoordinatorLansiaVerificationPage() {
 
                   <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
                     <Link
-                      href={`/lansia/${item.id}`}
+                      href={`/koordinator/lansia/${item.id}`}
                       className="inline-flex min-h-9 items-center gap-1 text-xs font-bold text-blue-700 hover:underline"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" /> Detail
+                      <ExternalLink className="h-3.5 w-3.5" /> Detail & Berkas KTP
                     </Link>
                     <button
                       type="button"
