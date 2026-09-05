@@ -58,8 +58,8 @@ test("detail kunjungan menandatangani foto private setelah ownership dan membaca
   assert.match(familyDetail, /Dana kunjungan sudah dicairkan/);
 });
 
-test("migration demo mengarahkan Helper ke akun masburgas", () => {
+test("migration demo mengarahkan Helper ke akun Andi", () => {
   const demoMigration = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
-  assert.match(demoMigration, /LOWER\(u\.username\) = 'masburgas'/);
+  assert.match(demoMigration, /LOWER\(u\.username\) = 'andihelper'/);
   assert.match(demoMigration, /Semarang Selatan/);
 });

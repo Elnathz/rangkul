@@ -1,24 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@fontsource-variable/instrument-sans";
 @import "@fontsource-variable/plus-jakarta-sans";
 
 @custom-variant dark (&:is(.dark *));
 
-/* ————————————————————————————————
-   Rangkul Design System — v1.0
-   Primary: #0D47A1 (deep blue)   Accent: #90CAF9 (sky)
-   ———————————————————————————————— */
+/* Rangkul Design System v1.0. Primary: #0D47A1. Accent: #90CAF9. */
 @theme inline {
   /* Shadcn bridge */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-jakarta: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --font-instrument: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-instrument: "Instrument Sans Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,7 +37,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
+  --color-muted: var(--surface-muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
@@ -48,10 +46,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-sm: var(--radius-sm-token);
+  --radius-md: var(--radius-md-token);
+  --radius-lg: var(--radius-lg-token);
+  --radius-xl: var(--radius-xl-token);
   --radius-2xl: calc(var(--radius) * 2);
   --radius-3xl: calc(var(--radius) * 2.5);
   --radius-4xl: calc(var(--radius) * 3);
@@ -65,31 +63,76 @@
 }
 
 :root {
+  /* Locked UI/UX restructure v2 tokens */
+  --brand-primary: #0D47A1;
+  --brand-sky: #90CAF9;
+  --app-bg: #F5F8FC;
+  --surface: #FFFFFF;
+  --surface-subtle: #F8FAFD;
+  --surface-muted: #EEF3F8;
+  --ink: #16233A;
+  --ink-secondary: #4E5F75;
+  --muted: #6B7A90;
+  --border: #DCE6F1;
+  --border-strong: #C9D8E8;
+  --success: #168A4A;
+  --success-bg: #ECF8F0;
+  --warning: #B66A00;
+  --warning-bg: #FFF7E8;
+  --danger: #C62828;
+  --danger-bg: #FFF0F0;
+  --info: #0D47A1;
+  --info-bg: #EEF5FF;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-sm-token: 10px;
+  --radius-md-token: 14px;
+  --radius-lg-token: 18px;
+  --radius-xl-token: 24px;
+  --radius-pill: 999px;
+  --shadow-card: 0 8px 24px rgba(22, 35, 58, 0.08);
+  --shadow-card-hover: 0 12px 30px rgba(22, 35, 58, 0.12);
+  --shadow-overlay: 0 20px 48px rgba(22, 35, 58, 0.18);
+
   /* Rangkul Palette */
-  --background: oklch(0.973 0.007 237);       /* #F5F8FC */
-  --foreground: oklch(0.15 0.025 237);         /* #16233A */
-  --card: oklch(1 0 0);                        /* #FFFFFF */
-  --card-foreground: oklch(0.15 0.025 237);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.025 237);
-  --primary: oklch(0.335 0.138 256);           /* #0D47A1 */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.87 0.065 237);          /* #90CAF9-ish light */
-  --secondary-foreground: oklch(0.335 0.138 256);
-  --muted: oklch(0.94 0.01 237);
-  --muted-foreground: oklch(0.48 0.04 237);    /* #6B7A90 */
-  --accent: oklch(0.91 0.06 237);
-  --accent-foreground: oklch(0.335 0.138 256);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.895 0.02 237);             /* #DCE6F1 */
-  --input: oklch(0.895 0.02 237);
-  --ring: oklch(0.335 0.138 256);
-  --radius: 0.75rem;
+  --background: var(--app-bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand-primary);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--brand-sky);
+  --secondary-foreground: var(--brand-primary);
+  --muted-foreground: var(--muted);
+  --accent: var(--info-bg);
+  --accent-foreground: var(--brand-primary);
+  --destructive: var(--danger);
+  --input: var(--border);
+  --ring: var(--brand-primary);
+  --radius: var(--radius-lg-token);
+  --page-gutter: 1rem;
+  --content-max: 80rem;
+  --header-height: 4.25rem;
+  --bottom-navigation-height: 4.75rem;
 
   /* Custom Rangkul vars */
-  --ink: oklch(0.15 0.025 237);
-  --ink-muted: oklch(0.48 0.04 237);
-  --surface: oklch(1 0 0);
+  --ink-muted: var(--muted);
 
   --chart-1: oklch(0.335 0.138 256);
   --chart-2: oklch(0.87 0.065 237);
@@ -97,14 +140,14 @@
   --chart-4: oklch(0.75 0.08 237);
   --chart-5: oklch(0.5 0.12 256);
 
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.15 0.025 237);
-  --sidebar-primary: oklch(0.335 0.138 256);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0.01 237);
-  --sidebar-accent-foreground: oklch(0.335 0.138 256);
-  --sidebar-border: oklch(0.895 0.02 237);
-  --sidebar-ring: oklch(0.335 0.138 256);
+  --sidebar: var(--surface-subtle);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--info-bg);
+  --sidebar-accent-foreground: var(--brand-primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-primary);
 }
 
 .dark {
@@ -142,6 +185,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-instrument), sans-serif;
   }
   button, a {
     @apply select-none;
@@ -149,9 +193,14 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-height) + 1rem);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-jakarta), sans-serif;
+  }
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
   }
 }
 
@@ -164,16 +213,15 @@
   }
   /* Gradient brand bg */
   .bg-brand-gradient {
-    background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%);
+    background: #0D47A1;
   }
   .bg-hero-blob {
     background: radial-gradient(ellipse at 70% 50%, rgba(144,202,249,0.25) 0%, rgba(13,71,161,0.06) 60%, transparent 80%);
   }
   /* Glassmorphism card */
   .glass-card {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--card);
+    border: 1px solid var(--border);
   }
   /* Subtle animated shimmer on cards */
   .hover-lift {
@@ -183,4 +231,31 @@
     transform: translateY(-4px);
     box-shadow: 0 16px 40px rgba(13,71,161,0.12);
   }
+  /* Clean custom scrollbar for dropdowns and dialogs */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+}
+
+@media (min-width: 48rem) {
+  :root { --page-gutter: 1.5rem; }
+}
+
+@media (min-width: 64rem) {
+  :root { --page-gutter: 2rem; }
 }

@@ -1,186 +1,365 @@
-import React from 'react';
-import Link from 'next/link';
-import { 
-  Users, 
-  CalendarCheck, 
-  PlusCircle,
-  Search,
-  Heart
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import Link from "next/link";
+import { ArrowRight, CalendarDays, Clock, Heart, HeartPulse, Plus, Sparkles, UsersRound } from "lucide-react";
+import { redirect } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import type { TaskStatus } from "@/lib/constants/task-status";
+import { createClient } from "@/lib/supabase/server";
+import { canRolePerformTaskAction, getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
 
 export default async function BerandaKeluargaPage() {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  if (!user) {
-    redirect('/login');
-  }
+  const [
+    { data: profile },
+    { data: lansias },
+    { data: activeTasks },
+    { data: upcomingTasks },
+    { data: latestCompleted },
+  ] = await Promise.all([
+    supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("lansia_profiles")
+      .select("id, nama, hubungan_keluarga")
+      .eq("keluarga_id", user.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("tasks")
+      .select(`
+        id, status, jadwal_waktu, started_at,
+        lansia_profiles(nama),
+        service_categories(nama),
+        helper_profiles(users(full_name))
+      `)
+      .eq("keluarga_id", user.id)
+      .in("status", ["dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga"])
+      .order("jadwal_waktu", { ascending: true })
+      .limit(1),
+    supabase
+      .from("tasks")
+      .select("id, status, jadwal_waktu, lansia_profiles(nama), service_categories(nama)")
+      .eq("keluarga_id", user.id)
+      .in("status", ["diajukan", "menunggu_persetujuan_koordinator"])
+      .order("jadwal_waktu", { ascending: true })
+      .limit(3),
+    supabase
+      .from("tasks")
+      .select("id, completed_at, lansia_profiles(nama), service_categories(nama), health_snapshots(energi, mood, mobilitas, cerita_hari_ini)")
+      .eq("keluarga_id", user.id)
+      .eq("status", "selesai")
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  // Ambil profil keluarga
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('full_name')
-    .eq('id', user.id)
-    .single();
+  const activeTask = activeTasks?.[0];
+  const activeStatus = activeTask ? getTaskStatusPresentation(activeTask.status as TaskStatus) : null;
+  const canCancel = activeTask ? canRolePerformTaskAction(activeTask.status as TaskStatus, "keluarga", "cancel") : false;
 
-  // Ambil daftar lansia
-  const { data: lansias } = await supabase
-    .from('lansia_profiles')
-    .select('*')
-    .eq('keluarga_id', user.id)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+  const rawSnapshot = latestCompleted?.health_snapshots;
+  const snapshot = Array.isArray(rawSnapshot) ? rawSnapshot[0] : rawSnapshot;
 
-  // Ambil jadwal terdekat (task aktif)
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select(`
-      *,
-      lansia:lansia_profiles(nama)
-    `)
-    .eq('keluarga_id', user.id)
-    .not('status', 'in', '("selesai","dibatalkan")')
-    .order('jadwal_waktu', { ascending: true })
-    .limit(1);
+  const activeLansiaName = Array.isArray(activeTask?.lansia_profiles)
+    ? activeTask?.lansia_profiles[0]?.nama
+    : activeTask?.lansia_profiles?.nama;
 
-  const activeTask = tasks?.[0] || null;
+  const activeHelperUser = Array.isArray(activeTask?.helper_profiles)
+    ? activeTask?.helper_profiles[0]?.users
+    : activeTask?.helper_profiles?.users;
+
+  const activeHelperName = Array.isArray(activeHelperUser)
+    ? activeHelperUser[0]?.full_name
+    : activeHelperUser?.full_name;
+
+  const familyAvatarUrl = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-6xl mx-auto">
-      <div className="space-y-6">
-        
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-gradient text-white p-8 rounded-2xl shadow-sm relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Halo, {userProfile?.full_name || 'Keluarga'}
-            </h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base max-w-sm">Kelola profil orang tersayang dan jadwalkan pendampingan dengan tenang.</p>
+    <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
+      {/* 1. Elevated Human-Centered Header */}
+      <header className="relative overflow-hidden rounded-2xl bg-primary bg-gradient-to-br from-[#0D3B82] via-[#0D47A1] to-[#1565C0] p-6 text-primary-foreground shadow-md sm:p-7 border border-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-48 rounded-full bg-blue-400/10 blur-2xl" aria-hidden="true" />
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4 sm:items-center">
+            {/* Avatar Badge with warm heart badge */}
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl overflow-hidden">
+              {familyAvatarUrl ? (
+                <img
+                  src={familyAvatarUrl}
+                  alt={profile?.full_name || "Keluarga"}
+                  className="size-full object-cover"
+                />
+              ) : (
+                (profile?.full_name || "Keluarga").slice(0, 2).toUpperCase()
+              )}
+              <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-[#0D47A1] z-10" title="Keluarga Tercinta">
+                <Heart className="size-2.5 text-white fill-white" aria-hidden="true" />
+              </span>
+            </div>
+
+            {/* Context & Metadata */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur-xs border border-white/10">
+                  <Sparkles className="size-3 text-blue-200" aria-hidden="true" />
+                  Dashboard Keluarga
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/90 border border-white/15">
+                  {(lansias ?? []).length} Orang Tersayang Terdaftar
+                </span>
+              </div>
+
+              <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Halo, {profile?.full_name || "Keluarga"}
+              </h1>
+
+              <p className="mt-1 text-xs text-white/80 sm:text-sm">
+                Pantau pendampingan lansia tersayang dalam lingkungan komunitas yang aman.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto relative z-10 mt-4 sm:mt-0">
-            <Button asChild variant="outline" className="w-full sm:w-auto h-11 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white backdrop-blur-md">
-              <Link href="/lansia/tambah">
-                <PlusCircle className="mr-2 w-4 h-4" /> Tambah Lansia
-              </Link>
-            </Button>
-            <Button asChild className="w-full sm:w-auto h-11 bg-white text-[#0D47A1] hover:bg-gray-50 font-bold shadow-md">
-              <Link href="/cari-helper">
-                <Search className="mr-2 w-4 h-4" /> Cari Helper
+
+          {/* Action Cluster */}
+          <div className="flex shrink-0 items-center gap-3 self-stretch sm:self-auto">
+            <Button asChild className="min-h-11 w-full rounded-xl bg-white font-bold text-[#0D47A1] shadow-sm hover:bg-white/90 sm:w-auto px-6 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Link href="/booking/new" className="flex items-center gap-2">
+                <Plus className="size-4" aria-hidden="true" />
+                <span>Buat Kunjungan</span>
               </Link>
             </Button>
           </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Main Content: Lansia List */}
-          <div className="xl:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-rose-500" /> Profil Lansia Tersimpan
-              </h2>
+      {/* 2. Active Visit / Needs Attention Card */}
+      {activeTask && activeStatus ? (
+        <section className="overflow-hidden rounded-[18px] border-2 border-[#0D47A1]/30 bg-white shadow-sm">
+          <div className="flex items-center justify-between bg-[#EEF5FF] px-5 py-3.5 border-b border-[#0D47A1]/15">
+            <div className="flex items-center gap-2">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0D47A1] opacity-75"></span>
+                <span className="relative inline-flex size-2.5 rounded-full bg-[#0D47A1]"></span>
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">
+                Kunjungan Sedang Berlangsung
+              </span>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {lansias && lansias.length > 0 ? (
-                lansias.map((lansia) => (
-                  <div key={lansia.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform group-hover:scale-110">
-                      <Users className="w-20 h-20 text-[#0D47A1]" />
-                    </div>
+            <span className="inline-flex rounded-full bg-[#0D47A1] px-3 py-0.5 text-xs font-bold text-white">
+              {activeStatus.label}
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-xl font-bold tracking-tight text-foreground">
+                  {Array.isArray(activeTask.service_categories)
+                    ? activeTask.service_categories[0]?.nama
+                    : activeTask.service_categories?.nama || "Pendampingan Lansia"}
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-[#0D47A1]">
+                  Untuk: {activeLansiaName || "Orang Tersayang"}
+                </p>
+                {activeHelperName && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Helper bertugas: <span className="font-medium text-foreground">{activeHelperName}</span>
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="size-3.5" />
+                  Jadwal: {new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short" }).format(new Date(activeTask.jadwal_waktu))}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                <Button asChild className="min-h-11 bg-[#0D47A1] text-white hover:bg-[#0D47A1]/90">
+                  <Link href={`/kunjungan/${activeTask.id}`}>Lihat Status</Link>
+                </Button>
+                <Button asChild variant="outline" className="min-h-11 border-border text-foreground hover:bg-muted/40">
+                  <Link href={`/pesan`}>Hubungi Helper</Link>
+                </Button>
+                {canCancel && (
+                  <Button asChild variant="outline" className="min-h-11 border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive">
+                    <Link href={`/kunjungan/${activeTask.id}`}>Lihat opsi pembatalan</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground bg-[#F8FAFD] p-3 rounded-xl border border-border/60">
+              {activeStatus.description}
+            </p>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 3. Riwayat Rangkul Preview Card */}
+      <section className="overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center justify-between border-b border-border/70 pb-4 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-[#0D47A1]/10 text-[#0D47A1]">
+              <HeartPulse className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-heading text-lg font-bold text-foreground">Riwayat Rangkul Terbaru</h2>
+              <p className="text-xs text-muted-foreground">Catatan observasi dan kebugaran lansia non-diagnostik</p>
+            </div>
+          </div>
+          <Link
+            href="/lansia"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-[#0D47A1] hover:bg-[#0D47A1]/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
+          >
+            Lihat Semua Profil
+          </Link>
+        </div>
+
+        {snapshot ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                Kunjungan: <strong className="text-foreground">{Array.isArray(latestCompleted?.lansia_profiles) ? latestCompleted?.lansia_profiles[0]?.nama : latestCompleted?.lansia_profiles?.nama}</strong>
+              </span>
+              <span>
+                {latestCompleted?.completed_at
+                  ? new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(latestCompleted.completed_at))
+                  : "Baru saja"}
+              </span>
+            </div>
+
+            {/* Indicator Pills */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-[#F8FAFD] border border-border p-3 text-center">
+                <p className="text-[11px] font-medium text-muted-foreground">Energi</p>
+                <p className="mt-1 font-heading text-base font-bold text-foreground">{snapshot.energi}/5</p>
+              </div>
+              <div className="rounded-xl bg-[#F8FAFD] border border-border p-3 text-center">
+                <p className="text-[11px] font-medium text-muted-foreground">Mood</p>
+                <p className="mt-1 font-heading text-base font-bold text-foreground">{snapshot.mood}/5</p>
+              </div>
+              <div className="rounded-xl bg-[#F8FAFD] border border-border p-3 text-center">
+                <p className="text-[11px] font-medium text-muted-foreground">Mobilitas</p>
+                <p className="mt-1 font-heading text-base font-bold text-foreground">{snapshot.mobilitas}/5</p>
+              </div>
+            </div>
+
+            {/* Story / Memory capsule */}
+            {snapshot.cerita_hari_ini && (
+              <div className="rounded-xl bg-[#F0F6FF] border border-[#0D47A1]/15 p-4 text-xs leading-relaxed text-slate-700 italic">
+                &quot;{snapshot.cerita_hari_ini}&quot;
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-xs text-muted-foreground">
+            Belum ada ringkasan Health Snapshot. Setelah kunjungan selesai, catatan observasi lansia akan tampil di sini.
+          </div>
+        )}
+      </section>
+
+      {/* 4. Orang Tersayang & Kunjungan Mendatang (2-Column Grid) */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        {/* Orang Tersayang (Lansia) */}
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/70 pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <UsersRound className="size-5 text-[#0D47A1]" />
+              <h2 className="font-heading text-lg font-bold text-foreground">Orang Tersayang</h2>
+            </div>
+            <Button asChild size="sm" variant="outline" className="min-h-11 gap-1 rounded-xl text-xs font-semibold">
+              <Link href="/lansia/tambah">
+                <Plus className="size-3.5" /> Tambah Lansia
+              </Link>
+            </Button>
+          </div>
+
+          {(lansias ?? []).length ? (
+            <div className="divide-y divide-border/60">
+              {(lansias ?? []).map((lansia) => (
+                <Link
+                  key={lansia.id}
+                  href={`/lansia/${lansia.id}`}
+                  className="flex min-h-14 items-center justify-between py-3 transition-colors hover:bg-muted/30 px-2 rounded-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-[#0D47A1]/10 font-heading font-bold text-sm text-[#0D47A1]">
+                      {lansia.nama.slice(0, 1).toUpperCase()}
+                    </span>
                     <div>
-                      <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider bg-blue-50 text-blue-700 mb-3 inline-block">
-                        {lansia.hubungan_keluarga || 'Keluarga'}
-                      </span>
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">{lansia.nama}</h3>
-                      <p className="text-sm font-medium text-gray-500 line-clamp-2">
-                        {lansia.catatan_kondisi || 'Tidak ada catatan khusus'}
+                      <p className="text-sm font-bold text-foreground">{lansia.nama}</p>
+                      <p className="text-xs text-muted-foreground">{lansia.hubungan_keluarga || "Keluarga"}</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              Belum ada profil lansia yang didaftarkan.
+            </div>
+          )}
+        </div>
+
+        {/* Kunjungan Mendatang */}
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/70 pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="size-5 text-[#0D47A1]" />
+              <h2 className="font-heading text-lg font-bold text-foreground">Kunjungan Mendatang</h2>
+            </div>
+            <Link
+              href="/kunjungan"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-[#0D47A1] hover:bg-[#0D47A1]/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
+            >
+              Semua Kunjungan
+            </Link>
+          </div>
+
+          {(upcomingTasks ?? []).length ? (
+            <div className="divide-y divide-border/60">
+              {(upcomingTasks ?? []).map((task) => {
+                const taskPres = getTaskStatusPresentation(task.status as TaskStatus);
+                const lansiaName = Array.isArray(task.lansia_profiles)
+                  ? task.lansia_profiles[0]?.nama
+                  : task.lansia_profiles?.nama;
+                const catName = Array.isArray(task.service_categories)
+                  ? task.service_categories[0]?.nama
+                  : task.service_categories?.nama;
+
+                return (
+                  <Link
+                    key={task.id}
+                    href={`/kunjungan/${task.id}`}
+                    className="flex min-h-14 items-center justify-between py-3 transition-colors hover:bg-muted/30 px-2 rounded-xl"
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{catName || "Pendampingan"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Untuk: {lansiaName || "Lansia"} · {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(task.jadwal_waktu))}
                       </p>
                     </div>
-                    <div className="mt-5 border-t border-gray-50 pt-4 flex gap-2 relative z-10 w-full overflow-hidden">
-                      <Button asChild variant="outline" size="sm" className="flex-1 text-xs font-semibold rounded-lg h-8">
-                        <Link href={`/lansia/${lansia.id}`}>Lihat Profil</Link>
-                      </Button>
-                      <Button asChild size="sm" className="flex-1 text-xs font-semibold rounded-lg h-8 bg-brand-gradient hover:opacity-90 text-white">
-                        <Link href={`/booking/new?lansia=${lansia.id}`}>Buat Pesanan</Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
-                  <p className="text-sm text-gray-500 mb-4">Belum ada profil lansia yang ditambahkan.</p>
-                </div>
-              )}
-              
-              {/* Add New Card */}
-              <Link href="/lansia/tambah" className="bg-transparent border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-500 hover:text-[#0D47A1] hover:border-[#0D47A1] hover:bg-[#F5F8FC] transition-all min-h-[180px]">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  <PlusCircle className="w-6 h-6" />
-                </div>
-                <span className="font-semibold text-sm">Tambahkan Profil Lansia</span>
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      {taskPres.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              Belum ada kunjungan mendatang.{" "}
+              <Link href="/booking/new" className="font-semibold text-[#0D47A1] underline">
+                Pesan sekarang
               </Link>
+              .
             </div>
-          </div>
-
-          {/* Sidebar Area */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900">Jadwal Terdekat</h3>
-                <CalendarCheck className="w-5 h-5 text-gray-400" />
-              </div>
-              
-              {activeTask ? (
-                <div className="flex flex-col gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
-                  <div className="flex justify-between items-start">
-                    <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-[10px] font-bold rounded uppercase tracking-wider">
-                      {activeTask.status.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-xs font-mono text-gray-400">
-                      BKG-{activeTask.id.substring(0, 4).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">
-                      Pendampingan {activeTask.lansia?.nama}
-                    </h4>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {new Date(activeTask.jadwal_waktu).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-3 border-t border-yellow-200 flex items-center justify-between">
-                     <div className="flex items-center gap-2 text-xs font-semibold text-yellow-800">
-                       {activeTask.status === 'diajukan' ? (
-                         <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-full border border-yellow-200/50">
-                           Sedang mencari Helper
-                           <svg className="animate-spin w-3 h-3 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                           </svg>
-                         </span>
-                       ) : (
-                         <span>Status: {activeTask.status.replace(/_/g, ' ')}</span>
-                       )}
-                     </div>
-                     <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:text-red-700">Batalkan</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-sm text-gray-500">Tidak ada jadwal pendampingan terdekat.</p>
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

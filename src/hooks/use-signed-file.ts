@@ -8,12 +8,22 @@ type SignedFileState = {
 };
 
 export function useSignedFile(path: string | null | undefined): SignedFileState {
-  const [state, setState] = useState<SignedFileState>(() =>
-    path ? { url: null, status: "loading" } : { url: null, status: "error" }
+  const isDirect = Boolean(
+    path && (
+      path.startsWith("/") ||
+      path.startsWith("http://") ||
+      path.startsWith("https://") ||
+      path.startsWith("data:")
+    )
   );
 
+  const [remoteState, setRemoteState] = useState<SignedFileState>({
+    url: null,
+    status: "loading",
+  });
+
   useEffect(() => {
-    if (!path) return;
+    if (!path || isDirect) return;
 
     let cancelled = false;
     const params = new URLSearchParams({ path });
@@ -21,24 +31,26 @@ export function useSignedFile(path: string | null | undefined): SignedFileState 
       .then(async (res) => {
         if (cancelled) return;
         if (res.status === 403) {
-          setState({ url: null, status: "forbidden" });
+          setRemoteState({ url: null, status: "forbidden" });
           return;
         }
         const body = (await res.json().catch(() => null)) as { url?: string } | null;
         if (!res.ok || !body?.url) {
-          setState({ url: null, status: "error" });
+          setRemoteState({ url: null, status: "error" });
           return;
         }
-        setState({ url: body.url, status: "ready" });
+        setRemoteState({ url: body.url, status: "ready" });
       })
       .catch(() => {
-        if (!cancelled) setState({ url: null, status: "error" });
+        if (!cancelled) setRemoteState({ url: null, status: "error" });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, isDirect]);
 
-  return state;
+  if (!path) return { url: null, status: "error" };
+  if (isDirect) return { url: path, status: "ready" };
+  return remoteState;
 }

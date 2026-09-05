@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
+import DateTimePicker from "@/components/keluarga/booking/DateTimePicker";
 import type { TaskStatus } from "@/lib/constants/task-status";
 
 type Props = { taskId: string; status: TaskStatus; jadwalWaktu: string };
@@ -71,10 +72,15 @@ export function TaskScheduleActions({ taskId, status, jadwalWaktu }: Props) {
       <motion.section {...reveal} transition={{ duration: 0.25, ease: "easeOut" }} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start gap-3"><CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div><h2 className="text-base font-black text-slate-950">Atur jadwal dan pembatalan</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Reschedule maksimal dua kali. Sistem akan menerapkan batas minimal tiga jam atau dua jam sesuai waktu booking.</p></div></div>
         {canReschedule && <form onSubmit={submitReschedule} className="mt-4 space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600" htmlFor="jadwal-baru">Jadwal baru</label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input id="jadwal-baru" type="datetime-local" value={nextSchedule} onChange={(event) => setNextSchedule(event.target.value)} className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" required />
-            <button type="submit" disabled={loading} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0D47A1] px-4 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60">
+          <DateTimePicker
+            value={nextSchedule}
+            onChange={setNextSchedule}
+            label="Jadwal baru"
+            required
+            helperText="Pilih waktu baru kunjungan sesuai kesepakatan."
+          />
+          <div className="flex justify-end pt-1">
+            <button type="submit" disabled={loading} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0D47A1] px-5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 shadow-xs transition-colors">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Simpan jadwal
             </button>

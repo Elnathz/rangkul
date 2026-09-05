@@ -13,6 +13,7 @@ DECLARE
   keluarga_2_id UUID;
   keluarga_3_id UUID;
   keluarga_4_id UUID;
+  keluarga_5_id UUID;
   koordinator_rt_1_user_id UUID;
   koordinator_rt_2_user_id UUID;
   koordinator_rt_3_user_id UUID;
@@ -32,6 +33,8 @@ DECLARE
   koordinator_rt_2_id UUID;
   koordinator_rt_3_id UUID;
   koordinator_rw_id UUID;
+  koordinator_kedungpane_user_id UUID;
+  koordinator_kedungpane_id UUID;
   helper_1_id UUID;
   helper_2_id UUID;
   helper_3_id UUID;
@@ -40,11 +43,16 @@ DECLARE
   helper_6_id UUID;
   helper_7_id UUID;
   helper_8_id UUID;
+  helper_9_user_id UUID;
+  helper_9_id UUID;
   existing_helper_id UUID;
   lansia_1_id UUID;
   lansia_2_id UUID;
   lansia_3_id UUID;
   lansia_4_id UUID;
+  lansia_5_id UUID;
+  category_id UUID;
+  lansia_5_id UUID;
   category_id UUID;
   ringan_category_id UUID;
   sedang_category_id UUID;
@@ -56,26 +64,29 @@ BEGIN
   FOR user_data IN
     SELECT *
     FROM (VALUES
-      ('demokeluarga@rangkul.id', 'Mbak Burgas', 'keluarga', 'mbakburgas', '081234567801', 'Jl. Pleburan Barat No. 10', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokeluarga2@rangkul.id', 'Keluarga Demo Dua', 'keluarga', 'demo_keluarga2', '081234567802', 'Jl. Pleburan Barat No. 11', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokeluarga3@rangkul.id', 'Keluarga Demo Tiga', 'keluarga', 'demo_keluarga3', '081234567803', 'Jl. Pleburan Timur No. 12', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokeluarga4@rangkul.id', 'Keluarga Demo Empat', 'keluarga', 'demo_keluarga4', '081234567804', 'Jl. Pleburan Timur No. 13', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demoadmin@rangkul.id', 'Admin Demo Rangkul', 'admin', 'demoadmin', '081234567899', 'Jl. Pleburan Tengah No. 99', 9, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokoordinator@rangkul.id', 'Mbah Burgas', 'koordinator', 'mbahburgas', '081234567811', 'Jl. Pleburan Barat No. 18', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper@rangkul.id', 'Mas Burgas', 'helper', 'masburgas', '081234567821', 'Jl. Pleburan Barat No. 28', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokoordinator5@rangkul.id', 'Koordinator Demo RT Satu', 'koordinator', 'demo_koord_rt1', '081234567815', 'Jl. Pleburan Barat No. 19', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokoordinator2@rangkul.id', 'Koordinator Demo RT Dua', 'koordinator', 'demo_koord_rt2', '081234567812', 'Jl. Pleburan Barat No. 20', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokoordinator3@rangkul.id', 'Koordinator Demo RT Tiga', 'koordinator', 'demo_koord_rt3', '081234567813', 'Jl. Pleburan Barat No. 21', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demokoordinator4@rangkul.id', 'Koordinator Demo RW', 'koordinator', 'demo_koord_rw', '081234567814', 'Jl. Pleburan Barat No. 22', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper2@rangkul.id', 'Helper Demo Terpercaya Dua', 'helper', 'demo_helper_t2', '081234567822', 'Jl. Pleburan Barat No. 30', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper3@rangkul.id', 'Helper Demo Terpercaya Tiga', 'helper', 'demo_helper_t3', '081234567823', 'Jl. Pleburan Barat No. 31', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper4@rangkul.id', 'Helper Demo Terpercaya Empat', 'helper', 'demo_helper_t4', '081234567824', 'Jl. Pleburan Barat No. 32', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper5@rangkul.id', 'Helper Demo Fallback Admin', 'helper', 'demo_helper_t5', '081234567825', 'Jl. Pleburan Barat No. 33', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper6@rangkul.id', 'Helper Demo Probation Satu', 'helper', 'demo_helper_p1', '081234567826', 'Jl. Pleburan Timur No. 34', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper7@rangkul.id', 'Helper Demo Probation Dua', 'helper', 'demo_helper_p2', '081234567827', 'Jl. Pleburan Timur No. 35', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper8@rangkul.id', 'Helper Demo Under Review', 'helper', 'demo_helper_review', '081234567828', 'Jl. Pleburan Timur No. 36', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah'),
-      ('demohelper9@rangkul.id', 'Helper Demo Terpercaya Lima', 'helper', 'demo_helper_t6', '081234567829', 'Jl. Pleburan Barat No. 37', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah')
-    ) AS data(email_address, full_name_value, role_value, username_value, phone_value, alamat_detail_value, rt_value, rw_value, kelurahan_value, kecamatan_value, kabupaten_kota_value, provinsi_value)
+      ('ratnakeluarga@rangkul.id', 'Ratna Wulandari', 'keluarga', 'ratnakeluarga', '081234567801', 'Jl. Pleburan Barat No. 10', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-ratna.jpg'),
+      ('mayakeluarga@rangkul.id', 'Maya Lestari', 'keluarga', 'mayakeluarga', '081234567802', 'Jl. Pleburan Barat No. 11', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-ayu.jpg'),
+      ('rintokeluarga@rangkul.id', 'Rinto Prabowo', 'keluarga', 'rintokeluarga', '081234567803', 'Jl. Pleburan Timur No. 12', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('dewikeluarga@rangkul.id', 'Dewi Kartika', 'keluarga', 'dewikeluarga', '081234567804', 'Jl. Pleburan Timur No. 13', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang4.jpeg'),
+      ('suryakeluarga@rangkul.id', 'Surya Wijaya', 'keluarga', 'suryakeluarga', '081234567805', 'Jl. Kedungpane Raya No. 8', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('demoadmin@rangkul.id', 'Admin Demo Rangkul', 'admin', 'demoadmin', '081234567899', 'Jl. Pleburan Tengah No. 99', 9, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-admin.jpg'),
+      ('wagimankoordinator@rangkul.id', 'Wagiman Popo', 'koordinator', 'wagimankoordinator', '081234567811', 'Jl. Pleburan Barat No. 18', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-wagiman.jpg'),
+      ('andihelper@rangkul.id', 'Andi Sudarto', 'helper', 'andihelper', '081234567821', 'Jl. Pleburan Barat No. 28', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/avatars/avatar-andi.jpg'),
+      ('budikoordinator@rangkul.id', 'Budi Santoso', 'koordinator', 'budikoordinator', '081234567815', 'Jl. Pleburan Barat No. 19', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('sulikoordinator@rangkul.id', 'Suli Hartini', 'koordinator', 'sulikoordinator', '081234567812', 'Jl. Pleburan Barat No. 20', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-sarah.jpg'),
+      ('aguskoordinator@rangkul.id', 'Agus Salim', 'koordinator', 'aguskoordinator', '081234567813', 'Jl. Pleburan Barat No. 21', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('rahmatkoordinator@rangkul.id', 'Rahmat Hidayat', 'koordinator', 'rahmatkoordinator', '081234567814', 'Jl. Pleburan Barat No. 22', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('darmokoordinator@rangkul.id', 'Darmo Prasetyo', 'koordinator', 'darmokoordinator', '081234567816', 'Jl. Kedungpane Raya No. 6', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('rinihelper@rangkul.id', 'Rini Kurniasih', 'helper', 'rinihelper', '081234567822', 'Jl. Pleburan Barat No. 30', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-ayu.jpg'),
+      ('dedihelper@rangkul.id', 'Dedi Setiawan', 'helper', 'dedihelper', '081234567823', 'Jl. Pleburan Barat No. 31', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg'),
+      ('sarihelper@rangkul.id', 'Sari Wulandari', 'helper', 'sarihelper', '081234567824', 'Jl. Pleburan Barat No. 32', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/helper-sarah.jpg'),
+      ('yusufhelper@rangkul.id', 'Yusuf Maulana', 'helper', 'yusufhelper', '081234567825', 'Jl. Pleburan Barat No. 33', 5, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang3.jpg'),
+      ('dewihelper@rangkul.id', 'Dewi Anggraini', 'helper', 'dewihelper', '081234567826', 'Jl. Pleburan Timur No. 34', 2, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang4.jpeg'),
+      ('arifhelper@rangkul.id', 'Arif Pratama', 'helper', 'arifhelper', '081234567827', 'Jl. Pleburan Timur No. 35', 3, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang5.jpeg'),
+      ('linahelper@rangkul.id', 'Lina Kurniawan', 'helper', 'linahelper', '081234567828', 'Jl. Pleburan Timur No. 36', 4, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang6.jpeg'),
+      ('fajarhelper@rangkul.id', 'Fajar Nugroho', 'helper', 'fajarhelper', '081234567829', 'Jl. Pleburan Barat No. 37', 1, 5, 'Pleburan', 'Semarang Selatan', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang1.jpeg'),
+      ('bagushelper@rangkul.id', 'Bagus Santoso', 'helper', 'bagushelper', '081234567830', 'Jl. Kedungpane Raya No. 10', 1, 2, 'Kedungpane', 'Mijen', 'Kota Semarang', 'Jawa Tengah', '/images/helpers/orang2.jpg')
+    ) AS data(email_address, full_name_value, role_value, username_value, phone_value, alamat_detail_value, rt_value, rw_value, kelurahan_value, kecamatan_value, kabupaten_kota_value, provinsi_value, avatar_url_value)
   LOOP
     IF NOT EXISTS (
       SELECT 1
@@ -90,6 +101,7 @@ BEGIN
     ) THEN
       INSERT INTO auth.users (
         id, instance_id, email, phone, encrypted_password, email_confirmed_at,
+        confirmation_token, recovery_token, email_change_token_new, email_change,
         raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at
       )
       VALUES (
@@ -104,11 +116,16 @@ BEGIN
         END,
         demo_password_hash,
         NOW(),
+        '',
+        '',
+        '',
+        '',
         jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
         jsonb_build_object(
           'full_name', user_data.full_name_value,
           'role', user_data.role_value,
-          'username', user_data.username_value
+          'username', user_data.username_value,
+          'avatar_url', user_data.avatar_url_value
         ),
         'authenticated',
         'authenticated',
@@ -132,6 +149,16 @@ BEGIN
     UPDATE auth.users
     SET encrypted_password = demo_password_hash,
         email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+        confirmation_token = '',
+        recovery_token = '',
+        email_change_token_new = '',
+        email_change = '',
+        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object(
+          'full_name', user_data.full_name_value,
+          'role', user_data.role_value,
+          'username', user_data.username_value,
+          'avatar_url', user_data.avatar_url_value
+        ),
         updated_at = NOW()
     WHERE LOWER(email) = LOWER(user_data.email_address)
        OR LOWER(raw_user_meta_data ->> 'username') = LOWER(user_data.username_value)
@@ -140,6 +167,27 @@ BEGIN
          FROM public.users existing_public_user
          WHERE LOWER(existing_public_user.username) = LOWER(user_data.username_value)
        );
+
+    INSERT INTO auth.identities (
+      provider_id, user_id, identity_data, provider, created_at, updated_at
+    )
+    VALUES (
+      existing_user_id::text,
+      existing_user_id,
+      jsonb_build_object(
+        'sub', existing_user_id::text,
+        'email', user_data.email_address,
+        'email_verified', TRUE,
+        'phone_verified', FALSE
+      ),
+      'email',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (provider_id, provider) DO UPDATE SET
+      user_id = EXCLUDED.user_id,
+      identity_data = EXCLUDED.identity_data,
+      updated_at = NOW();
 
     IF existing_user_id IS NOT NULL THEN
       UPDATE auth.users
@@ -187,6 +235,21 @@ BEGIN
           provinsi = user_data.provinsi_value,
           updated_at = NOW()
       WHERE id = existing_user_id;
+
+      INSERT INTO auth.identities (
+        id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+      )
+      VALUES (
+        gen_random_uuid(),
+        existing_user_id,
+        jsonb_build_object('sub', existing_user_id::text, 'email', user_data.email_address),
+        'email',
+        existing_user_id::text,
+        NOW(),
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (provider, provider_id) DO NOTHING;
     END IF;
   END LOOP;
 
@@ -203,28 +266,31 @@ BEGIN
   SELECT id INTO keluarga_1_id
   FROM public.users
   WHERE role = 'keluarga'
-    AND LOWER(username) = 'mbakburgas'
+    AND LOWER(username) = 'ratnakeluarga'
   LIMIT 1;
 
   IF keluarga_1_id IS NULL THEN
-    RAISE EXCEPTION 'Akun Keluarga mbakburgas gagal dibuat';
+    RAISE EXCEPTION 'Akun Keluarga ratnakeluarga gagal dibuat';
   END IF;
 
-  SELECT id INTO keluarga_2_id FROM public.users WHERE LOWER(email) = 'demokeluarga2@rangkul.id';
-  SELECT id INTO keluarga_3_id FROM public.users WHERE LOWER(email) = 'demokeluarga3@rangkul.id';
-  SELECT id INTO keluarga_4_id FROM public.users WHERE LOWER(email) = 'demokeluarga4@rangkul.id';
-  SELECT id INTO koordinator_rt_1_user_id FROM public.users WHERE LOWER(email) = 'demokoordinator5@rangkul.id';
-  SELECT id INTO koordinator_rt_2_user_id FROM public.users WHERE LOWER(email) = 'demokoordinator2@rangkul.id';
-  SELECT id INTO koordinator_rt_3_user_id FROM public.users WHERE LOWER(email) = 'demokoordinator3@rangkul.id';
-  SELECT id INTO koordinator_rw_user_id FROM public.users WHERE LOWER(email) = 'demokoordinator4@rangkul.id';
-  SELECT id INTO helper_1_user_id FROM public.users WHERE LOWER(email) = 'demohelper2@rangkul.id';
-  SELECT id INTO helper_2_user_id FROM public.users WHERE LOWER(email) = 'demohelper3@rangkul.id';
-  SELECT id INTO helper_3_user_id FROM public.users WHERE LOWER(email) = 'demohelper4@rangkul.id';
-  SELECT id INTO helper_4_user_id FROM public.users WHERE LOWER(email) = 'demohelper5@rangkul.id';
-  SELECT id INTO helper_5_user_id FROM public.users WHERE LOWER(email) = 'demohelper6@rangkul.id';
-  SELECT id INTO helper_6_user_id FROM public.users WHERE LOWER(email) = 'demohelper7@rangkul.id';
-  SELECT id INTO helper_7_user_id FROM public.users WHERE LOWER(email) = 'demohelper8@rangkul.id';
-  SELECT id INTO helper_8_user_id FROM public.users WHERE LOWER(email) = 'demohelper9@rangkul.id';
+  SELECT id INTO keluarga_2_id FROM public.users WHERE LOWER(email) = 'mayakeluarga@rangkul.id';
+  SELECT id INTO keluarga_3_id FROM public.users WHERE LOWER(email) = 'rintokeluarga@rangkul.id';
+  SELECT id INTO keluarga_4_id FROM public.users WHERE LOWER(email) = 'dewikeluarga@rangkul.id';
+  SELECT id INTO keluarga_5_id FROM public.users WHERE LOWER(email) = 'suryakeluarga@rangkul.id';
+  SELECT id INTO koordinator_rt_1_user_id FROM public.users WHERE LOWER(email) = 'budikoordinator@rangkul.id';
+  SELECT id INTO koordinator_rt_2_user_id FROM public.users WHERE LOWER(email) = 'sulikoordinator@rangkul.id';
+  SELECT id INTO koordinator_rt_3_user_id FROM public.users WHERE LOWER(email) = 'aguskoordinator@rangkul.id';
+  SELECT id INTO koordinator_rw_user_id FROM public.users WHERE LOWER(email) = 'rahmatkoordinator@rangkul.id';
+  SELECT id INTO koordinator_kedungpane_user_id FROM public.users WHERE LOWER(email) = 'darmokoordinator@rangkul.id';
+  SELECT id INTO helper_1_user_id FROM public.users WHERE LOWER(email) = 'rinihelper@rangkul.id';
+  SELECT id INTO helper_2_user_id FROM public.users WHERE LOWER(email) = 'dedihelper@rangkul.id';
+  SELECT id INTO helper_3_user_id FROM public.users WHERE LOWER(email) = 'sarihelper@rangkul.id';
+  SELECT id INTO helper_4_user_id FROM public.users WHERE LOWER(email) = 'yusufhelper@rangkul.id';
+  SELECT id INTO helper_5_user_id FROM public.users WHERE LOWER(email) = 'dewihelper@rangkul.id';
+  SELECT id INTO helper_6_user_id FROM public.users WHERE LOWER(email) = 'arifhelper@rangkul.id';
+  SELECT id INTO helper_7_user_id FROM public.users WHERE LOWER(email) = 'linahelper@rangkul.id';
+  SELECT id INTO helper_8_user_id FROM public.users WHERE LOWER(email) = 'fajarhelper@rangkul.id';
+  SELECT id INTO helper_9_user_id FROM public.users WHERE LOWER(email) = 'bagushelper@rangkul.id';
 
   INSERT INTO public.koordinator_profiles (
     id, user_id, wilayah, tingkat, status, dokumen_url, domisili_lat, domisili_lng, diverifikasi_oleh, diverifikasi_at
@@ -232,8 +298,9 @@ BEGIN
   VALUES
     (gen_random_uuid(), koordinator_rt_1_user_id, 'RT 01 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rt', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0045, 110.4375, admin_id, NOW()),
     (gen_random_uuid(), koordinator_rt_2_user_id, 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rt', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0048, 110.4378, admin_id, NOW()),
-    (gen_random_uuid(), koordinator_rt_3_user_id, 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rt', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0051, 110.4381, admin_id, NOW()),
-    (gen_random_uuid(), koordinator_rw_user_id, 'RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rw', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0050, 110.4380, admin_id, NOW())
+    (gen_random_uuid(), koordinator_rt_3_user_id, 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rt', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0061, 110.4391, admin_id, NOW()),
+    (gen_random_uuid(), koordinator_rw_user_id, 'RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', 'rw', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0050, 110.4380, admin_id, NOW()),
+    (gen_random_uuid(), koordinator_kedungpane_user_id, 'RT 01 / RW 02, Kelurahan Kedungpane, Kecamatan Mijen, Kota Semarang, Jawa Tengah', 'rt', 'verified', 'demo/dokumen_koordinator/dokumen-koordinator-demo.pdf', -7.0762, 110.3273, admin_id, NOW())
   ON CONFLICT (user_id) DO UPDATE SET
     wilayah = EXCLUDED.wilayah,
     tingkat = EXCLUDED.tingkat,
@@ -249,6 +316,7 @@ BEGIN
   SELECT id INTO koordinator_rt_2_id FROM public.koordinator_profiles WHERE user_id = koordinator_rt_2_user_id;
   SELECT id INTO koordinator_rt_3_id FROM public.koordinator_profiles WHERE user_id = koordinator_rt_3_user_id;
   SELECT id INTO koordinator_rw_id FROM public.koordinator_profiles WHERE user_id = koordinator_rw_user_id;
+  SELECT id INTO koordinator_kedungpane_id FROM public.koordinator_profiles WHERE user_id = koordinator_kedungpane_user_id;
 
   INSERT INTO public.helper_profiles (
     id, user_id, ktp_url, bio, wilayah_domisili, domisili_lat, domisili_lng,
@@ -259,11 +327,12 @@ BEGIN
     (gen_random_uuid(), helper_1_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 02.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0041, 110.4371, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'terpercaya', 7, 7),
     (gen_random_uuid(), helper_2_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 03.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0052, 110.4382, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 6, 6),
     (gen_random_uuid(), helper_3_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 04.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0062, 110.4392, TRUE, 4, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 8, 8),
-    (gen_random_uuid(), helper_4_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper verified dengan fallback Admin untuk wilayah baru.', 'RT 06 / RW 06, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0072, 110.4402, TRUE, 5, NULL, TRUE, 'verified', 'terpercaya', 5, 5),
+    (gen_random_uuid(), helper_4_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper verified dengan fallback Admin untuk wilayah baru.', 'RT 05 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0072, 110.4402, TRUE, 5, NULL, TRUE, 'verified', 'terpercaya', 5, 5),
     (gen_random_uuid(), helper_5_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper baru yang masih probation.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0043, 110.4373, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'probation', 1, 1),
     (gen_random_uuid(), helper_6_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', '[DEMO_TRUST_PROMOTION] Helper probation dengan empat tugas bersih.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0053, 110.4383, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'probation', 4, 4),
     (gen_random_uuid(), helper_7_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper dengan dua laporan aktif untuk demo moderasi.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0063, 110.4393, FALSE, 4, koordinator_rt_3_id, FALSE, 'under_review', 'probation', 0, 0),
-    (gen_random_uuid(), helper_8_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 01.', 'RT 01 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0046, 110.4376, TRUE, 2, koordinator_rt_1_id, FALSE, 'verified', 'terpercaya', 5, 5)
+    (gen_random_uuid(), helper_8_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 01.', 'RT 01 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0046, 110.4376, TRUE, 2, koordinator_rt_1_id, FALSE, 'verified', 'terpercaya', 5, 5),
+    (gen_random_uuid(), helper_9_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah Kedungpane.', 'RT 01 / RW 02, Kelurahan Kedungpane, Kecamatan Mijen, Kota Semarang, Jawa Tengah', -7.0765, 110.3276, TRUE, 5, koordinator_kedungpane_id, FALSE, 'verified', 'terpercaya', 6, 6)
   ON CONFLICT (user_id) DO UPDATE SET
     ktp_url = EXCLUDED.ktp_url,
     bio = EXCLUDED.bio,
@@ -288,11 +357,12 @@ BEGIN
   SELECT id INTO helper_6_id FROM public.helper_profiles WHERE user_id = helper_6_user_id;
   SELECT id INTO helper_7_id FROM public.helper_profiles WHERE user_id = helper_7_user_id;
   SELECT id INTO helper_8_id FROM public.helper_profiles WHERE user_id = helper_8_user_id;
+  SELECT id INTO helper_9_id FROM public.helper_profiles WHERE user_id = helper_9_user_id;
 
   SELECT hp.id INTO existing_helper_id
   FROM public.helper_profiles hp
   JOIN public.users u ON u.id = hp.user_id
-  WHERE LOWER(u.username) = 'masburgas'
+  WHERE LOWER(u.username) = 'andihelper'
   LIMIT 1;
   IF existing_helper_id IS NULL THEN
     existing_helper_id := helper_1_id;
@@ -339,31 +409,41 @@ BEGIN
   WHERE keluarga_4_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_4_id AND nama = 'Mbah Demo Empat');
 
-  SELECT id INTO lansia_1_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_1_id AND deleted_at IS NULL ORDER BY created_at LIMIT 1;
-  SELECT id INTO lansia_2_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_2_id AND nama = 'Mbah Demo Dua' LIMIT 1;
-  SELECT id INTO lansia_3_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_3_id AND nama = 'Mbah Demo Tiga' LIMIT 1;
-  SELECT id INTO lansia_4_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_4_id AND nama = 'Mbah Demo Empat' LIMIT 1;
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_5_id, 'Bu Sulastri', 'Jl. Kedungpane Raya No. 8, RT 01 / RW 02, Mijen', -7.0760, 110.3270, 'Senang berkebun dan berjalan di pagi hari.'
+  WHERE keluarga_5_id IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_5_id AND nama = 'Bu Sulastri');
+
+  SELECT id INTO lansia_1_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_1_id AND deleted_at IS NULL LIMIT 1;
+  SELECT id INTO lansia_2_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_2_id LIMIT 1;
+  SELECT id INTO lansia_3_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_3_id LIMIT 1;
+  SELECT id INTO lansia_4_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_4_id LIMIT 1;
+  SELECT id INTO lansia_5_id FROM public.lansia_profiles WHERE keluarga_id = keluarga_5_id LIMIT 1;
 
   UPDATE public.lansia_profiles
   SET nama = 'Giorno',
-      hubungan_keluarga = 'Anak kandung',
+      alamat = 'Jl. Pleburan Barat No. 12, RT 03 / RW 05, Semarang Selatan',
+      lat = -7.0054,
+      lng = 110.4388,
+      catatan_kondisi = 'Perlu ditemani mengobrol dan diingatkan minum obat.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
   WHERE id = lansia_1_id;
 
   UPDATE public.lansia_profiles
-  SET hubungan_keluarga = 'Keluarga inti',
+  SET lat = -7.0042,
+      lng = 110.4372,
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
-  WHERE id IN (lansia_2_id, lansia_3_id, lansia_4_id);
+  WHERE id IN (lansia_2_id, lansia_3_id, lansia_4_id, lansia_5_id);
 
   INSERT INTO public.helper_service_categories (helper_id, service_category_id)
   SELECT helper_id, category_id
   FROM (VALUES
     (existing_helper_id), (helper_1_id), (helper_2_id), (helper_3_id),
-    (helper_4_id), (helper_5_id), (helper_6_id), (helper_7_id), (helper_8_id)
+    (helper_4_id), (helper_5_id), (helper_6_id), (helper_7_id), (helper_8_id), (helper_9_id)
   ) AS helpers(helper_id)
   WHERE helper_id IS NOT NULL AND category_id IS NOT NULL
   ON CONFLICT DO NOTHING;
@@ -446,8 +526,8 @@ BEGIN
     kualitas_tidur = EXCLUDED.kualitas_tidur,
     cerita_hari_ini = EXCLUDED.cerita_hari_ini;
 
-  SELECT id INTO core_koordinator_user_id FROM public.users WHERE role = 'koordinator' AND LOWER(username) = 'mbahburgas' LIMIT 1;
-  SELECT id INTO core_helper_user_id FROM public.users WHERE role = 'helper' AND LOWER(username) = 'masburgas' LIMIT 1;
+  SELECT id INTO core_koordinator_user_id FROM public.users WHERE role = 'koordinator' AND LOWER(username) = 'wagimankoordinator' LIMIT 1;
+  SELECT id INTO core_helper_user_id FROM public.users WHERE role = 'helper' AND LOWER(username) = 'andihelper' LIMIT 1;
 
   IF core_koordinator_user_id IS NOT NULL THEN
     INSERT INTO public.koordinator_profiles (id, user_id, wilayah, tingkat, dokumen_url, status, domisili_lat, domisili_lng, diverifikasi_oleh, diverifikasi_at)
@@ -464,6 +544,13 @@ BEGIN
       updated_at = NOW();
 
     SELECT id INTO core_koordinator_profile_id FROM public.koordinator_profiles WHERE user_id = core_koordinator_user_id LIMIT 1;
+
+    UPDATE public.helper_profiles hp
+    SET koordinator_id = core_koordinator_profile_id,
+        updated_at = NOW()
+    FROM public.users u
+    WHERE hp.user_id = u.id
+      AND LOWER(u.username) IN ('dedihelper', 'arifhelper');
   END IF;
 
   IF core_helper_user_id IS NOT NULL THEN
@@ -486,6 +573,207 @@ BEGIN
         updated_at = NOW()
     WHERE catatan = '[DEMO_MATRIX] Task menunggu Koordinator';
   END IF;
+
+  -- TDD §19.8: fixture yang dapat diulang untuk semua mode penugasan Sprint 6.
+  -- Task pelamar tetap cukup jauh dari sekarang, sementara Cari Cepat selalu
+  -- pada tanggal server yang sama agar validasi RPC dapat dicoba secara nyata.
+  INSERT INTO public.tasks (
+    id, keluarga_id, lansia_id, helper_id, service_category_id,
+    jadwal_waktu, jadwal_waktu_asli, catatan, mode_penugasan, status,
+    harga_dasar, harga_final, expires_at
+  )
+  SELECT gen_random_uuid(), keluarga_1_id, lansia_1_id, NULL, category_id,
+         NOW() + INTERVAL '4 hours', NOW() + INTERVAL '4 hours',
+         '[DEMO_SPRINT6] Task pelamar terbuka', 'pelamar'::public.task_assignment_mode,
+         'diajukan', 30000, 30000, NOW() + INTERVAL '1 hour'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_SPRINT6] Task pelamar terbuka'
+  );
+
+  INSERT INTO public.tasks (
+    id, keluarga_id, lansia_id, helper_id, service_category_id,
+    jadwal_waktu, jadwal_waktu_asli, catatan, mode_penugasan, status,
+    harga_dasar, harga_final, expires_at, confirmed_at
+  )
+  SELECT gen_random_uuid(), keluarga_2_id, lansia_2_id, helper_1_id, category_id,
+         NOW() + INTERVAL '5 hours', NOW() + INTERVAL '5 hours',
+         '[DEMO_SPRINT6] Task pelamar terpilih', 'pelamar'::public.task_assignment_mode,
+         'dikonfirmasi', 30000, 30000, NOW() + INTERVAL '1 hour', NOW()
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_SPRINT6] Task pelamar terpilih'
+  );
+
+  INSERT INTO public.tasks (
+    id, keluarga_id, lansia_id, helper_id, service_category_id,
+    jadwal_waktu, jadwal_waktu_asli, catatan, mode_penugasan, status,
+    harga_dasar, harga_final, expires_at
+  )
+  SELECT gen_random_uuid(), keluarga_3_id, lansia_3_id, NULL, category_id,
+         date_trunc('day', NOW()) + INTERVAL '23 hours 30 minutes',
+         date_trunc('day', NOW()) + INTERVAL '23 hours 30 minutes',
+         '[DEMO_SPRINT6] Task cepat aktif', 'cepat'::public.task_assignment_mode,
+         'diajukan', 30000, 30000, NOW() + INTERVAL '15 minutes'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_SPRINT6] Task cepat aktif'
+  );
+
+  INSERT INTO public.tasks (
+    id, keluarga_id, lansia_id, helper_id, service_category_id,
+    jadwal_waktu, jadwal_waktu_asli, catatan, mode_penugasan, status,
+    harga_dasar, harga_final, expires_at, cancelled_at, cancellation_reason
+  )
+  SELECT gen_random_uuid(), keluarga_4_id, lansia_4_id, NULL, category_id,
+         date_trunc('day', NOW()) + INTERVAL '22 hours',
+         date_trunc('day', NOW()) + INTERVAL '22 hours',
+         '[DEMO_SPRINT6] Task cepat kedaluwarsa', 'cepat'::public.task_assignment_mode,
+         'dibatalkan', 30000, 30000, NOW() - INTERVAL '15 minutes', NOW(),
+         'Waktu pencarian kedaluwarsa (tidak ada Helper)'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_SPRINT6] Task cepat kedaluwarsa'
+  );
+
+  UPDATE public.tasks
+  SET keluarga_id = CASE catatan
+        WHEN '[DEMO_SPRINT6] Task pelamar terpilih' THEN keluarga_2_id
+        WHEN '[DEMO_SPRINT6] Task cepat aktif' THEN keluarga_3_id
+        WHEN '[DEMO_SPRINT6] Task cepat kedaluwarsa' THEN keluarga_4_id
+        ELSE keluarga_1_id
+      END,
+      lansia_id = CASE catatan
+        WHEN '[DEMO_SPRINT6] Task pelamar terpilih' THEN lansia_2_id
+        WHEN '[DEMO_SPRINT6] Task cepat aktif' THEN lansia_3_id
+        WHEN '[DEMO_SPRINT6] Task cepat kedaluwarsa' THEN lansia_4_id
+        ELSE lansia_1_id
+      END,
+      helper_id = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task pelamar terpilih' THEN helper_1_id
+        ELSE NULL
+      END,
+      service_category_id = category_id,
+      mode_penugasan = CASE
+        WHEN catatan LIKE '%pelamar%' THEN 'pelamar'::public.task_assignment_mode
+        ELSE 'cepat'::public.task_assignment_mode
+      END,
+      status = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task pelamar terpilih' THEN 'dikonfirmasi'::public.task_status
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat kedaluwarsa' THEN 'dibatalkan'::public.task_status
+        ELSE 'diajukan'::public.task_status
+      END,
+      expires_at = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat kedaluwarsa' THEN NOW() - INTERVAL '15 minutes'
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat aktif' THEN NOW() + INTERVAL '15 minutes'
+        ELSE NOW() + INTERVAL '1 hour'
+      END,
+      confirmed_at = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task pelamar terpilih' THEN NOW()
+        ELSE NULL
+      END,
+      cancelled_at = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat kedaluwarsa' THEN NOW()
+        ELSE NULL
+      END,
+      cancellation_reason = CASE
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat kedaluwarsa'
+          THEN 'Waktu pencarian kedaluwarsa (tidak ada Helper)'
+        ELSE NULL
+      END,
+      jadwal_waktu = CASE
+        WHEN catatan LIKE '%pelamar%' THEN NOW() + INTERVAL '4 hours'
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat aktif' THEN date_trunc('day', NOW()) + INTERVAL '23 hours 30 minutes'
+        ELSE date_trunc('day', NOW()) + INTERVAL '22 hours'
+      END,
+      jadwal_waktu_asli = CASE
+        WHEN catatan LIKE '%pelamar%' THEN NOW() + INTERVAL '4 hours'
+        WHEN catatan = '[DEMO_SPRINT6] Task cepat aktif' THEN date_trunc('day', NOW()) + INTERVAL '23 hours 30 minutes'
+        ELSE date_trunc('day', NOW()) + INTERVAL '22 hours'
+      END,
+      updated_at = NOW()
+  WHERE catatan IN (
+    '[DEMO_SPRINT6] Task pelamar terbuka',
+    '[DEMO_SPRINT6] Task pelamar terpilih',
+    '[DEMO_SPRINT6] Task cepat aktif',
+    '[DEMO_SPRINT6] Task cepat kedaluwarsa'
+  );
+
+  INSERT INTO public.task_applications (task_id, helper_id, status, diajukan_at, diputus_at)
+  SELECT task.id, applicant.helper_id, applicant.status, NOW() - INTERVAL '5 minutes',
+         CASE WHEN applicant.status = 'pending'::public.task_application_status THEN NULL ELSE NOW() END
+  FROM public.tasks task
+  JOIN (
+    VALUES
+      ('[DEMO_SPRINT6] Task pelamar terbuka', helper_1_id, 'pending'::public.task_application_status),
+      ('[DEMO_SPRINT6] Task pelamar terbuka', helper_2_id, 'pending'::public.task_application_status),
+      ('[DEMO_SPRINT6] Task pelamar terbuka', helper_3_id, 'pending'::public.task_application_status),
+      ('[DEMO_SPRINT6] Task pelamar terpilih', helper_1_id, 'selected'::public.task_application_status),
+      ('[DEMO_SPRINT6] Task pelamar terpilih', helper_2_id, 'rejected'::public.task_application_status)
+  ) AS applicant(marker, helper_id, status) ON task.catatan = applicant.marker
+  ON CONFLICT (task_id, helper_id) DO UPDATE SET
+    status = EXCLUDED.status,
+    diajukan_at = EXCLUDED.diajukan_at,
+    diputus_at = EXCLUDED.diputus_at;
+
+  -- Marker fixture bisa sudah ada dari seed lama. Normalisasi kepemilikan setiap
+  -- kali seed dijalankan agar semua alur dapat dicoba lewat persona yang aktif.
+  UPDATE public.tasks
+  SET keluarga_id = CASE catatan
+        WHEN '[DEMO_MATRIX] Task dikonfirmasi' THEN keluarga_2_id
+        WHEN '[DEMO_MATRIX] Task dikerjakan' THEN keluarga_3_id
+        WHEN '[DEMO_MATRIX] Task selesai' THEN keluarga_4_id
+        WHEN '[DEMO_MATRIX] Task menunggu Keluarga' THEN keluarga_2_id
+        ELSE keluarga_1_id
+      END,
+      lansia_id = CASE catatan
+        WHEN '[DEMO_MATRIX] Task dikonfirmasi' THEN lansia_2_id
+        WHEN '[DEMO_MATRIX] Task dikerjakan' THEN lansia_3_id
+        WHEN '[DEMO_MATRIX] Task selesai' THEN lansia_4_id
+        WHEN '[DEMO_MATRIX] Task menunggu Keluarga' THEN lansia_2_id
+        ELSE lansia_1_id
+      END,
+      helper_id = CASE catatan
+        WHEN '[DEMO_MATRIX] Task diajukan marketplace' THEN NULL
+        WHEN '[DEMO_MATRIX] Task dikonfirmasi' THEN helper_1_id
+        WHEN '[DEMO_MATRIX] Task dikerjakan' THEN helper_2_id
+        WHEN '[DEMO_MATRIX] Task menunggu Koordinator' THEN COALESCE(
+          (SELECT id FROM public.helper_profiles WHERE user_id = core_helper_user_id),
+          existing_helper_id
+        )
+        WHEN '[DEMO_MATRIX] Task menunggu Keluarga' THEN helper_1_id
+        WHEN '[DEMO_MATRIX] Task selesai' THEN helper_3_id
+        WHEN '[DEMO_MATRIX] Task dibatalkan' THEN helper_7_id
+        ELSE COALESCE(
+          (SELECT id FROM public.helper_profiles WHERE user_id = core_helper_user_id),
+          existing_helper_id
+        )
+      END,
+      updated_at = NOW()
+  WHERE catatan IN (
+    '[DEMO_MATRIX] Task diajukan marketplace',
+    '[DEMO_MATRIX] Task dikonfirmasi',
+    '[DEMO_MATRIX] Task dikerjakan',
+    '[DEMO_MATRIX] Task menunggu Koordinator',
+    '[DEMO_MATRIX] Task menunggu Keluarga',
+    '[DEMO_MATRIX] Task selesai',
+    '[DEMO_MATRIX] Task dibatalkan',
+    '[DEMO_MATRIX] Riwayat kunjungan 1',
+    '[DEMO_MATRIX] Riwayat kunjungan 2',
+    '[DEMO_MATRIX] Riwayat kunjungan 3',
+    '[DEMO_MATRIX] Riwayat kunjungan 4'
+  );
+
+  UPDATE public.reports
+  SET reported_helper_id = helper_7_user_id,
+      reporter_id = CASE alasan
+        WHEN '[DEMO_MATRIX] Laporan kedua untuk memicu under_review.' THEN keluarga_2_id
+        ELSE keluarga_1_id
+      END,
+      status = 'menunggu',
+      ditindak_oleh = NULL,
+      decision_reason = NULL,
+      updated_at = NOW()
+  WHERE alasan IN (
+    '[DEMO_MATRIX] Laporan pertama untuk moderasi Helper.',
+    '[DEMO_MATRIX] Laporan kedua untuk memicu under_review.'
+  );
 END;
 $$;
 
@@ -500,11 +788,11 @@ DECLARE
   payment_released_id UUID;
   alert_id UUID;
 BEGIN
-  SELECT id INTO keluarga_id FROM public.users WHERE email = 'demokeluarga3@rangkul.id' LIMIT 1;
+  SELECT id INTO keluarga_id FROM public.users WHERE email = 'rintokeluarga@rangkul.id' LIMIT 1;
   SELECT hp.user_id INTO helper_user_id
   FROM public.helper_profiles hp
   JOIN public.users u ON u.id = hp.user_id
-  WHERE u.email = 'demohelper3@rangkul.id'
+  WHERE u.email = 'dedihelper@rangkul.id'
   LIMIT 1;
 
   SELECT id INTO task_in_progress_id FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task dikerjakan' LIMIT 1;
@@ -591,19 +879,19 @@ BEGIN
 
   SELECT id INTO keluarga_cukup_id
   FROM public.users
-  WHERE email = 'demokeluarga4@rangkul.id'
+  WHERE email = 'dewikeluarga@rangkul.id'
     AND role = 'keluarga'
   LIMIT 1;
 
   SELECT id INTO keluarga_kurang_id
   FROM public.users
-  WHERE email = 'demokeluarga3@rangkul.id'
+  WHERE email = 'rintokeluarga@rangkul.id'
     AND role = 'keluarga'
   LIMIT 1;
 
   SELECT id INTO keluarga_banding_selesai_id
   FROM public.users
-  WHERE email = 'demokeluarga2@rangkul.id'
+  WHERE email = 'mayakeluarga@rangkul.id'
     AND role = 'keluarga'
   LIMIT 1;
 
@@ -758,7 +1046,7 @@ SET helper_id = (
       SELECT hp.id
       FROM public.helper_profiles hp
       JOIN public.users u ON u.id = hp.user_id
-      WHERE LOWER(u.username) = 'masburgas'
+      WHERE LOWER(u.username) = 'andihelper'
       LIMIT 1
     ),
     status = 'menunggu_persetujuan_koordinator',
@@ -921,60 +1209,69 @@ SET status = fixture.status::public.helper_status,
     updated_at = NOW()
 FROM public.users u
 JOIN (VALUES
-  ('masburgas', 'verified', 'probation', 0, 0, TRUE, FALSE),
-  ('demo_helper_t2', 'verified', 'terpercaya', 7, 7, TRUE, FALSE),
-  ('demo_helper_t3', 'verified', 'terpercaya', 6, 6, TRUE, FALSE),
-  ('demo_helper_t4', 'verified', 'terpercaya', 8, 8, TRUE, FALSE),
-  ('demo_helper_t5', 'verified', 'terpercaya', 5, 5, TRUE, TRUE),
-  ('demo_helper_p1', 'verified', 'probation', 1, 1, TRUE, FALSE),
-  ('demo_helper_p2', 'verified', 'probation', 4, 4, TRUE, FALSE),
-  ('demo_helper_review', 'under_review', 'probation', 0, 0, FALSE, FALSE),
-  ('demo_helper_t6', 'verified', 'terpercaya', 5, 5, TRUE, FALSE)
+  ('andihelper', 'verified', 'probation', 0, 0, TRUE, FALSE),
+  ('rinihelper', 'verified', 'terpercaya', 7, 7, TRUE, FALSE),
+  ('dedihelper', 'verified', 'terpercaya', 6, 6, TRUE, FALSE),
+  ('sarihelper', 'verified', 'terpercaya', 8, 8, TRUE, FALSE),
+  ('yusufhelper', 'verified', 'terpercaya', 5, 5, TRUE, TRUE),
+  ('dewihelper', 'verified', 'probation', 1, 1, TRUE, FALSE),
+  ('arifhelper', 'verified', 'probation', 4, 4, TRUE, FALSE),
+  ('linahelper', 'under_review', 'probation', 0, 0, FALSE, FALSE),
+  ('fajarhelper', 'verified', 'terpercaya', 5, 5, TRUE, FALSE),
+  ('bagushelper', 'verified', 'terpercaya', 6, 6, TRUE, FALSE)
 ) AS fixture(username, status, tier, streak, total, available, admin_fallback)
   ON fixture.username = LOWER(u.username)
 WHERE u.id = hp.user_id;
 
 -- Asset demo lokal. Tidak menimpa foto pengguna nyata.
-
 UPDATE public.helper_profiles hp
 SET foto_wajah_url = CASE
-  WHEN LOWER(u.username) = 'masburgas' THEN '/images/helpers/orang1.jpeg'
-  WHEN LOWER(u.username) LIKE '%helper_t2%' THEN '/images/helpers/orang2.jpg'
-  WHEN LOWER(u.username) LIKE '%helper_t3%' THEN '/images/helpers/orang3.jpg'
-  WHEN LOWER(u.username) LIKE '%helper_t4%' THEN '/images/helpers/orang4.jpeg'
-  WHEN LOWER(u.username) LIKE '%helper_t5%' THEN '/images/helpers/orang5.jpeg'
-  WHEN LOWER(u.username) LIKE '%helper_p1%' THEN '/images/helpers/orang6.jpeg'
+  WHEN LOWER(u.username) = 'andihelper' THEN '/images/avatars/avatar-andi.jpg'
+  WHEN LOWER(u.username) = 'rinihelper' THEN '/images/helpers/helper-ayu.jpg'
+  WHEN LOWER(u.username) = 'dedihelper' THEN '/images/helpers/orang2.jpg'
+  WHEN LOWER(u.username) = 'sarihelper' THEN '/images/helpers/helper-sarah.jpg'
+  WHEN LOWER(u.username) = 'yusufhelper' THEN '/images/helpers/orang3.jpg'
+  WHEN LOWER(u.username) = 'dewihelper' THEN '/images/helpers/orang4.jpeg'
+  WHEN LOWER(u.username) = 'arifhelper' THEN '/images/helpers/orang5.jpeg'
+  WHEN LOWER(u.username) = 'linahelper' THEN '/images/helpers/orang6.jpeg'
+  WHEN LOWER(u.username) = 'fajarhelper' THEN '/images/helpers/orang1.jpeg'
+  WHEN LOWER(u.username) = 'bagushelper' THEN '/images/helpers/orang2.jpg'
   ELSE '/images/helpers/orang2.jpg'
 END
 FROM public.users u
 WHERE u.id = hp.user_id
   AND u.role = 'helper'
   AND LOWER(u.username) IN (
-    'masburgas', 'demo_helper_t2', 'demo_helper_t3', 'demo_helper_t4',
-    'demo_helper_t5', 'demo_helper_t6', 'demo_helper_p1', 'demo_helper_p2',
-    'demo_helper_review'
+    'andihelper', 'rinihelper', 'dedihelper', 'sarihelper', 'yusufhelper',
+    'fajarhelper', 'dewihelper', 'arifhelper', 'linahelper', 'bagushelper'
   );
 
 UPDATE public.koordinator_profiles kp
 SET foto_url = CASE
-  WHEN LOWER(u.username) = 'mbahburgas' THEN '/images/helpers/orang1.jpeg'
+  WHEN LOWER(u.username) = 'wagimankoordinator' THEN '/images/avatars/avatar-wagiman.jpg'
+  WHEN LOWER(u.username) = 'budikoordinator' THEN '/images/helpers/orang5.jpeg'
+  WHEN LOWER(u.username) = 'sulikoordinator' THEN '/images/helpers/helper-sarah.jpg'
+  WHEN LOWER(u.username) = 'aguskoordinator' THEN '/images/helpers/orang3.jpg'
+  WHEN LOWER(u.username) = 'rahmatkoordinator' THEN '/images/helpers/orang2.jpg'
+  WHEN LOWER(u.username) = 'darmokoordinator' THEN '/images/helpers/orang5.jpeg'
   ELSE '/images/helpers/orang2.jpg'
 END
 FROM public.users u
 WHERE u.id = kp.user_id
   AND LOWER(u.username) IN (
-    'mbahburgas', 'demo_koord_rt1', 'demo_koord_rt2', 'demo_koord_rt3', 'demo_koord_rw'
+    'wagimankoordinator', 'budikoordinator', 'sulikoordinator', 'aguskoordinator',
+    'rahmatkoordinator', 'darmokoordinator'
   );
 
 UPDATE public.lansia_profiles lp
 SET foto_url = CASE
   WHEN LOWER(u.username) = 'mbakburgas' THEN '/images/helpers/orang3.jpg'
-  WHEN LOWER(u.username) = 'demo_keluarga2' THEN '/images/helpers/orang4.jpeg'
-  WHEN LOWER(u.username) = 'demo_keluarga3' THEN '/images/helpers/orang5.jpeg'
+  WHEN LOWER(u.username) = 'mayakeluarga' THEN '/images/helpers/orang4.jpeg'
+  WHEN LOWER(u.username) = 'rintokeluarga' THEN '/images/helpers/orang5.jpeg'
   ELSE '/images/helpers/orang6.jpeg'
 END
 FROM public.users u
 WHERE u.id = lp.keluarga_id
-  AND LOWER(u.username) IN ('mbakburgas', 'demo_keluarga2', 'demo_keluarga3', 'demo_keluarga4');
+  AND LOWER(u.username) IN ('mbakburgas', 'mayakeluarga', 'rintokeluarga', 'dewikeluarga', 'suryakeluarga');
 
 COMMIT;

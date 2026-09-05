@@ -4,10 +4,10 @@ import { test } from "node:test";
 
 const seed = await readFile("supabase/seed.sql", "utf8");
 
-test("seed memakai email utama demo yang singkat", () => {
-  assert.match(seed, /'demokeluarga@rangkul\.id'/);
-  assert.match(seed, /'demohelper@rangkul\.id'/);
-  assert.match(seed, /'demokoordinator@rangkul\.id'/);
+test("seed memakai persona utama demo yang mudah diingat", () => {
+  assert.match(seed, /'ratnakeluarga@rangkul\.id'/);
+  assert.match(seed, /'andihelper@rangkul\.id'/);
+  assert.match(seed, /'wagimankoordinator@rangkul\.id'/);
 });
 
 test("seed mengisi nomor telepon demo dengan format seluler Indonesia", () => {
@@ -18,7 +18,7 @@ test("seed mengisi nomor telepon demo dengan format seluler Indonesia", () => {
   assert.equal(new Set(phoneLiterals).size, phoneLiterals.length, "nomor demo tidak boleh duplikat");
 });
 
-test("seed mengisi alamat detail untuk akun demo termasuk pasangan Burgas", () => {
+test("seed mengisi alamat detail untuk persona utama demo", () => {
   assert.match(seed, /alamat_detail_value/);
   assert.match(seed, /rt_value/);
   assert.match(seed, /rw_value/);
@@ -26,11 +26,11 @@ test("seed mengisi alamat detail untuk akun demo termasuk pasangan Burgas", () =
   assert.match(seed, /kecamatan_value/);
   assert.match(seed, /kabupaten_kota_value/);
   assert.match(seed, /provinsi_value/);
-  assert.match(seed, /'demokoordinator@rangkul\.id'[^\n]*'mbahburgas'[^\n]*'Jl\. Pleburan Barat No\. 18'[^\n]*3[^\n]*5/i);
-  assert.match(seed, /'demohelper@rangkul\.id'[^\n]*'masburgas'[^\n]*'Jl\. Pleburan Barat No\. 28'[^\n]*3[^\n]*5/i);
+  assert.match(seed, /'wagimankoordinator@rangkul\.id'[^\n]*'wagimankoordinator'[^\n]*'Jl\. Pleburan Barat No\. 18'[^\n]*3[^\n]*5/i);
+  assert.match(seed, /'andihelper@rangkul\.id'[^\n]*'andihelper'[^\n]*'Jl\. Pleburan Barat No\. 28'[^\n]*3[^\n]*5/i);
 });
 
-test("seed menempatkan Koordinator dan Helper Burgas sebagai akun demo aktif", () => {
+test("seed menempatkan Koordinator dan Helper utama sebagai akun demo aktif", () => {
   const coreSeed = seed.slice(seed.indexOf("SELECT id INTO core_koordinator_user_id"));
   assert.match(coreSeed, /core_koordinator_user_id[\s\S]*'verified'/i);
   assert.match(coreSeed, /core_helper_user_id[\s\S]*'verified'/i);

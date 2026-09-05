@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { ExtraServiceApprovalCard } from "@/components/keluarga/ExtraServiceApprovalCard";
 import { TaskScheduleActions } from "@/components/keluarga/TaskScheduleActions";
 import { LansiaPhotoPreview } from "@/components/helper/LansiaPhotoPreview";
-import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { ImagePreviewModal } from "@/components/ui/ImagePreviewModal";
 import { RegionAddress } from "@/components/ui/RegionAddress";
 import { TaskStatusBadge } from "@/components/ui/TaskStatusBadge";
@@ -145,47 +144,11 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
 
   const [evidenceOpen, setEvidenceOpen] = React.useState(false);
   const evidenceFile = task.evidence?.foto_bukti_url ?? null;
-  const [tipAmount, setTipAmount] = React.useState("");
-  const [isSubmittingTip, setIsSubmittingTip] = React.useState(false);
-  const [feedback, setFeedback] = React.useState<{
-    title: string;
-    description: string;
-    tone: "success" | "danger";
-  } | null>(null);
-
   const mapUrl = getMapUrl(task.lansia);
   const pendingServices = task.extraServices.filter((service) => service.status === "menunggu_persetujuan_keluarga");
   const decidedServices = task.extraServices.filter((service) => service.status !== "menunggu_persetujuan_keluarga");
+  const approvedServices = task.extraServices.filter((service) => service.status === "disetujui");
   const helperName = task.helper ? getUserName(task.helper.users) : null;
-
-  const handleSubmitTip = async () => {
-    setIsSubmittingTip(true);
-    try {
-      const res = await fetch(`/api/tasks/${task.id}/tip`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nominal: parseInt(tipAmount) })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal mengirim tip');
-
-      router.refresh();
-      setTipAmount("");
-      setFeedback({
-        title: "Tip berhasil dikirim",
-        description: "Terima kasih sudah memberikan apresiasi untuk Helper.",
-        tone: "success",
-      });
-    } catch (error: unknown) {
-      setFeedback({
-        title: "Tip belum terkirim",
-        description: error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim tip.",
-        tone: "danger",
-      });
-    } finally {
-      setIsSubmittingTip(false);
-    }
-  };
 
   return (
     <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 pb-24 sm:px-6 lg:px-8">
@@ -225,6 +188,30 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                 helperInfo={task.helper ? { full_name: helperName || "Helper" } : null}
                 onRefresh={() => router.refresh()}
               />
+            </div>
+          )}
+
+          {task.mode_penugasan === "pelamar" && task.status === "diajukan" && (
+            <div className="p-6 pb-0 sm:p-8 sm:pb-0">
+              <div className="flex flex-col gap-4 rounded-2xl border border-violet-200 bg-violet-50/80 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+                    <UserRound className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-violet-950">Mode: Pilih dari Pelamar</h3>
+                    <p className="mt-0.5 text-xs leading-relaxed text-violet-800 sm:text-sm">
+                      Tugas ini terbuka untuk diajukan oleh Helper di sekitar lokasi lansia. Tinjau dan tentukan Helper pilihan Anda.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/kunjungan/${task.id}/pelamar`}
+                  className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-800"
+                >
+                  Lihat Antrean Pelamar
+                </Link>
+              </div>
             </div>
           )}
 
@@ -321,53 +308,12 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
                   <h2 className="text-lg font-black text-slate-950">Rincian pembayaran</h2>
                 </div>
                 <div className="mt-4 space-y-3 text-sm">
-                  {(() => {
-                    const basePrice = Number(task.harga_dasar) || 0;
-                    const finalPrice = Number(task.harga_final) || basePrice;
-                    const extraTimePrice = finalPrice > basePrice ? finalPrice - basePrice : 0;
-                    const serviceFee = 2500;
-                    const subtotal = finalPrice + serviceFee;
-                    const tax = Math.round(subtotal * 0.11);
-                    const total = subtotal + tax;
-
-                    return (
-                      <>
-                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {basePrice.toLocaleString("id-ID")}</span></div>
-                        {extraTimePrice > 0 && <div className="flex items-center justify-between gap-4 text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">Rp {extraTimePrice.toLocaleString("id-ID")}</span></div>}
-                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>Biaya Layanan Aplikasi</span><span className="font-semibold text-slate-900">Rp {serviceFee.toLocaleString("id-ID")}</span></div>
-                        <div className="flex items-center justify-between gap-4 text-slate-600"><span>PPN (11%)</span><span className="font-semibold text-slate-900">Rp {tax.toLocaleString("id-ID")}</span></div>
-                        <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total Pembayaran</span><span className="text-xl text-[#0D47A1]">Rp {total.toLocaleString("id-ID")}</span></div>
-                      </>
-                    );
-                  })()}
+                  <div className="flex items-center justify-between gap-4 text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">Rp {Number(task.harga_dasar).toLocaleString("id-ID")}</span></div>
+                  {approvedServices.map((service) => (
+                    <div key={service.id} className="flex items-center justify-between gap-4 text-slate-600"><span>{service.nama_layanan}</span><span className="font-semibold text-slate-900">Rp {Number(service.biaya).toLocaleString("id-ID")}</span></div>
+                  ))}
+                  <div className="flex items-center justify-between gap-4 border-t border-blue-100 pt-4 text-base font-black text-slate-950"><span>Total pembayaran</span><span className="text-xl text-[#0D47A1]">Rp {Number(task.harga_final).toLocaleString("id-ID")}</span></div>
                 </div>
-
-                {/* Tip Helper Section */}
-                {task.status === "selesai" && (
-                   <div className="mt-6 pt-6 border-t border-blue-100">
-                      <p className="text-sm font-bold text-slate-900 mb-3">Berikan Tip untuk Helper (Opsional)</p>
-                      <div className="flex gap-2">
-                         <div className="relative flex-1">
-                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
-                           <input
-                             type="number"
-                             placeholder="0"
-                             className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20"
-                             value={tipAmount}
-                             onChange={(e) => setTipAmount(e.target.value)}
-                             disabled={isSubmittingTip}
-                           />
-                         </div>
-                         <Button
-                           onClick={handleSubmitTip}
-                           disabled={isSubmittingTip || !tipAmount || parseInt(tipAmount) <= 0}
-                           className="rounded-xl bg-[#0D47A1] hover:bg-blue-800 px-6"
-                         >
-                           {isSubmittingTip ? '...' : 'Kirim Tip'}
-                         </Button>
-                      </div>
-                   </div>
-                )}
               </section>
             </div>
 
@@ -416,13 +362,6 @@ export function RealTaskDetailClient({ task: initialTask }: { task: RealTaskDeta
           </div>
         </section>
       </div>
-      <FeedbackDialog
-        open={Boolean(feedback)}
-        onOpenChange={(open) => !open && setFeedback(null)}
-        title={feedback?.title ?? ""}
-        description={feedback?.description ?? ""}
-        tone={feedback?.tone ?? "success"}
-      />
     </main>
   );
 }

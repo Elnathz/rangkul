@@ -153,8 +153,13 @@ export default function KeluargaEditProfilPage() {
       const body = await response.json().catch(() => null) as { message?: string } | null;
       if (!response.ok) throw new Error(body?.message || "Profil gagal diperbarui");
 
-      if (form.password) {
-        const { error } = await createClient().auth.updateUser({ password: form.password });
+      const authUpdates: { password?: string; data?: { avatar_url?: string } } = {};
+      if (form.password) authUpdates.password = form.password;
+      if (avatarPath && avatarPath !== form.foto_url) {
+        authUpdates.data = { avatar_url: avatarPath };
+      }
+      if (Object.keys(authUpdates).length > 0) {
+        const { error } = await createClient().auth.updateUser(authUpdates);
         if (error) throw new Error(error.message);
       }
 

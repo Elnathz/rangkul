@@ -10,6 +10,62 @@
 
 **Spec:** `docs/TDD_Rangkul.md` §3.1-§3.4, §3.14, §4.5, §5.5, §6-§9, §11, §14 Sprint 6, §16, §19.8, dan Amendment Mode Penugasan Sprint 6; `docs/GUIDEBOOK_ITechno.md` §4.2, §5, §6.
 
+## Amendemen Eksekusi 4 September 2026
+
+Bagian ini adalah catatan eksekusi, bukan pengganti checklist rencana di bawah. Checkbox hanya ditandai setelah ada bukti yang dapat diulang.
+
+- [x] Kontrak source mode `langsung`, `pelamar`, dan `cepat`, feature flag fail-closed, migration assignment, API role-scoped, dan UI booking/job board sudah ada di branch `dev-eln`.
+- [x] Remote Supabase yang tertaut memiliki seluruh migration Sprint 6 hingga `20260904130200`.
+- [x] RPC `accept_quick_task` kini memvalidasi mode, trust, availability, kategori, koordinat, radius, jadwal, dan race secara server-side. Ia memakai enum notifikasi `task` yang valid, sementara overload legacy yang tidak aman telah dihapus.
+- [x] Seed cloud berhasil memakai persona fiktif yang mudah dibaca tanpa mengubah password, role matrix, koordinat, trust tier, status, ataupun relasi yang dibutuhkan test. Akun utama: `ratnakeluarga@rangkul.id`, `andihelper@rangkul.id`, dan `wagimankoordinator@rangkul.id`.
+- [x] Pemilih layanan menampilkan ringkasan pilihan setelah pengguna memilih: layanan, tingkat, estimasi durasi, harga dasar, dan kebutuhan approval bila relevan. Nama kategori canonical TDD tidak diubah di database.
+- [x] CLI `browser-use` tidak tersedia pada host ini, tetapi browser in-app yang dapat dikendalikan dipakai untuk QA landing publik. Pada 375px, 768px, 1024px, dan 1440px tidak ada horizontal overflow setelah hero dikunci ke satu kolom mobile. Tautan footer pendek juga memiliki hit area minimal 44px.
+- [x] Walkthrough browser authenticated memakai empat persona demo. Keluarga, Helper, Koordinator, dan Admin diarahkan ke dashboard yang benar dan lulus overflow pada 375px, 768px, 1024px, serta 1440px. Conflict, forbidden, zoom, dan screenshot tersimpan tetap menjadi gate terpisah.
+- [x] Runtime RLS baseline lulus setelah policy Helper publik yang bocor ditutup. Runtime Sprint 6 juga lulus untuk projection marketplace tereduksi, RLS lamaran, apply-withdraw, pemilihan pelamar atomik, race Cari Cepat, dan expiry lamaran.
+- [ ] Gate source terbaru: lint, typecheck, test berurutan, dan production build lulus. Matrix runtime cloud penuh juga lulus 263/263 tanpa skip. Percobaan ulang `npm ci` terbaru gagal karena `ENOSPC`, sehingga clean install tetap harus diulang pada runner dengan ruang cukup.
+- [x] Reseed cloud setelah matrix runtime berhasil. Target ref diambil dari project Supabase yang tertaut hanya untuk proses tersebut, diverifikasi oleh script, lalu SQL dan empat asset demo privat tersinkron.
+- [ ] Empat viewport authenticated sudah memiliki evidence browser. Feature-flag preview dry run, zoom 200 persen, screenshot tersimpan, dan smoke production masih belum memiliki evidence, sehingga Sprint 6 belum release-ready.
+
+### Amendemen persona dan wilayah seed, 4 September 2026
+
+- [x] Ganti seluruh identitas akun fixture yang masih bernama generik menjadi persona fiktif yang mudah diingat, dengan username dan email berbasis nama tanpa underscore. Password demo tetap `Rangkul2026*`.
+- [x] Pertahankan Pleburan RW 05 sebagai area demo utama, dengan Keluarga, Helper, dan Koordinator tersebar pada RT 01 sampai RT 05 agar scope RT dan fallback RW bisa didemokan.
+- [x] Tambahkan persona Keluarga, Helper, dan Koordinator pada kelurahan pembanding Kedungpane, Kecamatan Mijen, dengan RT/RW berbeda. Area ini hanya melengkapi coverage wilayah, bukan membuka akses lintas wilayah.
+- [x] Seed SQL, route reseed Admin, profile Helper/Koordinator, kategori, dan test matrix memakai daftar persona yang sama. Matriks TDD memuat lebih dari lima Helper terpercaya, dua probation, satu under review, dan satu verified by Admin fallback.
+- [x] Cloud seed dijalankan ulang idempoten setelah perubahan dan runtime RLS diulang sehingga akun baru tetap memisahkan boundary Pleburan dan Kedungpane.
+
+## Amendemen landing storytelling, 5 September 2026
+
+- Scope: landing publik saja. Backend, dashboard peran, route bisnis, harga, dan kontrak Sprint 6 tidak diubah.
+- Acuan: `RANGKUL_LANDING_PAGE_UIUX_MASTER_REDESIGN_V2_NO_IMPECCABLE.md`, TDD, serta keputusan pengguna untuk tetap bekerja di `dev-eln`, menggunakan `ui-ux-pro-max` dan `gpt-taste`, tanpa Impeccable atau GSAP.
+- Struktur: Hero, trust strip, Apa itu Rangkul, cara kerja, layanan, Riwayat interaktif, mekanisme trust, role explorer, CTA, dan footer.
+- Asset: ilustrasi 3D fiktif Ibu Ratna disimpan lokal di `public/images/landing/ibu-ratna-hero-v1.png`. Tidak ada foto pengguna, testimoni, atau metrik rekaan.
+- Motion: Framer Motion yang sudah ada. Visual interaktif aktif secara default sesuai arahan pengguna. Tidak menambah animasi yang mengubah business state atau memperlambat konten utama.
+- QA: mobile-first pada 375px, lalu 768px, 1024px, dan 1440px; cek scroll spy, tab, fokus keyboard, target 44px, overflow, serta build quality gate.
+
+Status implementasi amendemen, 5 September 2026:
+
+- [x] Hero memakai komposisi white-blue-white, snapshot HTML berlabel contoh, dan ilustrasi 3D fiktif lokal. Asset tidak mewakili pelanggan sebenarnya.
+- [x] Narasi landing kini mengikuti urutan cerita produk. Section "Apa itu Rangkul" dan mekanisme trust menjelaskan peran Keluarga, Helper, serta Koordinator sebelum ajakan mendaftar.
+- [x] Layanan risiko tinggi dibuat sebagai panel terpisah dengan syarat persetujuan Koordinator. Tidak ada klaim, ranking, atau testimoni rekaan.
+- [x] Riwayat Rangkul memakai tab interaktif dan contoh non-diagnostik. Role explorer hanya menampilkan tiga peran publik dan memakai pola tab yang dapat diakses keyboard.
+- [x] `npm ci`, typecheck, test (249 lulus, 14 runtime cloud skip tanpa kredensial), dan build lulus. Lint lulus tanpa error, dengan 61 warning lama di luar perubahan landing.
+- [x] Browser aktual landing pada 375px, 768px, 1024px, dan 1440px lulus tanpa overflow. Scroll-spy, drawer Escape, focus return, serta redirect booking publik juga lulus.
+- [ ] Screenshot tersimpan, zoom 200 persen, dan walkthrough authenticated empat role tetap perlu dicatat ke evidence sebelum kandidat release. Ini bukan alasan untuk mengaktifkan feature flag Sprint 6.
+
+## Amendemen blocker otorisasi route, 5 September 2026
+
+Temuan akar masalah: proxy hanya menandai prefix `/admin`, `/koordinator`, `/helper`, `/keluarga`, dan `/tugas` sebagai frontend privat. Route Keluarga canonical memakai URL tanpa prefix role, sehingga `/beranda`, `/booking`, `/cari-helper`, `/kunjungan`, `/lansia`, `/pembayaran`, `/saldo`, dan `/banding` tidak memperoleh pemeriksaan role global. Route bersama `/notifikasi` juga belum diklasifikasikan eksplisit sebagai authenticated-only.
+
+- [x] Bentuk satu klasifikasi route frontend eksplisit untuk `public`, `authenticated`, `keluarga`, `helper`, `koordinator`, dan `admin`. Pencocokan segment-aware mencegah nama seperti `/administrator` dianggap sebagai `/admin`.
+- [x] Audit otomatis seluruh 70 `src/app/**/page.tsx` agar setiap halaman role-group mempunyai klasifikasi yang benar, termasuk route dinamis dan legacy `/tugas`.
+- [x] Pengunjung route privat diarahkan ke login dengan tujuan aman; pengguna lintas role diarahkan ke dashboard role miliknya, bukan landing publik.
+- [x] Pertahankan pemeriksaan role dan ownership di route handler serta RLS. Seluruh 86 route handler kini minimal authenticated di proxy, kecuali login, register, dan webhook bertanda tangan; handler serta RLS tetap menjadi otoritas scope resource.
+- [x] Uji matriks halaman dan API dengan akun seed Keluarga, Helper, Koordinator, dan Admin. Route tanpa prefix, legacy, namespace role, katalog Helper, antrean Koordinator, Admin stats, dan debug menghasilkan `200`, `307`, `401`, atau `403` sesuai aktor.
+- [x] Reseed cloud idempoten dan runtime RLS dijalankan ulang. Seluruh 283 test pada matrix final lulus tanpa skip; gate final dicatat di completion audit.
+
+Blocker ini harus hijau sebelum feature flag Sprint 6 dapat dipertimbangkan aktif. Menyembunyikan navigasi tanpa menutup URL dan endpoint langsung tidak memenuhi gate keamanan TDD §8 dan §16.
+
 ## Global Constraints
 
 - Sprint 6 berlangsung 3-5 September 2026. Deadline teknis internal adalah 5 September pukul 18.00 WIB.

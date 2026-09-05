@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -131,6 +131,7 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string
+          entry_type: string
           id: string
           saldo_setelah: number
           user_id: string
@@ -141,6 +142,7 @@ export type Database = {
           amount: number
           created_at?: string
           created_by: string
+          entry_type?: string
           id?: string
           saldo_setelah: number
           user_id: string
@@ -151,6 +153,7 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string
+          entry_type?: string
           id?: string
           saldo_setelah?: number
           user_id?: string
@@ -1020,6 +1023,48 @@ export type Database = {
           },
         ]
       }
+      task_applications: {
+        Row: {
+          diajukan_at: string
+          diputus_at: string | null
+          helper_id: string
+          id: string
+          status: Database["public"]["Enums"]["task_application_status"]
+          task_id: string
+        }
+        Insert: {
+          diajukan_at?: string
+          diputus_at?: string | null
+          helper_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_application_status"]
+          task_id: string
+        }
+        Update: {
+          diajukan_at?: string
+          diputus_at?: string | null
+          helper_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_application_status"]
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_applications_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_applications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_evidence: {
         Row: {
           catatan_kondisi: string
@@ -1294,6 +1339,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_quick_task: { Args: { p_task_id: string }; Returns: Json }
       acknowledge_emergency_alert: {
         Args: { p_alert_id: string }
         Returns: {
@@ -1414,6 +1460,7 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string
+          entry_type: string
           id: string
           saldo_setelah: number
           user_id: string
@@ -1426,6 +1473,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      apply_to_task: { Args: { p_task_id: string }; Returns: Json }
       assign_admin_fallback: {
         Args: { p_helper_id: string; p_reason: string }
         Returns: {
@@ -1482,6 +1530,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1520,6 +1569,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1534,14 +1584,11 @@ export type Database = {
         }
       }
       charge_task_with_demo_wallet: {
-        Args: {
-          p_task_id: string
-          p_idempotency_key?: string | null
-        }
+        Args: { p_idempotency_key?: string; p_task_id: string }
         Returns: {
           payment_id: string
-          status: Database["public"]["Enums"]["payment_status"]
           saldo_tersisa: number
+          status: Database["public"]["Enums"]["payment_status"]
         }[]
       }
       confirm_midtrans_refund: {
@@ -1553,6 +1600,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1592,6 +1640,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1626,6 +1675,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1688,6 +1738,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1731,6 +1782,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1745,6 +1797,28 @@ export type Database = {
         }
       }
       expire_pending_tasks: { Args: never; Returns: number }
+      expire_unassigned_tasks: { Args: never; Returns: number }
+      get_task_marketplace: {
+        Args: { p_limit?: number; p_mode?: string }
+        Returns: {
+          estimasi_durasi_menit: number
+          expires_at: string
+          harga_dasar: number
+          harga_final: number
+          jadwal_waktu: string
+          jarak_km: number
+          kategori_id: string
+          kategori_nama: string
+          kecamatan: string
+          kelurahan: string
+          mode_penugasan: string
+          task_id: string
+        }[]
+      }
+      haversine_distance_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
       is_admin: { Args: never; Returns: boolean }
       is_koordinator_or_admin: { Args: never; Returns: boolean }
       is_scoped_koordinator_for_user: {
@@ -1752,6 +1826,26 @@ export type Database = {
         Returns: boolean
       }
       is_task_participant: { Args: { p_task_id: string }; Returns: boolean }
+      keluarga_self_topup_demo_wallet: {
+        Args: { topup_amount: number; topup_reason?: string }
+        Returns: {
+          alasan: string
+          amount: number
+          created_at: string
+          created_by: string
+          entry_type: string
+          id: string
+          saldo_setelah: number
+          user_id: string
+          wallet_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "demo_wallet_ledger"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       prepare_midtrans_payment_intent: {
         Args: { p_amount: number; p_task_id: string }
         Returns: {
@@ -1761,6 +1855,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1788,6 +1883,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1815,6 +1911,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1842,6 +1939,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1869,6 +1967,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1908,6 +2007,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -1955,6 +2055,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -1973,6 +2074,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      select_task_application: {
+        Args: { p_application_id: string; p_task_id: string }
+        Returns: Json
+      }
       settle_midtrans_payment: {
         Args: { p_gateway_ref: string; p_order_id: string; p_payload: Json }
         Returns: {
@@ -1982,6 +2087,7 @@ export type Database = {
           held_at: string | null
           helper_share: number
           id: string
+          idempotency_key: string | null
           jumlah_total: number
           koordinator_share: number
           midtrans_order_id: string | null
@@ -2032,6 +2138,7 @@ export type Database = {
           jadwal_waktu_asli: string | null
           keluarga_id: string
           lansia_id: string
+          mode_penugasan: Database["public"]["Enums"]["task_assignment_mode"]
           reschedule_count: number
           service_category_id: string
           started_at: string | null
@@ -2045,6 +2152,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      withdraw_task_application: { Args: { p_task_id: string }; Returns: Json }
     }
     Enums: {
       account_status: "active" | "restricted" | "suspended"
@@ -2083,6 +2191,12 @@ export type Database = {
         | "dibatalkan_kompensasi"
         | "refunding"
       report_status: "menunggu" | "ditindak" | "selesai"
+      task_application_status:
+        | "pending"
+        | "selected"
+        | "withdrawn"
+        | "rejected"
+        | "expired"
       task_assignment_mode: "langsung" | "pelamar" | "cepat"
       task_status:
         | "diajukan"
@@ -2115,12 +2229,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2144,11 +2258,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2169,11 +2283,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2194,11 +2308,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2211,11 +2325,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2271,6 +2385,14 @@ export const Constants = {
         "refunding",
       ],
       report_status: ["menunggu", "ditindak", "selesai"],
+      task_application_status: [
+        "pending",
+        "selected",
+        "withdrawn",
+        "rejected",
+        "expired",
+      ],
+      task_assignment_mode: ["langsung", "pelamar", "cepat"],
       task_status: [
         "diajukan",
         "menunggu_persetujuan_koordinator",

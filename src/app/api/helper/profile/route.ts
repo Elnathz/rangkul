@@ -77,6 +77,7 @@ export async function PATCH(request: Request) {
     const wilayahChanged = input.wilayah_domisili !== undefined && input.wilayah_domisili !== existing.wilayah_domisili;
     const updates: Database['public']['Tables']['helper_profiles']['Update'] = {
       ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
+      ...(input.is_available !== undefined ? { is_available: input.is_available } : {}),
       ...(input.wilayah_domisili !== undefined ? { wilayah_domisili: input.wilayah_domisili } : {}),
       ...(input.domisili_lat !== undefined ? { domisili_lat: input.domisili_lat } : {}),
       ...(input.domisili_lng !== undefined ? { domisili_lng: input.domisili_lng } : {}),
@@ -89,7 +90,7 @@ export async function PATCH(request: Request) {
       .from('helper_profiles')
       .update(updates)
       .eq('id', existing.id)
-      .select('id, status, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km')
+      .select('id, status, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, is_available')
       .single();
     if (updateError) return createApiError('server_error', updateError.message, 500);
 

@@ -4,10 +4,10 @@ import test from "node:test";
 
 const alignmentMigration = fs.readFileSync(new URL("../supabase/seed.sql", import.meta.url), "utf8");
 
-test("seed demo membuat atau memakai akun inti mbahburgas dan masburgas", () => {
-  assert.match(alignmentMigration, /username\) = ["']mbahburgas["']/i);
-  assert.match(alignmentMigration, /demokoordinator@rangkul\.id/);
-  assert.match(alignmentMigration, /demohelper@rangkul\.id/);
+test("seed demo membuat atau memakai akun inti Wagiman dan Andi", () => {
+  assert.match(alignmentMigration, /username\) = ["']wagimankoordinator["']/i);
+  assert.match(alignmentMigration, /wagimankoordinator@rangkul\.id/);
+  assert.match(alignmentMigration, /andihelper@rangkul\.id/);
   assert.match(alignmentMigration, /core_koordinator_user_id[\s\S]*'verified'/i);
   assert.match(alignmentMigration, /raw_user_meta_data ->> 'username'/i);
   assert.match(alignmentMigration, /IF .*NULL/i);
@@ -15,7 +15,7 @@ test("seed demo membuat atau memakai akun inti mbahburgas dan masburgas", () => 
 });
 
 test("seed demo approval berada di Semarang Selatan", () => {
-  assert.match(alignmentMigration, /masburgas/i);
+  assert.match(alignmentMigration, /andihelper/i);
   assert.match(alignmentMigration, /Pleburan/i);
   assert.match(alignmentMigration, /Semarang Selatan/i);
   assert.match(alignmentMigration, /Kota Semarang/i);

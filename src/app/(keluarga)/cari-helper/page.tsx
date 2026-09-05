@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Filter, Heart, Loader2, MapPin, Search, ShieldCheck, Star } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Filter, Heart, Loader2, MapPin, Search, ShieldCheck, Star } from "lucide-react";
+import DateTimePicker from "@/components/keluarga/booking/DateTimePicker";
+import LansiaSelect from "@/components/keluarga/booking/LansiaSelect";
+import CustomServiceTierSelect from "@/components/keluarga/booking/CustomServiceTierSelect";
 
 type Lansia = { id: string; nama: string; alamat: string; lat: number | null; lng: number | null };
 type Category = { id: string; nama: string; tingkat: string; harga_dasar: number; is_high_risk: boolean };
@@ -98,29 +101,110 @@ export default function CariHelperPage() {
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[280px_1fr]">
-        <aside className="h-fit space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
-          <div className="flex items-center gap-2"><Filter className="h-5 w-5 text-[#0D47A1]" aria-hidden="true" /><h2 className="font-bold text-slate-900">Filter pencarian</h2></div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-            Jadwal kunjungan
-            <input type="datetime-local" value={jadwalWaktu} onChange={(event) => setJadwalWaktu(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" />
-            <span className="mt-2 block text-xs normal-case leading-relaxed tracking-normal text-slate-500">Helper probation tidak muncul bila jadwal kurang dari tiga jam.</span>
-          </label>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-            Pilih lansia
-            <select value={selectedLansia} onChange={(event) => setSelectedLansia(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-medium text-slate-800"><option value="">Semua lokasi</option>{lansias.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select>
-          </label>
-          <fieldset>
-            <legend className="text-xs font-bold uppercase tracking-wider text-slate-500">Tingkat layanan</legend>
-            <div className="mt-2 space-y-1">{["", "ringan", "sedang", "berat"].map((item) => <label key={item || "semua"} className="flex min-h-11 items-center gap-3 text-sm text-slate-700"><input type="radio" checked={tingkat === item} onChange={() => setTingkat(item)} className="h-5 w-5" />{item || "Semua tingkat"}</label>)}</div>
-          </fieldset>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Radius maksimal: {radius} km<input type="range" min="1" max="15" value={radius} onChange={(event) => setRadius(Number(event.target.value))} className="mt-3 min-h-11 w-full accent-blue-600" /></label>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Kategori layanan<select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-medium text-slate-800"><option value="">Semua kategori</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label>
+        <aside className="h-fit space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <Filter className="h-5 w-5 text-[#0D47A1]" aria-hidden="true" />
+            <h2 className="font-bold text-slate-900">Filter Pencarian</h2>
+          </div>
+
+          {/* 1. Jadwal Kunjungan (Custom DateTimePicker) */}
+          <DateTimePicker
+            value={jadwalWaktu}
+            onChange={setJadwalWaktu}
+            label="Jadwal Kunjungan"
+            helperText="Helper probation tidak muncul bila jadwal kurang dari tiga jam."
+          />
+
+          {/* 2. Pilih Lansia (Custom LansiaSelect with allowEmpty) */}
+          <LansiaSelect
+            lansiaList={lansias}
+            selectedId={selectedLansia}
+            onSelect={setSelectedLansia}
+            label="Pilih Lansia"
+            allowEmpty={true}
+            emptyLabel="Semua lokasi"
+            emptyDescription="Cari tanpa membatasi lokasi lansia"
+          />
+
+          {/* 3. Tingkat Layanan (Segmented Pill Buttons) */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Tingkat Layanan
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100/90 p-1.5">
+              {[
+                { key: "", label: "Semua Tingkat", dot: null, activeClass: "bg-[#0D47A1] text-white shadow-xs" },
+                { key: "ringan", label: "Ringan", dot: "bg-emerald-500", activeClass: "bg-emerald-700 text-white shadow-xs" },
+                { key: "sedang", label: "Sedang", dot: "bg-[#0D47A1]", activeClass: "bg-[#0D47A1] text-white shadow-xs" },
+                { key: "berat", label: "Berat", dot: "bg-amber-600", activeClass: "bg-amber-700 text-white shadow-xs" },
+              ].map((tier) => {
+                const isActive = tingkat === tier.key;
+                return (
+                  <button
+                    key={tier.key || "all"}
+                    type="button"
+                    onClick={() => setTingkat(tier.key)}
+                    className={`flex h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold transition-all ${
+                      isActive
+                        ? tier.activeClass
+                        : "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 shadow-2xs"
+                    }`}
+                  >
+                    {tier.dot && (
+                      <span
+                        className={`size-2 rounded-full shrink-0 ${
+                          isActive ? "bg-white" : tier.dot
+                        }`}
+                      />
+                    )}
+                    <span>{tier.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. Kategori Layanan (Custom ServiceTierSelect with allowEmpty) */}
+          <CustomServiceTierSelect
+            categories={categories}
+            selectedId={categoryId}
+            onSelect={setCategoryId}
+            label="Kategori Layanan"
+            allowEmpty={true}
+            emptyLabel="Semua Kategori"
+            emptyDescription="Tampilkan seluruh ragam layanan"
+            helperText="Pilih keahlian khusus untuk mempersempit kualifikasi Helper."
+          />
         </aside>
 
         <section className="min-w-0 space-y-6">
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
-            <label className="flex min-w-0 flex-1 items-center gap-2 px-2"><span className="sr-only">Cari nama atau layanan Helper</span><Search className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama atau layanan Helper" className="min-h-11 min-w-0 w-full text-base outline-none" /></label>
-            <label className="flex min-h-11 items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><span className="sr-only">Urutkan Helper</span><ArrowUpDown className="h-4 w-4 text-slate-400" aria-hidden="true" /><select value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 bg-transparent text-sm font-bold text-slate-700 outline-none"><option value="rekomendasi">Rekomendasi</option><option value="rating">Rating tertinggi</option><option value="jarak">Jarak terdekat</option></select></label>
+            <label className="flex min-w-0 flex-1 items-center gap-2 px-2">
+              <span className="sr-only">Cari nama atau layanan Helper</span>
+              <Search className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Cari nama atau layanan Helper"
+                className="min-h-11 min-w-0 w-full text-base outline-none"
+              />
+            </label>
+            <div className="flex min-h-11 items-center gap-2 border-t border-slate-100 px-2 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+              <span className="sr-only">Urutkan Helper</span>
+              <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />
+              <div className="relative">
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value)}
+                  className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl pl-3 pr-8 py-2 text-xs sm:text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#0D47A1]/20 cursor-pointer transition-colors"
+                >
+                  <option value="rekomendasi">Rekomendasi</option>
+                  <option value="rating">Rating tertinggi</option>
+                  <option value="jarak">Jarak terdekat</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
 
           {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}

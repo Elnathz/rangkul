@@ -1,246 +1,112 @@
-import React from 'react';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { 
-  Users, 
-  FileCheck, 
-  ChevronRight, 
-  UserCheck,
-  AlertCircle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
-import KoordinatorStatusGuard from '@/components/koordinator/KoordinatorStatusGuard';
-import { RegionAddress } from '@/components/ui/RegionAddress';
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, ClipboardCheck, FileWarning, ShieldAlert, UserRoundCheck, UsersRound } from "lucide-react";
+import { redirect } from "next/navigation";
+
+import KoordinatorStatusGuard from "@/components/koordinator/KoordinatorStatusGuard";
+import { RegionAddress } from "@/components/ui/RegionAddress";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 
 type PendingHelper = {
   id: string;
   created_at: string;
   wilayah_domisili: string;
-  status: string;
   koordinator_id: string | null;
   users: { full_name: string | null } | { full_name: string | null }[] | null;
 };
 
+type ScopedHelper = {
+  id: string;
+  is_available: boolean;
+  koordinator_id: string | null;
+  status: string;
+  wilayah_domisili: string;
+};
+
+function helperName(helper: PendingHelper) {
+  const user = Array.isArray(helper.users) ? helper.users[0] : helper.users;
+  return user?.full_name || "Helper tanpa nama";
+}
+
+function formatSubmittedAt(value: string) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
 export default async function KoordinatorDashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Get Koordinator Profile and User Name
   const { data: koordinator } = await supabase
-    .from('koordinator_profiles')
-    .select('id, wilayah, status')
-    .eq('user_id', user.id)
-    .single();
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('full_name')
-    .eq('id', user.id)
-    .single();
-
-  // Default values
-  let totalHelper = 0, pendingHelperCount = 0, activeHelper = 0;
-  let pendingHelpers: PendingHelper[] = [];
-
-  if (koordinator?.wilayah) {
-    // Ambil semua helper yang mungkin terkait untuk menghitung statistik
-    const { data: allHelpers } = await supabase
-      .from('helper_profiles')
-      .select('id, wilayah_domisili, status, koordinator_id')
-      .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`);
-
-    if (allHelpers) {
-      const myHelpers = allHelpers.filter(h => 
-        h.koordinator_id === koordinator.id || 
-        (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
-      );
-      
-      totalHelper = myHelpers.length;
-      pendingHelperCount = myHelpers.filter(h => h.status === 'pending_verification').length;
-      activeHelper = myHelpers.filter(h => h.status === 'verified').length;
-    }
-
-    // Fetch pending helpers list (top 3)
-    const { data: pendingData } = await supabase
-      .from('helper_profiles')
-      .select(`
-        id,
-        created_at,
-        wilayah_domisili,
-        status,
-        koordinator_id,
-        users ( full_name )
-      `)
-      .eq('status', 'pending_verification')
-      .or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`)
-      .order('created_at', { ascending: false });
-
-    if (pendingData) {
-      pendingHelpers = pendingData
-        .filter(h => 
-          h.koordinator_id === koordinator.id || 
-          (h.koordinator_id === null && h.wilayah_domisili.includes(koordinator.wilayah))
-        )
-        .slice(0, 3);
-    }
-  }
+    .from("koordinator_profiles")
+    .select("id, wilayah, status")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   const isProfileIncomplete = !koordinator?.wilayah;
+  const isOperational = koordinator?.status === "verified" && !isProfileIncomplete;
+  let scopedHelpers: ScopedHelper[] = [];
+  let pendingHelpers: PendingHelper[] = [];
+  let activeHelperCount = 0;
 
-  const formatTaskDate = (isoString: string) => {
-    const date = new Date(isoString);
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZoneName: 'short'
-    }).format(date);
-  };
+  if (koordinator?.id && koordinator.wilayah) {
+    const [{ data: helpers }, { data: pendingData }, { data: activeTasks }] = await Promise.all([
+      supabase.from("helper_profiles").select("id, is_available, wilayah_domisili, status, koordinator_id").or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`),
+      supabase.from("helper_profiles").select("id, created_at, wilayah_domisili, koordinator_id, users(full_name)").eq("status", "pending_verification").or(`koordinator_id.eq.${koordinator.id},koordinator_id.is.null`).order("created_at", { ascending: false }),
+      isOperational ? supabase.from("tasks").select("helper_id").eq("status", "dikerjakan") : Promise.resolve({ data: [] as Array<{ helper_id: string | null }> }),
+    ]);
+    const belongsToWilayah = (helper: { koordinator_id: string | null; wilayah_domisili: string }) => helper.koordinator_id === koordinator.id || (helper.koordinator_id === null && helper.wilayah_domisili.includes(koordinator.wilayah));
+    scopedHelpers = ((helpers ?? []) as ScopedHelper[]).filter(belongsToWilayah);
+    pendingHelpers = ((pendingData ?? []) as PendingHelper[]).filter(belongsToWilayah).slice(0, 3);
+    const scopedHelperIds = new Set(scopedHelpers.map((helper) => helper.id));
+    activeHelperCount = new Set((activeTasks ?? []).map((task) => task.helper_id).filter((id): id is string => Boolean(id && scopedHelperIds.has(id)))).size;
+  }
 
-  const formatWilayah = (wilayahStr: string) => {
-    return <RegionAddress value={wilayahStr} compact />;
-  };
+  const [approvalResult, emergencyResult, reportResult] = await Promise.all([
+    isOperational ? supabase.from("tasks").select("id", { count: "exact", head: true }).eq("status", "menunggu_persetujuan_koordinator") : Promise.resolve({ count: 0, error: null }),
+    isOperational ? supabase.from("emergency_alerts").select("id", { count: "exact", head: true }).eq("status", "active") : Promise.resolve({ count: 0, error: null }),
+    isOperational ? supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "menunggu") : Promise.resolve({ count: 0, error: null }),
+  ]);
 
-  const stats = [
-    { label: 'Total Helper Wilayah', value: (totalHelper || 0).toString(), icon: Users, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Antrean Verifikasi', value: (pendingHelperCount || 0).toString(), icon: FileCheck, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Helper Terverifikasi', value: (activeHelper || 0).toString(), icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' }
+  const verifiedHelperCount = scopedHelpers.filter((helper) => helper.status === "verified").length;
+  const availableHelperCount = scopedHelpers.filter((helper) => helper.status === "verified" && helper.is_available).length;
+  const unavailableHelperCount = Math.max(verifiedHelperCount - availableHelperCount, 0);
+  const pendingHelperCount = pendingHelpers.length;
+  const approvalCount = approvalResult.count ?? 0;
+  const activeEmergencyCount = emergencyResult.count ?? 0;
+  const pendingReportCount = reportResult.count ?? 0;
+  const hasQueueError = Boolean(approvalResult.error || emergencyResult.error || reportResult.error);
+  const actions = [
+    { title: "Verifikasi Helper", detail: pendingHelperCount ? `${pendingHelperCount} pengajuan perlu ditinjau.` : "Tidak ada pengajuan baru di wilayah Anda.", count: pendingHelperCount, href: "/koordinator/pengajuan", icon: UserRoundCheck, tone: "info" },
+    { title: "Persetujuan kunjungan", detail: approvalCount ? `${approvalCount} kunjungan memerlukan keputusan Anda.` : "Tidak ada kunjungan yang menunggu persetujuan.", count: approvalCount, href: "/koordinator/persetujuan", icon: ClipboardCheck, tone: "warning" },
+    { title: "Darurat aktif", detail: activeEmergencyCount ? `${activeEmergencyCount} sinyal SOS perlu ditangani sekarang.` : "Tidak ada sinyal SOS aktif.", count: activeEmergencyCount, href: "/koordinator/darurat", icon: AlertTriangle, tone: "danger" },
+    { title: "Laporan menunggu", detail: pendingReportCount ? `${pendingReportCount} laporan perlu ditindaklanjuti.` : "Tidak ada laporan yang menunggu peninjauan.", count: pendingReportCount, href: "/koordinator/laporan", icon: FileWarning, tone: "warning" },
   ];
 
-  return (
-    <KoordinatorStatusGuard koordinator={koordinator}>
-      <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-6xl mx-auto">
-      <div className="space-y-6">
-        
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-gradient text-white p-8 rounded-2xl shadow-sm relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Koordinator'}</h1>
-            <div className="mt-3 max-w-3xl">
-              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue-100">Wilayah operasional</p>
-              <RegionAddress value={koordinator?.wilayah} tone="inverse" compact />
-            </div>
-          </div>
-        </div>
+  return <KoordinatorStatusGuard koordinator={koordinator}>
+    <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+      <header className="flex flex-col gap-4 border-b border-border py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div><h1 className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground">Ringkasan wilayah</h1><p className="mt-1 text-sm leading-6 text-muted-foreground">Mulai dari antrean yang perlu keputusan, lalu pantau kondisi Helper di wilayah Anda.</p></div>
+        <div className="rounded-md border border-border bg-[var(--surface-subtle)] px-4 py-3 text-sm"><p className="font-semibold text-foreground">Wilayah operasional</p><div className="mt-1 text-muted-foreground"><RegionAddress value={koordinator?.wilayah} compact /></div></div>
+      </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {stats.map((stat, idx) => (
-            <div key={idx} className={`${stat.cardBg} p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md relative overflow-hidden group`}>
-               {idx === 0 && (
-                 <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none transform group-hover:scale-110 transition-transform">
-                   <Users className="w-20 h-20 text-white" />
-                 </div>
-               )}
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                <div className={`p-2.5 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </div>
-              <div className="relative z-10">
-                <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${idx === 0 ? 'text-blue-100' : 'text-gray-500'}`}>{stat.label}</p>
-                <p className={`text-3xl font-bold ${idx === 0 ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      {isProfileIncomplete ? <section className="rounded-md border border-amber-200 bg-amber-50 p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-heading text-xl font-bold text-foreground">Lengkapi pengajuan profil</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Atur wilayah dan dokumen jabatan agar Anda dapat melihat antrean Helper serta tindakan wilayah yang diizinkan.</p></div><Button asChild className="min-h-11 shrink-0"><Link href="/koordinator/pengajuan">Lengkapi pengajuan</Link></Button></div></section> : <>
+        <section className="overflow-hidden rounded-md border border-border bg-card" aria-labelledby="action-queue-heading">
+          <div className="flex items-center justify-between border-b border-border bg-[var(--surface-subtle)] px-4 py-4 sm:px-5"><div><h2 id="action-queue-heading" className="font-heading text-xl font-bold tracking-[-0.02em] text-foreground">Tindakan perlu ditangani</h2><p className="mt-1 text-sm text-muted-foreground">Antrean yang benar-benar membutuhkan keputusan Anda.</p></div><ShieldAlert className="size-6 text-primary" aria-hidden="true" /></div>
+          <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">{actions.map((action) => {
+            const emphasized = action.count > 0;
+            const iconTone = action.tone === "danger" && emphasized ? "bg-destructive/10 text-destructive" : action.tone === "warning" && emphasized ? "bg-amber-100 text-amber-800" : emphasized ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
+            return <Link key={action.href} href={action.href} className="group flex min-h-32 items-start gap-3 px-4 py-5 transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"><span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${iconTone}`}><action.icon className="size-5" aria-hidden="true" /></span><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="text-sm font-bold text-foreground">{action.title}</span>{emphasized ? <span className={action.tone === "danger" ? "rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-white" : "rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground"}>{action.count > 99 ? "99+" : action.count}</span> : null}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{action.detail}</span></span><ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" /></Link>;
+          })}</div>
+        </section>
 
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Link
-            href="/koordinator/komisi"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-100"
-          >
-            Lihat Rincian Komisi Saya (3%)
-            <ChevronRight className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-          </Link>
-          <Link
-            href="/koordinator/helper"
-            className="inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-bold text-[#0D47A1] shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
-          >
-            Pantau status aktivitas Helper
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
+        {hasQueueError ? <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Sebagian antrean belum dapat dimuat. Buka halaman tindakan terkait untuk mencoba lagi.</p> : null}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Tasks List */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Menunggu Verifikasi Anda</h2>
-              {!isProfileIncomplete && (
-                <Link href="/koordinator/antrean" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
-                  Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
-                </Link>
-              )}
-            </div>
-            
-            {isProfileIncomplete ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-orange-200 overflow-hidden p-8 text-center flex flex-col items-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <FileCheck className="w-8 h-8 text-orange-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Lengkapi Pengajuan Profil</h3>
-                <p className="text-gray-500 mb-6 max-w-md">
-                  Anda harus melengkapi dokumen pengajuan dan mengatur wilayah operasional sebelum bisa melihat dan memverifikasi calon Helper.
-                </p>
-                <Button asChild className="bg-[#0D47A1] text-white hover:bg-blue-800">
-                  <Link href="/koordinator/pengajuan">Isi Formulir Pengajuan Sekarang</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-                {pendingHelpers.length > 0 ? pendingHelpers.map((helper) => (
-                  <div key={helper.id} className="p-5 hover:bg-gray-50/50 transition-colors">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-                      <div className="flex-1 w-full relative">
-                        <h3 className="text-base font-bold text-gray-900 mb-1">{(Array.isArray(helper.users) ? helper.users[0]?.full_name : helper.users?.full_name) || 'Helper Anonim'}</h3>
-                        {formatWilayah(helper.wilayah_domisili)}
-                        <p className="text-xs text-gray-400">Diajukan: {formatTaskDate(helper.created_at)}</p>
-                      </div>
-                      
-                      <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
-                        <Button asChild size="sm" className="bg-[#0D47A1] text-white hover:bg-blue-800 w-full sm:w-auto">
-                          <Link href={`/koordinator/helper/${helper.id}`}>Review Berkas</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )) : (
-                   <div className="p-8 text-center text-gray-500 text-sm">
-                     Tidak ada Helper yang menunggu verifikasi.
-                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar Area */}
-          <div className="space-y-6">
-            {/* Warning Banner */}
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 relative overflow-hidden">
-              <h3 className="font-bold text-blue-900 mb-2 flex items-center relative z-10">
-                <AlertCircle className="w-5 h-5 mr-2 text-blue-600" />
-                Pemberitahuan Sistem
-              </h3>
-              <p className="text-sm text-blue-800 mb-4 leading-relaxed relative z-10">
-                Pastikan Anda mengecek KTP dan SKCK calon Helper dengan teliti demi keamanan lansia.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    </KoordinatorStatusGuard>
-  );
+        <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="overflow-hidden rounded-md border border-border bg-card"><div className="flex items-center justify-between border-b border-border bg-[var(--surface-subtle)] px-4 py-4 sm:px-5"><div><h2 className="font-heading text-lg font-bold text-foreground">Aktivitas Wilayah Terbaru</h2><p className="mt-1 text-sm text-muted-foreground">Pengajuan Helper yang benar-benar masuk dari wilayah Anda.</p></div><Link href="/koordinator/pengajuan" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-4">Lihat antrean</Link></div>{pendingHelpers.length ? <div className="divide-y divide-border">{pendingHelpers.map((helper) => <div key={helper.id} className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><div className="min-w-0"><h3 className="truncate text-sm font-bold text-foreground">{helperName(helper)}</h3><div className="mt-1 text-sm text-muted-foreground"><RegionAddress value={helper.wilayah_domisili} compact /></div><p className="mt-1 text-xs text-muted-foreground">Mengajukan verifikasi pada {formatSubmittedAt(helper.created_at)}</p></div><Button asChild variant="outline" className="min-h-11 shrink-0 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary"><Link href={`/koordinator/helper/${helper.id}`}>Tinjau Helper</Link></Button></div>)}</div> : <div className="px-4 py-10 text-center text-sm text-muted-foreground sm:px-5">Tidak ada Helper yang menunggu verifikasi. Semua pengajuan sudah ditinjau.</div>}</div>
+          <aside className="rounded-md border border-border bg-[var(--surface-subtle)] p-5"><UsersRound className="size-6 text-primary" aria-hidden="true" /><h2 className="mt-4 font-heading text-xl font-bold tracking-[-0.02em] text-foreground">Helper wilayah</h2><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><p><span className="block text-2xl font-bold tabular-nums text-foreground">{verifiedHelperCount}</span><span className="text-muted-foreground">Helper terverifikasi</span></p><p><span className="block text-2xl font-bold tabular-nums text-foreground">{activeHelperCount}</span><span className="text-muted-foreground">Sedang bertugas</span></p><p><span className="block text-2xl font-bold tabular-nums text-foreground">{availableHelperCount}</span><span className="text-muted-foreground">Tersedia</span></p><p><span className="block text-2xl font-bold tabular-nums text-foreground">{unavailableHelperCount}</span><span className="text-muted-foreground">Tidak tersedia</span></p></div><Link href="/koordinator/helper" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-4">Lihat Helper wilayah</Link></aside>
+        </section>
+      </>}
+    </main>
+  </KoordinatorStatusGuard>;
 }

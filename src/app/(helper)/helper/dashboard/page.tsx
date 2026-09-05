@@ -1,334 +1,284 @@
-import React from 'react';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { 
-  Briefcase, 
-  Clock, 
-  MapPin, 
-  ChevronRight, 
-  CheckCircle2, 
-  AlertCircle,
-  Wallet 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
+import Link from "next/link";
+import {
+  BriefcaseBusiness,
+  CalendarClock,
+  CheckCircle2,
+  CircleCheck,
+  MapPin,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
+import { redirect } from "next/navigation";
 
-type RecentTask = {
-  id: string;
-  jadwal_waktu: string;
-  status: string;
-  lansia_profiles: { nama: string; alamat: string } | null;
-  service_categories: { nama: string } | null;
+import { AvailabilityToggle } from "@/components/helper/AvailabilityToggle";
+import { ServiceTiersTabs, type ServiceCategoryItem } from "@/components/helper/ServiceTiersTabs";
+import { Button } from "@/components/ui/button";
+import type { TaskStatus } from "@/lib/constants/task-status";
+import { createClient } from "@/lib/supabase/server";
+import { getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
+
+const formatRupiah = (value: number) => new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  maximumFractionDigits: 0,
+}).format(value);
+
+const helperStatusLabel: Record<string, string> = {
+  pending_verification: "Menunggu verifikasi",
+  verified: "Terverifikasi",
+  under_review: "Sedang ditinjau",
+  rejected: "Perlu perbaikan profil",
+  suspended: "Ditangguhkan",
 };
 
 export default async function HelperDashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Get user name
-  const { data: userData } = await supabase
-    .from('users')
-    .select('full_name')
-    .eq('id', user.id)
-    .single();
-
-  // Get helper profile
-  const { data: profile } = await supabase
-    .from('helper_profiles')
-    .select('id, status, total_tugas_selesai, saldo_tersedia, suspend_reason')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  const helperStatus = profile?.status || 'unregistered';
-  
-  // Get active tasks count
-  let activeTasksCount = 0;
-  if (profile) {
-    const { count } = await supabase
-      .from('tasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('helper_id', profile.id)
-      .in('status', ['dikonfirmasi', 'dikerjakan', 'menunggu_persetujuan_koordinator', 'menunggu_persetujuan_keluarga']);
-    activeTasksCount = count || 0;
-  }
-
-  // Get recent tasks
-  let recentTasks: RecentTask[] = [];
-  if (profile) {
-    const { data: tasksData } = await supabase
-      .from('tasks')
+  const [{ data: userData }, { data: profile }] = await Promise.all([
+    supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("helper_profiles")
       .select(`
-        id,
-        jadwal_waktu,
-        status,
-        lansia_profiles ( nama, alamat ),
-        service_categories ( nama )
+        id, status, tingkat_kepercayaan, is_available, saldo_tersedia,
+        total_tugas_selesai, wilayah_domisili, radius_layanan_km, foto_wajah_url,
+        helper_service_categories ( service_categories ( id, nama, tingkat, is_high_risk ) )
       `)
-      .eq('helper_id', profile.id)
-      .in('status', ['diajukan', 'dikonfirmasi', 'dikerjakan', 'menunggu_persetujuan_koordinator', 'menunggu_persetujuan_keluarga'])
-      .order('jadwal_waktu', { ascending: true })
-      .limit(3);
-      
-    recentTasks = (tasksData || []) as RecentTask[];
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  if (!profile) {
+    return (
+      <main className="mx-auto min-h-screen max-w-3xl px-4 py-8 pb-28 sm:px-6">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h1 className="font-heading text-2xl font-bold text-foreground">Mulai sebagai Helper</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Lengkapi profil dan dokumen Anda agar Koordinator dapat melakukan verifikasi.
+          </p>
+          <Button asChild className="mt-5 min-h-11 rounded-xl">
+            <Link href="/helper/verifikasi">Lengkapi profil</Link>
+          </Button>
+        </section>
+      </main>
+    );
   }
 
-  // Format IDR helper
-  const formatIDR = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-  
-  // Format Date helper
-  const formatTaskDate = (isoString: string) => {
-    const date = new Date(isoString);
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZoneName: 'short'
-    }).format(date);
-  };
+  const { data: tasks } = await supabase
+    .from("tasks")
+    .select("id, status, jadwal_waktu, lansia_profiles(nama), service_categories(nama)")
+    .eq("helper_id", profile.id)
+    .order("jadwal_waktu", { ascending: true })
+    .limit(8);
+  const activeTasks = (tasks ?? []).filter((task) => !["selesai", "dibatalkan"].includes(task.status));
+  const nextTask = activeTasks[0];
+  const taskStatus = nextTask ? getTaskStatusPresentation(nextTask.status as TaskStatus) : null;
+  const canBrowse = profile.status === "verified";
+  const helperName = userData?.full_name || "Helper";
+  const helperAvatarUrl = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | undefined);
 
-  const stats = [
-    { label: 'Tugas Aktif', value: activeTasksCount.toString(), icon: Briefcase, color: 'text-white', bg: 'bg-white/20', cardBg: 'bg-brand-gradient text-white border-transparent' },
-    { label: 'Menunggu Verifikasi', value: '0', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', cardBg: 'bg-white hover:border-orange-200' },
-    { label: 'Tugas Selesai', value: (profile?.total_tugas_selesai || 0).toString(), icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', cardBg: 'bg-white hover:border-green-200' },
-    { label: 'Estimasi Fee', value: formatIDR(profile?.saldo_tersedia || 0), icon: Wallet, color: 'text-[#0D47A1]', bg: 'bg-blue-50', cardBg: 'bg-white hover:border-blue-200' },
-  ];
+  const helperCategories: ServiceCategoryItem[] = (profile.helper_service_categories ?? [])
+    .map((item) => {
+      const category = Array.isArray(item.service_categories)
+        ? item.service_categories[0]
+        : item.service_categories;
+      return category as ServiceCategoryItem | null;
+    })
+    .filter((category): category is ServiceCategoryItem => Boolean(category));
 
-  let rejectReason = '';
-  let rejectPhoto = '';
-  if ((helperStatus as string) === 'rejected' && profile?.suspend_reason) {
-    const parts = profile.suspend_reason.split('\n\nLampiran Foto: ');
-    rejectReason = parts[0];
-    if (parts.length > 1) {
-      rejectPhoto = parts[1];
-    }
-  }
-
-
+  const serviceCoverage = `${Number(profile.radius_layanan_km).toLocaleString("id-ID")} km`;
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] p-4 sm:p-6 lg:p-8 font-sans pb-24">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-gradient text-white p-8 rounded-2xl shadow-sm relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Selamat datang, {userData?.full_name || 'Helper'}</h1>
-            <p className="text-blue-100 mt-2 text-sm sm:text-base">Status Anda saat ini: 
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ml-2 uppercase tracking-wider backdrop-blur-md ${
-                helperStatus === 'verified' ? 'bg-green-500/20 text-white border-green-300/30' :
-                (helperStatus === 'suspended') ? 'bg-red-500/20 text-white border-red-300/30' :
-                helperStatus === 'unregistered' ? 'bg-gray-500/20 text-white border-gray-300/30' :
-                'bg-orange-500/20 text-white border-orange-300/30'
-              }`}>
-                {helperStatus === 'pending_verification' ? 'Sedang Ditinjau' : 
-                 helperStatus === 'unregistered' ? 'Belum Mendaftar' : 
-                 helperStatus}
-              </span>
-            </p>
-          </div>
-          {helperStatus === 'verified' && (
-            <Button asChild className="bg-white text-[#0D47A1] rounded-xl shadow-md hover:bg-gray-50 font-bold transition-all relative z-10 mt-2 sm:mt-0">
-              <Link href="/helper/tugas/baru">
-                Cari Pekerjaan
-              </Link>
-            </Button>
-          )}
-        </div>
+    <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
+      {/* Elevated Human-Centered Header */}
+      <header className="relative overflow-hidden rounded-2xl bg-primary bg-gradient-to-br from-[#0D3B82] via-[#0D47A1] to-[#1565C0] p-6 text-primary-foreground shadow-md sm:p-7 border border-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-48 rounded-full bg-blue-400/10 blur-2xl" aria-hidden="true" />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, idx) => (
-            <div key={idx} className={`${stat.cardBg} p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md relative overflow-hidden group`}>
-               {idx === 0 && (
-                 <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none transform group-hover:scale-110 transition-transform">
-                   <Briefcase className="w-20 h-20 text-white" />
-                 </div>
-               )}
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                <div className={`p-2.5 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-              </div>
-              <div className="relative z-10">
-                <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${idx === 0 ? 'text-blue-100' : 'text-gray-500'}`}>{stat.label}</p>
-                <p className={`text-2xl font-bold ${idx === 0 ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Tasks List */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Jadwal Terdekat</h2>
-              <Link href="/helper/tugas" className="text-sm font-semibold text-[#0D47A1] hover:underline flex items-center">
-                Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {recentTasks.length > 0 ? recentTasks.map((task) => {
-                const isActive = ['dikonfirmasi', 'dikerjakan'].includes(task.status);
-                const needsConfirmation = task.status === 'diajukan';
-                const title = task.service_categories?.nama || 'Tugas Rangkul';
-                const lansiaName = task.lansia_profiles?.nama || 'Anonim';
-                const location = task.lansia_profiles?.alamat || '-';
-                
-                return (
-                  <div key={task.id} className="p-5 hover:bg-gray-50/50 transition-colors">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
-                            isActive ? 'bg-blue-100 text-blue-700' : needsConfirmation ? 'bg-amber-100 text-amber-800' : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {isActive ? 'AKTIF' : needsConfirmation ? 'MENUNGGU KONFIRMASI ANDA' : 'MENUNGGU'}
-                          </span>
-                          <span className="text-sm font-semibold text-gray-400">ID: {task.id.split('-')[0]}...</span>
-                        </div>
-                        <h3 className="text-base font-bold text-gray-900 mb-1">{title}</h3>
-                        <p className="text-sm font-medium text-gray-600 mb-3">Klien: {lansiaName}</p>
-                        
-                        <div className="flex flex-col gap-2 text-sm text-gray-500">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 shrink-0 text-gray-400" />
-                            <span>{formatTaskDate(task.jadwal_waktu as string)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 shrink-0 text-gray-400" />
-                            <span className="line-clamp-1">{location}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
-                        <Button asChild variant="outline" size="sm" className="rounded-lg font-semibold w-full sm:w-auto h-9">
-                          <Link href={`/tugas/${task.id}`}>
-                            {needsConfirmation ? 'Konfirmasi tugas' : 'Lihat Detail'}
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }) : (
-                <div className="p-8 text-center text-gray-500 text-sm">
-                  Belum ada jadwal tugas terdekat.
-                </div>
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4 sm:items-center">
+            {/* Avatar Badge with verified ring */}
+            <div className="relative flex size-13 shrink-0 items-center justify-center rounded-2xl bg-white/15 font-heading text-lg font-bold text-white shadow-inner border border-white/20 backdrop-blur-xs sm:size-15 sm:text-xl overflow-hidden">
+              {helperAvatarUrl ? (
+                <img
+                  src={helperAvatarUrl}
+                  alt={helperName}
+                  className="size-full object-cover"
+                />
+              ) : (
+                helperName.slice(0, 2).toUpperCase()
               )}
+              {profile.status === "verified" ? (
+                <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0D47A1] z-10" title="Terverifikasi">
+                  <CheckCircle2 className="size-2.5 text-white" aria-hidden="true" />
+                </span>
+              ) : null}
+            </div>
+
+            {/* Context & Metadata */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur-xs border border-white/10">
+                  <ShieldCheck className="size-3 text-blue-200" aria-hidden="true" />
+                  Workspace Helper
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[11px] font-bold text-emerald-200 border border-emerald-400/30">
+                  {helperStatusLabel[profile.status] ?? profile.status}
+                </span>
+              </div>
+
+              <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-white sm:text-3xl">
+                {helperName}
+              </h1>
+
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/80">
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="size-3 text-amber-300" aria-hidden="true" />
+                  Tingkat <strong className="text-white capitalize">{profile.tingkat_kepercayaan}</strong>
+                </span>
+                <span className="text-white/40">·</span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3 text-blue-200" aria-hidden="true" />
+                  {profile.wilayah_domisili}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>Radius {serviceCoverage}</span>
+              </div>
             </div>
           </div>
 
-          {/* Sidebar Area */}
-          <div className="space-y-6">
-            {/* Action Required Banner */}
-            {helperStatus === 'unregistered' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <AlertCircle className="w-24 h-24 text-blue-600" />
-                </div>
-                <h3 className="font-bold text-blue-900 mb-2 flex items-center relative z-10">
-                  <AlertCircle className="w-5 h-5 mr-2" />
-                  Profil Belum Lengkap
-                </h3>
-                <p className="text-sm text-blue-800 mb-4 leading-relaxed relative z-10">
-                  Anda belum mengisi formulir pendaftaran Helper. Silakan lengkapi profil Anda untuk memulai!
-                </p>
-                <Button asChild size="sm" className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-lg w-full font-semibold relative z-10">
-                  <Link href="/helper/verifikasi">Lengkapi Profil Sekarang</Link>
-                </Button>
-              </div>
+          {/* Action Cluster */}
+          <div className="flex shrink-0 items-center gap-3 self-stretch sm:self-auto">
+            {canBrowse ? (
+              <Button asChild className="min-h-11 w-full rounded-xl bg-white font-bold text-[#0D47A1] shadow-sm hover:bg-white/90 sm:w-auto px-6 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <Link href="/helper/tugas/baru" className="flex items-center gap-2">
+                  <Search className="size-4" aria-hidden="true" />
+                  <span>Cari Tugas</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="min-h-11 w-full rounded-xl border-white/40 bg-transparent font-bold text-white hover:bg-white/10 hover:text-white sm:w-auto px-5">
+                <Link href="/helper/verifikasi">Lihat verifikasi</Link>
+              </Button>
             )}
-            
-            {(helperStatus as string) === 'rejected' && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <AlertCircle className="w-24 h-24 text-red-600" />
-                </div>
-                <h3 className="font-bold text-red-900 mb-2 flex items-center relative z-10">
-                  <AlertCircle className="w-5 h-5 mr-2" />
-                  Berkas Ditolak Koordinator
-                </h3>
-                <p className="text-sm text-red-800 mb-4 leading-relaxed relative z-10">
-                  Mohon perbaiki dan perbarui profil Anda berdasarkan revisi Koordinator wilayah Anda untuk dapat mulai mengambil pekerjaan.
-                </p>
-                
-                {rejectReason && (
-                  <div className="bg-white/60 border border-red-100 rounded-xl p-4 mb-4 relative z-10">
-                    <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-1">Alasan Penolakan:</p>
-                    <p className="text-sm text-gray-800 italic">&quot;{rejectReason}&quot;</p>
-                    
-                    {rejectPhoto && (
-                      <div className="mt-3">
-                        <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-2">Lampiran Bukti:</p>
-                        <a href={rejectPhoto} target="_blank" rel="noreferrer" className="block w-full max-w-[200px] rounded-lg overflow-hidden border border-red-200 shadow-sm hover:opacity-90 transition-opacity">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={rejectPhoto} alt="Bukti Penolakan" className="w-full h-auto object-cover" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white rounded-lg w-full font-semibold relative z-10 mt-2">
-                  <Link href="/helper/verifikasi">Perbarui Formulir Sekarang</Link>
-                </Button>
-              </div>
-            )}
-            
-            {helperStatus === 'pending_verification' && (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <Clock className="w-24 h-24 text-orange-600" />
-                </div>
-                <h3 className="font-bold text-orange-900 mb-2 flex items-center relative z-10">
-                   <Clock className="w-5 h-5 mr-2" />
-                   Sedang Diproses
-                </h3>
-                <p className="text-sm text-orange-800 leading-relaxed relative z-10">
-                  Silakan tunggu hingga Koordinator setempat selesai memvalidasi dan mewawancarai Anda. Anda belum dapat mengambil orderan pesanan Lansia.
-                </p>
-              </div>
-            )}
-
-            {/* Quick Links / Resources */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Informasi Penting</h3>
-              <ul className="space-y-3">
-                {[
-                  { title: 'SOP Pendampingan Lansia', link: '#' },
-                  { title: 'Panduan Darurat Medis', link: '#' },
-                  { title: 'Kebijakan Komisi 3% Rangkul', link: '#' }
-                ].map((item, i) => (
-                  <li key={i}>
-                    <Link href={item.link} className="group flex items-center justify-between text-sm p-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors">
-                      <span className="text-gray-700 font-medium group-hover:text-[#0D47A1] transition-colors">{item.title}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0D47A1] transition-colors" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
-
         </div>
-      </div>
-    </div>
+      </header>
+
+      {/* Ringkasan Kerja (3 Kartu Metrik di Atas) */}
+      <section aria-labelledby="helper-metrics-heading" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 id="helper-metrics-heading" className="font-heading text-xl font-bold text-foreground">Ringkasan kerja</h2>
+          <span className="text-xs text-muted-foreground">Data operasional terkini</span>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <BriefcaseBusiness className="size-5" aria-hidden="true" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">Tugas aktif</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">{activeTasks.length}</p>
+          </div>
+          <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--success-bg)] text-[var(--success)]">
+              <CircleCheck className="size-5" aria-hidden="true" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">Tugas selesai</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">{profile.total_tugas_selesai}</p>
+          </div>
+          <Link href="/helper/penghasilan" className="group rounded-2xl border border-border/80 bg-card p-5 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+              <Wallet className="size-5" aria-hidden="true" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">Saldo tersedia</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{formatRupiah(Number(profile.saldo_tersedia))}</p>
+          </Link>
+        </div>
+      </section>
+
+      {/* Grid 2-Kolom Seimbang: Tugas Berikutnya & Jangkauan Layanan */}
+      <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+        {/* Kolom Kiri: Tugas Berikutnya */}
+        <article className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/70 bg-[var(--surface-subtle)] px-6 py-4">
+            <div>
+              <h2 className="font-heading text-xl font-bold text-foreground">Tugas berikutnya</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Status dan tindakan kunjungan terdekat.</p>
+            </div>
+            <CalendarClock className="size-5 text-primary" aria-hidden="true" />
+          </div>
+          {nextTask && taskStatus ? (
+            <div className="p-6">
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                {taskStatus.label}
+              </span>
+              <h3 className="mt-3 font-heading text-2xl font-bold text-foreground">
+                {Array.isArray(nextTask.service_categories)
+                  ? nextTask.service_categories[0]?.nama
+                  : nextTask.service_categories?.nama || "Kunjungan Rangkul"}
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Untuk {Array.isArray(nextTask.lansia_profiles) ? nextTask.lansia_profiles[0]?.nama : nextTask.lansia_profiles?.nama || "lansia"}
+              </p>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">{taskStatus.description}</p>
+              <Button asChild className="mt-6 min-h-11 rounded-xl">
+                <Link href={`/helper/tugas/${nextTask.id}`}>Lihat detail tugas</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="p-6 sm:p-8">
+              <h3 className="font-heading text-lg font-bold text-foreground">Belum ada tugas aktif</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Cari tugas yang tersedia sesuai wilayah dan layananmu.</p>
+              {canBrowse ? (
+                <Button asChild className="mt-5 min-h-11 rounded-xl">
+                  <Link href="/helper/tugas/baru">Cari Tugas</Link>
+                </Button>
+              ) : null}
+            </div>
+          )}
+        </article>
+
+        {/* Kolom Kanan: Ketersediaan & Jangkauan Layanan dengan Tabs */}
+        <aside className="space-y-5">
+          <AvailabilityToggle initialValue={profile.is_available} disabled={!canBrowse} />
+
+          <article className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-lg font-bold text-foreground">Jangkauan layanan</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Wilayah dan tingkat layanan yang Anda pilih.</p>
+              </div>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <MapPin className="size-5" aria-hidden="true" />
+              </span>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-border/60 bg-[var(--surface-subtle)] p-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Radius Layanan</p>
+              <p className="mt-1 font-heading text-xl font-bold tabular-nums text-foreground">{serviceCoverage}</p>
+              <p className="text-xs text-muted-foreground">Titik domisili: {profile.wilayah_domisili}</p>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Layanan Aktif</p>
+              <ServiceTiersTabs categories={helperCategories} />
+            </div>
+
+            <div className="mt-4 border-t border-border/70 pt-3.5">
+              <Link href="/helper/profil/edit" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <SlidersHorizontal className="size-4" aria-hidden="true" />
+                Atur jangkauan
+              </Link>
+            </div>
+          </article>
+        </aside>
+      </section>
+    </main>
   );
 }
