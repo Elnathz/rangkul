@@ -213,21 +213,21 @@ export default function HelperDirectoryClient() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24 sm:p-6 lg:p-8">
-      <section className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg shadow-blue-900/10 sm:p-8">
+    <div className="mx-auto max-w-6xl space-y-4 p-3 pb-24 sm:space-y-6 sm:p-6 lg:p-8">
+      <section className="relative overflow-hidden rounded-2xl bg-brand-gradient p-4 text-white shadow-lg shadow-blue-900/10 sm:rounded-3xl sm:p-8">
         <div className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
-        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-50">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-50 sm:mb-3 sm:px-3 sm:py-1 sm:text-xs">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
               Direktori Helper Terverifikasi
             </div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Pantau Helper di wilayahmu</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-blue-100 sm:text-base">
+            <h1 className="text-xl font-bold tracking-tight sm:text-3xl">Pantau Helper di wilayahmu</h1>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-blue-100 sm:mt-2 sm:text-base">
               Lihat siapa yang siap menerima tugas dan siapa yang sedang mendampingi lansia saat ini.
             </p>
             {directory?.koordinator_wilayah && (
-              <div className="mt-4 max-w-3xl">
+              <div className="mt-3 max-w-3xl sm:mt-4">
                 <RegionAddress value={directory.koordinator_wilayah} tone="inverse" compact />
               </div>
             )}
@@ -237,49 +237,49 @@ export default function HelperDirectoryClient() {
             variant="outline"
             onClick={() => void loadDirectory(true)}
             disabled={refreshing}
-            className="w-full rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white md:w-auto"
+            className="w-full rounded-xl border-white/30 bg-white/10 text-xs text-white hover:bg-white/20 hover:text-white sm:text-sm md:w-auto"
           >
-            <RefreshCw className={refreshing ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} aria-hidden="true" />
+            <RefreshCw className={refreshing ? "mr-2 h-3.5 w-3.5 animate-spin" : "mr-2 h-3.5 w-3.5"} aria-hidden="true" />
             {refreshing ? "Memperbarui..." : "Perbarui status"}
           </Button>
         </div>
       </section>
 
       {errorMessage && (
-        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
-          <Activity className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700 sm:p-4 sm:text-sm" role="alert">
+          <Activity className="mt-0.5 h-4 w-4 shrink-0 sm:h-5 sm:w-5" aria-hidden="true" />
           <div className="flex-1">
             <p className="font-bold">Data Helper belum tersedia</p>
-            <p className="mt-1 leading-relaxed">{errorMessage}</p>
+            <p className="mt-0.5 leading-relaxed">{errorMessage}</p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => void loadDirectory()} className="rounded-lg border-red-200 bg-white text-red-700 hover:bg-red-100">
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadDirectory()} className="rounded-lg border-red-200 bg-white text-xs text-red-700 hover:bg-red-100">
             Coba lagi
           </Button>
         </div>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan aktivitas Helper">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4" aria-label="Aktivitas Helper">
         {[
           { label: "Total terverifikasi", value: stats.total, icon: UsersRound, className: "bg-white text-[#0D47A1]" },
           { label: "Sedang bertugas", value: stats.active, icon: Activity, className: "bg-violet-50 text-violet-700" },
           { label: "Siap menerima", value: stats.available, icon: CheckCircle2, className: "bg-emerald-50 text-emerald-700" },
           { label: "Ada jadwal", value: stats.scheduled, icon: Clock3, className: "bg-blue-50 text-blue-700" },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${stat.className}`}>
-              <stat.icon className="h-5 w-5" aria-hidden="true" />
+          <div key={stat.label} className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-xs sm:rounded-2xl sm:p-5">
+            <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg sm:mb-4 sm:h-10 sm:w-10 sm:rounded-xl ${stat.className}`}>
+              <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{stat.label}</p>
-            <p className="mt-1 text-3xl font-bold text-slate-950">{stat.value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">{stat.label}</p>
+            <p className="mt-0.5 text-2xl font-bold text-slate-950 sm:mt-1 sm:text-3xl">{stat.value}</p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs sm:rounded-3xl sm:p-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-950">Daftar Helper</h2>
-            <p className="mt-1 text-sm text-slate-500">Status diperbarui saat halaman dibuka atau tombol refresh ditekan.</p>
+            <h2 className="text-base font-bold text-slate-950 sm:text-lg">Daftar Helper</h2>
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">Status diperbarui saat halaman dibuka atau tombol refresh ditekan.</p>
           </div>
           <div className="relative w-full lg:max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -288,12 +288,12 @@ export default function HelperDirectoryClient() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Cari nama atau wilayah"
               aria-label="Cari Helper berdasarkan nama atau wilayah"
-              className="h-11 rounded-xl border-slate-200 pl-10"
+              className="h-10 rounded-xl border-slate-200 pl-9 text-xs sm:h-11 sm:pl-10 sm:text-sm"
             />
           </div>
         </div>
 
-        <div className="mt-5 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filter aktivitas Helper">
+        <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 sm:mt-5 sm:gap-2" role="tablist" aria-label="Filter aktivitas Helper">
           {filterOptions.map((option) => (
             <button
               key={option.value}
@@ -301,7 +301,7 @@ export default function HelperDirectoryClient() {
               role="tab"
               aria-selected={filter === option.value}
               onClick={() => setFilter(option.value)}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2 ${
+              className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2 sm:px-4 sm:py-2 ${
                 filter === option.value
                   ? "border-[#0D47A1] bg-[#0D47A1] text-white"
                   : "border-slate-200 bg-white text-blue-800 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900"
@@ -313,24 +313,24 @@ export default function HelperDirectoryClient() {
         </div>
 
         {helpers.length === 0 ? (
-          <div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-14 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
-              <UsersRound className="h-7 w-7" aria-hidden="true" />
+          <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center sm:mt-5 sm:px-6 sm:py-14">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-xs sm:h-14 sm:w-14">
+              <UsersRound className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true" />
             </div>
-            <h3 className="mt-4 text-base font-bold text-slate-900">Tidak ada Helper yang cocok</h3>
-            <p className="mt-1 max-w-sm text-sm leading-relaxed text-slate-500">
+            <h3 className="mt-3 text-sm font-bold text-slate-900 sm:mt-4 sm:text-base">Tidak ada Helper yang cocok</h3>
+            <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500 sm:text-sm">
               Coba ubah filter atau kata pencarian. Helper berstatus under review tidak tampil di direktori aktif.
             </p>
           </div>
         ) : (
-          <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:mt-5 sm:gap-4 xl:grid-cols-2">
             {helpers.map((helper) => {
               const activity = activityMeta[helper.status_aktivitas];
               return (
-                <Link key={helper.id} href={`/koordinator/helper/${helper.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] rounded-2xl">
-                  <article className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-md cursor-pointer h-full">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blue-100 text-base font-bold text-[#0D47A1]">
+                <Link key={helper.id} href={`/koordinator/helper/${helper.id}`} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1]">
+                  <article className="h-full rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-blue-200 hover:bg-white hover:shadow-md cursor-pointer sm:p-5">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-100 text-sm font-bold text-[#0D47A1] sm:h-12 sm:w-12 sm:rounded-2xl sm:text-base">
                       {helper.foto_url && !failedAvatarIds.has(helper.id) ? (
                         <img
                           src={helper.foto_url}

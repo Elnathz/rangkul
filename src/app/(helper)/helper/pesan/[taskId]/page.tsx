@@ -1,7 +1,6 @@
 import { getChatMessages } from "@/lib/chat/actions";
 import { ChatRoomClient } from "@/components/chat/ChatRoomClient";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -16,30 +15,42 @@ export default async function ChatRoomPage({ params }: { params: Promise<{ taskI
 
   const { data: task } = await supabaseAdmin
     .from("tasks")
-    .select(`id,
+    .select(`
+      id,
       keluarga_id, 
       keluarga:keluarga_id(full_name),
       helper_id,
       helper_profile:helper_profiles!helper_id(user_id)
     `)
     .eq("id", taskId)
-    .single();
+    .maybeSingle();
 
-  if (!task) notFound();
-
-  let otherUserId: string;
+  let otherUserId = taskId;
   let otherUserName = "Pengguna Rangkul";
 
-  if (user.id === task.keluarga_id) {
-    const helperUserId = Array.isArray(task.helper_profile) ? task.helper_profile[0]?.user_id : task.helper_profile?.user_id;
-    if (!helperUserId) notFound();
-    otherUserId = helperUserId;
-    const { data: otherProfile } = await supabaseAdmin.from("users").select("full_name").eq("id", otherUserId).single();
-    if (otherProfile) otherUserName = otherProfile.full_name;
+  if (task) {
+    if (user.id === task.keluarga_id) {
+      const helperUserId = Array.isArray(task.helper_profile) ? task.helper_profile[0]?.user_id : task.helper_profile?.user_id;
+      if (helperUserId) {
+        otherUserId = helperUserId;
+        const { data: otherProfile } = await supabaseAdmin.from("users").select("full_name").eq("id", otherUserId).maybeSingle();
+        if (otherProfile?.full_name) otherUserName = otherProfile.full_name;
+      }
+    } else {
+      otherUserId = task.keluarga_id;
+      const { data: otherProfile } = await supabaseAdmin.from("users").select("full_name").eq("id", otherUserId).maybeSingle();
+      if (otherProfile?.full_name) otherUserName = otherProfile.full_name;
+    }
   } else {
-    otherUserId = task.keluarga_id;
-    const { data: otherProfile } = await supabaseAdmin.from("users").select("full_name").eq("id", otherUserId).single();
-    if (otherProfile) otherUserName = otherProfile.full_name;
+    const { data: targetUser } = await supabaseAdmin
+      .from("users")
+      .select("full_name")
+      .eq("id", taskId)
+      .maybeSingle();
+      
+    if (targetUser?.full_name) {
+      otherUserName = targetUser.full_name;
+    }
   }
 
   const messages = await getChatMessages(taskId);
@@ -58,4 +69,3 @@ export default async function ChatRoomPage({ params }: { params: Promise<{ taskI
     />
   );
 }
-

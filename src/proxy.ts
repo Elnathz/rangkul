@@ -91,9 +91,10 @@ export async function proxy(request: NextRequest) {
         : undefined
     )) as AppRole | undefined;
     
-    // Namespace API yang role-spesifik ditutup sebelum route handler. Ownership dan
-    // scope wilayah tetap diperiksa lagi oleh handler dan RLS.
-    if (Array.isArray(apiAccess) && (!userRole || !apiAccess.includes(userRole))) {
+    const isLansiaDetailApi = pathname.startsWith('/api/lansia/');
+    const isAllowedLansiaRole = isLansiaDetailApi && (userRole === 'admin' || userRole === 'koordinator');
+
+    if (Array.isArray(apiAccess) && (!userRole || (!apiAccess.includes(userRole) && !isAllowedLansiaRole))) {
       return NextResponse.json(
         { error: 'forbidden', message: 'Role Anda tidak memiliki akses ke resource ini' },
         { status: 403 },

@@ -99,8 +99,8 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
             </div>
           </div>
         ) : null}
-        <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-          <NavigationIcon name="home" className="size-5" /> Kembali ke Beranda
+        <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl border border-border/80 bg-background px-3 text-sm font-semibold text-foreground shadow-xs transition-all hover:bg-card hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+          <NavigationIcon name="home" className="size-5 shrink-0 text-primary" /> Kembali ke Utama
         </Link>
       </div>
     </aside>

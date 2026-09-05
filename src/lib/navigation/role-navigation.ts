@@ -37,8 +37,9 @@ export const ROLE_NAVIGATION: Record<AppRole, readonly NavigationItem[]> = {
     { href: "/helper/pesan", label: "Pesan", icon: "message" },
   ],
   koordinator: [
-    { href: "/koordinator/dashboard", label: "Ringkasan", icon: "home", group: "Ringkasan" },
-    { href: "/koordinator/pengajuan", label: "Verifikasi Helper", icon: "users", aliases: ["/koordinator/antrean"], group: "Operasional" },
+    { href: "/koordinator/dashboard", label: "Beranda", icon: "home", group: "Beranda" },
+    { href: "/koordinator/lansia", label: "Verifikasi Lansia", icon: "users", group: "Operasional" },
+    { href: "/koordinator/antrean", label: "Verifikasi Helper", icon: "users", aliases: ["/koordinator/pengajuan"], group: "Operasional" },
     { href: "/koordinator/persetujuan", label: "Persetujuan Kunjungan", icon: "clipboard", aliases: ["/koordinator/antrean-persetujuan"], group: "Operasional" },
     { href: "/koordinator/helper", label: "Helper Wilayah", icon: "shield", group: "Operasional" },
     { href: "/koordinator/darurat", label: "Darurat", icon: "alert", group: "Risiko & Laporan" },
@@ -47,8 +48,9 @@ export const ROLE_NAVIGATION: Record<AppRole, readonly NavigationItem[]> = {
     { href: "/koordinator/pesan", label: "Pesan", icon: "message", group: "Lainnya" },
   ],
   admin: [
-    { href: "/admin/dashboard", label: "Ringkasan", icon: "home", group: "Ringkasan" },
+    { href: "/admin/dashboard", label: "Beranda", icon: "home", group: "Beranda" },
     { href: "/admin/users", label: "Pengguna", icon: "users", group: "Pengguna & Akses" },
+    { href: "/admin/lansia", label: "Data Lansia", icon: "users", group: "Pengguna & Akses" },
     { href: "/admin/koordinator/pengajuan", label: "Koordinator", icon: "shield", group: "Pengguna & Akses" },
     { href: "/admin/helpers", label: "Helper", icon: "users", group: "Pengguna & Akses" },
     { href: "/admin/helpers/fallback", label: "Fallback verifikasi", icon: "shield", group: "Pengguna & Akses" },
