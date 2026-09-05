@@ -120,8 +120,9 @@ export default function LoginPage() {
               <Image
                 src="/logo-markdown.svg"
                 alt="Rangkul"
-                width={80}
+                width={74}
                 height={80}
+                className="h-20 w-auto"
                 priority
                 unoptimized
               />

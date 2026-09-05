@@ -51,6 +51,24 @@ test("beranda Keluarga memakai permukaan brand biru sebagai puncak hierarki aksi
   assert.match(page, /text-primary-foreground/);
 });
 
+test("aksi sekunder beranda Keluarga tetap memiliki target sentuh minimum", () => {
+  const page = readFileSync("src/app/(keluarga)/beranda/page.tsx", "utf8");
+
+  assert.match(page, /href="\/lansia"\s+className="[^"]*min-h-11[^"]*"/);
+  assert.match(page, /className="min-h-11 gap-1 rounded-xl text-xs font-semibold"[\s\S]{0,100}href="\/lansia\/tambah"/);
+  assert.match(page, /href="\/kunjungan"\s+className="[^"]*min-h-11[^"]*"/);
+});
+
+test("logo autentikasi memakai rasio intrinsik asset", () => {
+  for (const file of [
+    "src/app/(auth)/login/page.tsx",
+    "src/app/(auth)/register/page.tsx",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    assert.match(source, /src="\/logo-markdown\.svg"[\s\S]*width=\{74\}[\s\S]*height=\{80\}[\s\S]*className="h-20 w-auto"/);
+  }
+});
+
 test("navigasi bawah mobile memakai liquid glass dengan indikator active yang bergerak", () => {
   const navigation = readFileSync("src/components/layout/MobileBottomNavigation.tsx", "utf8");
 

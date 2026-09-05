@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock, Heart, HeartPulse, Plus, Sparkles, User, UsersRound } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, Heart, HeartPulse, Plus, Sparkles, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -199,7 +199,10 @@ export default async function BerandaKeluargaPage() {
               <p className="text-xs text-muted-foreground">Catatan observasi dan kebugaran lansia non-diagnostik</p>
             </div>
           </div>
-          <Link href="/lansia" className="text-xs font-semibold text-[#0D47A1] hover:underline">
+          <Link
+            href="/lansia"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-[#0D47A1] hover:bg-[#0D47A1]/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
+          >
             Lihat Semua Profil
           </Link>
         </div>
@@ -256,7 +259,7 @@ export default async function BerandaKeluargaPage() {
               <UsersRound className="size-5 text-[#0D47A1]" />
               <h2 className="font-heading text-lg font-bold text-foreground">Orang Tersayang</h2>
             </div>
-            <Button asChild size="sm" variant="outline" className="h-9 gap-1 rounded-xl text-xs font-semibold">
+            <Button asChild size="sm" variant="outline" className="min-h-11 gap-1 rounded-xl text-xs font-semibold">
               <Link href="/lansia/tambah">
                 <Plus className="size-3.5" /> Tambah Lansia
               </Link>
@@ -298,7 +301,10 @@ export default async function BerandaKeluargaPage() {
               <CalendarDays className="size-5 text-[#0D47A1]" />
               <h2 className="font-heading text-lg font-bold text-foreground">Kunjungan Mendatang</h2>
             </div>
-            <Link href="/kunjungan" className="text-xs font-semibold text-[#0D47A1] hover:underline">
+            <Link
+              href="/kunjungan"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-[#0D47A1] hover:bg-[#0D47A1]/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
+            >
               Semua Kunjungan
             </Link>
           </div>
