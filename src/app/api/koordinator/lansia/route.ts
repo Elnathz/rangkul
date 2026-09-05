@@ -38,7 +38,17 @@ export async function GET() {
         .maybeSingle();
 
       if (kp?.wilayah) {
-        query = query.ilike('kecamatan', `%${kp.wilayah}%`);
+        // Coba query berdasarkan kecamatan/wilayah, jika 0 fallback tampilkan semua agar Koordinator tetap dapat bekerja
+        const { data: regionalProfiles } = await admin
+          .from('lansia_profiles')
+          .select('*')
+          .is('deleted_at', null)
+          .ilike('kecamatan', `%${kp.wilayah}%`)
+          .order('created_at', { ascending: false });
+
+        if (regionalProfiles && regionalProfiles.length > 0) {
+          return apiResponse({ profiles: regionalProfiles }, 200);
+        }
       }
     }
 
