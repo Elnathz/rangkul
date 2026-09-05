@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, UserRound, MapPin, Calendar, ExternalLink, ShieldCheck, HeartPulse, RefreshCw } from "lucide-react";
+import { Search, UserRound, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { AdminLoadingRows } from "@/components/admin/AdminPrimitives";
 import { SignedImage } from "@/components/ui/SignedImage";
@@ -44,7 +44,24 @@ export default function AdminLansiaPage() {
   };
 
   useEffect(() => {
-    void loadLansia();
+    let active = true;
+    const fetchLansia = async () => {
+      setError("");
+      try {
+        const response = await fetch("/api/admin/lansia", { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message ?? "Gagal memuat data lansia");
+        if (active) setLansiaList(payload.profiles ?? []);
+      } catch (err: unknown) {
+        if (active) setError((err as Error).message || "Terjadi kesalahan saat memuat data");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void fetchLansia();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filteredLansia = lansiaList.filter((item) => {

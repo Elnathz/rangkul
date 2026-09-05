@@ -154,7 +154,7 @@ export async function POST(request: Request) {
           type: 'lansia_verification',
           is_read: false,
         }));
-        await supabase.from('notifications').insert(notifInserts as any);
+        await supabase.from('notifications').insert(notifInserts as unknown as Database['public']['Tables']['notifications']['Insert'][]);
       } else {
         // Belum ada koordinator di wilayah ini -> ditampung oleh Admin
         const { data: adminUsers } = await supabase
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
             type: 'lansia_verification_admin',
             is_read: false,
           }));
-          await supabase.from('notifications').insert(adminNotifs as any);
+          await supabase.from('notifications').insert(adminNotifs as unknown as Database['public']['Tables']['notifications']['Insert'][]);
         }
       }
     }

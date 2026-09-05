@@ -18,7 +18,7 @@ export async function GET() {
       return createApiError('server_error', error.message, 500);
     }
 
-    const profiles = (rawProfiles ?? []).map((p: any) => ({
+    const profiles = (rawProfiles ?? []).map((p: Record<string, unknown> & { keluarga?: { full_name?: string } }) => ({
       ...p,
       nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
     }));

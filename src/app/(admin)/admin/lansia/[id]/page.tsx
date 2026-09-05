@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -138,23 +139,26 @@ export default function AdminDetailLansiaPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [lightbox, setLightbox] = useState<{ title: string; url: string } | null>(null);
 
-  const fetchDetail = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/lansia/${id}`, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || "Gagal memuat detail lansia");
-      setLansia(payload.profile);
-    } catch (err: unknown) {
-      setError((err as Error).message || "Terjadi kesalahan sistem");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let active = true;
+    const fetchDetail = async () => {
+      setError("");
+      try {
+        const response = await fetch(`/api/lansia/${id}`, { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message || "Gagal memuat detail lansia");
+        if (active) setLansia(payload.profile);
+      } catch (err: unknown) {
+        if (active) setError((err as Error).message || "Terjadi kesalahan sistem");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
     if (id) void fetchDetail();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const handleVerify = async (status: "verified" | "rejected") => {

@@ -34,14 +34,14 @@ export async function GET() {
 
     const { data: rawHelpers } = await helperQuery;
 
-    const helpers = (rawHelpers ?? []).map((h: any) => {
-      const u = Array.isArray(h.users) ? h.users[0] : h.users;
+    const helpers = (rawHelpers ?? []).map((h: Record<string, unknown>) => {
+      const u = Array.isArray(h.users) ? (h.users[0] as Record<string, unknown>) : (h.users as Record<string, unknown> | null);
       return {
-        id: h.id,
-        user_id: h.user_id,
-        nama: u?.full_name || "Helper Rangkul",
+        id: h.id as string,
+        user_id: h.user_id as string,
+        nama: (u?.full_name as string) || "Helper Rangkul",
         role: "helper",
-        foto_url: h.foto_wajah_url || null,
+        foto_url: (h.foto_wajah_url as string) || null,
         info: u?.kecamatan ? `Kec. ${u.kecamatan}` : "Helper Wilayah",
       };
     });
@@ -58,10 +58,10 @@ export async function GET() {
 
     const { data: rawKeluarga } = await keluargaQuery.limit(20);
 
-    const keluarga = (rawKeluarga ?? []).map((k: any) => ({
-      id: k.id,
-      user_id: k.id,
-      nama: k.full_name || "Keluarga Rangkul",
+    const keluarga = (rawKeluarga ?? []).map((k: Record<string, unknown>) => ({
+      id: k.id as string,
+      user_id: k.id as string,
+      nama: (k.full_name as string) || "Keluarga Rangkul",
       role: "keluarga",
       foto_url: null,
       info: k.kecamatan ? `Kec. ${k.kecamatan}` : "Keluarga Wilayah",
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { target_user_id, role } = body;
+    const { target_user_id } = body;
 
     if (!target_user_id) {
       return createApiError("validation_error", "target_user_id wajib diisi", 400);

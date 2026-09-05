@@ -7,17 +7,6 @@ import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/ui/SignedImage";
 import { Loader2, ArrowLeft, Edit, AlertCircle, Heart, Activity, UserRound, Calendar, MapPin, Stethoscope, HeartPulse } from "lucide-react";
 import Link from "next/link";
-import type { Database } from "@/types/database";
-
-type LansiaDb = Database["public"]["Tables"]["lansia_profiles"]["Row"] & {
-  umur?: number | null;
-  kondisi_medis?: string | null;
-  tingkat_mobilitas?: string | null;
-  kebutuhan_khusus?: string | null;
-  wilayah_domisili?: string | null;
-  domisili_lat?: number | null;
-  domisili_lng?: number | null;
-};
 
 type Lansia = {
   id: string;
@@ -67,7 +56,9 @@ export default function LansiaProfilPage() {
         if (response.ok && payload.profile) {
           const data = payload.profile;
           let region: Lansia["region"] = null;
-          let rt = data.rt ? String(data.rt) : "", rw = data.rw ? String(data.rw) : "", alamat = data.alamat || "";
+          const rt = data.rt ? String(data.rt) : "";
+          const rw = data.rw ? String(data.rw) : "";
+          const alamat = data.alamat || "";
           
           if (data.kelurahan || data.kecamatan) {
             region = {

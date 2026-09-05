@@ -58,9 +58,10 @@ export async function GET(
         .eq('id', profile.keluarga_id)
         .maybeSingle();
       if (familyUser) {
-        nama_keluarga = (familyUser as any).full_name || null;
-        email_keluarga = (familyUser as any).email || null;
-        telepon_keluarga = (familyUser as any).phone_number || null;
+        const u = familyUser as Record<string, unknown>;
+        nama_keluarga = (u.full_name as string) || null;
+        email_keluarga = (u.email as string) || null;
+        telepon_keluarga = (u.phone_number as string) || null;
       }
     }
 

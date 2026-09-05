@@ -24,7 +24,7 @@ export async function GET() {
 
     const admin = await createAdminClient();
 
-    let query = admin
+    const query = admin
       .from('lansia_profiles')
       .select('*, keluarga:users!lansia_profiles_keluarga_id_fkey(full_name)')
       .is('deleted_at', null)
@@ -46,7 +46,7 @@ export async function GET() {
           .order('created_at', { ascending: false });
 
         if (regionalProfiles && regionalProfiles.length > 0) {
-          const formatted = regionalProfiles.map((p: any) => ({
+          const formatted = regionalProfiles.map((p: Record<string, unknown> & { keluarga?: { full_name?: string } }) => ({
             ...p,
             nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
           }));
@@ -61,7 +61,7 @@ export async function GET() {
       return createApiError('server_error', error.message, 500);
     }
 
-    const formatted = (profiles ?? []).map((p: any) => ({
+    const formatted = (profiles ?? []).map((p: Record<string, unknown> & { keluarga?: { full_name?: string } }) => ({
       ...p,
       nama_keluarga: p.keluarga?.full_name || 'Keluarga Rangkul',
     }));
@@ -105,7 +105,7 @@ export async function PATCH(request: Request) {
       .from('lansia_profiles')
       .update({
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .eq('id', id)
       .select('*')
       .single();

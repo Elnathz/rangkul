@@ -21,7 +21,7 @@ export type InboxItem = {
 
 import { useRouter } from "next/navigation";
 import { AdminModal } from "@/components/admin/AdminPrimitives";
-import { UserCheck, HeartHandshake, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 type ChatTarget = {
   id: string;

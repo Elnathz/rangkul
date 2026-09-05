@@ -50,7 +50,24 @@ export default function KoordinatorLansiaVerificationPage() {
   };
 
   useEffect(() => {
-    void loadLansia();
+    let active = true;
+    const fetchLansia = async () => {
+      setError("");
+      try {
+        const response = await fetch("/api/koordinator/lansia", { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message ?? "Gagal memuat lansia di wilayah Anda");
+        if (active) setLansiaList(payload.profiles ?? []);
+      } catch (err: unknown) {
+        if (active) setError((err as Error).message || "Terjadi kesalahan saat memuat data lansia");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void fetchLansia();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleVerify = async (status: "verified" | "rejected") => {
