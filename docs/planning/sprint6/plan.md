@@ -20,11 +20,11 @@ Bagian ini adalah catatan eksekusi, bukan pengganti checklist rencana di bawah. 
 - [x] Seed cloud berhasil memakai persona fiktif yang mudah dibaca tanpa mengubah password, role matrix, koordinat, trust tier, status, ataupun relasi yang dibutuhkan test. Akun utama: `ratnakeluarga@rangkul.id`, `andihelper@rangkul.id`, dan `wagimankoordinator@rangkul.id`.
 - [x] Pemilih layanan menampilkan ringkasan pilihan setelah pengguna memilih: layanan, tingkat, estimasi durasi, harga dasar, dan kebutuhan approval bila relevan. Nama kategori canonical TDD tidak diubah di database.
 - [x] CLI `browser-use` tidak tersedia pada host ini, tetapi browser in-app yang dapat dikendalikan dipakai untuk QA landing publik. Pada 375px, 768px, 1024px, dan 1440px tidak ada horizontal overflow setelah hero dikunci ke satu kolom mobile. Tautan footer pendek juga memiliki hit area minimal 44px.
-- [ ] Walkthrough browser authenticated masih memerlukan otorisasi eksplisit untuk memasukkan kredensial akun demo ke `http://localhost:3000/login`. Ini dibutuhkan untuk melengkapi bukti empat role, konflik, forbidden, dan state loading di browser nyata.
+- [x] Walkthrough browser authenticated memakai empat persona demo. Keluarga, Helper, Koordinator, dan Admin diarahkan ke dashboard yang benar dan lulus overflow pada 375px, 768px, 1024px, serta 1440px. Conflict, forbidden, zoom, dan screenshot tersimpan tetap menjadi gate terpisah.
 - [x] Runtime RLS baseline lulus setelah policy Helper publik yang bocor ditutup. Runtime Sprint 6 juga lulus untuk projection marketplace tereduksi, RLS lamaran, apply-withdraw, pemilihan pelamar atomik, race Cari Cepat, dan expiry lamaran.
-- [x] Quality gate source pada 5 September: `npm ci`, lint, typecheck, test, dan production build selesai hijau. Matrix runtime cloud penuh juga lulus 263/263 tanpa test skipped.
-- [ ] Reseed cloud setelah matrix runtime belum dapat dijalankan dari host ini karena `.env.local` tidak menyediakan `SUPABASE_DEMO_PROJECT_REF` dan `NEXT_PUBLIC_SUPABASE_URL`. Script berhenti aman sebelum menyentuh database. Konfigurasi target demo harus dipulihkan, lalu `npm run seed:cloud` dijalankan ulang sebelum demo final.
-- [ ] Empat viewport authenticated dan feature-flag deployment masih belum memiliki evidence. Sprint 6 tidak boleh diberi status release-ready sebelum semuanya memiliki evidence.
+- [ ] Gate source terbaru: lint, typecheck, test berurutan, dan production build lulus. Matrix runtime cloud penuh juga lulus 263/263 tanpa skip. Percobaan ulang `npm ci` terbaru gagal karena `ENOSPC`, sehingga clean install tetap harus diulang pada runner dengan ruang cukup.
+- [x] Reseed cloud setelah matrix runtime berhasil. Target ref diambil dari project Supabase yang tertaut hanya untuk proses tersebut, diverifikasi oleh script, lalu SQL dan empat asset demo privat tersinkron.
+- [ ] Empat viewport authenticated sudah memiliki evidence browser. Feature-flag preview dry run, zoom 200 persen, screenshot tersimpan, dan smoke production masih belum memiliki evidence, sehingga Sprint 6 belum release-ready.
 
 ### Amendemen persona dan wilayah seed, 4 September 2026
 
@@ -50,7 +50,21 @@ Status implementasi amendemen, 5 September 2026:
 - [x] Layanan risiko tinggi dibuat sebagai panel terpisah dengan syarat persetujuan Koordinator. Tidak ada klaim, ranking, atau testimoni rekaan.
 - [x] Riwayat Rangkul memakai tab interaktif dan contoh non-diagnostik. Role explorer hanya menampilkan tiga peran publik dan memakai pola tab yang dapat diakses keyboard.
 - [x] `npm ci`, typecheck, test (249 lulus, 14 runtime cloud skip tanpa kredensial), dan build lulus. Lint lulus tanpa error, dengan 61 warning lama di luar perubahan landing.
-- [ ] QA screenshot aktual pada 375px, 768px, 1024px, dan 1440px tetap perlu dicatat ke evidence sebelum kandidat release. Ini bukan alasan untuk mengaktifkan feature flag Sprint 6.
+- [x] Browser aktual landing pada 375px, 768px, 1024px, dan 1440px lulus tanpa overflow. Scroll-spy, drawer Escape, focus return, serta redirect booking publik juga lulus.
+- [ ] Screenshot tersimpan, zoom 200 persen, dan walkthrough authenticated empat role tetap perlu dicatat ke evidence sebelum kandidat release. Ini bukan alasan untuk mengaktifkan feature flag Sprint 6.
+
+## Amendemen blocker otorisasi route, 5 September 2026
+
+Temuan akar masalah: proxy hanya menandai prefix `/admin`, `/koordinator`, `/helper`, `/keluarga`, dan `/tugas` sebagai frontend privat. Route Keluarga canonical memakai URL tanpa prefix role, sehingga `/beranda`, `/booking`, `/cari-helper`, `/kunjungan`, `/lansia`, `/pembayaran`, `/saldo`, dan `/banding` tidak memperoleh pemeriksaan role global. Route bersama `/notifikasi` juga belum diklasifikasikan eksplisit sebagai authenticated-only.
+
+- [x] Bentuk satu klasifikasi route frontend eksplisit untuk `public`, `authenticated`, `keluarga`, `helper`, `koordinator`, dan `admin`. Pencocokan segment-aware mencegah nama seperti `/administrator` dianggap sebagai `/admin`.
+- [x] Audit otomatis seluruh 70 `src/app/**/page.tsx` agar setiap halaman role-group mempunyai klasifikasi yang benar, termasuk route dinamis dan legacy `/tugas`.
+- [x] Pengunjung route privat diarahkan ke login dengan tujuan aman; pengguna lintas role diarahkan ke dashboard role miliknya, bukan landing publik.
+- [x] Pertahankan pemeriksaan role dan ownership di route handler serta RLS. Seluruh 86 route handler kini minimal authenticated di proxy, kecuali login, register, dan webhook bertanda tangan; handler serta RLS tetap menjadi otoritas scope resource.
+- [x] Uji matriks halaman dan API dengan akun seed Keluarga, Helper, Koordinator, dan Admin. Route tanpa prefix, legacy, namespace role, katalog Helper, antrean Koordinator, Admin stats, dan debug menghasilkan `200`, `307`, `401`, atau `403` sesuai aktor.
+- [x] Reseed cloud idempoten dan runtime RLS dijalankan ulang. Seluruh 283 test pada matrix final lulus tanpa skip; gate final dicatat di completion audit.
+
+Blocker ini harus hijau sebelum feature flag Sprint 6 dapat dipertimbangkan aktif. Menyembunyikan navigasi tanpa menutup URL dan endpoint langsung tidak memenuhi gate keamanan TDD §8 dan §16.
 
 ## Global Constraints
 
