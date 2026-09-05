@@ -71,10 +71,15 @@ export async function POST(request: Request) {
       return createApiError('signed_url_failed', 'Gagal membuat signed URL', 500);
     }
 
-    return apiResponse({
+    const result = {
       url: signedData.signedUrl,
       path: filePath,
       preview_url: signedData.signedUrl,
+    };
+
+    return apiResponse({
+      ...result,
+      data: result,
     }, 200);
   } catch {
     return createApiError('server_error', 'Upload file gagal', 500);

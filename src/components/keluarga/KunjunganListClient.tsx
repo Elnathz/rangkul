@@ -203,7 +203,7 @@ export default function KunjunganListClient({ tasks }: { tasks: KunjunganTaskIte
   }, [filteredTasks, sortOption]);
 
   return (
-    <main className="min-h-screen bg-[#F5F8FC] px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-[#F5F8FC] px-4 pt-24 pb-12 sm:px-6 sm:pt-28">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header Section */}
         <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -296,14 +296,14 @@ export default function KunjunganListClient({ tasks }: { tasks: KunjunganTaskIte
             onClick={() => handleTabChange("dibatalkan")}
             className={`flex min-h-[44px] items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 cursor-pointer ${
               activeTab === "dibatalkan"
-                ? "bg-slate-700 text-white shadow-xs"
-                : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                ? "bg-rose-600 text-white shadow-xs"
+                : "border border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:bg-rose-50/50 hover:text-rose-700"
             }`}
           >
             <span>Dibatalkan</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                activeTab === "dibatalkan" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                activeTab === "dibatalkan" ? "bg-white/20 text-white" : "bg-rose-50 text-rose-700 border border-rose-100"
               }`}
             >
               {counts.dibatalkan}
@@ -442,8 +442,8 @@ function EmptyKunjunganState({
 
   if (tab === "dibatalkan") {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
-        <XCircle className="mx-auto size-9 text-slate-300" />
+      <div className="rounded-2xl border border-dashed border-rose-200 bg-white p-10 text-center">
+        <XCircle className="mx-auto size-9 text-rose-400" />
         <p className="mt-3 font-bold text-slate-900">Tidak ada kunjungan yang dibatalkan</p>
         <p className="mt-1 text-sm text-slate-500">
           Semua jadwal pendampingan Anda berjalan dengan lancar.
@@ -621,39 +621,39 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
     );
   }
 
-  // Varian 3: Kunjungan Dibatalkan (Muted card)
+  // Varian 3: Kunjungan Dibatalkan (Rose/Red accent card)
   if (task.status === "dibatalkan") {
     return (
-      <article className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 shadow-2xs space-y-3">
+      <article className="rounded-2xl border border-rose-200/90 bg-rose-50/20 p-4 sm:p-5 shadow-2xs transition-all hover:border-rose-300 hover:shadow-xs space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 border border-slate-300 px-2 py-0.5 text-[10px] font-bold text-slate-700">
-                <XCircle className="size-3" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-[10px] font-bold text-rose-700">
+                <XCircle className="size-3 text-rose-600" />
                 Dibatalkan
               </span>
               <span className="text-[11px] text-slate-400 font-mono">#{shortId}</span>
             </div>
-            <h3 className="text-base font-bold text-slate-800 leading-tight">
-              {categoryName} · <span className="font-normal text-slate-600">{lansiaName}</span>
+            <h3 className="text-base font-bold text-slate-900 leading-tight">
+              {categoryName} · <span className="font-medium text-slate-600">{lansiaName}</span>
             </h3>
             <p className="mt-1 text-xs text-slate-500">{formatShortDate(task.jadwal_waktu)}</p>
           </div>
 
           <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-slate-500 line-through">Rp {priceFormatted}</p>
+            <p className="text-sm font-bold text-rose-400 line-through">Rp {priceFormatted}</p>
           </div>
         </div>
 
         {task.alasan_pembatalan && (
-          <div className="rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-600">
-            <span className="font-bold text-slate-700">Alasan: </span>
+          <div className="rounded-xl border border-rose-200/70 bg-rose-50/60 p-3 text-xs text-rose-950">
+            <span className="font-bold text-rose-900">Alasan: </span>
             <span>{task.alasan_pembatalan}</span>
           </div>
         )}
 
         <div className="flex justify-end pt-1">
-          <Button asChild variant="outline" size="sm" className="h-8 rounded-lg text-xs font-semibold">
+          <Button asChild variant="outline" size="sm" className="h-8 rounded-lg text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300">
             <Link href={`/kunjungan/${task.id}`}>Lihat Detail</Link>
           </Button>
         </div>

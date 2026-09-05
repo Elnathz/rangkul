@@ -318,7 +318,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        ktpUrl = uploadData.data?.path;
+        ktpUrl = uploadData.data?.path || uploadData.path;
       } else {
         ktpUrl = form.ktp_url;
       }
@@ -340,7 +340,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        fotoUrl = uploadData.data?.path;
+        fotoUrl = uploadData.data?.path || uploadData.path;
       } else {
         fotoUrl = form.foto_url;
       }
