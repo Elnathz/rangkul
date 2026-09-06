@@ -150,7 +150,7 @@ Format error:
 
 ## Feature flag
 
-Matching Sprint 6 dikendalikan oleh `SPRINT6_MATCHING_ENABLED`.
+Mode penugasan fleksibel dikendalikan oleh `FLEXIBLE_ASSIGNMENT_ENABLED`.
 
 - `false` atau tidak disetel: `/booking/new` kembali ke pencarian Helper dan route matching menolak alur baru.
 - `true`: mode `pelamar` dan `cepat` aktif.

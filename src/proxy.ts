@@ -10,6 +10,7 @@ import {
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { Database } from '@/types/database';
+import { isMutationMethod, isSameOriginMutation } from '@/lib/security/request-origin';
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -18,6 +19,14 @@ export async function proxy(request: NextRequest) {
 
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
+  }
+
+  const isProtectedApiRoute = apiAccess !== null && apiAccess !== 'public';
+  if (isProtectedApiRoute && isMutationMethod(request.method) && !isSameOriginMutation(request)) {
+    return NextResponse.json(
+      { error: 'csrf_origin_mismatch', message: 'Permintaan mutasi harus berasal dari origin Rangkul' },
+      { status: 403 },
+    );
   }
 
   // Update session first
@@ -46,7 +55,6 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   
   // Check if route requires authentication
-  const isProtectedApiRoute = apiAccess !== null && apiAccess !== 'public';
   const isProtectedFrontendRoute = frontendAccess !== null && frontendAccess !== 'public';
   const isProtectedRoute = isProtectedApiRoute || isProtectedFrontendRoute;
   

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { isFlexibleAssignmentEnabled } from "@/lib/features/sprint6-matching";
 import TaskApplicantsClient, {
   type ApplicantItem,
 } from "@/components/keluarga/TaskApplicantsClient";
@@ -20,7 +20,7 @@ export default async function TaskApplicantsPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
-  if (!isSprint6MatchingEnabled()) {
+  if (!isFlexibleAssignmentEnabled()) {
     notFound();
   }
 

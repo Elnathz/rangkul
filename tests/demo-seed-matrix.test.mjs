@@ -117,3 +117,49 @@ test("blok deklarasi seed tidak mendeklarasikan variabel dua kali", () => {
   assert.equal(declarationBlock.match(/^\s*lansia_5_id UUID;$/gm)?.length, 1);
   assert.equal(declarationBlock.match(/^\s*category_id UUID;$/gm)?.length, 1);
 });
+
+test("pemulihan task marketplace tidak menetapkan kolom yang sama dua kali", () => {
+  const statement = migration
+    .split(";")
+    .find((candidate) => candidate.includes("UPDATE public.tasks")
+      && candidate.includes("WHERE catatan = '[DEMO_MATRIX] Task diajukan marketplace'"));
+  assert.ok(statement, "UPDATE marker task marketplace wajib tersedia");
+  const setClause = statement.slice(statement.indexOf("SET") + 3, statement.indexOf("WHERE catatan"));
+
+  const assignedColumns = [...setClause.matchAll(/^\s*([a-z_]+)\s*=/gm)].map((match) => match[1]);
+  assert.deepEqual(assignedColumns, [...new Set(assignedColumns)]);
+});
+
+test("fixture payment normal membagi 90 persen Helper, 7 persen Platform, dan 3 persen Koordinator", () => {
+  const expectations = [
+    {
+      marker: "[DEMO_MATRIX] Task dikerjakan",
+      total: 50000,
+      helper: 45000,
+      platform: 3500,
+      koordinator: 1500,
+    },
+    {
+      marker: "[DEMO_MATRIX] Task selesai",
+      total: 70000,
+      helper: 63000,
+      platform: 4900,
+      koordinator: 2100,
+    },
+  ];
+
+  for (const expected of expectations) {
+    const statement = migration
+      .split(";")
+      .find((candidate) => candidate.includes("UPDATE public.payments payment")
+        && candidate.includes(`task.catatan = '${expected.marker}'`));
+    assert.ok(statement, `fixture payment ${expected.marker} wajib tersedia`);
+    const setClause = statement.slice(statement.indexOf("SET") + 3, statement.indexOf("FROM public.tasks"));
+
+    const amount = (column) => Number(setClause.match(new RegExp(`^\\s*${column}\\s*=\\s*(\\d+)`, "m"))?.[1]);
+    assert.equal(amount("jumlah_total"), expected.total);
+    assert.equal(amount("helper_share"), expected.helper);
+    assert.equal(amount("platform_fee"), expected.platform);
+    assert.equal(amount("koordinator_share"), expected.koordinator);
+  }
+});

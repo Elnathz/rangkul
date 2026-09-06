@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { isFlexibleAssignmentEnabled } from "@/lib/features/sprint6-matching";
 
 type RouteContext = {
   params: Promise<{
@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return createApiError("unauthorized", "Anda harus login untuk memilih Helper", 401);
     }
 
-    if (!isSprint6MatchingEnabled()) {
+    if (!isFlexibleAssignmentEnabled()) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 

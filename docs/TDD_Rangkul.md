@@ -2021,6 +2021,15 @@ Audit action canonical adalah `review_report`, `restore_helper`, `suspend_helper
 - Feature flag production default off dan fail closed. Flag hanya boleh diaktifkan setelah seluruh quality gate Sprint 6 hijau.
 - Go/no-go ditetapkan paling lambat 5 September 2026 pukul 18.00 WIB. Tanggal 6 September hanya untuk verifikasi final, deployment submission, dokumentasi, dan submit paling lambat pukul 12.00 WIB.
 
+## Amendment Mengikat Privasi Akun dan Browser, 6 September 2026
+
+- Penghapusan akun tidak menghapus row historis yang masih dibutuhkan oleh task, payment, laporan, dan audit. Data langsung pada `public.users`, profil Helper, profil Koordinator, dan profil lansia dianonimkan melalui RPC server-authoritative.
+- Admin menghapus akun lain melalui `DELETE /api/admin/users/:id`. Pengguna non-Admin mengajukan penghapusan sendiri melalui `DELETE /api/users/me/delete` dengan konfirmasi eksplisit `HAPUS AKUN`. Admin tidak boleh menghapus atau menganonimkan akun sendiri dari jalur ini.
+- Setelah anonimisasi database, Auth ditutup dengan soft delete Supabase (`deleteUser(id, true)`). Avatar dan dokumen pada prefix private user dihapus oleh service role. Restore akun tidak dijanjikan.
+- Semua mutation API terlindungi harus berasal dari origin Rangkul yang sama. Proxy menolak request browser cross-site dengan `403 csrf_origin_mismatch` sebelum route handler dijalankan. Webhook pembayaran tetap mengikuti verifikasi signature yang sudah canonical.
+- Upload file memakai allowlist role dan tipe dokumen, path private dengan prefix user, validasi MIME, ukuran, dan magic byte. URL publik permanen tidak pernah disimpan sebagai avatar atau dokumen.
+- Input tetap divalidasi dengan Zod di client dan server, query memakai query builder atau RPC berparameter, React escaping dipertahankan, dan RLS tetap menjadi boundary terakhir. Data seed tidak boleh mengklaim diagnosis atau kredensial klinis fiktif.
+
 ---
 
 *Dokumen ini adalah rancangan teknis dan dapat direvisi seiring pengembangan — terutama setelah Technical Meeting 16 Agustus 2026.*

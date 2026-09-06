@@ -14,11 +14,13 @@ import {
 import { redirect } from "next/navigation";
 
 import { AvailabilityToggle } from "@/components/helper/AvailabilityToggle";
+import { ServiceCoverageManager } from "@/components/helper/ServiceCoverageManager";
 import { ServiceTiersTabs, type ServiceCategoryItem } from "@/components/helper/ServiceTiersTabs";
 import { Button } from "@/components/ui/button";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { createClient } from "@/lib/supabase/server";
 import { getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
+import { getSignedUrl } from "@/lib/storage/private-files";
 
 const formatRupiah = (value: number) => new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -81,7 +83,8 @@ export default async function HelperDashboardPage() {
   const taskStatus = nextTask ? getTaskStatusPresentation(nextTask.status as TaskStatus) : null;
   const canBrowse = profile.status === "verified";
   const helperName = userData?.full_name || "Helper";
-  const helperAvatarUrl = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | undefined);
+  const rawFoto = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | null) || (user.user_metadata?.foto_url as string | null) || null;
+  const helperAvatarUrl = await getSignedUrl(rawFoto);
 
   const helperCategories: ServiceCategoryItem[] = (profile.helper_service_categories ?? [])
     .map((item) => {
@@ -259,11 +262,11 @@ export default async function HelperDashboardPage() {
               </span>
             </div>
 
-            <div className="mt-4 rounded-xl border border-border/60 bg-[var(--surface-subtle)] p-3.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Radius Layanan</p>
-              <p className="mt-1 font-heading text-xl font-bold tabular-nums text-foreground">{serviceCoverage}</p>
-              <p className="text-xs text-muted-foreground">Titik domisili: {profile.wilayah_domisili}</p>
-            </div>
+            {/* Atur jangkauan radius layanan */}
+            <ServiceCoverageManager
+              initialRadius={Number(profile.radius_layanan_km) || 5}
+              wilayahDomisili={profile.wilayah_domisili}
+            />
 
             <div className="mt-4 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Layanan Aktif</p>
@@ -271,9 +274,9 @@ export default async function HelperDashboardPage() {
             </div>
 
             <div className="mt-4 border-t border-border/70 pt-3.5">
-              <Link href="/helper/profil/edit" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <Link href="/helper/profil/edit" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <SlidersHorizontal className="size-4" aria-hidden="true" />
-                Atur jangkauan
+                Ubah kategori layanan di profil
               </Link>
             </div>
           </article>

@@ -1,5 +1,5 @@
-export function isSprint6MatchingEnabled(
-  value: string | undefined = process.env.SPRINT6_MATCHING_ENABLED,
+export function isFlexibleAssignmentEnabled(
+  value: string | undefined = process.env.FLEXIBLE_ASSIGNMENT_ENABLED,
 ): boolean {
   return value === "true";
 }

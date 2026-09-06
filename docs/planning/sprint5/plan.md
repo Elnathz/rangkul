@@ -16,7 +16,7 @@
 
 - Tidak ada subagent.
 - Tidak ada feature baru di luar scope Sprint 6. Jalur `langsung` adalah regression baseline.
-- `SPRINT6_MATCHING_ENABLED` default `false`. Ketika off, UI dan API Sprint 6 menjawab `404` tanpa side effect.
+- `FLEXIBLE_ASSIGNMENT_ENABLED` default `false`. Ketika off, UI dan API mode penugasan fleksibel menjawab `404` tanpa side effect.
 - Semua mutation memakai Zod server, constraint/RPC database, RLS, dan audit transaksi jika rule bisnis berubah.
 - Object path private hanya dibaca melalui resource ID dan authorization server, bukan query path/bucket bebas.
 - Sebelum memperbaiki UI, pakai `@ui-ux-pro-max`, `gpt-taste`, dan `Impeccable`. Untuk UI operasional, gpt-taste hanya dipakai sebagai anti-pattern review, bukan alasan memaksakan hero, AIDA, atau GSAP.
@@ -50,7 +50,7 @@
 
 **Files:** `tests/sprint5-candidate-gate.test.mjs`, `.env.example`, `docs/api-contract.md`, `docs/planning/sprint5/candidate-manifest.md`, `docs/planning/sprint5/cloud-evidence.md`.
 
-- [ ] Write a failing test proving `isSprint6MatchingEnabled(undefined)` and `("false")` return false, `("true")` returns true, `.env.example` defaults false, and every Sprint 6 mutation route returns `404` before it parses input or invokes an RPC.
+- [ ] Write a failing test proving `isFlexibleAssignmentEnabled(undefined)` and `("false")` return false, `("true")` returns true, `.env.example` defaults false, and every flexible assignment mutation route returns `404` before it parses input or invokes an RPC.
 - [ ] Run `node --experimental-strip-types --test tests/sprint5-candidate-gate.test.mjs` and record the expected failure.
 - [ ] Implement server-side flag gates. Hiding a menu is not a gate.
 - [ ] Run `npx supabase migration list --linked`, record the redacted output, verify the linked ref is development, and inventory all existing Sprint 6 commits/migrations.

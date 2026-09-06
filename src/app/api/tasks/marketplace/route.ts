@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
 import { marketplaceQuerySchema } from "@/lib/validations/task-marketplace";
-import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { isFlexibleAssignmentEnabled } from "@/lib/features/sprint6-matching";
 
 export async function GET(request: Request) {
   try {
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
       return createApiError("unauthorized", "Anda harus login terlebih dahulu", 401);
     }
 
-    if (!isSprint6MatchingEnabled()) {
+    if (!isFlexibleAssignmentEnabled()) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 
