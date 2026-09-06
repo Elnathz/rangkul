@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { createClient } from "@/lib/supabase/server";
 import { getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
+import { getSignedUrl } from "@/lib/storage/private-files";
 
 const formatRupiah = (value: number) => new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -81,7 +82,8 @@ export default async function HelperDashboardPage() {
   const taskStatus = nextTask ? getTaskStatusPresentation(nextTask.status as TaskStatus) : null;
   const canBrowse = profile.status === "verified";
   const helperName = userData?.full_name || "Helper";
-  const helperAvatarUrl = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | undefined);
+  const rawFoto = profile.foto_wajah_url || (user.user_metadata?.avatar_url as string | null) || (user.user_metadata?.foto_url as string | null) || null;
+  const helperAvatarUrl = await getSignedUrl(rawFoto);
 
   const helperCategories: ServiceCategoryItem[] = (profile.helper_service_categories ?? [])
     .map((item) => {

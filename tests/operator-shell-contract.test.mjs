@@ -7,7 +7,7 @@ test("shell operasional memakai sidebar bersama pada desktop dan drawer terakses
 
   const sidebar = readFileSync("src/components/layout/RoleSidebar.tsx", "utf8");
   const navbar = readFileSync("src/components/layout/Navbar.tsx", "utf8");
-  const koordinatorLayout = readFileSync("src/app/(koordinator)/layout.tsx", "utf8");
+  const koordinatorLayout = readFileSync("src/app/(koordinator)/layout.tsx", "utf8") + (existsSync("src/app/(koordinator)/KoordinatorLayoutClient.tsx") ? readFileSync("src/app/(koordinator)/KoordinatorLayoutClient.tsx", "utf8") : "");
   const adminLayout = readFileSync("src/app/(admin)/layout.tsx", "utf8");
 
   assert.match(sidebar, /w-64/);
