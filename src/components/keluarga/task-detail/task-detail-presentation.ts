@@ -43,6 +43,17 @@ export type PaymentPresentation = {
   tone: "muted" | "warning" | "success" | "danger";
 };
 
+export function formatPaymentDeadline(jadwalWaktu?: string | null) {
+  if (!jadwalWaktu) return null;
+  const timestamp = Date.parse(jadwalWaktu);
+  if (!Number.isFinite(timestamp)) return null;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp));
+}
+
 const PAYMENT_ELIGIBLE_TASK_STATUSES: TaskStatus[] = ["dikonfirmasi", "dikerjakan", "selesai"];
 
 function paymentDeadlineHasPassed(jadwalWaktu?: string | null) {

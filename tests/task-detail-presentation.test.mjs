@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   getHealthScorePresentation,
+  formatPaymentDeadline,
   getPaymentPresentation,
   paymentRequiresCompletion,
   getTaskDetailPresentation,
@@ -14,6 +15,7 @@ import {
 const detailSource = () => fs.readFileSync("src/components/keluarga/RealTaskDetailClient.tsx", "utf8");
 const applicantSource = () => fs.readFileSync("src/app/(keluarga)/kunjungan/[id]/pelamar/page.tsx", "utf8");
 const paymentPageSource = () => fs.readFileSync("src/app/(keluarga)/pembayaran/[task_id]/page.tsx", "utf8");
+const paymentNoticeSource = () => fs.readFileSync("src/components/keluarga/task-detail/PaymentPriorityNotice.tsx", "utf8");
 const dashboardSource = () => fs.readFileSync("src/app/(keluarga)/beranda/page.tsx", "utf8");
 const visitListSource = () => fs.readFileSync("src/components/keluarga/KunjunganListClient.tsx", "utf8");
 const visitPageSource = () => fs.readFileSync("src/app/(keluarga)/kunjungan/page.tsx", "utf8");
@@ -151,6 +153,11 @@ test("tagihan lewat jadwal tidak menawarkan checkout yang sudah tidak layak", ()
   assert.match(legacyStartedPayment.description, /perlu ditinjau/);
 });
 
+test("deadline pembayaran diformat dari jadwal kunjungan", () => {
+  assert.match(formatPaymentDeadline("2026-08-27T10:04:00.000Z"), /2026|27/);
+  assert.equal(formatPaymentDeadline(null), null);
+});
+
 test("halaman pembayaran tidak menawarkan checkout sebelum kunjungan layak dibayar", () => {
   const source = paymentPageSource();
 
@@ -167,11 +174,15 @@ test("pembayaran yang perlu diselesaikan diprioritaskan di detail dan daftar Kun
   const dashboard = dashboardSource();
   const list = visitListSource();
   const visitPage = visitPageSource();
+  const paymentPage = paymentPageSource();
+  const paymentNotice = paymentNoticeSource();
 
   assert.match(detail, /PaymentPriorityNotice/);
   assert.ok(detail.lastIndexOf("PaymentPriorityNotice") < detail.lastIndexOf("TaskLifecycleStepper"));
   assert.match(detail, /headerPresentation/);
   assert.match(detail, /jadwalWaktu=\{task\.jadwal_waktu\}/);
+  assert.match(paymentNotice, /Bayar paling lambat/);
+  assert.match(paymentPage, /formatPaymentDeadline/);
   assert.match(dashboard, /getPaymentPresentation/);
   assert.match(dashboard, /paymentRequiresCompletion/);
   assert.match(list, /getPaymentPresentation/);

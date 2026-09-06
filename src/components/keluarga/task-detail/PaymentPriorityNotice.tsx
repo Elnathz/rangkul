@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertCircle, ArrowRight, CreditCard } from "lucide-react";
 
 import type { TaskStatus } from "@/lib/constants/task-status";
-import { getPaymentPresentation, paymentRequiresCompletion } from "./task-detail-presentation";
+import { formatPaymentDeadline, getPaymentPresentation, paymentRequiresCompletion } from "./task-detail-presentation";
 
 export function PaymentPriorityNotice({
   taskId,
@@ -39,6 +39,11 @@ export function PaymentPriorityNotice({
               {payment.label}
             </h2>
             <p className="mt-1 text-sm leading-5 text-ink-muted">{payment.description}</p>
+            {paymentRequiresCompletion(paymentStatus, taskStatus, jadwalWaktu) && formatPaymentDeadline(jadwalWaktu) ? (
+              <p className="mt-2 text-sm font-bold text-amber-900">
+                Bayar paling lambat <time dateTime={jadwalWaktu ?? undefined}>{formatPaymentDeadline(jadwalWaktu)}</time>
+              </p>
+            ) : null}
           </div>
         </div>
         {needsCompletion && payment.actionLabel ? (

@@ -19,6 +19,7 @@
 - Relasi payment satu-ke-satu dinormalisasi sebelum render, sehingga pembayaran yang sudah diterima tidak lagi memunculkan CTA `Bayar kunjungan` karena terbaca sebagai `null`.
 - Copy overdue dibedakan: Kunjungan terkonfirmasi menjelaskan pembatalan otomatis, sedangkan record lama yang sudah dimulai diberi status perlu ditinjau tim.
 - Batas pembayaran adalah saat jadwal Kunjungan dimulai. Tugas terkonfirmasi tanpa pembayaran diterima akan dibatalkan oleh job lima-menitan. RLS Helper menolak check-in pada tugas yang belum memiliki payment `held_escrow` atau `released`.
+- Waktu batas pembayaran ditampilkan eksplisit sebagai “Bayar paling lambat” pada notice detail dan sebagai “Batas pembayaran” pada halaman pembayaran, menggunakan `jadwal_waktu` dari server.
 
 ## Browser QA
 
@@ -39,7 +40,7 @@ Keterbatasan tooling: browser automation yang tersedia pada host hanya memberi v
 - `npm ci`: lulus pada lockfile proyek.
 - `npm run lint`: lulus.
 - `npm run typecheck`: lulus.
-- `npm run test`: 302 lulus, 14 runtime cloud test ditandai skip.
+- `npm run test`: 303 lulus, 14 runtime cloud test ditandai skip.
 - `npm run build`: lulus pada Next.js 16.2.12.
 - `npm run seed` dengan target cloud tervalidasi: lulus dan menyinkronkan empat asset demo private.
 
