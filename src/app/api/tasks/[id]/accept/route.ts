@@ -4,7 +4,7 @@ import {
   canHelperAcceptTask,
   getTaskAcceptanceStatus,
 } from "@/lib/helper/task-acceptance";
-import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { isFlexibleAssignmentEnabled } from "@/lib/features/sprint6-matching";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -93,7 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const task = taskRow as unknown as TaskRelations & { mode_penugasan?: string };
 
-    if (task.mode_penugasan !== "langsung" && !isSprint6MatchingEnabled()) {
+    if (task.mode_penugasan !== "langsung" && !isFlexibleAssignmentEnabled()) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 

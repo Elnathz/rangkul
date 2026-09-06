@@ -64,7 +64,7 @@ Normalisasi belum tuntas: halaman lama masih memiliki kelas `blue-*`, `slate-*`,
 
 - Tidak ada subagent.
 - Tidak ada penghapusan `sprint5/plan.md`, `sprint6/plan.md`, route API, migration, atau payload untuk menyelesaikan error UI.
-- `SPRINT6_MATCHING_ENABLED` tetap `false` sampai G4 Sprint 5 lengkap dan dibuktikan runtime.
+- `FLEXIBLE_ASSIGNMENT_ENABLED` tetap `false` sampai G4 Sprint 5 lengkap dan dibuktikan runtime.
 - Mulai dari 375px. Verifikasi 768px, 1024px, dan 1440px, keyboard-only, zoom 200 persen, loading, empty, error, forbidden, conflict, retry, serta target sentuh 44x44px.
 - Gunakan `@ui-ux-pro-max` sebelum setiap perubahan UI. Gunakan Impeccable sebagai visual dan accessibility gate. `gpt-taste` dan `design-taste-frontend` berlaku pada landing dan anti-slop review, bukan untuk memaksakan AIDA atau GSAP pada dashboard operasional.
 - Brand tetap `#0D47A1` dan `#90CAF9`. Heading memakai Plus Jakarta Sans, body memakai Instrument Sans lokal. Light theme menjadi scope submission.

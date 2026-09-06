@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const pageSize = Math.min(Math.max(Number(url.searchParams.get("pageSize") ?? "25"), 1), 100);
     const role = url.searchParams.get("role");
     const status = url.searchParams.get("status");
-    const search = url.searchParams.get("q")?.trim().replace(/[%,()]/g, " ");
+    const search = url.searchParams.get("q")?.trim().replace(/[%,()_*\\]/g, " ");
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -27,7 +27,13 @@ export async function GET(request: Request) {
 
     if (role && roles.has(role)) query = query.eq("role", role as "keluarga" | "helper" | "koordinator" | "admin");
     if (status && statuses.has(status)) query = query.eq("account_status", status as "active" | "restricted" | "suspended");
-    if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%`);
+    if (search) {
+      query = query.or([
+        "full_name.ilike.%" + search + "%",
+        "email.ilike.%" + search + "%",
+        "username.ilike.%" + search + "%",
+      ].join(","));
+    }
 
     const { data, count, error } = await query;
     if (error) return createApiError("server_error", "Gagal mengambil data pengguna", 500);

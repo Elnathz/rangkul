@@ -19,3 +19,14 @@ export const uploadSchema = z.object({
 });
 
 export type UploadInput = z.infer<typeof uploadSchema>;
+
+const ROLE_UPLOADS: Record<string, readonly UploadInput['docType'][]> = {
+  keluarga: ['foto_lansia', 'identitas_lansia', 'hubungan_keluarga', 'foto_keluarga'],
+  helper: ['ktp', 'foto_helper', 'foto_bukti'],
+  koordinator: ['ktp', 'dokumen_koordinator', 'foto_koordinator'],
+  admin: [...DOC_TYPES],
+};
+
+export function canUploadDocumentType(role: string | null | undefined, docType: UploadInput['docType']) {
+  return Boolean(role && ROLE_UPLOADS[role]?.includes(docType));
+}

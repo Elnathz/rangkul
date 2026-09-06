@@ -8,6 +8,7 @@ Dokumentasi ini menjelaskan kontrak antara UI Next.js, Route Handler, dan Supaba
 | --- | --- |
 | [`../api-contract.md`](../api-contract.md) | Kontrak manusia: actor, payload, response, error, RLS, dan aturan transaksi. |
 | [`openapi.json`](openapi.json) | OpenAPI 3.1 yang dapat diimpor ke Postman, Bruno, Insomnia, Scalar, Swagger UI, atau Redoc. |
+| [`endpoints.md`](endpoints.md) | Inventaris route handler aktual, method, actor, alias, dan tanggung jawab. |
 | [`booking.md`](booking.md) | Booking langsung, Pilih dari Pelamar, Cari Cepat, dan lifecycle task. |
 | [`auth.md`](auth.md) | Register dan login. |
 | [`helper.md`](helper.md) | Profil, availability, kategori, dan verifikasi Helper. |
@@ -20,6 +21,39 @@ Dokumentasi ini menjelaskan kontrak antara UI Next.js, Route Handler, dan Supaba
 - Proxy menolak request tanpa sesi. Route handler memeriksa role dan relasi resource. RLS menjadi lapisan terakhir.
 - `service_role` tidak boleh dipakai dari browser atau endpoint user biasa.
 - Hanya `/api/auth/login`, `/api/auth/register`, dan webhook pembayaran bertanda tangan yang dapat dipanggil tanpa sesi user.
+
+## Quick start lokal
+
+Base URL:
+
+```text
+http://localhost:3000/api
+```
+
+Login dengan username:
+
+```bash
+curl --request POST http://localhost:3000/api/auth/login \
+  --header "Content-Type: application/json" \
+  --data '{"identifier":"ratnakeluarga","password":"Rangkul2026*"}'
+```
+
+Login dengan email:
+
+```bash
+curl --request POST http://localhost:3000/api/auth/login \
+  --header "Content-Type: application/json" \
+  --data '{"identifier":"ratnakeluarga@rangkul.id","password":"Rangkul2026*"}'
+```
+
+Browser menyimpan sesi melalui cookie aplikasi. Client non-browser dapat memakai access token user:
+
+```bash
+curl http://localhost:3000/api/users/me \
+  --header "Authorization: Bearer <access-token-user>"
+```
+
+Jangan memakai `SUPABASE_SERVICE_ROLE_KEY` sebagai Bearer token client.
 
 ## Format response
 
@@ -74,11 +108,13 @@ Response gagal:
 | Admin | `/api/admin/*` | Admin |
 | Storage | `/api/storage/*` | Role login dengan validasi folder actor dan tipe dokumen |
 
-## Feature flag Sprint 6
+Daftar path dan method lengkap tersedia pada [`endpoints.md`](endpoints.md). Inventaris tersebut berasal dari route handler di source, sedangkan OpenAPI menyediakan schema machine-readable untuk endpoint prioritas.
 
-`SPRINT6_MATCHING_ENABLED` default ke `false`.
+## Feature flag mode penugasan fleksibel
 
-- Saat `false`, `/booking/new` kembali ke katalog Helper dan endpoint marketplace mengembalikan `404` sebelum side effect.
+`FLEXIBLE_ASSIGNMENT_ENABLED` default ke `false`.
+
+- Saat `false`, `/booking/new` tetap dapat dibuka oleh Keluarga dan menampilkan langkah memilih Helper dari katalog. Endpoint marketplace dan mutation mode fleksibel mengembalikan `404` sebelum side effect.
 - Saat `true`, `/booking/new` menawarkan `pelamar` dan `cepat`.
 - Booking `langsung` selalu dimulai dari `/booking/{helper_id}` dan payload wajib memiliki `helper_id`.
 - Mengaktifkan flag tidak mengurangi pemeriksaan role, RLS, radius, kategori, jadwal, trust tier, atau race condition.
@@ -94,6 +130,16 @@ accessToken=<access token akun demo>
 
 Untuk browser QA, login melalui `/api/auth/login` lebih praktis karena cookie sesi dikelola aplikasi. Jangan menyimpan token, service role key, atau credential production di collection yang di-commit.
 
+### Pilihan tool tanpa Postman
+
+- **Bruno** untuk collection berbasis file yang mudah direview di Git.
+- **Insomnia** untuk eksplorasi request dan environment secara visual.
+- **Scalar** atau **Swagger UI** untuk merender `openapi.json`.
+- **Redoc** untuk dokumentasi baca yang fokus pada schema.
+- **curl** untuk reproduksi minimal di terminal dan CI.
+
+Postman tidak wajib. OpenAPI lebih portabel karena dapat diimpor ke beberapa tool tanpa mengunci dokumentasi pada satu vendor.
+
 ## Verifikasi kontrak
 
 ```bash
@@ -101,3 +147,5 @@ npm run test
 ```
 
 Contract test memeriksa bahwa OpenAPI dapat diparse, endpoint Sprint 6 terdokumentasi, role Keluarga tercatat pada create task, dan response `409` serta `422` tersedia.
+
+Sebelum mengubah kontrak, cocokkan method, path, request, success response, error response, actor, seed example, TDD, dan RLS. Perubahan schema database harus memakai migrasi dan memperbarui tipe, bukan menghapus payload dari route.

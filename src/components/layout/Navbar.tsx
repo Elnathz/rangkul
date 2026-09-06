@@ -313,8 +313,8 @@ export default function Navbar() {
                 unreadCount={unreadCount}
                 onUnreadCountChange={setUnreadCount}
               />
-              <div ref={profileMenuRef} className="relative hidden sm:block">
-                <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen} aria-controls="profile-menu" className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+              <div ref={profileMenuRef} className="relative block">
+                <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-label={`Buka menu profil ${username}`} aria-expanded={profileOpen} aria-controls="profile-menu" className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                   {avatarUrl && !imageError ? (
                     <img
                       src={avatarUrl}
@@ -326,7 +326,7 @@ export default function Navbar() {
                   ) : (
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span>
                   )}
-                  <span className="max-w-28 truncate">{username}</span>
+                  <span className="hidden max-w-28 truncate sm:inline">{username}</span>
                   <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
                 </button>
                 {profileOpen ? <div id="profile-menu" className="absolute right-0 top-full mt-2 w-56 rounded-md border border-border bg-card p-1.5 shadow-[var(--shadow-overlay)]">

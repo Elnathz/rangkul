@@ -2,6 +2,7 @@ import { apiResponse, createApiError } from "@/lib/api-response";
 import { adminAuthErrorResponse, requireAdmin } from "@/lib/admin/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/server";
+import { removePrivateObjectsForUser } from "@/lib/storage/private-user-cleanup";
 import { updateAdminUserSchema, normalizeIndonesianPhone } from "@/lib/validations/admin-users";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,18 +41,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { user } = await requireAdmin();
+    const { supabase, user } = await requireAdmin();
     const { id } = await params;
     if (id === user.id) return createApiError("validation_error", "Akun Admin aktif tidak dapat dihapus", 422);
 
-    const admin = await createAdminClient();
-    const { data: target } = await admin.from("users").select("id, email, full_name, role").eq("id", id).maybeSingle();
-    if (!target) return createApiError("not_found", "Pengguna tidak ditemukan", 404);
-    await writeAuditLog({ actor_id: user.id, action: "admin_user_deleted", entity_type: "user", entity_id: id, metadata: { email: target.email, role: target.role } });
+    const { error: anonymizeError } = await supabase.rpc("admin_anonymize_user", { target_user_id: id });
+    if (anonymizeError) {
+      const notFound = /tidak ditemukan/i.test(anonymizeError.message);
+      return createApiError(notFound ? "not_found" : "conflict", notFound ? "Pengguna tidak ditemukan" : "Akun belum dapat dianonimkan", notFound ? 404 : 409);
+    }
 
-    const { error } = await admin.auth.admin.deleteUser(id);
-    if (error) return createApiError("server_error", "Gagal menghapus akun: " + error.message, 500);
-    return apiResponse({ message: "Akun pengguna berhasil dihapus" });
+    const admin = await createAdminClient();
+    await removePrivateObjectsForUser(admin, id);
+    const { error } = await admin.auth.admin.deleteUser(id, true);
+    if (error) return createApiError("server_error", "Data sudah dianonimkan, tetapi sesi Auth belum dapat ditutup", 500);
+    return apiResponse({ message: "Akun dianonimkan dan sesi Auth ditutup" });
   } catch (error) {
     const authResponse = adminAuthErrorResponse(error);
     return authResponse ?? createApiError("server_error", "Terjadi kesalahan server", 500);

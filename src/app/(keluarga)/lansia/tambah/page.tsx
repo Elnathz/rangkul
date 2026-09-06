@@ -59,8 +59,23 @@ export default function TambahLansiaPage() {
         showToast("Harap isi Nama, Umur, dan Hubungan Keluarga.");
         return;
       }
+      if (form.nama.trim().length < 2 || form.nama.trim().length > 100) {
+        showToast("Nama lansia harus antara 2 sampai 100 karakter.");
+        return;
+      }
+      const umurNum = parseInt(form.umur, 10);
+      if (isNaN(umurNum) || umurNum < 50 || umurNum > 130) {
+        showToast("Umur lansia harus antara 50 sampai 130 tahun.");
+        return;
+      }
       if (!form.region.provinsi || !form.region.kota || !form.region.kecamatan || !form.region.kelurahan || !form.rt || !form.rw || !form.alamat) {
         showToast("Harap melengkapi pilihan wilayah administrasi dan alamat spesifik.");
+        return;
+      }
+      const rtNum = parseInt(form.rt, 10);
+      const rwNum = parseInt(form.rw, 10);
+      if (isNaN(rtNum) || rtNum < 1 || rtNum > 999 || isNaN(rwNum) || rwNum < 1 || rwNum > 999) {
+        showToast("Nomor RT dan RW harus antara 1 sampai 999.");
         return;
       }
       if (form.lat === null || form.lng === null) {
@@ -262,11 +277,11 @@ export default function TambahLansiaPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <Label htmlFor="nama" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Nama Lengkap <span className="text-red-500">*</span></Label>
-                    <Input id="nama" required placeholder="Contoh: Bapak Haryono" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="h-11 rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                    <Input id="nama" required maxLength={100} placeholder="Contoh: Bapak Haryono" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="h-11 rounded-xl focus-visible:ring-[#0D47A1]/20" />
                   </div>
                   <div>
                     <Label htmlFor="umur" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Umur (Tahun) <span className="text-red-500">*</span></Label>
-                    <Input id="umur" type="number" min={50} required placeholder="Contoh: 65" value={form.umur} onChange={(e) => setForm({ ...form, umur: e.target.value })} className="h-11 rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                    <Input id="umur" type="number" min={50} max={130} required placeholder="Contoh: 65" value={form.umur} onChange={(e) => setForm({ ...form, umur: e.target.value })} className="h-11 rounded-xl focus-visible:ring-[#0D47A1]/20" />
                   </div>
                   <div className="sm:col-span-2">
                     <Label htmlFor="hubungan" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Hubungan Keluarga <span className="text-red-500">*</span></Label>
@@ -286,7 +301,7 @@ export default function TambahLansiaPage() {
                 {form.hubungan_keluarga === "Lainnya" && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <Label htmlFor="hubungan_lainnya" className="text-xs font-bold uppercase tracking-wider text-[#0D47A1] block mb-1.5">Spesifikkan Hubungan <span className="text-red-500">*</span></Label>
-                    <Input id="hubungan_lainnya" required placeholder="Contoh: Kakak, Sepupu" value={form.hubungan_keluarga_lainnya} onChange={(e) => setForm({ ...form, hubungan_keluarga_lainnya: e.target.value })} className="h-11 rounded-xl bg-blue-50 focus-visible:ring-[#0D47A1]/20" />
+                    <Input id="hubungan_lainnya" required maxLength={50} placeholder="Contoh: Kakak, Sepupu" value={form.hubungan_keluarga_lainnya} onChange={(e) => setForm({ ...form, hubungan_keluarga_lainnya: e.target.value })} className="h-11 rounded-xl bg-blue-50 focus-visible:ring-[#0D47A1]/20" />
                   </div>
                 )}
 
@@ -297,16 +312,16 @@ export default function TambahLansiaPage() {
                   <div className="grid grid-cols-2 gap-4 mt-4 mb-2">
                     <div>
                       <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">RT <span className="text-red-500">*</span></Label>
-                      <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                      <Input id="rt" type="number" min={1} max={999} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
                     </div>
                     <div>
                       <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">RW <span className="text-red-500">*</span></Label>
-                      <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                      <Input id="rw" type="number" min={1} max={999} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
                     </div>
                   </div>
 
                   <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5 mt-4">Alamat Spesifik Tempat Tinggal <span className="text-red-500">*</span></Label>
-                  <Textarea id="alamat" required rows={3} placeholder="Jl. Sudirman No. 12, Kel. Sukamaju..." value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                  <Textarea id="alamat" required rows={3} maxLength={255} placeholder="Jl. Sudirman No. 12, Kel. Sukamaju..." value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
                 </div>
 
                 <div className="pt-2">
@@ -344,12 +359,12 @@ export default function TambahLansiaPage() {
 
                 <div>
                   <Label htmlFor="catatan_kondisi" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5 mt-2">Riwayat Medis (Singkat)</Label>
-                  <Textarea id="catatan_kondisi" rows={3} placeholder="Contoh: Hipertensi, Diabetes Tipe 2..." value={form.catatan_kondisi} onChange={(e) => setForm({ ...form, catatan_kondisi: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                  <Textarea id="catatan_kondisi" rows={3} maxLength={1000} placeholder="Contoh: Hipertensi, Diabetes Tipe 2..." value={form.catatan_kondisi} onChange={(e) => setForm({ ...form, catatan_kondisi: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
                 </div>
 
                 <div>
                   <Label htmlFor="kebutuhan_khusus" className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Kebutuhan Khusus / Pantangan</Label>
-                  <Textarea id="kebutuhan_khusus" rows={3} placeholder="Contoh: Tidak boleh makan manis, mudah lupa..." value={form.kebutuhan_khusus} onChange={(e) => setForm({ ...form, kebutuhan_khusus: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
+                  <Textarea id="kebutuhan_khusus" rows={3} maxLength={1000} placeholder="Contoh: Tidak boleh makan manis, mudah lupa..." value={form.kebutuhan_khusus} onChange={(e) => setForm({ ...form, kebutuhan_khusus: e.target.value })} className="rounded-xl focus-visible:ring-[#0D47A1]/20" />
                 </div>
               </div>
             )}

@@ -4,7 +4,7 @@ import { createTaskSchema } from '@/lib/validations/booking';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
 import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
-import { isSprint6MatchingEnabled } from '@/lib/features/sprint6-matching';
+import { isFlexibleAssignmentEnabled } from '@/lib/features/sprint6-matching';
 
 export async function POST(request: Request) {
   try {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
     const mode = mode_penugasan ?? 'langsung';
 
-    if (mode !== 'langsung' && !isSprint6MatchingEnabled()) {
+    if (mode !== 'langsung' && !isFlexibleAssignmentEnabled()) {
       return createApiError('not_found', 'Fitur belum tersedia', 404);
     }
 

@@ -1,0 +1,112 @@
+{
+  "type": "FeatureCollection",
+  "name": "rangkul_demo_locations",
+  "description": "Titik fiktif dari supabase/seed.sql untuk pengujian Rangkul. Bukan batas administratif resmi.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "entity": "lansia", "name": "Giorno", "owner": "Ratna Wulandari", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4388, -7.0054] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "lansia", "name": "Mbah Demo Dua", "owner": "Maya Lestari", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 2, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4372, -7.0042] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "lansia", "name": "Mbah Demo Tiga", "owner": "Rinto Prabowo", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4382, -7.0052] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "lansia", "name": "Mbah Demo Empat", "owner": "Dewi Kartika", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 4, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4392, -7.0062] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "lansia", "name": "Bu Sulastri", "owner": "Surya Wijaya", "kelurahan": "Kedungpane", "kecamatan": "Mijen", "rt": 1, "rw": 2 },
+      "geometry": { "type": "Point", "coordinates": [110.327, -7.076] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "budikoordinator", "name": "Budi Santoso", "level": "rt", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 1, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4375, -7.0045] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "sulikoordinator", "name": "Suli Hartini", "level": "rt", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 2, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4378, -7.0048] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "wagimankoordinator", "name": "Wagiman Popo", "level": "rt", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4381, -7.0051] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "aguskoordinator", "name": "Agus Salim", "level": "rt", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 4, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.4391, -7.0061] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "rahmatkoordinator", "name": "Rahmat Hidayat", "level": "rw", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": null, "rw": 5 },
+      "geometry": { "type": "Point", "coordinates": [110.438, -7.005] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "koordinator", "username": "darmokoordinator", "name": "Darmo Prasetyo", "level": "rt", "kelurahan": "Kedungpane", "kecamatan": "Mijen", "rt": 1, "rw": 2 },
+      "geometry": { "type": "Point", "coordinates": [110.3273, -7.0762] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "fajarhelper", "name": "Fajar Nugroho", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 1, "rw": 5, "radius_km": 2, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.4376, -7.0046] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "rinihelper", "name": "Rini Kurniasih", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 2, "rw": 5, "radius_km": 2, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.4371, -7.0041] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "dewihelper", "name": "Dewi Anggraini", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 2, "rw": 5, "radius_km": 2, "status": "verified", "tier": "probation" },
+      "geometry": { "type": "Point", "coordinates": [110.4373, -7.0043] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "andihelper", "name": "Andi Sudarto", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5, "radius_km": 5, "status": "verified", "tier": "probation" },
+      "geometry": { "type": "Point", "coordinates": [110.4381, -7.0051] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "dedihelper", "name": "Dedi Setiawan", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5, "radius_km": 3, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.4382, -7.0052] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "arifhelper", "name": "Arif Pratama", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 3, "rw": 5, "radius_km": 3, "status": "verified", "tier": "probation" },
+      "geometry": { "type": "Point", "coordinates": [110.4383, -7.0053] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "sarihelper", "name": "Sari Wulandari", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 4, "rw": 5, "radius_km": 4, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.4392, -7.0062] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "linahelper", "name": "Lina Kurniawan", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 4, "rw": 5, "radius_km": 4, "status": "under_review", "tier": "probation" },
+      "geometry": { "type": "Point", "coordinates": [110.4393, -7.0063] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "yusufhelper", "name": "Yusuf Maulana", "kelurahan": "Pleburan", "kecamatan": "Semarang Selatan", "rt": 5, "rw": 5, "radius_km": 5, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.4402, -7.0072] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "entity": "helper", "username": "bagushelper", "name": "Bagus Santoso", "kelurahan": "Kedungpane", "kecamatan": "Mijen", "rt": 1, "rw": 2, "radius_km": 5, "status": "verified", "tier": "terpercaya" },
+      "geometry": { "type": "Point", "coordinates": [110.3276, -7.0765] }
+    }
+  ]
+}

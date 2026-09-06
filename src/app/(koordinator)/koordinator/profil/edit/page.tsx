@@ -38,8 +38,6 @@ export default function KoordinatorEditProfilPage() {
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
-  // fotoPreviewUrl: blob URL (new file) or signed URL (existing saved photo)
-  const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -65,12 +63,11 @@ export default function KoordinatorEditProfilPage() {
         .maybeSingle();
 
       const parsed = parseRegionAddress(profile?.wilayah || userProfile?.alamat_detail || "");
-      const avatarPath = user.user_metadata?.avatar_url || "";
       const nextForm = {
         ...form,
         username: userProfile?.full_name || userProfile?.username || user.email?.split('@')[0] || "",
         phone: userProfile?.phone?.replace(/^\+62/, "0") || "",
-        foto_url: avatarPath,
+        foto_url: user.user_metadata?.avatar_url || "",
         alamat: parsed.detail || "",
         rt: userProfile?.rt?.toString() || parsed.rt || "",
         rw: userProfile?.rw?.toString() || parsed.rw || "",
@@ -84,16 +81,6 @@ export default function KoordinatorEditProfilPage() {
 
       setForm(nextForm);
       initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
-
-      // resolve photo preview
-      if (avatarPath) {
-        if (avatarPath.startsWith('http')) {
-          setFotoPreviewUrl(avatarPath);
-        } else {
-          const { data: signed } = await supabase.storage.from('dokumen').createSignedUrl(avatarPath, 300);
-          if (signed?.signedUrl) setFotoPreviewUrl(signed.signedUrl);
-        }
-      }
     };
     fetchData();
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -227,7 +214,7 @@ export default function KoordinatorEditProfilPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           
           <div className={`transition-all duration-500 ${activeTab === 'mandiri' ? 'block animate-in fade-in slide-in-from-left-4' : 'hidden'}`}>
             {/* Akun & Keamanan */}
@@ -270,20 +257,17 @@ export default function KoordinatorEditProfilPage() {
                           setFotoFileName(null);
                           return;
                         }
-                        const previewUrl = URL.createObjectURL(file);
-                        setFotoPreviewUrl(previewUrl);
-                        setForm({ ...form, foto_url: file.name });
+                        setForm({ ...form, foto_url: URL.createObjectURL(file) });
                         setFotoFileName(file.name);
                         setFotoFile(file);
                       }
                     }}
                   />
                   
-                  {fotoPreviewUrl ? (
+                  {form.foto_url ? (
                     <>
-                      <div className="absolute inset-0 w-full h-full z-0 opacity-40 group-hover:opacity-30 transition-opacity">
-                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                         <img src={fotoPreviewUrl} alt="Preview Foto" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
+                         <img src={form.foto_url} alt="Preview Foto" className="w-full h-full object-cover" />
                       </div>
                       <div className="relative z-10 text-center p-4">
                         <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-2 shadow-md ring-4 ring-white">

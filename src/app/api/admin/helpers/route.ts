@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const page = Math.max(Number(url.searchParams.get("page") ?? "1"), 1);
     const pageSize = Math.min(Math.max(Number(url.searchParams.get("pageSize") ?? "25"), 1), 100);
     const status = url.searchParams.get("status");
-    const search = url.searchParams.get("q")?.trim().replace(/[%,()]/g, " ");
+    const search = url.searchParams.get("q")?.trim().replace(/[%,()_*\\]/g, " ");
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       .range(from, to);
 
     if (status && helperStatuses.has(status)) query = query.eq("status", status as "pending_verification" | "verified" | "under_review" | "rejected" | "suspended");
-    if (search) query = query.or(`wilayah_domisili.ilike.%${search}%`);
+    if (search) query = query.ilike("wilayah_domisili", "%" + search + "%");
 
     const { data, count, error } = await query;
     if (error) return createApiError("server_error", "Gagal mengambil data Helper", 500);

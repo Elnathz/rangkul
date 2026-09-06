@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { isFlexibleAssignmentEnabled } from "@/lib/features/sprint6-matching";
 import { distanceInKm } from "@/lib/geo";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -17,7 +17,7 @@ export async function POST(request: Request, context: RouteContext) {
       return createApiError("unauthorized", "Anda harus login untuk mengajukan diri", 401);
     }
 
-    if (!isSprint6MatchingEnabled()) {
+    if (!isFlexibleAssignmentEnabled()) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 
@@ -73,7 +73,7 @@ export async function GET(request: Request, context: RouteContext) {
       return createApiError("unauthorized", "Anda harus login terlebih dahulu", 401);
     }
 
-    if (!isSprint6MatchingEnabled()) {
+    if (!isFlexibleAssignmentEnabled()) {
       return createApiError("not_found", "Fitur belum tersedia", 404);
     }
 

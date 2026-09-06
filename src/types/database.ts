@@ -1449,6 +1449,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_anonymize_user: {
+        Args: { target_user_id: string }
+        Returns: Database["public"]["Tables"]["users"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      anonymize_own_account: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Tables"]["users"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_topup_demo_wallet: {
         Args: {
           target_user_id: string

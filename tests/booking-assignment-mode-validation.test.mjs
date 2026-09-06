@@ -32,12 +32,14 @@ test("mode pelamar dan cepat tidak menerima Helper pilihan", () => {
   );
 });
 
-test("entry booking umum hanya menampilkan dua mode Sprint 6 saat flag aktif", () => {
+test("entry booking umum tidak menjadi dead end saat mode fleksibel nonaktif", () => {
   const page = readFileSync("src/app/(keluarga)/booking/new/page.tsx", "utf8");
   const client = readFileSync("src/components/keluarga/booking/BookingNewClient.tsx", "utf8");
   const route = readFileSync("src/app/api/booking/task/route.ts", "utf8");
 
-  assert.match(page, /if \(!isSprint6MatchingEnabled\(\)\) redirect\("\/cari-helper"\)/);
+  assert.doesNotMatch(page, /redirect\("\/cari-helper"\)/);
+  assert.match(page, /isFlexibleAssignmentEnabled/);
+  assert.match(page, /Pilih Helper terlebih dahulu/);
   assert.match(client, /\["pelamar",\s*"cepat"\]/);
   assert.doesNotMatch(client, /mode_penugasan:\s*"langsung"/);
   assert.match(route, /message: 'Data input tidak valid',[\s\S]*?422\s*\)/);
@@ -52,12 +54,12 @@ test("query mode dari katalog menentukan mode awal formulir booking", () => {
   assert.match(client, /useState<Mode>\(initialMode\)/);
 });
 
-test("CTA mode Sprint 6 di katalog mengikuti feature flag server", () => {
+test("CTA mode fleksibel di katalog mengikuti feature flag server", () => {
   const catalogRoute = readFileSync("src/app/api/helpers/route.ts", "utf8");
   const catalogPage = readFileSync("src/app/(keluarga)/cari-helper/page.tsx", "utf8");
 
-  assert.match(catalogRoute, /isSprint6MatchingEnabled/);
-  assert.match(catalogRoute, /matching_enabled:\s*isSprint6MatchingEnabled\(\)/);
+  assert.match(catalogRoute, /isFlexibleAssignmentEnabled/);
+  assert.match(catalogRoute, /matching_enabled:\s*isFlexibleAssignmentEnabled\(\)/);
   assert.match(catalogPage, /setMatchingEnabled\(Boolean\(body\.matching_enabled\)\)/);
   assert.match(catalogPage, /matchingEnabled\s*&&\s*\(/);
 });

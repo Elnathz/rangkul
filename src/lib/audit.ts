@@ -6,6 +6,7 @@ type AuditAction =
   | 'admin_user_created'
   | 'admin_user_updated'
   | 'admin_user_deleted'
+  | 'account_anonymized'
   | 'admin_helper_status_changed'
   | 'admin_helper_fallback_assigned'
   | 'admin_service_category_created'

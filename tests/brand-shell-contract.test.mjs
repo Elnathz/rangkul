@@ -76,3 +76,11 @@ test("navigasi bawah mobile memakai liquid glass dengan indikator active yang be
   assert.match(navigation, /layoutId="bottom-navigation-active"/);
   assert.match(navigation, /useReducedMotion/);
 });
+
+test("logout tetap tersedia dari header mobile untuk role dengan bottom navigation", () => {
+  const navbar = readFileSync("src/components/layout/Navbar.tsx", "utf8");
+
+  assert.match(navbar, /ref=\{profileMenuRef\}[\s\S]{0,80}className="relative block/);
+  assert.match(navbar, /Buka menu profil/);
+  assert.match(navbar, /onClick=\{handleLogout\}/);
+});
