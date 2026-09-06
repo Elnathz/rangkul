@@ -16,7 +16,9 @@ import { TaskDetailHeader } from "@/components/keluarga/task-detail/TaskDetailHe
 import { TaskLifecycleStepper } from "@/components/keluarga/task-detail/TaskLifecycleStepper";
 import { TaskNextActionPanel } from "@/components/keluarga/task-detail/TaskNextActionPanel";
 import {
+  getPaymentPresentation,
   getTaskDetailPresentation,
+  paymentRequiresCompletion,
   sanitizeUserFacingText,
   shortTaskReference,
 } from "@/components/keluarga/task-detail/task-detail-presentation";
@@ -171,6 +173,15 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
   const pendingServices = task.extraServices.filter((service) => service.status === "menunggu_persetujuan_keluarga");
   const decidedServices = task.extraServices.filter((service) => service.status !== "menunggu_persetujuan_keluarga");
   const approvedServices = task.extraServices.filter((service) => service.status === "disetujui");
+  const paymentPresentation = getPaymentPresentation(task.payment?.status, task.status, task.jadwal_waktu);
+  const paymentNeedsAction = paymentRequiresCompletion(task.payment?.status, task.status, task.jadwal_waktu);
+  const headerPresentation = paymentNeedsAction || paymentPresentation.tone === "danger"
+    ? {
+        ...presentation,
+        label: paymentPresentation.label,
+        tone: paymentPresentation.tone === "danger" ? "danger" as const : "warning" as const,
+      }
+    : presentation;
   const archived = task.status === "dibatalkan";
   const scheduleForDisplay = archived && task.jadwal_waktu_asli ? task.jadwal_waktu_asli : task.jadwal_waktu;
   const contextRail = (
@@ -193,6 +204,7 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
       showContactHelper={presentation.showContactHelper}
       paymentStatus={task.payment?.status}
       taskStatus={task.status}
+      jadwalWaktu={task.jadwal_waktu}
     />
   );
 
@@ -206,7 +218,7 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
             lansiaName={task.lansia.nama}
             total={Number(task.harga_final)}
             categoryDescription={sanitizeUserFacingText(task.category.deskripsi)}
-            presentation={presentation}
+            presentation={headerPresentation}
             taskReference={shortTaskReference(task.id)}
           />
   <PaymentPriorityNotice
@@ -292,6 +304,7 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
                     approvedServices={approvedServices}
                     paymentStatus={task.payment?.status}
                     taskStatus={task.status}
+                    jadwalWaktu={task.jadwal_waktu}
                   />
                 ) : null}
               </div>

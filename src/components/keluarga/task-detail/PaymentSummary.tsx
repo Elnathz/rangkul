@@ -12,6 +12,7 @@ export function PaymentSummary({
   approvedServices,
   paymentStatus,
   taskStatus,
+  jadwalWaktu,
 }: {
   taskId: string;
   basePrice: number;
@@ -19,8 +20,9 @@ export function PaymentSummary({
   approvedServices: ExtraService[];
   paymentStatus: string | null | undefined;
   taskStatus: TaskStatus;
+  jadwalWaktu?: string | null;
 }) {
-  const payment = getPaymentPresentation(paymentStatus, taskStatus);
+  const payment = getPaymentPresentation(paymentStatus, taskStatus, jadwalWaktu);
   const toneClass = payment.tone === "warning"
     ? "border-amber-200 bg-amber-50/70"
     : payment.tone === "success"

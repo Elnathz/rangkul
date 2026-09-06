@@ -170,6 +170,8 @@ test("pembayaran yang perlu diselesaikan diprioritaskan di detail dan daftar Kun
 
   assert.match(detail, /PaymentPriorityNotice/);
   assert.ok(detail.lastIndexOf("PaymentPriorityNotice") < detail.lastIndexOf("TaskLifecycleStepper"));
+  assert.match(detail, /headerPresentation/);
+  assert.match(detail, /jadwalWaktu=\{task\.jadwal_waktu\}/);
   assert.match(dashboard, /getPaymentPresentation/);
   assert.match(dashboard, /paymentRequiresCompletion/);
   assert.match(list, /getPaymentPresentation/);

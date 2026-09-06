@@ -50,6 +50,7 @@ export function TaskContextRail({
   showContactHelper,
   paymentStatus,
   taskStatus,
+  jadwalWaktu,
 }: {
   taskId: string;
   lansia: {
@@ -69,9 +70,10 @@ export function TaskContextRail({
   showContactHelper: boolean;
   paymentStatus: string | null | undefined;
   taskStatus: TaskStatus;
+  jadwalWaktu?: string | null;
 }) {
   const hasMeaningfulRating = Boolean(helper && helper.rating > 0 && helper.completedTasks > 0);
-  const payment = getPaymentPresentation(paymentStatus, taskStatus);
+  const payment = getPaymentPresentation(paymentStatus, taskStatus, jadwalWaktu);
 
   return (
     <aside className="overflow-hidden rounded-[18px] border border-border bg-surface lg:sticky lg:top-24 lg:self-start" aria-label="Konteks kunjungan">
