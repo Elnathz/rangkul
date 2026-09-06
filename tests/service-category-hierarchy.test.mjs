@@ -52,7 +52,7 @@ test("semua surface kategori memakai hierarki database", () => {
 
 test("kategori baru Admin mengalir ke katalog, booking, dan edit Helper dari sumber database yang sama", () => {
   assert.match(categoriesRoute, /getSelectableServiceCategories/);
-  assert.match(cariHelperPage, /fetch\("\/api\/categories"/);
+  assert.match(cariHelperPage, /fetch\("\/api\/categories",\s*\{ cache: "no-store" \}\)/);
   assert.match(bookingPage, /getSelectableServiceCategories/);
   assert.match(helperBookingPage, /getSelectableServiceCategories/);
   assert.match(helperEditSource, /from\('service_categories'\)/);
