@@ -37,6 +37,7 @@ export default function HelperEditProfilPage() {
     region: { provinsi: "", kota: "", kecamatan: "", kelurahan: "" },
     domisili_lat: null as number | null,
     domisili_lng: null as number | null,
+    radius_layanan_km: 5,
   });
 
   const [dbCategories, setDbCategories] = useState<ServiceCategory[]>([]);
@@ -111,7 +112,7 @@ export default function HelperEditProfilPage() {
         .maybeSingle();
       const { data: profile } = await supabase
         .from('helper_profiles')
-        .select('id, wilayah_domisili, domisili_lat, domisili_lng, foto_wajah_url')
+        .select('id, wilayah_domisili, domisili_lat, domisili_lng, foto_wajah_url, radius_layanan_km')
         .eq('user_id', user.id)
         .single();
 
@@ -129,6 +130,7 @@ export default function HelperEditProfilPage() {
           region,
           domisili_lat: profile.domisili_lat,
           domisili_lng: profile.domisili_lng,
+          radius_layanan_km: Number(profile.radius_layanan_km) || 5,
         };
 
         setForm(nextForm);
@@ -154,6 +156,7 @@ export default function HelperEditProfilPage() {
           region: { provinsi: parsed.provinsi, kota: parsed.kotaKabupaten, kecamatan: parsed.kecamatan, kelurahan: parsed.kelurahan },
           domisili_lat: profile.domisili_lat,
           domisili_lng: profile.domisili_lng,
+          radius_layanan_km: Number(profile.radius_layanan_km) || 5,
         };
         initialSnapshot.current = getSnapshot(nextForm, nextIds);
       }
@@ -211,14 +214,14 @@ export default function HelperEditProfilPage() {
       ].filter(Boolean).join(" | ");
       const currentFormSnapshot = initialSnapshot.current ? JSON.parse(initialSnapshot.current) as { username: string; phone: string; alamat: string; rt: string; rw: string; region: RegionValue; domisili_lat: number | null; domisili_lng: number | null; kategoriIds: string[] } : null;
       const accountChanged = !currentFormSnapshot || JSON.stringify({ username: form.username, phone: form.phone, alamat: form.alamat, rt: form.rt, rw: form.rw, region: form.region }) !== JSON.stringify({ username: currentFormSnapshot.username, phone: currentFormSnapshot.phone, alamat: currentFormSnapshot.alamat, rt: currentFormSnapshot.rt, rw: currentFormSnapshot.rw, region: currentFormSnapshot.region });
-      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
+      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, radius_layanan_km: form.radius_layanan_km, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, radius_layanan_km: (currentFormSnapshot as any).radius_layanan_km, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
       if (accountChanged) {
         const accountResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah_domisili, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
         const accountResult = await accountResponse.json();
         if (!accountResponse.ok) throw new Error(accountResult.message || "Data akun gagal diperbarui");
       }
       if (helperChanged) {
-        const profileResponse = await fetch("/api/helper/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, kategori_ids: kategoriIds }) });
+        const profileResponse = await fetch("/api/helper/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, radius_layanan_km: Number(form.radius_layanan_km), kategori_ids: kategoriIds }) });
         const profileResult = await profileResponse.json();
         if (!profileResponse.ok) throw new Error(profileResult.message || "Data operasional gagal diperbarui");
       }
@@ -571,6 +574,23 @@ export default function HelperEditProfilPage() {
                        setForm(f => ({ ...f, domisili_lat: pos.lat, domisili_lng: pos.lng, ...(targetAddress ? { alamat: targetAddress } : {}) }));
                     }}
                   />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius Jangkauan Layanan (km)</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={25}
+                    value={form.radius_layanan_km}
+                    onChange={(e) => setForm({ ...form, radius_layanan_km: Math.max(1, Math.min(25, Number(e.target.value) || 1)) })}
+                    className="rounded-xl h-11 w-32 bg-slate-50 border-slate-200 focus:bg-white font-bold text-slate-800"
+                  />
+                  <span className="text-xs font-medium text-slate-600">
+                    km (Jarak maksimal penerimaan tugas dari lokasi domisili Anda)
+                  </span>
                 </div>
               </div>
             </div>
