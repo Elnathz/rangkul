@@ -14,8 +14,7 @@ export const registerSchema = z.object({
   phone: z.string()
     .min(10, 'Nomor HP minimal 10 digit')
     .max(13, 'Nomor HP maksimal 13 digit')
-    .regex(/^08[0-9]+$/, 'Nomor HP harus diawali dengan 08')
-    .optional(),
+    .regex(/^08[0-9]+$/, 'Nomor HP harus diawali dengan 08'),
   role: z.enum(['keluarga', 'helper', 'koordinator'], {
     error: 'Peran tidak valid',
   }),
