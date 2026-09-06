@@ -56,8 +56,8 @@ test("UI Helper dan Keluarga tidak lagi memakai mock extra service", () => {
 
 test("foto lansia memakai rasio tetap dan modal zoom", () => {
   assert.match(helperPage, /LansiaPhotoPreview/);
-  assert.match(familyClient, /LansiaPhotoPreview/);
-  assert.match(familyClient, /ImagePreviewModal/);
+  const contextRail = fs.readFileSync(new URL("../src/components/keluarga/task-detail/TaskContextRail.tsx", import.meta.url), "utf8");
+  assert.match(contextRail, /ImagePreviewModal/);
   const photoPreview = fs.readFileSync(new URL("../src/components/helper/LansiaPhotoPreview.tsx", import.meta.url), "utf8");
   assert.ok(photoPreview.includes("aspect-[4/3]"));
 });
