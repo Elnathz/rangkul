@@ -468,8 +468,8 @@ BEGIN
   SELECT gen_random_uuid(), keluarga_3_id, lansia_3_id, helper_2_id, sedang_category_id, NOW() + INTERVAL '3 hours', NOW() + INTERVAL '3 hours', '[DEMO_MATRIX] Task dikerjakan', 'dikerjakan', 50000, 50000
   WHERE NOT EXISTS (SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task dikerjakan');
 
-  INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final)
-  SELECT gen_random_uuid(), keluarga_1_id, lansia_1_id, existing_helper_id, sedang_category_id, NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days', '[DEMO_MATRIX] Task menunggu Koordinator', 'menunggu_persetujuan_koordinator', 50000, 50000
+  INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final, expires_at)
+  SELECT gen_random_uuid(), keluarga_1_id, lansia_1_id, existing_helper_id, sedang_category_id, NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days', '[DEMO_MATRIX] Task menunggu Koordinator', 'menunggu_persetujuan_koordinator', 50000, 50000, NOW() + INTERVAL '1 hour'
   WHERE NOT EXISTS (SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task menunggu Koordinator');
 
   INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final)
@@ -1012,6 +1012,7 @@ SET helper_id = NULL,
     completed_at = NULL,
     cancelled_at = NULL,
     cancellation_reason = NULL,
+    expires_at = NOW() + INTERVAL '1 hour',
     updated_at = NOW()
 WHERE catatan = '[DEMO_MATRIX] Task diajukan marketplace';
 

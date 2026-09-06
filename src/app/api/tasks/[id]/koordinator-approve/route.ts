@@ -6,6 +6,7 @@ type TaskRelation = {
   id: string;
   status: string;
   helper_id: string | null;
+  expires_at: string | null;
   helper_profiles: { koordinator_id: string | null } | { koordinator_id: string | null }[] | null;
 };
 
@@ -49,7 +50,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     const { data: taskRow, error: taskError } = await supabase
       .from("tasks")
-      .select("id, status, helper_id, helper_profiles!inner ( koordinator_id )")
+      .select("id, status, helper_id, expires_at, helper_profiles!inner ( koordinator_id )")
       .eq("id", id)
       .maybeSingle();
 
@@ -63,6 +64,10 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     const task = taskRow as unknown as TaskRelation;
     const helper = getRelation(task.helper_profiles);
+
+    if (!task.expires_at || new Date(task.expires_at).getTime() <= Date.now()) {
+      return createApiError("conflict", "Batas waktu persetujuan Koordinator sudah lewat", 409);
+    }
 
     if (
       task.status !== "menunggu_persetujuan_koordinator" ||
