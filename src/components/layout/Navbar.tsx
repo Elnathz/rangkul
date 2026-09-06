@@ -97,14 +97,15 @@ export default function Navbar() {
 
   const role = isAppRole(user?.user_metadata?.role) ? user.user_metadata.role : null;
   const username = String(user?.user_metadata?.full_name ?? user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Profil");
+  const isNoSidebarPage = pathname === "/koordinator/pengajuan" || pathname === "/koordinator/profil/edit";
   const rawMetaAvatar = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
   const isDirectAvatar = Boolean(rawMetaAvatar && (rawMetaAvatar.startsWith("http://") || rawMetaAvatar.startsWith("https://") || rawMetaAvatar.startsWith("/")));
   const avatarUrl = customAvatarUrl || (isDirectAvatar ? rawMetaAvatar : null);
   const navigation = isPublicSurface ? publicNavigation : role ? ROLE_NAVIGATION[role] : publicNavigation;
   const profileEditHref = editProfileHref(role);
   const isConsumerRole = role === "keluarga" || role === "helper";
-  const showInlineNavigation = isPublicSurface || isConsumerRole;
-  const showMobileDrawerTrigger = !isConsumerRole;
+  const showInlineNavigation = isPublicSurface || isConsumerRole || isNoSidebarPage;
+  const showMobileDrawerTrigger = !isConsumerRole && !isNoSidebarPage;
   const currentPageLabel = navigation.find((item) => isNavigationItemActive(pathname, item))?.label ?? roleLabel(role);
 
   useEffect(() => {
@@ -285,7 +286,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={cn("fixed inset-x-0 top-0 z-50", isPublicSurface ? "border-b border-[#DDE9F5] bg-white/80 backdrop-blur-xl" : "border-b border-border bg-card/95 shadow-[0_1px_0_rgba(13,71,161,0.04)]", role === "koordinator" || role === "admin" ? "lg:left-64" : "")}>
+      <header className={cn("fixed inset-x-0 top-0 z-50", isPublicSurface ? "border-b border-[#DDE9F5] bg-white/80 backdrop-blur-xl" : "border-b border-border bg-card/95 shadow-[0_1px_0_rgba(13,71,161,0.04)]", (role === "koordinator" || role === "admin") && !isNoSidebarPage ? "lg:left-64" : "")}>
         <nav className={cn("flex h-[var(--header-height)] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8", showInlineNavigation ? "mx-auto max-w-7xl" : "")} aria-label={isPublicSurface ? "Navigasi landing" : "Navigasi workspace"}>
           <div className="flex shrink-0 items-center gap-1.5">
             {showMobileDrawerTrigger ? <button ref={menuTriggerRef} type="button" onClick={() => setMenuOpen(true)} className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden" aria-label="Buka menu"><Menu className="size-5" aria-hidden="true" /></button> : null}
@@ -295,7 +296,7 @@ export default function Navbar() {
           </Link> : <div className="min-w-0"><p className="truncate font-heading text-base font-bold tracking-[-0.02em] text-foreground">{currentPageLabel}</p><p className="hidden text-xs font-medium text-muted-foreground sm:block">{roleLabel(role)} Rangkul</p></div>}
           </div>
 
-          {showInlineNavigation ? <LayoutGroup id="desktop-navigation"><ul className="hidden min-w-0 items-center gap-1 lg:flex">{navigation.map((item) => {
+          {showInlineNavigation ? (!isNoSidebarPage ? <LayoutGroup id="desktop-navigation"><ul className="hidden min-w-0 items-center gap-1 lg:flex">{navigation.map((item) => {
             const active = isPublicSurface ? publicActive === item.href.replace("/", "") : isNavigationItemActive(pathname, item);
             const badgeCount = getBadgeCount(item);
             return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined} className={cn("relative inline-flex min-h-11 items-center overflow-hidden rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2", active ? "text-primary" : isPublicSurface ? "text-[#4E5F75] hover:text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
@@ -303,7 +304,7 @@ export default function Navbar() {
               <span className="relative z-10">{item.label}</span>
               {badgeCount > 0 ? <span className="relative z-10 ml-1.5 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">{badgeCount > 99 ? "99+" : badgeCount}</span> : null}
             </Link></li>;
-          })}</ul></LayoutGroup> : <p className="hidden text-sm font-medium text-muted-foreground lg:block">Pilih grup di sidebar untuk membuka menu.</p>}
+          })}</ul></LayoutGroup> : null) : <p className="hidden text-sm font-medium text-muted-foreground lg:block">Pilih grup di sidebar untuk membuka menu.</p>}
 
           <div className="flex shrink-0 items-center gap-1.5">
             {role === "helper" ? <button type="button" onClick={() => setSosOpen(true)} className="hidden min-h-11 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 sm:inline-flex"><ShieldAlert className="size-4" aria-hidden="true" />SOS</button> : null}
@@ -381,7 +382,7 @@ export default function Navbar() {
       </header>
 
       {menuOpen ? <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu navigasi"><button type="button" className="absolute inset-0 bg-slate-950/35" onClick={() => setMenuOpen(false)} aria-label="Tutup menu" /><aside ref={drawerRef} className="relative flex h-full w-[min(21rem,88vw)] flex-col bg-card shadow-[var(--shadow-overlay)]"><div className="flex h-[var(--header-height)] items-center justify-between border-b border-border px-4"><Link href={isPublicSurface ? "/" : profileHref(role)} onClick={() => setMenuOpen(false)} className="flex items-center gap-2"><Image src="/logo.png" alt="" aria-hidden="true" width={36} height={36} className="size-9 object-contain" priority /><span className="font-heading text-base font-extrabold text-primary">Rangkul</span></Link><button type="button" onClick={() => setMenuOpen(false)} className="inline-flex size-11 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Tutup menu"><X className="size-5" aria-hidden="true" /></button></div>{user ? <div className="flex items-center gap-3 border-b border-border bg-[var(--surface-subtle)] px-4 py-3">{avatarUrl && !imageError ? <img src={avatarUrl} alt="" aria-hidden="true" className="size-10 shrink-0 rounded-full border border-border object-cover" /> : <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(username)}</span>}<div className="min-w-0"><p className="truncate font-semibold text-foreground text-sm">{username}</p><p className="truncate text-xs text-muted-foreground capitalize">{roleLabel(role)} Workspace</p></div></div> : null}<nav className="flex-1 overflow-y-auto p-3" aria-label="Menu perangkat kecil"><ul className="space-y-1">{drawerItems.map((item) => { const active = isPublicSurface ? publicActive === item.href.replace("/", "") : isNavigationItemActive(pathname, item); return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMenuOpen(false)} className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><NavigationIcon name={item.icon} className="size-5" />{item.label}</Link></li>; })}</ul></nav><div className="border-t border-border p-3">{user ? <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button> : <div className="grid gap-2"><Button variant="outline" asChild className="min-h-11"><Link href="/login" onClick={() => setMenuOpen(false)}>Masuk</Link></Button><Button asChild className="min-h-11"><Link href="/register" onClick={() => setMenuOpen(false)}>Daftar</Link></Button></div>}</div></aside></div> : null}
-      {role === "keluarga" || role === "helper" || role === "koordinator" ? <MobileBottomNavigation role={role} items={ROLE_NAVIGATION[role]} badges={badges} /> : null}
+      {(role === "keluarga" || role === "helper" || role === "koordinator") && !isNoSidebarPage ? <MobileBottomNavigation role={role} items={ROLE_NAVIGATION[role]} badges={badges} /> : null}
       <SOSDialog isOpen={sosOpen} onClose={() => setSosOpen(false)} userRole={role} />
     </>
   );

@@ -59,7 +59,7 @@ function DocumentPreviewCard({
 }) {
   const { url: signedUrl, status } = useSignedFile(path);
   const isPdf = Boolean(path && /\.pdf(?:$|[?#])/i.test(path));
-  const displayUrl = signedUrl;
+  const displayUrl = path ? signedUrl : null;
   const kind = isPdf ? "pdf" : "image";
 
   return (
@@ -71,8 +71,8 @@ function DocumentPreviewCard({
             {isPdf ? "Dokumen PDF" : "Foto / gambar"}
           </span>
         ) : (
-          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-            Belum ada berkas
+          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+            Belum Diunggah
           </span>
         )}
       </div>
@@ -112,7 +112,7 @@ function DocumentPreviewCard({
         ) : (
           <div className="p-6 text-center">
             <FileText className="mx-auto h-8 w-8 text-slate-300" />
-            <p className="mt-2 text-xs font-medium text-slate-400">Dokumen tidak tersedia</p>
+            <p className="mt-2 text-xs font-medium text-slate-400">Dokumen belum diunggah</p>
           </div>
         )}
       </div>

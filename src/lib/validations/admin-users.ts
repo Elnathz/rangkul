@@ -13,14 +13,14 @@ export const createAdminUserSchema = z.object({
   password: z.string().min(8, "Password minimal 8 karakter"),
   full_name: z.string().trim().min(2).max(120),
   username: z.string().trim().min(3).max(40).regex(/^[a-zA-Z0-9_]+$/, "Username hanya boleh berisi huruf, angka, dan underscore"),
-  phone: phoneSchema.optional(),
+  phone: phoneSchema,
   role: adminUserRoleSchema,
 });
 
 export const updateAdminUserSchema = z.object({
   full_name: z.string().trim().min(2).max(120).optional(),
   username: z.string().trim().min(3).max(40).regex(/^[a-zA-Z0-9_]+$/).optional(),
-  phone: phoneSchema.nullable().optional(),
+  phone: phoneSchema.optional(),
   rt: z.number().int().min(0).max(999).nullable().optional(),
   rw: z.number().int().min(0).max(999).nullable().optional(),
   kelurahan: z.string().trim().max(120).nullable().optional(),
