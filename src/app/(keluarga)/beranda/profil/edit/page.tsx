@@ -44,6 +44,8 @@ export default function KeluargaEditProfilPage() {
   const fotoInputRef = React.useRef<HTMLInputElement>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  // fotoPreviewUrl: blob URL (new file) or signed URL (existing saved photo)
+  const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -75,11 +77,12 @@ export default function KeluargaEditProfilPage() {
 
       if (profile) {
         const parsed = parseRegionAddress(profile.alamat_detail);
+        const avatarPath = user.user_metadata?.avatar_url || "";
         const nextForm = {
           ...form,
           username: profile.full_name || profile.username || user.email?.split('@')[0] || "",
           phone: profile.phone?.replace(/^\+62/, "0") || "",
-          foto_url: user.user_metadata?.avatar_url || "",
+          foto_url: avatarPath,
           alamat: profile.alamat_detail?.includes("|") ? parsed.detail : profile.alamat_detail || "",
           rt: profile.rt?.toString() || parsed.rt || "",
           rw: profile.rw?.toString() || parsed.rw || "",
@@ -93,6 +96,17 @@ export default function KeluargaEditProfilPage() {
 
         setForm(nextForm);
         initialSnapshot.current = JSON.stringify({ ...nextForm, password: "", confirmPassword: "", foto_url: "" });
+
+        // resolve preview: if it looks like a storage path fetch a signed URL
+        if (avatarPath) {
+          if (avatarPath.startsWith('http')) {
+            setFotoPreviewUrl(avatarPath);
+          } else {
+            const supabaseCli = createClient();
+            const { data: signed } = await supabaseCli.storage.from('dokumen').createSignedUrl(avatarPath, 300);
+            if (signed?.signedUrl) setFotoPreviewUrl(signed.signedUrl);
+          }
+        }
       }
     };
     fetchData();
@@ -225,7 +239,7 @@ export default function KeluargaEditProfilPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           
           <div className={`transition-all duration-500 ${activeTab === 'mandiri' ? 'block animate-in fade-in slide-in-from-left-4' : 'hidden'}`}>
             {/* Akun & Keamanan */}
@@ -268,17 +282,20 @@ export default function KeluargaEditProfilPage() {
                           setFotoFileName(null);
                           return;
                         }
-                        setForm({ ...form, foto_url: URL.createObjectURL(file) });
+                        const previewUrl = URL.createObjectURL(file);
+                        setFotoPreviewUrl(previewUrl);
+                        setForm({ ...form, foto_url: file.name });
                         setFotoFileName(file.name);
                         setFotoFile(file);
                       }
                     }}
                   />
                   
-                  {form.foto_url ? (
+                  {fotoPreviewUrl ? (
                     <>
-                      <div className="absolute inset-0 w-full h-full z-0 opacity-20 group-hover:opacity-10 transition-opacity">
-                         <img src={form.foto_url} alt="Preview Foto" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 w-full h-full z-0 opacity-40 group-hover:opacity-30 transition-opacity">
+                         {/* eslint-disable-next-line @next/next/no-img-element */}
+                         <img src={fotoPreviewUrl} alt="Preview Foto" className="w-full h-full object-cover" />
                       </div>
                       <div className="relative z-10 text-center p-4">
                         <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-2 shadow-md ring-4 ring-white">
@@ -357,13 +374,13 @@ export default function KeluargaEditProfilPage() {
                     <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                       RT <span className="text-red-500">*</span>
                     </Label>
-                    <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                    <Input id="rt" type="number" min={1} placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
                   </div>
                   <div>
                      <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                       RW <span className="text-red-500">*</span>
                     </Label>
-                    <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
+                    <Input id="rw" type="number" min={1} placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl border-border focus-visible:border-[#0D47A1]" />
                   </div>
                 </div>
                 <Label htmlFor="alamat" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
@@ -371,7 +388,6 @@ export default function KeluargaEditProfilPage() {
                 </Label>
                 <Textarea
                   id="alamat"
-                  required
                   rows={3}
                   placeholder="Contoh: Jl. Merdeka No.1..."
                   value={form.alamat}
