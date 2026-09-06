@@ -174,7 +174,7 @@ export async function GET(
             mobilitas: s.mobilitas,
             mood: s.mood,
             cerita_hari_ini: s.cerita_hari_ini,
-            date: s.created_at || t.completed_at || t.jadwal_waktu,
+            date: t.completed_at || t.jadwal_waktu || s.created_at,
           };
           break;
         }
@@ -269,7 +269,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/lansia/[id] — soft delete profil lansia milik keluarga yang login
+// DELETE /api/lansia/[id]: soft delete profil lansia milik keluarga yang login
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -294,6 +294,18 @@ export async function DELETE(
 
     if (!existing) {
       return createApiError('not_found', 'Profil lansia tidak ditemukan', 404);
+    }
+
+    // Cek apakah ada kunjungan yang masih aktif
+    const { data: activeTasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('lansia_id', id)
+      .in('status', ['diajukan', 'menunggu_persetujuan_koordinator', 'dikonfirmasi', 'dikerjakan', 'menunggu_persetujuan_keluarga'])
+      .limit(1);
+
+    if (activeTasks && activeTasks.length > 0) {
+      return createApiError('conflict', 'Tidak dapat menghapus profil lansia yang masih memiliki jadwal kunjungan aktif', 409);
     }
 
     const { error: deleteError } = await supabase

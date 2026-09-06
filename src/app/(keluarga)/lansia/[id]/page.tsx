@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/ui/SignedImage";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   Loader2,
   ArrowLeft,
   Pencil,
+  Trash2,
   AlertCircle,
   HeartPulse,
   HeartHandshake,
@@ -220,6 +222,30 @@ export default function LansiaProfilPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [showFullAddress, setShowFullAddress] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteLansia = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const response = await fetch(`/api/lansia/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Gagal menghapus profil lansia");
+      }
+      setDeleteDialogOpen(false);
+      router.push(backHref);
+      router.refresh();
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Terjadi kesalahan saat menghapus");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchLansia = async () => {
@@ -340,7 +366,7 @@ export default function LansiaProfilPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <Link href={`/lansia/${id}/edit`} className="w-full sm:w-auto">
                 <Button
                   variant="outline"
@@ -349,6 +375,20 @@ export default function LansiaProfilPage() {
                   <Pencil className="w-4 h-4 mr-2" /> Edit Profil
                 </Button>
               </Link>
+
+              {userRole === "keluarga" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setDeleteDialogOpen(true);
+                  }}
+                  className="w-full sm:w-auto bg-white border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 rounded-xl font-bold min-h-[44px] px-4 shadow-sm"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Hapus Lansia
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -684,6 +724,26 @@ export default function LansiaProfilPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeleteError(null);
+        }}
+        title={`Hapus Profil ${lansia.nama}?`}
+        description="Profil lansia ini akan dinonaktifkan dari akun Anda. Data riwayat kunjungan yang telah selesai akan tetap tersimpan di arsip."
+        confirmLabel="Ya, Hapus Profil"
+        tone="danger"
+        loading={isDeleting}
+        onConfirm={handleDeleteLansia}
+      >
+        {deleteError && (
+          <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 leading-relaxed">
+            {deleteError}
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
