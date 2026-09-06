@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -93,10 +93,10 @@ export default function SaldoPage() {
 
         {/* Header */}
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Demo Wallet</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Isi Saldo</h1>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">Saldo Rangkul</p>
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Kelola Saldo</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Tambahkan saldo demo untuk membayar layanan pendampingan.
+            Tambahkan saldo untuk membayar layanan pendampingan keluarga Anda.
           </p>
         </div>
 

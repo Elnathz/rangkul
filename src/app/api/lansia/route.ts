@@ -137,45 +137,77 @@ export async function POST(request: Request) {
       return createApiError('server_error', insertError.message, 500);
     }
 
-    // Cek apakah ada Koordinator di wilayah pendaftaran lansia
-    if (kecamatan) {
-      const { data: matchedKoordinators } = await supabase
+    // Notifikasi ke Koordinator wilayah yang mencakup lansia ini
+    try {
+      const admin = await createAdminClient();
+      const { data: activeKoordinators } = await admin
         .from('koordinator_profiles')
-        .select('user_id, id')
-        .ilike('wilayah', `%${kecamatan}%`)
+        .select(`
+          id,
+          user_id,
+          wilayah,
+          tingkat,
+          users!koordinator_profiles_user_id_fkey(
+            kelurahan,
+            kecamatan,
+            rt,
+            rw
+          )
+        `)
         .eq('status', 'verified');
 
-      if (matchedKoordinators && matchedKoordinators.length > 0) {
-        // Ada koordinator di wilayah ini -> kirimkan notifikasi ke Koordinator
-        const notifInserts = matchedKoordinators.map((k) => ({
-          user_id: k.user_id,
-          title: 'Pengajuan Lansia Baru di Wilayah Anda',
-          body: `Lansia baru bernama ${nama} di ${kelurahan ? 'Kel. ' + kelurahan : 'wilayah Anda'} membutuhkan verifikasi persetujuan.`,
-          type: 'lansia_verification',
-          is_read: false,
-        }));
-        await supabase.from('notifications').insert(notifInserts as unknown as Database['public']['Tables']['notifications']['Insert'][]);
-      } else {
-        // Belum ada koordinator di wilayah ini -> ditampung oleh Admin
-        const { data: adminUsers } = await supabase
-          .from('users')
-          .select('id')
-          .eq('role', 'admin');
+      if (activeKoordinators && activeKoordinators.length > 0) {
+        const matchedCoordinatorUserIds = new Set<string>();
 
-        if (adminUsers && adminUsers.length > 0) {
-          const adminNotifs = adminUsers.map((a) => ({
-            user_id: a.id,
-            title: 'Penampungan Lansia (Wilayah Tanpa Koordinator)',
-            body: `Lansia ${nama} didaftarkan di Kec. ${kecamatan} (Belum ada Koordinator). Membutuhkan peninjauan Admin.`,
-            type: 'lansia_verification_admin',
+        for (const kp of activeKoordinators) {
+          const u = Array.isArray(kp.users) ? kp.users[0] : kp.users;
+          const coordKel = (u?.kelurahan || '').trim().toLowerCase();
+          const coordKec = (u?.kecamatan || '').trim().toLowerCase();
+          const lansiaKel = (kelurahan || '').trim().toLowerCase();
+          const lansiaKec = (kecamatan || '').trim().toLowerCase();
+
+          let isMatch = false;
+          if (coordKel && lansiaKel && coordKel === lansiaKel) {
+            if (!coordKec || !lansiaKec || coordKec === lansiaKec) {
+              if (kp.tingkat === 'rt') {
+                if (typeof u?.rw === 'number' && typeof rw === 'number' && u.rw === rw && typeof u?.rt === 'number' && typeof rt === 'number' && u.rt === rt) {
+                  isMatch = true;
+                }
+              } else if (kp.tingkat === 'rw') {
+                if (typeof u?.rw === 'number' && typeof rw === 'number' && u.rw === rw) {
+                  isMatch = true;
+                }
+              } else {
+                isMatch = true;
+              }
+            }
+          } else if (kp.wilayah) {
+            const w = kp.wilayah.toLowerCase();
+            if (lansiaKel && w.includes(lansiaKel)) isMatch = true;
+            else if (lansiaKec && w.includes(lansiaKec)) isMatch = true;
+          }
+
+          if (isMatch && kp.user_id) {
+            matchedCoordinatorUserIds.add(kp.user_id);
+          }
+        }
+
+        if (matchedCoordinatorUserIds.size > 0) {
+          const notifInserts = Array.from(matchedCoordinatorUserIds).map((userId) => ({
+            user_id: userId,
+            title: 'Lansia Baru di Wilayah Anda',
+            body: `Lansia baru bernama ${nama} telah didaftarkan di ${kelurahan ? 'Kel. ' + kelurahan : 'wilayah pengawasan Anda'}.`,
+            type: 'koordinator_info' as const,
             is_read: false,
           }));
-          await supabase.from('notifications').insert(adminNotifs as unknown as Database['public']['Tables']['notifications']['Insert'][]);
+          await admin.from('notifications').insert(notifInserts as unknown as Database['public']['Tables']['notifications']['Insert'][]);
         }
       }
+    } catch (notifErr) {
+      console.error('Gagal mengirim notifikasi koordinator lansia baru:', notifErr);
     }
 
-    return apiResponse({ message: 'Profil lansia berhasil ditambahkan dan diajukan untuk verifikasi', profile }, 201);
+    return apiResponse({ message: 'Profil lansia berhasil ditambahkan', profile }, 201);
   } catch (error: unknown) {
     return createApiError('server_error', (error as Error).message || 'Terjadi kesalahan server', 500);
   }

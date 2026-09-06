@@ -24,10 +24,10 @@ export type NavigationItem = {
 export const ROLE_NAVIGATION: Record<AppRole, readonly NavigationItem[]> = {
   keluarga: [
     { href: "/beranda", label: "Beranda", icon: "home" },
-    { href: "/booking/new", label: "Buat Kunjungan", mobileLabel: "Buat", icon: "calendar" },
     { href: "/kunjungan", label: "Kunjungan", icon: "clipboard" },
-    { href: "/lansia", label: "Lansia", icon: "users" },
+    { href: "/booking/new", label: "Buat Kunjungan", mobileLabel: "Buat", icon: "calendar" },
     { href: "/beranda/pesan", label: "Pesan", icon: "message" },
+    { href: "/beranda/profil", label: "Profil", icon: "users", aliases: ["/lansia"] },
   ],
   helper: [
     { href: "/helper/dashboard", label: "Beranda", icon: "home" },
@@ -35,10 +35,11 @@ export const ROLE_NAVIGATION: Record<AppRole, readonly NavigationItem[]> = {
     { href: "/helper/tugas", label: "Tugas Saya", icon: "clipboard", aliases: ["/tugas"] },
     { href: "/helper/penghasilan", label: "Penghasilan", icon: "wallet" },
     { href: "/helper/pesan", label: "Pesan", icon: "message" },
+    { href: "/helper/profil", label: "Profil", icon: "users" },
   ],
   koordinator: [
     { href: "/koordinator/dashboard", label: "Beranda", icon: "home", group: "Beranda" },
-    { href: "/koordinator/lansia", label: "Verifikasi Lansia", icon: "users", group: "Operasional" },
+    { href: "/koordinator/lansia", label: "Data Lansia", icon: "users", group: "Operasional" },
     { href: "/koordinator/antrean", label: "Verifikasi Helper", icon: "users", aliases: ["/koordinator/pengajuan"], group: "Operasional" },
     { href: "/koordinator/persetujuan", label: "Persetujuan Kunjungan", icon: "clipboard", aliases: ["/koordinator/antrean-persetujuan"], group: "Operasional" },
     { href: "/koordinator/helper", label: "Helper Wilayah", icon: "shield", group: "Operasional" },

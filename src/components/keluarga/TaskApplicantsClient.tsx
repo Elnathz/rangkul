@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { createClient } from "@/lib/supabase/client";
 
 export type ApplicantItem = {
   application_id: string;
@@ -101,14 +102,31 @@ export default function TaskApplicantsClient({
     }
   }, [taskId]);
 
-  // Polling interval 5 detik selama status tugas masih 'diajukan'
+  // Realtime hanya memicu invalidasi. Detail pelamar tetap diambil dari endpoint
+  // keluarga agar RLS dan masking data tetap menjadi sumber kebenaran.
   React.useEffect(() => {
     if (taskStatus !== "diajukan") return;
-    const timer = setInterval(() => {
-      fetchApplicants();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [taskStatus, fetchApplicants]);
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`task-applications-${taskId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "task_applications",
+          filter: `task_id=eq.${taskId}`,
+        },
+        () => {
+          void fetchApplicants();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [taskId, taskStatus, fetchApplicants]);
 
   const handleSelectApplicant = async (applicant: ApplicantItem) => {
     setSelectingId(applicant.application_id);

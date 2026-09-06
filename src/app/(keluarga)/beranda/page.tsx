@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { createClient } from "@/lib/supabase/server";
+import { getSignedUrl } from "@/lib/storage/private-files";
 import { canRolePerformTaskAction, getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
 import { getPaymentPresentation, paymentRequiresCompletion } from "@/components/keluarga/task-detail/task-detail-presentation";
 
@@ -88,7 +89,8 @@ export default async function BerandaKeluargaPage() {
     ? activeHelperUser[0]?.full_name
     : activeHelperUser?.full_name;
 
-  const familyAvatarUrl = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
+  const rawFamilyAvatar = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
+  const familyAvatarUrl = await getSignedUrl(rawFamilyAvatar);
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-5 pb-28 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8">
@@ -233,7 +235,7 @@ export default async function BerandaKeluargaPage() {
             </div>
           </div>
           <Link
-            href="/lansia"
+            href="/beranda/profil"
             className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-[#0D47A1] hover:bg-[#0D47A1]/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D47A1] focus-visible:ring-offset-2"
           >
             Lihat Semua Profil

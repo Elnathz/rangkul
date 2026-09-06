@@ -97,7 +97,9 @@ export default function Navbar() {
 
   const role = isAppRole(user?.user_metadata?.role) ? user.user_metadata.role : null;
   const username = String(user?.user_metadata?.full_name ?? user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Profil");
-  const avatarUrl = customAvatarUrl || (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
+  const rawMetaAvatar = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
+  const isDirectAvatar = Boolean(rawMetaAvatar && (rawMetaAvatar.startsWith("http://") || rawMetaAvatar.startsWith("https://") || rawMetaAvatar.startsWith("/")));
+  const avatarUrl = customAvatarUrl || (isDirectAvatar ? rawMetaAvatar : null);
   const navigation = isPublicSurface ? publicNavigation : role ? ROLE_NAVIGATION[role] : publicNavigation;
   const profileEditHref = editProfileHref(role);
   const isConsumerRole = role === "keluarga" || role === "helper";
@@ -113,21 +115,42 @@ export default function Navbar() {
       setUser(currentUser);
       if (currentUser) {
         const userRole = currentUser.user_metadata?.role;
-        if (!currentUser.user_metadata?.avatar_url) {
-          if (userRole === "helper") {
-            const { data: hp } = await supabase
-              .from("helper_profiles")
-              .select("foto_wajah_url")
-              .eq("user_id", currentUser.id)
-              .maybeSingle();
-            if (hp?.foto_wajah_url) setCustomAvatarUrl(hp.foto_wajah_url);
-          } else if (userRole === "koordinator") {
-            const { data: kp } = await supabase
-              .from("koordinator_profiles")
-              .select("foto_url")
-              .eq("user_id", currentUser.id)
-              .maybeSingle();
-            if (kp?.foto_url) setCustomAvatarUrl(kp.foto_url);
+        let rawPhoto: string | null = null;
+
+        if (userRole === "helper") {
+          const { data: hp } = await supabase
+            .from("helper_profiles")
+            .select("foto_wajah_url")
+            .eq("user_id", currentUser.id)
+            .maybeSingle();
+          rawPhoto = hp?.foto_wajah_url || (currentUser.user_metadata?.avatar_url as string | null) || null;
+        } else if (userRole === "koordinator") {
+          const { data: kp } = await supabase
+            .from("koordinator_profiles")
+            .select("foto_url")
+            .eq("user_id", currentUser.id)
+            .maybeSingle();
+          rawPhoto = kp?.foto_url || (currentUser.user_metadata?.avatar_url as string | null) || null;
+        } else {
+          // For keluarga and admin, avatar comes from user_metadata
+          rawPhoto = (currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.foto_url || null) as string | null;
+        }
+
+        if (rawPhoto) {
+          if (rawPhoto.startsWith("http://") || rawPhoto.startsWith("https://") || rawPhoto.startsWith("/")) {
+            setCustomAvatarUrl(rawPhoto);
+          } else {
+            // Storage bucket path: request signed URL
+            try {
+              const res = await fetch(`/api/storage/read?path=${encodeURIComponent(rawPhoto)}`);
+              if (res.ok) {
+                const body = (await res.json()) as { data?: { url?: string }; url?: string };
+                const resolved = body?.data?.url || body?.url;
+                if (resolved) setCustomAvatarUrl(resolved);
+              }
+            } catch {
+              // fallback to initials
+            }
           }
         }
       }
@@ -136,6 +159,11 @@ export default function Navbar() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setImageError(false);
+      if (session?.user) {
+        void loadUserData();
+      } else {
+        setCustomAvatarUrl(null);
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -143,6 +171,7 @@ export default function Navbar() {
   useEffect(() => {
     if (!user) return;
 
+    const supabase = createClient();
     let active = true;
     const loadNotifications = async () => {
       try {
@@ -160,9 +189,26 @@ export default function Navbar() {
 
     void loadNotifications();
     const intervalId = window.setInterval(loadNotifications, 60_000);
+    const channel = supabase
+      .channel(`navbar-notifications-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void loadNotifications();
+        }
+      )
+      .subscribe();
+
     return () => {
       active = false;
       window.clearInterval(intervalId);
+      void supabase.removeChannel(channel);
     };
   }, [user]);
 
@@ -246,7 +292,6 @@ export default function Navbar() {
             {showInlineNavigation ? <Link href={isPublicSurface ? "/" : profileHref(role)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-md pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
             <Image src="/logo.png" alt="" aria-hidden="true" width={44} height={44} className="size-10 object-contain sm:size-11" priority />
             <span className="font-heading text-lg font-extrabold tracking-[-0.03em] text-primary sm:text-xl">Rangkul</span>
-            {!isPublicSurface && role ? <span className="hidden rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-bold text-primary sm:inline-flex">{roleLabel(role)} Workspace</span> : null}
           </Link> : <div className="min-w-0"><p className="truncate font-heading text-base font-bold tracking-[-0.02em] text-foreground">{currentPageLabel}</p><p className="hidden text-xs font-medium text-muted-foreground sm:block">{roleLabel(role)} Rangkul</p></div>}
           </div>
 
@@ -302,6 +347,30 @@ export default function Navbar() {
                     </div>
                   </div>
                   <Link href={profileHref(role)} onClick={() => setProfileOpen(false)} className="mt-1 flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">Beranda</Link>
+                  {role === "keluarga" && (
+                    <>
+                      <Link href="/beranda/profil" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">
+                        <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        Profil Keluarga
+                      </Link>
+                      <Link href="/saldo" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">
+                        <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                        Saldo Rangkul
+                      </Link>
+                    </>
+                  )}
+                  {role === "helper" && (
+                    <>
+                      <Link href="/helper/profil" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">
+                        <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        Profil Helper
+                      </Link>
+                      <Link href="/helper/penghasilan" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted">
+                        <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Penghasilan
+                      </Link>
+                    </>
+                  )}
                   {profileEditHref ? <Link href={profileEditHref} onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted"><Pencil className="size-4" aria-hidden="true" />Edit profil</Link> : null}
                   <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-destructive hover:bg-red-50"><LogOut className="size-4" aria-hidden="true" />Keluar</button>
                 </div> : null}
