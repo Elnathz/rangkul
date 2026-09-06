@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, UserRound, ExternalLink, RefreshCw } from "lucide-react";
+import { Search, UserRound, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { AdminLoadingRows } from "@/components/admin/AdminPrimitives";
 import { SignedImage } from "@/components/ui/SignedImage";
@@ -27,6 +27,7 @@ export default function AdminLansiaPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const loadLansia = async () => {
     setLoading(true);
@@ -74,6 +75,21 @@ export default function AdminLansiaPage() {
     );
   });
 
+  const deleteLansia = async (item: LansiaItem) => {
+    if (!window.confirm(`Hapus profil lansia ${item.nama}? Data akan disembunyikan dari platform.`)) return;
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(`/api/admin/lansia/${item.id}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message ?? "Profil lansia gagal dihapus");
+      setNotice(`Profil ${item.nama} berhasil dihapus.`);
+      await loadLansia();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Profil lansia gagal dihapus");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -96,6 +112,12 @@ export default function AdminLansiaPage() {
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
           {error}
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status">
+          {notice}
         </div>
       ) : null}
 
@@ -171,13 +193,22 @@ export default function AdminLansiaPage() {
                           {item.catatan_kondisi || "Tidak ada catatan"}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link
-                          href={`/admin/lansia/${item.id}`}
-                          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:border-blue-300 hover:text-blue-800"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" /> Detail & Berkas KTP
-                        </Link>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Link
+                            href={`/admin/lansia/${item.id}`}
+                            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-800 hover:bg-blue-100"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" /> Lihat detail
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => deleteLansia(item)}
+                            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-xs font-bold text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -188,7 +219,7 @@ export default function AdminLansiaPage() {
             <div className="divide-y divide-slate-100 md:hidden">
               {filteredLansia.map((item) => (
                 <article key={item.id} className="space-y-3 p-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="size-10 shrink-0 overflow-hidden rounded-full bg-blue-50 border border-slate-200">
                       {item.foto_url ? (
                         <SignedImage path={item.foto_url} alt={item.nama} className="h-full w-full object-cover" />
@@ -205,12 +236,21 @@ export default function AdminLansiaPage() {
                         {[item.kecamatan, item.kabupaten_kota].filter(Boolean).join(", ") || "Alamat -"}
                       </p>
                     </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
                     <Link
                       href={`/admin/lansia/${item.id}`}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-bold text-blue-700"
+                      className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-800"
                     >
-                      Detail
+                      <ExternalLink className="h-3.5 w-3.5" /> Lihat detail
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => deleteLansia(item)}
+                      className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Hapus
+                    </button>
                   </div>
                 </article>
               ))}

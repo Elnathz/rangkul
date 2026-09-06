@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Camera, Image as ImageIcon, UploadCloud, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUploadFile } from "@/lib/storage/file-validation";
 
 export default function TambahLansiaPage() {
   const router = useRouter();
@@ -84,10 +85,33 @@ export default function TambahLansiaPage() {
     e.preventDefault();
     if (step !== 3) return;
 
-    if (!photoPreview) {
-      showToast("Harap unggah foto lansia terlebih dahulu.");
-      setFieldErrors({ foto: ["Foto lansia wajib diunggah"] });
+    const file = fileInputRef.current?.files?.[0];
+    const identitasFile = identitasInputRef.current?.files?.[0];
+    const hubunganFile = hubunganInputRef.current?.files?.[0];
+    const requiredErrors: Record<string, string[]> = {};
+
+    if (!file || !photoPreview) requiredErrors.foto = ["Foto lansia wajib diunggah"];
+    if (!identitasFile) requiredErrors.dokumen_identitas_lansia_url = ["KTP lansia wajib diunggah"];
+    if (!hubunganFile) requiredErrors.dokumen_hubungan_keluarga_url = ["Bukti hubungan keluarga wajib diunggah"];
+    if (Object.keys(requiredErrors).length > 0) {
+      showToast("Foto, KTP lansia, dan bukti hubungan keluarga wajib diunggah.");
+      setFieldErrors(requiredErrors);
       return;
+    }
+    if (!file || !identitasFile || !hubunganFile) return;
+
+    const uploadChecks = [
+      [file, { kind: "image" as const, label: "Foto lansia" }],
+      [identitasFile, { kind: "document" as const, label: "KTP lansia" }],
+      [hubunganFile, { kind: "document" as const, label: "Bukti hubungan keluarga" }],
+    ] as const;
+    for (const [candidate, options] of uploadChecks) {
+      const fileError = validateUploadFile(candidate, options);
+      if (fileError) {
+        showToast(fileError);
+        setFieldErrors({ dokumen: [fileError] });
+        return;
+      }
     }
 
     setLoading(true);
@@ -101,7 +125,6 @@ export default function TambahLansiaPage() {
       let identitasUrl = null;
       let hubunganUrl = null;
 
-      const file = fileInputRef.current?.files?.[0];
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -116,7 +139,6 @@ export default function TambahLansiaPage() {
         fotoUrl = uploadData.data?.path || uploadData.path;
       }
 
-      const identitasFile = identitasInputRef.current?.files?.[0];
       if (identitasFile) {
         const formData = new FormData();
         formData.append("file", identitasFile);
@@ -131,7 +153,6 @@ export default function TambahLansiaPage() {
         identitasUrl = uploadData.data?.path || uploadData.path;
       }
 
-      const hubunganFile = hubunganInputRef.current?.files?.[0];
       if (hubunganFile) {
         const formData = new FormData();
         formData.append("file", hubunganFile);
@@ -347,12 +368,13 @@ export default function TambahLansiaPage() {
                     onClick={() => fileInputRef.current?.click()}
                     className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors ${photoPreview ? 'border-[#0D47A1]/40 bg-[#F5F8FC]' : 'border-slate-300 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40'} h-40 sm:h-48 group`}
                   >
-                    <input type="file" accept="image/jpeg,image/png,image/jpg" ref={fileInputRef} className="hidden" onChange={(e) => {
+                    <input type="file" accept={IMAGE_ACCEPT} ref={fileInputRef} className="hidden" onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            showToast("Ukuran foto maksimal 5MB", "error");
-                            setFieldErrors(prev => ({...prev, foto: ["Maksimal 5MB"]}));
+                          const fileError = validateUploadFile(file, { kind: "image", label: "Foto lansia" });
+                          if (fileError) {
+                            showToast(fileError, "error");
+                            setFieldErrors(prev => ({...prev, foto: [fileError]}));
                             e.target.value = '';
                             setPhotoPreview(null);
                             return;
@@ -376,7 +398,7 @@ export default function TambahLansiaPage() {
                       <div className="text-center p-4">
                         <div className="w-12 h-12 rounded-full bg-blue-100 text-[#0D47A1] flex items-center justify-center mx-auto mb-3 shadow-inner"><ImageIcon className="w-6 h-6" /></div>
                         <p className="text-sm font-semibold text-[#0D47A1]">Ketuk untuk unggah foto</p>
-                        <p className="text-xs text-slate-500 mt-1">Maksimal ukuran 5MB (JPG/PNG)</p>
+                        <p className="text-xs text-slate-500 mt-1">Maksimal 5MB, format JPG atau PNG</p>
                       </div>
                     )}
                   </div>
@@ -384,34 +406,53 @@ export default function TambahLansiaPage() {
                 </div>
 
                 <div className="pt-4 border-t border-slate-100">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Dokumen Pendukung (Opsional)</Label>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Dokumen Wajib <span className="text-red-500">*</span></Label>
+                  <p className="mb-3 text-sm text-slate-500">Unggah KTP lansia dan KK atau surat hubungan keluarga. Foto atau PDF diterima, maksimal 5MB per berkas.</p>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div onClick={() => identitasInputRef.current?.click()} className="border border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-colors">
-                      <input type="file" accept="image/jpeg,image/png,application/pdf" ref={identitasInputRef} className="hidden" onChange={(e) => {
+                      <input type="file" accept={DOCUMENT_ACCEPT} ref={identitasInputRef} className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) return showToast("Ukuran KTP maksimal 5MB", "error");
+                            const fileError = validateUploadFile(file, { kind: "document", label: "KTP lansia" });
+                            if (fileError) {
+                              showToast(fileError, "error");
+                              e.target.value = '';
+                              setIdentitasFileName(null);
+                              setFieldErrors(prev => ({ ...prev, dokumen_identitas_lansia_url: [fileError] }));
+                              return;
+                            }
+                            setFieldErrors(prev => ({ ...prev, dokumen_identitas_lansia_url: [] }));
                             setIdentitasFileName(file.name);
                           }
                         }} />
                       <div className="mx-auto w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
                         {identitasFileName ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>}
                       </div>
-                      <p className="text-sm font-medium text-slate-700 truncate px-2">{identitasFileName || "KTP Lansia"}</p>
+                      <p className="text-sm font-medium text-slate-700 truncate px-2">{identitasFileName || "KTP Lansia (JPG, PNG, PDF)"}</p>
+                      {fieldErrors.dokumen_identitas_lansia_url?.[0] && <p className="mt-1 text-xs text-red-600">{fieldErrors.dokumen_identitas_lansia_url[0]}</p>}
                     </div>
 
                     <div onClick={() => hubunganInputRef.current?.click()} className="border border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-colors">
-                      <input type="file" accept="image/jpeg,image/png,application/pdf" ref={hubunganInputRef} className="hidden" onChange={(e) => {
+                      <input type="file" accept={DOCUMENT_ACCEPT} ref={hubunganInputRef} className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) return showToast("Ukuran Dokumen maksimal 5MB", "error");
+                            const fileError = validateUploadFile(file, { kind: "document", label: "Bukti hubungan keluarga" });
+                            if (fileError) {
+                              showToast(fileError, "error");
+                              e.target.value = '';
+                              setHubunganFileName(null);
+                              setFieldErrors(prev => ({ ...prev, dokumen_hubungan_keluarga_url: [fileError] }));
+                              return;
+                            }
+                            setFieldErrors(prev => ({ ...prev, dokumen_hubungan_keluarga_url: [] }));
                             setHubunganFileName(file.name);
                           }
                         }} />
                       <div className="mx-auto w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
                         {hubunganFileName ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
                       </div>
-                      <p className="text-sm font-medium text-slate-700 truncate px-2">{hubunganFileName || "Kartu Keluarga / KK"}</p>
+                      <p className="text-sm font-medium text-slate-700 truncate px-2">{hubunganFileName || "KK / bukti hubungan (JPG, PNG, PDF)"}</p>
+                      {fieldErrors.dokumen_hubungan_keluarga_url?.[0] && <p className="mt-1 text-xs text-red-600">{fieldErrors.dokumen_hubungan_keluarga_url[0]}</p>}
                     </div>
                   </div>
                 </div>

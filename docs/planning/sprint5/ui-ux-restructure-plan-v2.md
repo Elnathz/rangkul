@@ -9,6 +9,13 @@
 **Primary spec:** `docs/TDD_Rangkul.md`
 **Tujuan:** membuat Rangkul terasa seperti produk digital yang matang, dipercaya, mudah dipahami, dan purpose-built untuk masing-masing role — bukan sekadar satu template dashboard yang diganti labelnya.
 
+## Progress Update 6 September 2026
+
+- Pagination Admin Pengguna sekarang menjelaskan rentang baris, total pengguna, posisi halaman, status tombol, dan target keyboard 44px.
+- Panel simulasi penghasilan pada section Peran dirapikan agar kontrol jumlah kunjungan, nilai hasil, dan catatan pembayaran tetap terbaca pada kolom sempit.
+- Dokumen Lansia pada form tambah kini wajib diisi sesuai TDD. Validasi bersama menerima JPG, PNG, dan PDF untuk dokumen, tetapi foto lansia tetap hanya JPG atau PNG. API `/api/lansia` dan `/api/lansia/profile` mempertahankan kontrak dokumen wajib.
+- Gate terakhir yang dijalankan setelah perubahan: `npm run lint` selesai tanpa error dengan 66 warning non-blocking, `npm run typecheck` lulus, `npm run test` lulus 325 test dengan 14 skip cloud-runtime, dan `npm run build` lulus.
+
 ---
 
 ## Progress Update 4 September 2026

@@ -33,5 +33,3 @@ export async function GET(request: Request) {
     return authResponse ?? createApiError("server_error", "Terjadi kesalahan server", 500);
   }
 }
-
-export const allowedHelperStatuses = helperStatuses;

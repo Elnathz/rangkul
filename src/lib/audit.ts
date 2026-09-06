@@ -11,6 +11,7 @@ type AuditAction =
   | 'admin_service_category_created'
   | 'admin_service_category_updated'
   | 'admin_service_category_deleted'
+  | 'admin_lansia_deleted'
   | 'helper_approved'
   | 'helper_rejected'
   | 'helper_admin_fallback_approved'

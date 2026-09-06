@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 import HelperCategoryMultiSelect, { type HelperCategoryItem } from "@/components/helper/HelperCategoryMultiSelect";
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUploadFile } from "@/lib/storage/file-validation";
 
 type KoordinatorOption = {
   id: string;
@@ -299,6 +300,26 @@ export default function HelperVerifikasiPage() {
         setFieldErrors({ foto_url: ["Foto Profil wajib diunggah"] });
         setLoading(false);
         return;
+      }
+
+      if (fileKtp) {
+        const fileError = validateUploadFile(fileKtp, { kind: "document", label: "Dokumen identitas" });
+        if (fileError) {
+          showToast(fileError);
+          setFieldErrors({ ktp_url: [fileError] });
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (fileFoto) {
+        const fileError = validateUploadFile(fileFoto, { kind: "image", label: "Foto profil" });
+        if (fileError) {
+          showToast(fileError);
+          setFieldErrors({ foto_url: [fileError] });
+          setLoading(false);
+          return;
+        }
       }
 
       if (fileKtp) {
@@ -689,13 +710,14 @@ export default function HelperVerifikasiPage() {
                   id="ktp_upload" 
                   ref={ktpInputRef}
                   className="hidden" 
-                  accept="image/jpeg, image/png"
+                  accept={DOCUMENT_ACCEPT}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       const file = e.target.files[0];
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast("Ukuran file KTP tidak boleh lebih dari 5MB", "error");
-                        setFieldErrors(prev => ({...prev, ktp_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                      const fileError = validateUploadFile(file, { kind: "document", label: "Dokumen identitas" });
+                      if (fileError) {
+                        showToast(fileError, "error");
+                        setFieldErrors(prev => ({...prev, ktp_url: [fileError]}));
                         e.target.value = '';
                         setForm({ ...form, ktp_url: "" });
                         setKtpFileName(null);
@@ -728,7 +750,7 @@ export default function HelperVerifikasiPage() {
                       </svg>
                     </div>
                     <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto KTP</p>
-                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal 5MB, format JPG, PNG, atau PDF</p>
                   </div>
                 )}
               </Label>
@@ -754,13 +776,14 @@ export default function HelperVerifikasiPage() {
                   id="foto_upload" 
                   ref={fotoInputRef}
                   className="hidden" 
-                  accept="image/jpeg, image/png"
+                  accept={IMAGE_ACCEPT}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       const file = e.target.files[0];
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast("Ukuran file foto profil tidak boleh lebih dari 5MB", "error");
-                        setFieldErrors(prev => ({...prev, foto_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                      const fileError = validateUploadFile(file, { kind: "image", label: "Foto profil" });
+                      if (fileError) {
+                        showToast(fileError, "error");
+                        setFieldErrors(prev => ({...prev, foto_url: [fileError]}));
                         e.target.value = '';
                         setForm({ ...form, foto_url: "" });
                         setFotoFileName(null);
@@ -793,7 +816,7 @@ export default function HelperVerifikasiPage() {
                       </svg>
                     </div>
                     <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto Profil</p>
-                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal 5MB, format JPG atau PNG</p>
                   </div>
                 )}
               </Label>
