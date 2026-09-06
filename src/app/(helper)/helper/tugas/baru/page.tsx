@@ -124,12 +124,18 @@ export default async function CariPekerjaanPage() {
           );
           const privacy = projectHelperTaskPrivacy({ helper_id: job.helper_id, catatan: job.catatan, lansia: job.lansia_profiles }, profile.id);
 
+          const firstName = job.lansia_profiles.nama?.trim().split(" ")[0] ?? "";
+          const lowerFirst = firstName.toLowerCase();
+          const hasSapaan = lowerFirst.startsWith("mbah") || lowerFirst.startsWith("ibu") || lowerFirst.startsWith("pak") || lowerFirst.startsWith("bu ");
+          const lansiaPanggilan = firstName ? (hasSapaan ? firstName : `Mbah ${firstName}`) : "Penerima layanan";
+
           return {
             id: job.id,
             jadwal_waktu: job.jadwal_waktu,
             harga_dasar: Number(job.harga_dasar),
             harga_final: Number(job.harga_final),
             lansia_nama: privacy.lansia_nama,
+            lansia_panggilan: lansiaPanggilan,
             lansia_alamat: privacy.lansia_alamat,
             catatan_tugas: privacy.catatan_tugas || "Detail catatan tersedia setelah tugas diterima.",
             catatan_kondisi: privacy.catatan_kondisi || "Detail kondisi tersedia setelah tugas diterima.",

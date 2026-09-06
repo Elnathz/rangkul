@@ -28,9 +28,22 @@ export type HelperTaskPrivacyProjection = {
 };
 
 function publicRegion(lansia: TaskPrivacyLansia) {
-  return [lansia.kelurahan, lansia.kecamatan, lansia.kabupaten_kota]
-    .filter((part): part is string => Boolean(part?.trim()))
-    .join(", ") || "Wilayah tersedia";
+  const explicit = [lansia.kelurahan, lansia.kecamatan, lansia.kabupaten_kota]
+    .filter((part): part is string => Boolean(part?.trim()));
+
+  if (explicit.length > 0) {
+    return explicit.join(", ");
+  }
+
+  if (lansia.alamat) {
+    const segments = lansia.alamat.split(",").map((s) => s.trim()).filter(Boolean);
+    const regionSegments = segments.filter((s) => !s.toUpperCase().startsWith("RT") && !s.toUpperCase().startsWith("RW") && !s.toUpperCase().startsWith("JL"));
+    if (regionSegments.length > 0) {
+      return regionSegments.slice(0, 3).join(", ");
+    }
+  }
+
+  return "Wilayah tersedia";
 }
 
 export function projectHelperTaskPrivacy(

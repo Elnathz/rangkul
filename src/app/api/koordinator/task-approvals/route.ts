@@ -26,7 +26,14 @@ export async function GET() {
     if (profileError || !profile) return createApiError("not_found", "Profil Koordinator tidak ditemukan", 404);
     if (profile.status !== "verified") return apiResponse({ data: { koordinator: profile, tasks: [] } }, 200);
 
-    const { data, error } = await supabase
+    const { data: actorUser } = await supabase
+      .from("users")
+      .select("kelurahan, kecamatan, rw, rt")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const taskReader = await createAdminClient();
+    const { data, error } = await taskReader
       .from("tasks")
       .select(`
         id,
@@ -35,16 +42,38 @@ export async function GET() {
         jadwal_waktu,
         harga_final,
         catatan,
-        lansia_profiles!inner ( nama, alamat, catatan_kondisi, foto_url ),
+        lansia_profiles!inner ( id, nama, alamat, kelurahan, kecamatan, rw, rt, catatan_kondisi, foto_url ),
         service_categories!inner ( nama, tingkat, is_high_risk ),
-        helper_profiles!inner ( tingkat_kepercayaan, total_tugas_selesai, suspend_reason, rating_avg, wilayah_domisili, bio, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
+        helper_profiles!inner ( id, koordinator_id, tingkat_kepercayaan, total_tugas_selesai, suspend_reason, rating_avg, wilayah_domisili, bio, foto_wajah_url, verified_by_admin_fallback, users!inner ( full_name ) )
       `)
       .eq("status", "menunggu_persetujuan_koordinator")
       .order("jadwal_waktu", { ascending: true });
     if (error) return createApiError("server_error", "Antrean tugas belum dapat dimuat", 500);
 
-    const fileReader = await createAdminClient();
-    const tasks = await Promise.all(((data ?? []) as unknown as ApprovalQueueTask[]).map(async (task) => {
+    const scopedTasks = (data ?? []).filter((taskRow) => {
+      const helper = relation(taskRow.helper_profiles);
+      const lansia = relation(taskRow.lansia_profiles);
+
+      // 1. Koordinator asal Helper
+      if (helper?.koordinator_id === profile.id) return true;
+
+      // 2. Koordinator wilayah tugas/lansia (jika helper fallback admin / tanpa koordinator terpasang)
+      const isFallbackHelper = !helper?.koordinator_id || helper?.verified_by_admin_fallback === true;
+      if (isFallbackHelper && actorUser) {
+        const kelurahanMatch = Boolean(
+          lansia?.kelurahan && actorUser.kelurahan && lansia.kelurahan.toLowerCase().trim() === actorUser.kelurahan.toLowerCase().trim()
+        );
+        const kecamatanMatch = Boolean(
+          lansia?.kecamatan && actorUser.kecamatan && lansia.kecamatan.toLowerCase().trim() === actorUser.kecamatan.toLowerCase().trim()
+        );
+        if (kelurahanMatch || kecamatanMatch) return true;
+      }
+
+      return false;
+    });
+
+    const fileReader = taskReader;
+    const tasks = await Promise.all((scopedTasks as unknown as ApprovalQueueTask[]).map(async (task) => {
       const lansia = relation(task.lansia_profiles);
       const helper = relation(task.helper_profiles);
       const sign = (value: string | null | undefined) => resolvePrivatePhotoUrl(value, async (path, expiresIn) => {
