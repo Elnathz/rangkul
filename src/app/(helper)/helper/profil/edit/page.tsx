@@ -212,16 +212,38 @@ export default function HelperEditProfilPage() {
         form.rt && form.rw ? `RT ${form.rt}/RW ${form.rw}` : "",
         form.alamat,
       ].filter(Boolean).join(" | ");
-      const currentFormSnapshot = initialSnapshot.current ? JSON.parse(initialSnapshot.current) as { username: string; phone: string; alamat: string; rt: string; rw: string; region: RegionValue; domisili_lat: number | null; domisili_lng: number | null; radius_layanan_km: number | null; kategoriIds: string[] } : null;
+      const currentFormSnapshot = initialSnapshot.current ? JSON.parse(initialSnapshot.current) as { username: string; phone: string; alamat: string; rt: string; rw: string; region: RegionValue; domisili_lat: number | null; domisili_lng: number | null; radius_layanan_km?: number; kategoriIds: string[] } : null;
       const accountChanged = !currentFormSnapshot || JSON.stringify({ username: form.username, phone: form.phone, alamat: form.alamat, rt: form.rt, rw: form.rw, region: form.region }) !== JSON.stringify({ username: currentFormSnapshot.username, phone: currentFormSnapshot.phone, alamat: currentFormSnapshot.alamat, rt: currentFormSnapshot.rt, rw: currentFormSnapshot.rw, region: currentFormSnapshot.region });
-      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, radius_layanan_km: form.radius_layanan_km, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, radius_layanan_km: currentFormSnapshot.radius_layanan_km, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
+      const helperChanged = !currentFormSnapshot || JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, radius_layanan_km: form.radius_layanan_km, kategoriIds: [...kategoriIds].sort() }) !== JSON.stringify({ wilayah_domisili: [currentFormSnapshot.region.kelurahan, currentFormSnapshot.region.kecamatan, currentFormSnapshot.region.kota, currentFormSnapshot.region.provinsi].filter(Boolean).join(", ") + (currentFormSnapshot.rt && currentFormSnapshot.rw ? ` | RT ${currentFormSnapshot.rt}/RW ${currentFormSnapshot.rw}` : "") + (currentFormSnapshot.alamat ? ` | ${currentFormSnapshot.alamat}` : ""), domisili_lat: currentFormSnapshot.domisili_lat, domisili_lng: currentFormSnapshot.domisili_lng, radius_layanan_km: currentFormSnapshot.radius_layanan_km || 5, kategoriIds: [...currentFormSnapshot.kategoriIds].sort() });
       if (accountChanged) {
         const accountResponse = await fetch("/api/users/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: form.username, phone: form.phone, alamat_detail: wilayah_domisili, rt: form.rt ? Number(form.rt) : undefined, rw: form.rw ? Number(form.rw) : undefined, kelurahan: form.region.kelurahan, kecamatan: form.region.kecamatan, kabupaten_kota: form.region.kota, provinsi: form.region.provinsi }) });
         const accountResult = await accountResponse.json();
         if (!accountResponse.ok) throw new Error(accountResult.message || "Data akun gagal diperbarui");
       }
       if (helperChanged) {
-        const profileResponse = await fetch("/api/helper/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wilayah_domisili, domisili_lat: form.domisili_lat, domisili_lng: form.domisili_lng, radius_layanan_km: Number(form.radius_layanan_km), kategori_ids: kategoriIds }) });
+        const profilePayload: Record<string, unknown> = {
+          kategori_ids: kategoriIds,
+          radius_layanan_km: Number(form.radius_layanan_km) || 5,
+        };
+        const addressActuallyChanged = !currentFormSnapshot ||
+          form.alamat !== currentFormSnapshot.alamat ||
+          form.rt !== currentFormSnapshot.rt ||
+          form.rw !== currentFormSnapshot.rw ||
+          JSON.stringify(form.region) !== JSON.stringify(currentFormSnapshot.region) ||
+          form.domisili_lat !== currentFormSnapshot.domisili_lat ||
+          form.domisili_lng !== currentFormSnapshot.domisili_lng;
+
+        if (addressActuallyChanged) {
+          profilePayload.wilayah_domisili = wilayah_domisili;
+          profilePayload.domisili_lat = form.domisili_lat;
+          profilePayload.domisili_lng = form.domisili_lng;
+        }
+
+        const profileResponse = await fetch("/api/helper/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profilePayload),
+        });
         const profileResult = await profileResponse.json();
         if (!profileResponse.ok) throw new Error(profileResult.message || "Data operasional gagal diperbarui");
       }
@@ -577,20 +599,47 @@ export default function HelperEditProfilPage() {
                 </div>
               </div>
 
-              <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius Jangkauan Layanan (km)</Label>
+              {/* Radius Jangkauan Layanan */}
+              <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="radius_km" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                    Radius Jangkauan Layanan
+                  </Label>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0D47A1]">
+                    {form.radius_layanan_km || 5} KM
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Jarak maksimal penugasan yang dapat Anda terima dari titik domisili. Perubahan radius berlaku instan tanpa verifikasi ulang Koordinator.
+                </p>
                 <div className="flex items-center gap-3">
-                  <Input
-                    type="number"
+                  <input
+                    id="radius_km"
+                    type="range"
                     min={1}
                     max={25}
-                    value={form.radius_layanan_km}
-                    onChange={(e) => setForm({ ...form, radius_layanan_km: Math.max(1, Math.min(25, Number(e.target.value) || 1)) })}
-                    className="rounded-xl h-11 w-32 bg-slate-50 border-slate-200 focus:bg-white font-bold text-slate-800"
+                    step={1}
+                    value={form.radius_layanan_km || 5}
+                    onChange={(e) => setForm({ ...form, radius_layanan_km: Number(e.target.value) })}
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-blue-200 accent-[#0D47A1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Radius jangkauan layanan"
                   />
-                  <span className="text-xs font-medium text-slate-600">
-                    km (Jarak maksimal penerimaan tugas dari lokasi domisili Anda)
-                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {[1, 3, 5, 10, 15, 25].map((km) => (
+                    <button
+                      key={km}
+                      type="button"
+                      onClick={() => setForm({ ...form, radius_layanan_km: km })}
+                      className={`min-h-8 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        (form.radius_layanan_km || 5) === km
+                          ? "bg-[#0D47A1] text-white shadow-xs"
+                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {km} km
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

@@ -103,6 +103,24 @@ Keputusan memakai conditional RPC dan mengembalikan `409` bila pengajuan sudah d
 
 Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencakup `foto_bukti`, `foto_lansia`, `foto_helper`, `foto_koordinator`, `ktp`, `identitas_lansia`, `hubungan_keluarga`, dan `dokumen_koordinator`. Server menentukan bucket dan object path final. Response `201` mengembalikan `data.path`, `data.bucket`, `data.content_type`, dan metadata aman. Signed URL opsional hanya untuk preview sesi aktif dan tidak boleh disimpan sebagai referensi permanen.
 
+## Privasi akun dan browser
+
+### `DELETE /api/users/me/delete`
+
+Kirim body berikut setelah pengguna memahami bahwa proses tidak dapat dipulihkan:
+
+```json
+{ "confirmation": "HAPUS AKUN" }
+```
+
+Server menganonimkan identifier pada profil dan profil lansia, membersihkan object private dengan prefix user, menutup Auth menggunakan soft delete, lalu mempertahankan histori task, payment, dan audit. Admin tidak dapat memakai jalur self-delete.
+
+### `DELETE /api/admin/users/:id`
+
+Admin dapat menganonimkan akun lain. Endpoint tidak menghapus histori transaksi dan menolak target yang sama dengan akun Admin aktif. Kegagalan penutupan Auth dikembalikan sebagai error server setelah anonimisasi database tercatat, sehingga client wajib menampilkan status partial completion dan tidak mengulang tanpa pemeriksaan.
+
+Mutation API terlindungi harus dikirim dari origin Rangkul yang sama. Proxy menolak origin berbeda dengan `403 csrf_origin_mismatch`. RLS dan pemeriksaan ownership pada route tetap berlaku setelah pemeriksaan origin, sehingga header origin bukan pengganti otorisasi.
+
 ## Katalog, kategori, dan Riwayat Rangkul
 
 - `GET /api/categories` mengembalikan kategori leaf aktif beserta `tingkat`, `harga_dasar`, `is_high_risk`, dan batas jarak jika ada.
@@ -120,7 +138,7 @@ Multipart form dengan field `file` dan `docType`. `docType` yang tersedia mencak
 
 ## Kontrak Sprint 6
 
-Matching Sprint 6 dikendalikan oleh `SPRINT6_MATCHING_ENABLED`. Flag yang tidak disetel dianggap `false`. Production tetap memakai `false` sampai migration, RLS, quality gate, dan smoke test per role lulus.
+Mode penugasan fleksibel dikendalikan oleh `FLEXIBLE_ASSIGNMENT_ENABLED`. Flag yang tidak disetel dianggap `false`. Production tetap memakai `false` sampai migration, RLS, quality gate, dan smoke test per role lulus.
 
 ### Mode penugasan
 

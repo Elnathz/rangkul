@@ -142,6 +142,37 @@ export default function LansiaEditProfilPage() {
       return;
     }
 
+    if (form.nama.trim().length < 2 || form.nama.trim().length > 100) {
+      showToast("Nama lansia harus antara 2 sampai 100 karakter.");
+      setLoading(false);
+      return;
+    }
+
+    const umurNum = parseInt(form.umur, 10);
+    if (isNaN(umurNum) || umurNum < 50 || umurNum > 130) {
+      showToast("Umur lansia harus antara 50 sampai 130 tahun.");
+      setLoading(false);
+      return;
+    }
+
+    if (form.rt) {
+      const rtNum = parseInt(form.rt, 10);
+      if (isNaN(rtNum) || rtNum < 1 || rtNum > 999) {
+        showToast("Nomor RT harus antara 1 sampai 999.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (form.rw) {
+      const rwNum = parseInt(form.rw, 10);
+      if (isNaN(rwNum) || rwNum < 1 || rwNum > 999) {
+        showToast("Nomor RW harus antara 1 sampai 999.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const currentSnapshot = JSON.stringify(form);
     if (initialSnapshot.current === currentSnapshot && !croppedFile && !fotoInputRef.current?.files?.[0]) {
       showToast("Tidak ada perubahan.", "success");
@@ -334,12 +365,12 @@ export default function LansiaEditProfilPage() {
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Nama Lengkap Lansia <span className="text-red-500">*</span></Label>
-                <Input value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} placeholder="Sesuai KTP" className="rounded-xl h-11" required />
+                <Input value={form.nama} maxLength={100} onChange={e => setForm({...form, nama: e.target.value})} placeholder="Sesuai KTP" className="rounded-xl h-11" required />
               </div>
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Umur (Tahun) <span className="text-red-500">*</span></Label>
-                <Input type="number" min={50} value={form.umur} onChange={e => setForm({...form, umur: e.target.value})} placeholder="Contoh: 65" className="rounded-xl h-11" required />
+                <Input type="number" min={50} max={130} value={form.umur} onChange={e => setForm({...form, umur: e.target.value})} placeholder="Contoh: 65" className="rounded-xl h-11" required />
               </div>
             </div>
           </div>
@@ -361,7 +392,7 @@ export default function LansiaEditProfilPage() {
                     <label key={m} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${form.tingkat_mobilitas === m ? 'bg-blue-50 border-[#0D47A1]' : 'hover:bg-slate-50 border-slate-200'}`}>
                       <input type="radio" name="mobilitas" checked={form.tingkat_mobilitas === m} onChange={() => setForm({...form, tingkat_mobilitas: m})} className="hidden" />
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${form.tingkat_mobilitas === m ? 'border-[#0D47A1]' : 'border-slate-300'}`}>
-                        {form.tingkat_mobilitas === m && <div className="w-2 h-2 rounded-full bg-[#0D47A1]" />}
+                        {form.tingkat_mobilitas === m && <div className="w-2.5 h-2.5 rounded-full bg-[#0D47A1]" />}
                       </div>
                       <span className="text-sm font-semibold text-slate-700">{m}</span>
                     </label>
@@ -371,14 +402,14 @@ export default function LansiaEditProfilPage() {
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Riwayat Medis (Singkat)</Label>
-                <Textarea value={form.kondisi_medis} onChange={e => setForm({...form, kondisi_medis: e.target.value})} placeholder="Contoh: Hipertensi, Diabetes Tipe 2..." className="rounded-xl min-h-[80px]" />
+                <Textarea value={form.kondisi_medis} maxLength={1000} onChange={e => setForm({...form, kondisi_medis: e.target.value})} placeholder="Contoh: Hipertensi, Diabetes Tipe 2..." className="rounded-xl min-h-[80px]" />
               </div>
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2 flex items-center gap-2">
                   <Heart className="w-3.5 h-3.5" /> Kebutuhan Khusus / Pantangan
                 </Label>
-                <Textarea value={form.kebutuhan_khusus} onChange={e => setForm({...form, kebutuhan_khusus: e.target.value})} placeholder="Contoh: Tidak boleh makan manis, mudah lupa..." className="rounded-xl min-h-[80px]" />
+                <Textarea value={form.kebutuhan_khusus} maxLength={1000} onChange={e => setForm({...form, kebutuhan_khusus: e.target.value})} placeholder="Contoh: Tidak boleh makan manis, mudah lupa..." className="rounded-xl min-h-[80px]" />
               </div>
             </div>
           </div>
@@ -421,17 +452,17 @@ export default function LansiaEditProfilPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">RT</Label>
-                  <Input type="number" min={1} value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl" />
+                  <Input type="number" min={1} max={999} value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl" />
                 </div>
                 <div>
                   <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">RW</Label>
-                  <Input type="number" min={1} value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl" />
+                  <Input type="number" min={1} max={999} value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl" />
                 </div>
               </div>
 
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Detail Alamat Lengkap</Label>
-                <Textarea value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} placeholder="Jl. Bunga Mawar No. 5..." className="rounded-xl min-h-[100px]" />
+                <Textarea value={form.alamat} maxLength={255} onChange={e => setForm({...form, alamat: e.target.value})} placeholder="Jl. Bunga Mawar No. 5..." className="rounded-xl min-h-[100px]" />
               </div>
 
               <div>

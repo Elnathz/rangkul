@@ -1,5 +1,8 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
+import { z } from "zod";
+
+const startTargetSchema = z.object({ target_user_id: z.string().uuid("Target obrolan tidak valid") });
 
 // GET /api/chat/start-target — mengambil daftar Helper & Keluarga di wilayah Koordinator untuk Obrolan Baru
 export async function GET() {
@@ -29,7 +32,7 @@ export async function GET() {
       .eq("status", "verified");
 
     if (wilayahFilter) {
-      helperQuery = helperQuery.ilike("wilayah_domisili", `%${wilayahFilter}%`);
+      helperQuery = helperQuery.ilike("wilayah_domisili", "%" + wilayahFilter + "%");
     }
 
     const { data: rawHelpers } = await helperQuery;
@@ -53,7 +56,7 @@ export async function GET() {
       .eq("role", "keluarga");
 
     if (wilayahFilter) {
-      keluargaQuery = keluargaQuery.ilike("kecamatan", `%${wilayahFilter}%`);
+      keluargaQuery = keluargaQuery.ilike("kecamatan", "%" + wilayahFilter + "%");
     }
 
     const { data: rawKeluarga } = await keluargaQuery.limit(20);
@@ -83,12 +86,9 @@ export async function POST(request: Request) {
       return createApiError("unauthorized", "Anda harus login", 401);
     }
 
-    const body = await request.json();
-    const { target_user_id } = body;
-
-    if (!target_user_id) {
-      return createApiError("validation_error", "target_user_id wajib diisi", 400);
-    }
+    const validation = startTargetSchema.safeParse(await request.json().catch(() => null));
+    if (!validation.success) return apiResponse({ error: "validation_error", message: "Target obrolan tidak valid", fieldErrors: validation.error.flatten().fieldErrors }, 422);
+    const { target_user_id } = validation.data;
 
     const admin = await createAdminClient();
 
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     const { data: existingTask } = await admin
       .from("tasks")
       .select("id")
-      .or(`keluarga_id.eq.${target_user_id},keluarga_id.eq.${user.id}`)
+      .or(["keluarga_id.eq." + target_user_id, "keluarga_id.eq." + user.id].join(","))
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

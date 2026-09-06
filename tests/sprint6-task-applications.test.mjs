@@ -57,7 +57,7 @@ test("Sprint 6 API routes contract and feature flag protection", () => {
     ["withdraw", withdrawRoute],
     ["select", selectRoute],
   ]) {
-    assert.match(content, /isSprint6MatchingEnabled/, `${name} harus cek feature flag`);
+    assert.match(content, /isFlexibleAssignmentEnabled/, `${name} harus cek feature flag`);
     assert.match(content, /createApiError\(["']not_found["'], ["']Fitur belum tersedia["'], 404\)/);
   }
 
@@ -80,7 +80,7 @@ test("Sprint 6 frontend pages and components mobile-first contract", () => {
   const detailKeluarga = read("src/components/keluarga/RealTaskDetailClient.tsx");
   const detailHelper = read("src/app/(helper)/tugas/[id]/page.tsx");
 
-  assert.match(applicantsPage, /isSprint6MatchingEnabled/);
+  assert.match(applicantsPage, /isFlexibleAssignmentEnabled/);
   assert.match(applicantsPage, /task_applications/);
 
   // Target sentuh mobile-first minimal 44px

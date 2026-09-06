@@ -45,7 +45,7 @@ test("indeks API menjelaskan auth, error, feature flag, dan sumber kebenaran", (
   assert.match(index, /docs\/TDD_Rangkul\.md/);
   assert.match(index, /401[\s\S]*403[\s\S]*404[\s\S]*409[\s\S]*422/);
   assert.match(contract, /## Kontrak Sprint 6/);
-  assert.match(contract, /SPRINT6_MATCHING_ENABLED/);
+  assert.match(contract, /FLEXIBLE_ASSIGNMENT_ENABLED/);
   assert.match(booking, /langsung[\s\S]*pelamar[\s\S]*cepat/);
   assert.doesNotMatch(booking, /selesai_dikerjakan|diverifikasi_lansia|kadaluarsa/);
   assert.match(helper, /POST \/api\/helpers\/apply/);

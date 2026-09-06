@@ -12,6 +12,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"tests/*.test.mjs\"",
+    "test:security": "node --experimental-strip-types --test tests/security-hardening-contract.test.mjs",
     "seed": "node scripts/seed.mjs",
     "seed:cloud": "node scripts/seed.mjs --linked"
   },

@@ -12,6 +12,7 @@ export type JobData = {
   harga_dasar: number;
   harga_final: number;
   lansia_nama: string;
+  lansia_panggilan?: string;
   lansia_alamat: string;
   catatan_tugas: string;
   catatan_kondisi: string;
@@ -316,27 +317,18 @@ export default function CariPekerjaanClient({
             <div className="overflow-y-auto bg-slate-50 flex-1 relative">
                <div className="relative h-48 w-full shrink-0 overflow-hidden bg-brand-gradient">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.24),transparent_35%)]" aria-hidden="true" />
-                  <div className="absolute bottom-4 left-5 right-5 text-white">
-                     <HeartHandshake className="mb-3 h-8 w-8" aria-hidden="true" />
-                     <h2 className="text-2xl font-bold font-display">{selectedJob.lansia_nama}</h2>
-                     <div className="flex items-center gap-1.5 mt-1 text-sm font-medium text-white/90">
-                        <MapPin size={16} />
-                        {selectedJob.distanceStr} dari lokasimu
+                  <div className="relative z-10 flex flex-col items-center text-center p-6 text-white">
+                     <HeartHandshake className="mb-3 h-8 w-8 text-blue-200" aria-hidden="true" />
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-blue-200 mb-1">Penerima Layanan</span>
+                     <h2 className="text-2xl font-bold font-display">{selectedJob.lansia_panggilan || selectedJob.lansia_nama}</h2>
+                     <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-white/90 bg-white/15 px-3 py-1 rounded-full backdrop-blur-sm">
+                        <MapPin size={13} />
+                        {selectedJob.distanceStr} dari titik domisili Anda
                      </div>
                   </div>
                </div>
 
                <div className="p-6 space-y-6">
-                 {/* Kategori Card */}
-                 <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-slate-400 mb-1 block">Rincian Tugas</span>
-                    <p className="font-bold text-slate-800">{selectedJob.kategori_nama}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{selectedJob.kategori_deskripsi}</p>
-                    <span className="inline-block mt-2 text-[11px] font-bold uppercase tracking-wider px-2 py-1 bg-slate-100 text-slate-600 rounded">
-                       Tingkat {selectedJob.kategori_tingkat}
-                    </span>
-                 </div>
-                 
                  {/* Time & Place */}
                  <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
                     <div>
@@ -347,48 +339,27 @@ export default function CariPekerjaanClient({
                       </div>
                     </div>
                     <div className="w-full">
-                      <span className="text-xs font-bold uppercase text-slate-400 mb-2 block">Rincian Lokasi Pertemuan</span>
-                      <div className="flex items-start gap-3 text-sm text-slate-600 bg-white border border-slate-100 p-3.5 rounded-xl">
-                        <Map size={18} className="text-blue-500 shrink-0 mt-0.5" />
-                        <div className="flex flex-col gap-3 w-full">
-                           {selectedJob.lansia_alamat.split(',').map((part, i) => {
-                             const p = part.trim();
-                             let label = "Wilayah Tambahan";
-                             if (i === 0) label = "Jalan Utama / Patokan";
-                             else if (p.toUpperCase().includes('RT') || p.toUpperCase().includes('RW')) label = "Blok RT / RW";
-                             else if (i === 2) label = "Kelurahan / Desa";
-                             else if (i === 3) label = "Kecamatan / Kota";
-                             else if (i === 4) label = "Provinsi";
-
-                             return (
-                               <div key={i} className="flex flex-col border-b border-slate-100 pb-2.5 last:border-0 last:pb-0">
-                                 <span className="text-[10px] font-bold text-slate-400 mb-0.5 uppercase tracking-wider">{label}</span>
-                                 <span className={i === 0 ? "font-bold text-slate-900" : "font-semibold text-slate-700 leading-snug"}>{p}</span>
-                               </div>
-                             );
-                           })}
+                      <span className="text-xs font-bold uppercase text-slate-400 mb-2 block">Cakupan Wilayah Pertemuan</span>
+                      <div className="flex items-start gap-3 text-sm text-slate-600 bg-slate-50/80 border border-slate-200/80 p-3.5 rounded-xl">
+                        <Map size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                        <div className="flex flex-col gap-1 w-full text-xs">
+                          <span className="font-bold text-slate-900 text-sm">{selectedJob.lansia_alamat}</span>
+                          <span className="text-slate-500">Jarak tempuh: ±{selectedJob.distanceStr} dari lokasi Anda.</span>
+                          <span className="text-[11px] text-blue-800 font-medium bg-blue-50 border border-blue-200/70 p-2 rounded-lg mt-1">
+                            Alamat presisi rumah dan nomor kontak keluarga akan terbuka langsung di halaman penugasan setelah Anda menekan tombol Ambil Tugas.
+                          </span>
                         </div>
                       </div>
                     </div>
                  </div>
 
-                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-slate-400 mb-1.5 block">Catatan dari keluarga</span>
-                    <p className="text-sm leading-relaxed text-slate-700">{selectedJob.catatan_tugas}</p>
+                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1.5">
+                    <span className="text-xs font-bold uppercase text-slate-400 block">Kebutuhan & Catatan Kunjungan</span>
+                    <p className="text-sm font-semibold text-slate-800">{selectedJob.kategori_deskripsi}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Instruksi mendalam keluarga dan catatan khusus lansia tersimpan terproteksi dan akan otomatis tampil begitu tugas resmi diambil.
+                    </p>
                  </div>
-
-                 {/* Catatan Area */}
-                 {selectedJob.catatan_kondisi && (
-                   <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                      <div className="flex items-center gap-2 mb-2">
-                         <AlertCircle size={16} className="text-red-500" />
-                         <span className="text-sm font-bold text-red-800">Kondisi Khusus Lansia</span>
-                      </div>
-                      <p className="text-sm text-red-700 leading-relaxed font-medium">
-                        {selectedJob.catatan_kondisi}
-                      </p>
-                   </div>
-                 )}
                </div>
             </div>
 
