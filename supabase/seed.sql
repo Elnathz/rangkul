@@ -52,8 +52,6 @@ DECLARE
   lansia_4_id UUID;
   lansia_5_id UUID;
   category_id UUID;
-  lansia_5_id UUID;
-  category_id UUID;
   ringan_category_id UUID;
   sedang_category_id UUID;
   berat_category_id UUID;
@@ -1064,12 +1062,24 @@ UPDATE public.tasks
 SET status = 'menunggu_persetujuan_keluarga',
     jadwal_waktu = NOW() + INTERVAL '1 day',
     jadwal_waktu_asli = NOW() + INTERVAL '1 day',
+    harga_final = harga_dasar,
     started_at = NULL,
     completed_at = NULL,
     cancelled_at = NULL,
     cancellation_reason = NULL,
     updated_at = NOW()
 WHERE catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
+
+-- Layanan tambahan dan status Kunjungan harus dipulihkan sebagai satu fixture atomik.
+DELETE FROM public.task_extra_services extra_service
+USING public.tasks task
+WHERE extra_service.task_id = task.id
+  AND task.catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
+
+INSERT INTO public.task_extra_services (task_id, nama_layanan, biaya, status)
+SELECT task.id, 'Pendampingan tambahan 30 menit', 10000, 'menunggu_persetujuan_keluarga'
+FROM public.tasks task
+WHERE task.catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
 
 UPDATE public.tasks
 SET status = 'selesai',

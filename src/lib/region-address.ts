@@ -8,6 +8,14 @@ export type ParsedRegionAddress = {
   detail: string;
 };
 
+export function formatRegionName(value: string) {
+  if (!value) return "";
+  if (/^RT\s*\d+\s*\/\s*RW\s*\d+$/i.test(value.trim())) return value.trim().toUpperCase().replace(/\s*\/\s*/, "/");
+  return value
+    .toLocaleLowerCase("id-ID")
+    .replace(/(^|[\s-])\p{L}/gu, (letter) => letter.toLocaleUpperCase("id-ID"));
+}
+
 export function parseRegionAddress(value: string | null | undefined): ParsedRegionAddress {
   const raw = value?.trim() ?? "";
   const sections = raw.split("|").map((part) => part.trim()).filter(Boolean);
@@ -50,9 +58,9 @@ export function getRegionParts(value: string | null | undefined) {
   const parsed = parseRegionAddress(value);
   return [
     parsed.rt && parsed.rw ? `RT ${parsed.rt}/RW ${parsed.rw}` : "",
-    parsed.kelurahan,
-    parsed.kecamatan,
-    parsed.kotaKabupaten,
-    parsed.provinsi,
+    formatRegionName(parsed.kelurahan),
+    formatRegionName(parsed.kecamatan),
+    formatRegionName(parsed.kotaKabupaten),
+    formatRegionName(parsed.provinsi),
   ].filter(Boolean);
 }

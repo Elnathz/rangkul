@@ -146,7 +146,15 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
   const isHeld = payment?.status === "held_escrow";
   const isReleased = payment?.status === "released";
   const isRefunded = payment?.status === "refunded" || payment?.status === "dibatalkan_kompensasi";
+  const isDisputed = payment?.status === "disputed";
+  const canStartPayment = ["dikonfirmasi", "dikerjakan", "selesai"].includes(task.status);
+  const canCheckout = canStartPayment && (!payment || payment.status === "pending");
   const canRelease = isHeld && task.status === "selesai";
+  const unavailablePaymentMessage = task.status === "menunggu_persetujuan_keluarga"
+    ? "Tunggu keputusan layanan tambahan. Total pembayaran akan diperbarui setelah keputusan selesai."
+    : task.status === "dibatalkan"
+      ? "Kunjungan ini sudah dibatalkan. Tidak ada pembayaran baru yang perlu dilakukan."
+      : "Belum perlu dibayar. Pembayaran tersedia setelah Kunjungan dikonfirmasi.";
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
@@ -159,8 +167,10 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
       {isHeld && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah diterima dan ditahan sampai Keluarga mengonfirmasi tugas selesai.</div>}
       {isHeld && !canRelease && <div className="mb-4 rounded-xl bg-blue-50 p-4 text-sm font-medium text-blue-800">Tunggu Helper mengirim laporan kunjungan. Tombol pencairan muncul setelah task berstatus selesai.</div>}
       {isReleased && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah dicairkan ke pihak terkait.</div>}
-      {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses refund atau kompensasi.</div>}
-      {!isHeld && !isReleased && !isRefunded && (
+      {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses pengembalian atau kompensasi.</div>}
+      {isDisputed && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sedang ditinjau. Kami akan memberi pembaruan setelah ada keputusan.</div>}
+      {!canStartPayment && !payment && <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-900">{unavailablePaymentMessage}</div>}
+      {canCheckout && (
         <div className="space-y-3">
           <Button onClick={handlePayment} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">
             {processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Menyiapkan Midtrans...</> : "Bayar dengan Midtrans"}

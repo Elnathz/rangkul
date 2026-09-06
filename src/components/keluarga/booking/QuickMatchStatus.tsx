@@ -37,12 +37,12 @@ export default function QuickMatchStatus({
 
   if (status === "dikonfirmasi" || status === "dikerjakan" || status === "selesai") {
     return (
-      <div className="rounded-2xl bg-emerald-50 p-5 border border-emerald-200 text-emerald-950 flex items-center gap-4">
+      <div className="flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
         <CheckCircle2 className="h-8 w-8 text-emerald-600 shrink-0" />
         <div>
-          <h4 className="font-bold text-sm">Helper Terpercaya Telah Ditemukan!</h4>
+          <h4 className="text-sm font-bold">Helper telah ditemukan</h4>
           <p className="text-xs text-emerald-800 mt-0.5">
-            {helperInfo?.full_name ? `Helper ${helperInfo.full_name} telah menerima tugas Anda.` : "Tugas sudah dikonfirmasi."}
+            {helperInfo?.full_name ? `${helperInfo.full_name} telah menerima kunjungan Anda.` : "Kunjungan sudah dikonfirmasi."}
           </p>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function QuickMatchStatus({
 
   if (status === "dibatalkan") {
     return (
-      <div className="rounded-2xl bg-red-50 p-5 border border-red-200 text-red-950 flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 rounded-[18px] border border-red-200 bg-red-50 p-4 text-red-950 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <XCircle className="h-8 w-8 text-red-600 shrink-0" />
           <div>
@@ -71,19 +71,19 @@ export default function QuickMatchStatus({
   }
 
   return (
-    <div className="rounded-2xl bg-amber-50 p-5 border border-amber-200 text-amber-950 space-y-3">
+    <div className="space-y-3 rounded-[18px] border border-blue-200 bg-blue-50/70 p-4 text-ink">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 font-bold text-sm text-amber-900">
-          <Zap className="h-5 w-5 text-amber-600 animate-bounce" />
-          <span>Sedang Mencarikan Helper Terpercaya...</span>
+        <div className="flex items-center gap-2 text-sm font-bold text-primary">
+          <Zap className="h-5 w-5" aria-hidden="true" />
+          <span>Mencari Helper yang sesuai</span>
         </div>
-        <div className="flex items-center gap-1 bg-amber-200/60 px-3 py-1 rounded-full text-xs font-mono font-bold text-amber-900">
-          <Clock className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
+          <Clock className="h-3.5 w-3.5" aria-hidden="true" />
           <span>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</span>
         </div>
       </div>
-      <p className="text-xs text-amber-800">
-        Halaman ini akan diperbarui otomatis begitu Helper menerima tugas Anda.
+      <p className="text-xs text-ink-muted">
+        Status akan diperbarui otomatis ketika Helper menerima kunjungan.
       </p>
     </div>
   );
