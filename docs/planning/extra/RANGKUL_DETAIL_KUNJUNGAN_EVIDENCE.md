@@ -41,7 +41,7 @@ Keterbatasan tooling: browser automation yang tersedia pada host hanya memberi v
 - `npm ci`: lulus pada lockfile proyek.
 - `npm run lint`: lulus.
 - `npm run typecheck`: lulus.
-- `npm run test`: 306 lulus, 14 runtime cloud test ditandai skip.
+- `npm run test`: 307 lulus, 14 runtime cloud test ditandai skip.
 - `npm run build`: lulus pada Next.js 16.2.12.
 - `npm run seed` dengan target cloud tervalidasi: lulus dan menyinkronkan empat asset demo private.
 
