@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
+import { getSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 import BookingNewClient, {
   type BookingLansia,
   type BookingCategory,
@@ -33,14 +34,14 @@ export default async function BookingNewPage({
       .order("created_at", { ascending: false }),
     supabase
       .from("service_categories")
-      .select("id, nama, tingkat, harga_dasar, estimasi_durasi_menit, is_high_risk, jarak_min_km, jarak_max_km")
-      .eq("is_active", true)
+      .select("id, nama, tingkat, harga_dasar, estimasi_durasi_menit, is_high_risk, is_active, parent_id, jarak_min_km, jarak_max_km")
+      .or("is_active.eq.true,parent_id.is.null")
       .order("tingkat")
       .order("nama"),
   ]);
 
   const lansias = (lansiaResult.data ?? []) as BookingLansia[];
-  const categories = (categoryResult.data ?? []) as BookingCategory[];
+  const categories = getSelectableServiceCategories((categoryResult.data ?? []) as ServiceCategoryRow[]) as unknown as BookingCategory[];
 
   return (
     <BookingNewClient

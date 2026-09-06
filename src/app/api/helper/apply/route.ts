@@ -1,5 +1,6 @@
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { helperProfileSchema } from '@/lib/validations/helper';
+import { getSelectableServiceCategories, type ServiceCategoryRow } from '@/lib/service-category-tree';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import {
   validateSelectedCoordinator,
@@ -126,15 +127,22 @@ export async function POST(request: Request) {
       return createApiError('server_error', 'Gagal menyimpan detail lokasi wilayah', 500);
     }
 
-    // Verifikasi semua kategori_ids valid di database
+    // Verifikasi kategori terhadap katalog leaf aktif. Parent hanya menjadi
+    // label pengelompokan dan tidak boleh disimpan sebagai keahlian Helper.
     const { data: validCategories, error: catError } = await supabase
       .from('service_categories')
-      .select('id')
-      .in('id', kategori_ids)
-      .eq('is_active', true);
+      .select('id, nama, tingkat, parent_id, is_active')
+      .or('is_active.eq.true,parent_id.is.null');
 
-    if (catError || !validCategories || validCategories.length !== kategori_ids.length) {
-      return createApiError('validation_error', 'Satu atau lebih kategori tidak valid', 422);
+    if (catError) {
+      return createApiError('server_error', catError.message, 500);
+    }
+    const selectableIds = new Set(
+      getSelectableServiceCategories((validCategories ?? []) as ServiceCategoryRow[]).map((category) => category.id),
+    );
+    const uniqueCategoryIds = new Set(kategori_ids);
+    if (uniqueCategoryIds.size !== kategori_ids.length || [...uniqueCategoryIds].some((id) => !selectableIds.has(id))) {
+      return createApiError('validation_error', 'Satu atau lebih kategori tidak aktif atau bukan layanan yang dapat dipilih', 422);
     }
 
     // Update atau Insert helper_profiles
