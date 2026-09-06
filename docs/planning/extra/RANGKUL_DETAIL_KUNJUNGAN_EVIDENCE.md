@@ -39,10 +39,10 @@ Keterbatasan tooling: browser automation yang tersedia pada host hanya memberi v
 - `npm ci`: lulus pada lockfile proyek.
 - `npm run lint`: lulus.
 - `npm run typecheck`: lulus.
-- `npm run test`: 296 lulus, 14 runtime cloud test ditandai skip.
+- `npm run test`: 302 lulus, 14 runtime cloud test ditandai skip.
 - `npm run build`: lulus pada Next.js 16.2.12.
 - `npm run seed` dengan target cloud tervalidasi: lulus dan menyinkronkan empat asset demo private.
 
 ## Catatan gate
 
-`git diff --check` masih gagal pada perubahan bekerja yang sudah ada di `src/app/(keluarga)/lansia/page.tsx` karena blank line pada akhir file. File itu berada di luar scope detail Kunjungan dan tidak diubah oleh implementasi ini. Perbaiki atau commit perubahan pemiliknya sebelum PR digabung.
+Perubahan di luar scope masih ada di working tree dan sengaja tidak ikut commit ini, termasuk blank line pada `src/app/(keluarga)/lansia/page.tsx`. File tersebut tidak diubah oleh implementasi payment/detail Kunjungan.
