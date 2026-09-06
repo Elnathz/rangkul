@@ -9,7 +9,16 @@ const ROLE_HOME: Record<AppRole, string> = {
   admin: "/admin/dashboard",
 };
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/help"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/help",
+  "/500",
+  "/403",
+  "/401",
+];
 const AUTHENTICATED_PATHS = ["/notifikasi", "/pesan"];
 const ROLE_PATHS: Record<AppRole, readonly string[]> = {
   keluarga: [
@@ -75,6 +84,7 @@ export function getApiRouteAccess(pathname: string): ApiRouteAccess | null {
     return ["helper"];
   }
 
+  if (isPathWithin(pathname, "/api/koordinator/by-region")) return ["helper"];
   if (isPathWithin(pathname, "/api/koordinator")) return ["koordinator"];
   if (isPathWithin(pathname, "/api/lansia")) {
     return ["keluarga"];

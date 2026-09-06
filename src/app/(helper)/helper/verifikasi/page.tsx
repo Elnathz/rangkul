@@ -11,7 +11,8 @@ import RegionSelect from "@/components/ui/RegionSelect";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
-import ServiceSelectionModal from "@/components/services/ServiceSelectionModal";
+import HelperCategoryMultiSelect, { type HelperCategoryItem } from "@/components/helper/HelperCategoryMultiSelect";
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUploadFile } from "@/lib/storage/file-validation";
 
 type KoordinatorOption = {
   id: string;
@@ -19,7 +20,6 @@ type KoordinatorOption = {
   tingkat: string;
   users: {
     full_name: string | null;
-    phone: string | null;
   } | null;
 };
 type OwnHelperProfile = {
@@ -60,7 +60,7 @@ export default function HelperVerifikasiPage() {
     setTimeout(() => setToast(null), 4000);
   };
   
-  const [dbCategories, setDbCategories] = useState<ServiceCategoryOption[]>([]);
+  const [dbCategories, setDbCategories] = useState<HelperCategoryItem[]>([]);
   const [kategoriIds, setKategoriIds] = useState<string[]>([]);
   const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
@@ -69,7 +69,6 @@ export default function HelperVerifikasiPage() {
   const [koordinatorsError, setKoordinatorsError] = useState(false);
   const [koordinatorsRetry, setKoordinatorsRetry] = useState(0);
   const [koordModalOpen, setKoordModalOpen] = useState(false);
-  const [koordTab, setKoordTab] = useState<'rtrw' | 'kelurahan'>('kelurahan');
   const [showKoordDropdown, setShowKoordDropdown] = useState(false);
 
   const tiers = [
@@ -111,8 +110,8 @@ export default function HelperVerifikasiPage() {
       // Fetch categories
       const { data: cats } = await supabase
         .from('service_categories')
-        .select('id, nama, tingkat, parent_id, is_active');
-      if (cats) setDbCategories(getSelectableServiceCategories(cats as unknown as ServiceCategoryRow[]));
+        .select('id, nama, tingkat, parent_id, is_active, harga_dasar, estimasi_durasi_menit, is_high_risk');
+      if (cats) setDbCategories(getSelectableServiceCategories(cats as unknown as ServiceCategoryRow[]) as HelperCategoryItem[]);
 
       // Fetch user profile if exists
       const { data: { user } } = await supabase.auth.getUser();
@@ -189,7 +188,14 @@ export default function HelperVerifikasiPage() {
   }, []);
 
   useEffect(() => {
-    if (!form.region.kelurahan) {
+    if (
+      !form.region.kelurahan ||
+      !form.region.kecamatan ||
+      !form.region.kota ||
+      !form.region.provinsi ||
+      !form.rt ||
+      !form.rw
+    ) {
       queueMicrotask(() => {
         setKoordinators([]);
         setKoordinatorsError(false);
@@ -202,31 +208,34 @@ export default function HelperVerifikasiPage() {
     const fetchKoords = async () => {
       setKoordinatorsLoading(true);
       setKoordinatorsError(false);
-      const supabase = createClient();
-      let query = supabase
-        .from('koordinator_profiles')
-        .select(`
-          id,
-          wilayah,
-          tingkat,
-          users!koordinator_profiles_user_id_fkey!inner(full_name, phone)
-        `)
-        .eq('status', 'verified');
+      try {
+        const params = new URLSearchParams();
+        if (form.region.kelurahan) params.set('kelurahan', form.region.kelurahan);
+        if (form.region.kecamatan) params.set('kecamatan', form.region.kecamatan);
+        if (form.region.kota) params.set('kota', form.region.kota);
+        if (form.region.provinsi) params.set('provinsi', form.region.provinsi);
+        params.set('rt', form.rt);
+        params.set('rw', form.rw);
 
-      for (const wilayahPart of [
-        form.region.kelurahan,
-        form.region.kecamatan,
-        form.region.kota,
-        form.region.provinsi,
-      ].filter(Boolean)) {
-        query = query.ilike('wilayah', `%${wilayahPart}%`);
-      }
+        const response = await fetch(`/api/koordinator/by-region?${params.toString()}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Gagal mencari koordinator');
 
-      const { data, error } = await query;
-      if (!cancelled) {
-        setKoordinators((data ?? []) as unknown as KoordinatorOption[]);
-        setKoordinatorsError(Boolean(error));
-        setKoordinatorsLoading(false);
+        if (!cancelled) {
+          const nextCoordinators = (result.koordinators ?? []) as KoordinatorOption[];
+          setKoordinators(nextCoordinators);
+          setForm((current) => current.koordinator_id && !nextCoordinators.some((item) => item.id === current.koordinator_id)
+            ? { ...current, koordinator_id: '' }
+            : current);
+          setKoordinatorsError(false);
+          setKoordinatorsLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setKoordinators([]);
+          setKoordinatorsError(true);
+          setKoordinatorsLoading(false);
+        }
       }
     };
 
@@ -234,7 +243,7 @@ export default function HelperVerifikasiPage() {
     return () => {
       cancelled = true;
     };
-  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi, koordinatorsRetry]);
+  }, [form.region.kelurahan, form.region.kecamatan, form.region.kota, form.region.provinsi, form.rt, form.rw, koordinatorsRetry]);
 
   // Helper to toggle by ID
   const toggleKategori = (catId: string) => {
@@ -294,6 +303,26 @@ export default function HelperVerifikasiPage() {
       }
 
       if (fileKtp) {
+        const fileError = validateUploadFile(fileKtp, { kind: "document", label: "Dokumen identitas" });
+        if (fileError) {
+          showToast(fileError);
+          setFieldErrors({ ktp_url: [fileError] });
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (fileFoto) {
+        const fileError = validateUploadFile(fileFoto, { kind: "image", label: "Foto profil" });
+        if (fileError) {
+          showToast(fileError);
+          setFieldErrors({ foto_url: [fileError] });
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (fileKtp) {
         const formData = new FormData();
         formData.append("file", fileKtp);
         formData.append("docType", "ktp");
@@ -310,7 +339,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        ktpUrl = uploadData.data?.path;
+        ktpUrl = uploadData.data?.path || uploadData.path;
       } else {
         ktpUrl = form.ktp_url;
       }
@@ -332,7 +361,7 @@ export default function HelperVerifikasiPage() {
           setLoading(false);
           return;
         }
-        fotoUrl = uploadData.data?.path;
+        fotoUrl = uploadData.data?.path || uploadData.path;
       } else {
         fotoUrl = form.foto_url;
       }
@@ -441,6 +470,7 @@ export default function HelperVerifikasiPage() {
                   setForm(f => ({
                     ...f,
                     region,
+                    koordinator_id: "",
                     ...(coords ? { 
                       domisili_lat: coords.lat, 
                       domisili_lng: coords.lng,
@@ -455,13 +485,13 @@ export default function HelperVerifikasiPage() {
                   <Label htmlFor="rt" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                     RT <span className="text-red-500">*</span>
                   </Label>
-                  <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value })} className="rounded-xl" />
+                  <Input id="rt" type="number" min={1} required placeholder="Contoh: 1" value={form.rt} onChange={(e) => setForm({ ...form, rt: e.target.value, koordinator_id: "" })} className="rounded-xl" />
                 </div>
                 <div>
                    <Label htmlFor="rw" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                     RW <span className="text-red-500">*</span>
                   </Label>
-                  <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value })} className="rounded-xl" />
+                  <Input id="rw" type="number" min={1} required placeholder="Contoh: 5" value={form.rw} onChange={(e) => setForm({ ...form, rw: e.target.value, koordinator_id: "" })} className="rounded-xl" />
                 </div>
               </div>
 
@@ -512,7 +542,7 @@ export default function HelperVerifikasiPage() {
                   ) : (
                     <div className="relative">
                       <p className="mb-3 text-sm leading-6 text-blue-800/80">
-                        {koordinators.length} Koordinator tersedia di Kelurahan {form.region.kelurahan}. Memilih Koordinator akan mempercepat verifikasi akun Anda.
+                        {koordinators.length} Koordinator terverifikasi sesuai RT/RW domisili Anda tersedia.
                       </p>
                       <button
                         type="button"
@@ -533,23 +563,6 @@ export default function HelperVerifikasiPage() {
 
                   {showKoordDropdown && koordinators.length > 0 && (
                       <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
-                        <div className="flex border-b border-gray-100">
-                          <button
-                            type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'kelurahan' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
-                            onClick={() => setKoordTab('kelurahan')}
-                          >
-                            Semua (Kel. {form.region.kelurahan})
-                          </button>
-                          <button
-                            type="button"
-                            className={`flex-1 py-2 text-xs font-bold ${koordTab === 'rtrw' ? 'text-[#0D47A1] bg-blue-50/50 border-b-2 border-[#0D47A1]' : 'text-gray-500 hover:bg-gray-50'}`}
-                            onClick={() => setKoordTab('rtrw')}
-                          >
-                            RT {form.rt || '-'}/RW {form.rw || '-'} Anda
-                          </button>
-                        </div>
-                        
                         <div className="max-h-64 overflow-y-auto">
                            <button 
                              type="button"
@@ -559,19 +572,7 @@ export default function HelperVerifikasiPage() {
                              -- Saya tidak mengetahui Koordinator saya --
                            </button>
                            
-                           {(() => {
-                             const filtered = koordinators.filter(k => {
-                               if (koordTab === 'kelurahan') return true;
-                               return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
-                             });
-                             
-                             if (filtered.length === 0) {
-                               return <div className="p-4 text-center text-sm text-gray-500">Tidak ada koordinator ditemukan di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : 'kelurahan ini'}.</div>
-                             }
-                             
-                             return (
-                               <>
-                                 {filtered.slice(0, 5).map(k => (
+                           {koordinators.slice(0, 5).map(k => (
                                    <button 
                                      key={k.id}
                                      type="button"
@@ -587,26 +588,22 @@ export default function HelperVerifikasiPage() {
                                          {form.koordinator_id === k.id && <svg className="w-4 h-4 text-[#0D47A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                        </div>
                                        <div className="text-[10px] uppercase font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded w-max mt-0.5 mb-1">{k.tingkat?.replace('_', ' ') || 'Koordinator'}</div>
-                                       <div className="text-xs text-gray-500 line-clamp-1">{k.wilayah.split('|')[1]?.trim()}</div>
-                                       <div className="text-xs text-gray-400 mt-0.5">{k.users?.phone || '-'}</div>
+                                       <div className="mt-1 text-xs text-gray-500 line-clamp-2">{k.wilayah}</div>
                                      </div>
                                    </button>
                                  ))}
                                  
-                                 {filtered.length > 5 && (
+                                 {koordinators.length > 5 && (
                                    <div className="p-2 border-t border-gray-50 bg-white sticky bottom-0">
                                      <button 
                                        type="button" 
                                        className="w-full py-2 bg-gray-50 hover:bg-blue-50 text-[#0D47A1] text-xs font-bold rounded-lg transition-colors border border-gray-100"
                                        onClick={() => { setKoordModalOpen(true); setShowKoordDropdown(false); }}
                                      >
-                                       Lihat Semua Koordinator ({filtered.length})
+                                       Lihat Semua Koordinator ({koordinators.length})
                                      </button>
                                    </div>
                                  )}
-                               </>
-                             );
-                           })()}
                         </div>
                       </div>
                     )}
@@ -645,93 +642,21 @@ export default function HelperVerifikasiPage() {
             <div className={step === 2 ? "block animate-in fade-in" : "hidden"}>
               <h2 className="text-lg font-bold text-gray-900 mb-4">Langkah 2: Profil & Spesialisasi Layanan</h2>
               
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-4 mt-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2 mt-2">
                 Kategori Layanan yang Disediakan <span className="text-red-500">*</span>
               </Label>
-              <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
+              <p className="text-xs text-slate-500 mb-4">
+                Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.
+              </p>
               <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm leading-6 text-blue-900">
                 <span className="font-semibold">{dbCategories.length} layanan aktif tersedia.</span> Kategori induk nonaktif hanya digunakan untuk pengelompokan katalog dan tidak dapat dipilih sebagai layanan.
               </p>
 
-              {/* Preview Tabs */}
-              <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
-                 {tiers.map((tier) => (
-                   <button
-                     key={tier.id}
-                     type="button"
-                     onClick={() => setActiveTab(tier.id)}
-                     className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
-                       activeTab === tier.id 
-                         ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
-                         : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                     }`}
-                   >
-                     {tier.title}
-                   </button>
-                 ))}
-              </div>
-
-              <div className="space-y-4 mb-2">
-                {(() => {
-                  const activeTier = tiers.find(t => t.id === activeTab);
-                  if (!activeTier) return null;
-                  const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
-
-                  return groupSelectableServiceCategories(filteredDbCats.slice(0, 4)).map((group) => (
-                    <section key={group.key} className="space-y-2">
-                      {group.parentName && <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{group.parentName}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px]">Parent</span></div>}
-                      <div className={group.parentName ? "space-y-2 border-l-2 border-blue-100 pl-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                        {group.items.map((cat) => {
-                          const isSelected = kategoriIds.includes(cat.id);
-                          return (
-                            <label key={cat.id} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
-                              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
-                                {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                              </div>
-                              <span className={`text-sm font-semibold leading-tight ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
-                              <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ));
-                })()}
-              </div>
-
-              <div className="mb-6">
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setModalOpen(true);
-                    setModalActiveTab(activeTab); // Langsung buka tab yang sedang dilihat
-                  }} 
-                  className="text-[#0D47A1] text-sm font-semibold hover:underline flex items-center gap-1 mt-3 transition-colors hover:text-blue-800 focus:outline-none"
-                >
-                  {(() => {
-                    const activeTier = tiers.find(t => t.id === activeTab);
-                    const filteredCount = activeTier ? dbCategories.filter(c => c.tingkat === activeTier.id).length : 0;
-                    const rem = Math.max(0, filteredCount - 4);
-                    return `Tampilkan Semua Kategori ${activeTier?.title} (+${rem} lainnya)`;
-                  })()}
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-
-              {kategoriIds.length > 0 && (
-                <div className="mb-6 bg-slate-50 border border-slate-100 p-4 rounded-xl">
-                  <span className="text-xs font-bold text-gray-500 uppercase block mb-2">Kategori Terpilih ({kategoriIds.length}):</span>
-                  <div className="flex flex-wrap gap-2">
-                    {dbCategories.filter(c => kategoriIds.includes(c.id)).map(c => (
-                      <span key={c.id} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-[#0D47A1] border border-blue-200 shadow-sm">
-                        {c.nama}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <HelperCategoryMultiSelect
+                categories={dbCategories}
+                selectedIds={kategoriIds}
+                onChange={setKategoriIds}
+              />
               
               <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5 mt-2">
                 Bio Singkat & Pengalaman
@@ -785,13 +710,14 @@ export default function HelperVerifikasiPage() {
                   id="ktp_upload" 
                   ref={ktpInputRef}
                   className="hidden" 
-                  accept="image/jpeg, image/png"
+                  accept={DOCUMENT_ACCEPT}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       const file = e.target.files[0];
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast("Ukuran file KTP tidak boleh lebih dari 5MB", "error");
-                        setFieldErrors(prev => ({...prev, ktp_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                      const fileError = validateUploadFile(file, { kind: "document", label: "Dokumen identitas" });
+                      if (fileError) {
+                        showToast(fileError, "error");
+                        setFieldErrors(prev => ({...prev, ktp_url: [fileError]}));
                         e.target.value = '';
                         setForm({ ...form, ktp_url: "" });
                         setKtpFileName(null);
@@ -824,7 +750,7 @@ export default function HelperVerifikasiPage() {
                       </svg>
                     </div>
                     <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto KTP</p>
-                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal 5MB, format JPG, PNG, atau PDF</p>
                   </div>
                 )}
               </Label>
@@ -850,13 +776,14 @@ export default function HelperVerifikasiPage() {
                   id="foto_upload" 
                   ref={fotoInputRef}
                   className="hidden" 
-                  accept="image/jpeg, image/png"
+                  accept={IMAGE_ACCEPT}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       const file = e.target.files[0];
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast("Ukuran file foto profil tidak boleh lebih dari 5MB", "error");
-                        setFieldErrors(prev => ({...prev, foto_url: ["File terlalu besar (Maksimal 5MB)"]}));
+                      const fileError = validateUploadFile(file, { kind: "image", label: "Foto profil" });
+                      if (fileError) {
+                        showToast(fileError, "error");
+                        setFieldErrors(prev => ({...prev, foto_url: [fileError]}));
                         e.target.value = '';
                         setForm({ ...form, foto_url: "" });
                         setFotoFileName(null);
@@ -889,7 +816,7 @@ export default function HelperVerifikasiPage() {
                       </svg>
                     </div>
                     <p className="text-sm font-bold text-[#0D47A1]">Ketuk Area Ini untuk Unggah Foto Profil</p>
-                    <p className="text-xs text-gray-500 mt-1">Maksimal ukuran 5MB (Format JPG/PNG)</p>
+                    <p className="text-xs text-gray-500 mt-1">Maksimal 5MB, format JPG atau PNG</p>
                   </div>
                 )}
               </Label>
@@ -961,17 +888,7 @@ export default function HelperVerifikasiPage() {
         </div>
       </div>
 
-      {/* Universal ServiceSelectionModal */}
-      <ServiceSelectionModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        mode="multiple"
-        categories={dbCategories}
-        selectedIds={kategoriIds}
-        onConfirm={(ids) => setKategoriIds(ids)}
-        title="Kategori Layanan yang Disediakan"
-        subtitle="Pilih ragam tugas pendampingan yang sesuai dengan kemampuan dan pengalaman Anda."
-      />
+
 
       {/* Koordinator Modal */}
       {koordModalOpen && (
@@ -982,7 +899,7 @@ export default function HelperVerifikasiPage() {
              <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                <div>
                   <h3 className="font-bold text-xl text-gray-900">Pilih Koordinator Rangkul</h3>
-                  <p className="text-xs text-gray-500 mt-1">Daftar lengkap koordinator di {koordTab === 'rtrw' ? `RT ${form.rt}/RW ${form.rw}` : `Kel. ${form.region.kelurahan}`}.</p>
+                  <p className="text-xs text-gray-500 mt-1">Koordinator terverifikasi untuk RT {form.rt}/RW {form.rw}, {form.region.kelurahan}.</p>
                </div>
                <button onClick={() => setKoordModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -992,13 +909,7 @@ export default function HelperVerifikasiPage() {
              {/* Modal Content - List */}
              <div className="p-4 overflow-y-auto bg-slate-50/30 flex-1">
                 <div className="flex flex-col gap-3">
-                  {(() => {
-                    const filtered = koordinators.filter(k => {
-                      if (koordTab === 'kelurahan') return true;
-                      return form.rt && form.rw && k.wilayah.includes(`RT ${form.rt}`) && k.wilayah.includes(`RW ${form.rw}`);
-                    });
-                    
-                    return filtered.map(k => (
+                  {koordinators.map(k => (
                        <button 
                          key={k.id}
                          type="button"
@@ -1020,15 +931,10 @@ export default function HelperVerifikasiPage() {
                                </div>
                              )}
                            </div>
-                           <div className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded-lg">{k.wilayah.split('|')[1]?.trim()}</div>
-                           <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                             {k.users?.phone || 'Nomor tidak tersedia'}
-                           </div>
+                           <div className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded-lg">{k.wilayah}</div>
                          </div>
                        </button>
-                    ));
-                  })()}
+                    ))}
                 </div>
              </div>
           </div>

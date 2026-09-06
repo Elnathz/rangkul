@@ -5,6 +5,13 @@ import { groupSelectableServiceCategories, sortServiceCategoriesHierarchy } from
 
 const adminSource = fs.readFileSync("src/app/(admin)/admin/categories/page.tsx", "utf8");
 const helperEditSource = fs.readFileSync("src/app/(helper)/helper/profil/edit/page.tsx", "utf8");
+const helperApplyRoute = fs.readFileSync("src/app/api/helper/apply/route.ts", "utf8");
+const helperProfileRoute = fs.readFileSync("src/app/api/helper/profile/route.ts", "utf8");
+const helperCatalogRoute = fs.readFileSync("src/app/api/helpers/route.ts", "utf8");
+const categoriesRoute = fs.readFileSync("src/app/api/categories/route.ts", "utf8");
+const cariHelperPage = fs.readFileSync("src/app/(keluarga)/cari-helper/page.tsx", "utf8");
+const bookingPage = fs.readFileSync("src/app/(keluarga)/booking/new/page.tsx", "utf8");
+const helperBookingPage = fs.readFileSync("src/app/(keluarga)/booking/[helper_id]/page.tsx", "utf8");
 const categoryPolicy = fs.readFileSync("supabase/migrations/20260824140000_read_service_category_parents.sql", "utf8");
 
 const rows = [
@@ -41,4 +48,28 @@ test("semua surface kategori memakai hierarki database", () => {
   assert.match(helperEditSource, /groupSelectableServiceCategories/);
   assert.match(helperEditSource, /parent_id, is_active/);
   assert.match(categoryPolicy, /is_active = true OR parent_id IS NULL/);
+});
+
+test("kategori baru Admin mengalir ke katalog, booking, dan edit Helper dari sumber database yang sama", () => {
+  assert.match(categoriesRoute, /getSelectableServiceCategories/);
+  assert.match(cariHelperPage, /fetch\("\/api\/categories",\s*\{ cache: "no-store" \}\)/);
+  assert.match(bookingPage, /getSelectableServiceCategories/);
+  assert.match(helperBookingPage, /getSelectableServiceCategories/);
+  assert.match(helperEditSource, /from\('service_categories'\)/);
+  assert.match(helperEditSource, /getSelectableServiceCategories/);
+});
+
+test("backend menolak kategori parent atau link kategori yang sudah tidak selectable", () => {
+  assert.match(helperApplyRoute, /getSelectableServiceCategories/);
+  assert.match(helperProfileRoute, /getSelectableServiceCategories/);
+  assert.match(helperCatalogRoute, /selectableCategoryIds/);
+  assert.match(fs.readFileSync("src/app/api/booking/task/route.ts", "utf8"), /activeChildren/);
+});
+
+test("kategori parent aktif tidak ikut dipilih jika memiliki child aktif", () => {
+  const parent = { id: "parent", nama: "Pendampingan", tingkat: "ringan", parent_id: null, is_active: true };
+  const child = { id: "child", nama: "Pendampingan singkat", tingkat: "ringan", parent_id: "parent", is_active: true };
+  const inactiveChild = { id: "inactive-child", nama: "Pendampingan lama", tingkat: "sedang", parent_id: "parent", is_active: false };
+  assert.deepEqual(groupSelectableServiceCategories([parent, child]).flatMap((group) => group.items.map((item) => item.id)), ["child"]);
+  assert.deepEqual(groupSelectableServiceCategories([parent, inactiveChild]).flatMap((group) => group.items.map((item) => item.id)), ["parent"]);
 });

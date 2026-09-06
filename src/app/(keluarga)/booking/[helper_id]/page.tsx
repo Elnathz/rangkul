@@ -12,6 +12,7 @@ import { isUrgentProbationBooking } from "@/lib/helper/task-acceptance";
 import LansiaSelect from "@/components/keluarga/booking/LansiaSelect";
 import CustomServiceTierSelect, { type ServiceCategoryItem } from "@/components/keluarga/booking/CustomServiceTierSelect";
 import DateTimePicker from "@/components/keluarga/booking/DateTimePicker";
+import { getSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 
 interface Lansia {
   id: string;
@@ -60,9 +61,11 @@ export default function BookingPage({ params }: { params: Promise<{ helper_id: s
 
         const { data: catData } = await supabase
           .from("service_categories")
-          .select("id, nama, harga_dasar, tingkat, estimasi_durasi_menit, is_high_risk")
-          .eq("is_active", true);
-        if (catData) setCategories(catData as unknown as ServiceCategoryItem[]);
+          .select("id, nama, harga_dasar, tingkat, estimasi_durasi_menit, is_high_risk, is_active, parent_id")
+          .or("is_active.eq.true,parent_id.is.null");
+        if (catData) {
+          setCategories(getSelectableServiceCategories(catData as unknown as ServiceCategoryRow[]) as ServiceCategoryItem[]);
+        }
 
         if (helper_id !== "direct") {
           const response = await fetch(`/api/helpers/${helper_id}`);

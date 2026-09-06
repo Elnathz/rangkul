@@ -36,7 +36,7 @@ export function TaskScheduleActions({ taskId, status, jadwalWaktu }: Props) {
       const response = await fetch(`/api/tasks/${taskId}/reschedule`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jadwal_waktu: new Date(nextSchedule).toISOString() }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "Jadwal belum dapat diubah");
-      setFeedback({ title: "Jadwal diperbarui", description: "Perubahan jadwal sudah tersimpan di task ini.", tone: "success" });
+      setFeedback({ title: "Jadwal diperbarui", description: "Perubahan jadwal kunjungan sudah tersimpan.", tone: "success" });
       router.refresh();
     } catch (error: unknown) {
       setFeedback({ title: "Jadwal belum berubah", description: error instanceof Error ? error.message : "Coba lagi beberapa saat.", tone: "danger" });
@@ -54,12 +54,12 @@ export function TaskScheduleActions({ taskId, status, jadwalWaktu }: Props) {
     try {
       const response = await fetch(`/api/tasks/${taskId}/cancel`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cancellation_reason: reason }) });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || "Tugas belum dapat dibatalkan");
+      if (!response.ok) throw new Error(payload.message || "Kunjungan belum dapat dibatalkan");
       setCancelOpen(false);
-      setFeedback({ title: "Tugas dibatalkan", description: "Tugas ini sudah dipindahkan ke riwayat kunjungan.", tone: "success" });
+      setFeedback({ title: "Kunjungan dibatalkan", description: "Kunjungan ini sudah dipindahkan ke riwayat.", tone: "success" });
       router.refresh();
     } catch (error: unknown) {
-      setFeedback({ title: "Tugas belum dibatalkan", description: error instanceof Error ? error.message : "Coba lagi beberapa saat.", tone: "danger" });
+      setFeedback({ title: "Kunjungan belum dibatalkan", description: error instanceof Error ? error.message : "Coba lagi beberapa saat.", tone: "danger" });
     } finally {
       setLoading(false);
     }
@@ -69,8 +69,8 @@ export function TaskScheduleActions({ taskId, status, jadwalWaktu }: Props) {
   const canReschedule = status === "diajukan" || status === "dikonfirmasi";
   return (
     <>
-      <motion.section {...reveal} transition={{ duration: 0.25, ease: "easeOut" }} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-start gap-3"><CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-[#0D47A1]" /><div><h2 className="text-base font-black text-slate-950">Atur jadwal dan pembatalan</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Reschedule maksimal dua kali. Sistem akan menerapkan batas minimal tiga jam atau dua jam sesuai waktu booking.</p></div></div>
+      <motion.section {...reveal} transition={{ duration: 0.22, ease: "easeOut" }} className="rounded-[18px] border border-border bg-surface p-4 sm:p-5">
+        <div className="flex items-start gap-3"><CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><h2 className="font-display text-base font-extrabold text-ink">Pengaturan kunjungan</h2><p className="mt-1 text-xs leading-relaxed text-ink-muted">Jadwal dapat diubah maksimal dua kali selama masih memenuhi batas waktu perubahan.</p></div></div>
         {canReschedule && <form onSubmit={submitReschedule} className="mt-4 space-y-3">
           <DateTimePicker
             value={nextSchedule}
@@ -80,16 +80,16 @@ export function TaskScheduleActions({ taskId, status, jadwalWaktu }: Props) {
             helperText="Pilih waktu baru kunjungan sesuai kesepakatan."
           />
           <div className="flex justify-end pt-1">
-            <button type="submit" disabled={loading} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0D47A1] px-5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 shadow-xs transition-colors">
+            <button type="submit" disabled={loading} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-[#083578] disabled:cursor-not-allowed disabled:opacity-60">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Simpan jadwal
             </button>
           </div>
         </form>}
-        {!canReschedule && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900">Jadwal tidak dapat diubah selama menunggu persetujuan Koordinator.</p>}
-        <button type="button" onClick={() => setCancelOpen(true)} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-bold text-red-700 hover:bg-red-50"><XCircle className="h-4 w-4" />Batalkan tugas</button>
+        {!canReschedule && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900">Jadwal terkunci selama Koordinator melakukan peninjauan.</p>}
+        <button type="button" onClick={() => setCancelOpen(true)} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-bold text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"><XCircle className="h-4 w-4" />Batalkan Kunjungan</button>
       </motion.section>
-      <ConfirmDialog open={cancelOpen} onOpenChange={setCancelOpen} title="Batalkan tugas ini?" description="Pembatalan hanya dapat dilakukan sebelum tugas dimulai. Isi alasan agar keluarga dan Helper menerima informasi yang jelas." confirmLabel="Batalkan tugas" tone="danger" loading={loading} onConfirm={cancelTask}>
+      <ConfirmDialog open={cancelOpen} onOpenChange={setCancelOpen} title="Batalkan kunjungan ini?" description="Pembatalan hanya dapat dilakukan sebelum kunjungan dimulai. Isi alasan agar semua pihak menerima informasi yang jelas." confirmLabel="Batalkan Kunjungan" tone="danger" loading={loading} onConfirm={cancelTask}>
         <label className="mt-4 block text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="alasan-pembatalan">Alasan pembatalan</label>
         <textarea id="alasan-pembatalan" value={reason} onChange={(event) => setReason(event.target.value)} minLength={10} maxLength={500} required rows={4} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100" placeholder="Contoh: Lansia harus pergi ke rumah sakit." />
       </ConfirmDialog>

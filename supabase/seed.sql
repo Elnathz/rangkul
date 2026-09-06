@@ -52,8 +52,6 @@ DECLARE
   lansia_4_id UUID;
   lansia_5_id UUID;
   category_id UUID;
-  lansia_5_id UUID;
-  category_id UUID;
   ringan_category_id UUID;
   sedang_category_id UUID;
   berat_category_id UUID;
@@ -425,6 +423,12 @@ BEGIN
       alamat = 'Jl. Pleburan Barat No. 12, RT 03 / RW 05, Semarang Selatan',
       lat = -7.0054,
       lng = 110.4388,
+      rt = 3,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
       catatan_kondisi = 'Perlu ditemani mengobrol dan diingatkan minum obat.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
@@ -434,10 +438,58 @@ BEGIN
   UPDATE public.lansia_profiles
   SET lat = -7.0042,
       lng = 110.4372,
+      rt = 2,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
-  WHERE id IN (lansia_2_id, lansia_3_id, lansia_4_id, lansia_5_id);
+  WHERE id = lansia_2_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0052,
+      lng = 110.4382,
+      rt = 3,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_3_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0062,
+      lng = 110.4392,
+      rt = 4,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_4_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0760,
+      lng = 110.3270,
+      rt = 1,
+      rw = 2,
+      kelurahan = 'Kedungpane',
+      kecamatan = 'Mijen',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_5_id;
 
   INSERT INTO public.helper_service_categories (helper_id, service_category_id)
   SELECT helper_id, category_id
@@ -470,8 +522,8 @@ BEGIN
   SELECT gen_random_uuid(), keluarga_3_id, lansia_3_id, helper_2_id, sedang_category_id, NOW() + INTERVAL '3 hours', NOW() + INTERVAL '3 hours', '[DEMO_MATRIX] Task dikerjakan', 'dikerjakan', 50000, 50000
   WHERE NOT EXISTS (SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task dikerjakan');
 
-  INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final)
-  SELECT gen_random_uuid(), keluarga_1_id, lansia_1_id, existing_helper_id, sedang_category_id, NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days', '[DEMO_MATRIX] Task menunggu Koordinator', 'menunggu_persetujuan_koordinator', 50000, 50000
+  INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final, expires_at)
+  SELECT gen_random_uuid(), keluarga_1_id, lansia_1_id, existing_helper_id, sedang_category_id, NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days', '[DEMO_MATRIX] Task menunggu Koordinator', 'menunggu_persetujuan_koordinator', 50000, 50000, NOW() + INTERVAL '1 hour'
   WHERE NOT EXISTS (SELECT 1 FROM public.tasks WHERE catatan = '[DEMO_MATRIX] Task menunggu Koordinator');
 
   INSERT INTO public.tasks (id, keluarga_id, lansia_id, helper_id, service_category_id, jadwal_waktu, jadwal_waktu_asli, catatan, status, harga_dasar, harga_final)
@@ -1014,6 +1066,7 @@ SET helper_id = NULL,
     completed_at = NULL,
     cancelled_at = NULL,
     cancellation_reason = NULL,
+    expires_at = NOW() + INTERVAL '1 hour',
     updated_at = NOW()
 WHERE catatan = '[DEMO_MATRIX] Task diajukan marketplace';
 
@@ -1064,12 +1117,24 @@ UPDATE public.tasks
 SET status = 'menunggu_persetujuan_keluarga',
     jadwal_waktu = NOW() + INTERVAL '1 day',
     jadwal_waktu_asli = NOW() + INTERVAL '1 day',
+    harga_final = harga_dasar,
     started_at = NULL,
     completed_at = NULL,
     cancelled_at = NULL,
     cancellation_reason = NULL,
     updated_at = NOW()
 WHERE catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
+
+-- Layanan tambahan dan status Kunjungan harus dipulihkan sebagai satu fixture atomik.
+DELETE FROM public.task_extra_services extra_service
+USING public.tasks task
+WHERE extra_service.task_id = task.id
+  AND task.catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
+
+INSERT INTO public.task_extra_services (task_id, nama_layanan, biaya, status)
+SELECT task.id, 'Pendampingan tambahan 30 menit', 10000, 'menunggu_persetujuan_keluarga'
+FROM public.tasks task
+WHERE task.catatan = '[DEMO_MATRIX] Task menunggu Keluarga';
 
 UPDATE public.tasks
 SET status = 'selesai',

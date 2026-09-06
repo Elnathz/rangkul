@@ -29,7 +29,11 @@ Dokumen ini hanya mencatat pemeriksaan yang benar-benar dilakukan. Status `Belum
 - Guard lintas peran kini diuji sebagai matriks penuh. Seluruh 70 halaman mendapat klasifikasi akses dari route group; request langsung dengan persona Keluarga, Helper, Koordinator, dan Admin membuktikan route tanpa prefix, route legacy `/tugas`, dan namespace role hanya merender untuk role yang tepat. Role lain mendapat `307` ke dashboardnya sendiri. Seluruh 86 route handler minimal membutuhkan sesi kecuali login, register, dan webhook bertanda tangan; sampel namespace role menghasilkan `401`, `403`, dan `200` sesuai aktor.
 - Logo autentikasi memakai rasio intrinsik SVG. Browser tidak lagi menghasilkan warning rasio gambar baru setelah perbaikan.
 - Cloud demo berhasil di-seed ulang melalui `npm run seed:cloud` setelah target ref diverifikasi dari project yang tertaut. Script menyelesaikan SQL dan menyinkronkan empat asset demo privat.
-- Gate setelah perubahan terakhir: lint lulus dengan 60 warning lama dan tanpa error, typecheck lulus, test berurutan menghasilkan 261 lulus dan 14 cloud-runtime skip dari total 275, serta production build menyelesaikan 91 halaman. Percobaan `npm ci` memakai cache berhenti dengan `ENOSPC`; dependency inti pulih dan `npm ls --depth=0` keluar 0, tetapi `npm ci` tetap berstatus gagal dan harus diulang di runner dengan ruang cukup.
+- Gate terbaru setelah sinkronisasi `develop`: `npm ci` lokal lulus, lint lulus dengan 54 warning non-blocking dan tanpa error, typecheck lulus, 295/295 test cloud lulus tanpa skip, serta production build menyelesaikan 96 route.
+- Katalog Keluarga tidak lagi memperlihatkan kontrol mode Sprint 6 ketika feature flag server nonaktif. Trigger dropdown memiliki target sentuh 44px, semantik menu, dan pengembalian fokus saat Escape.
+- Form verifikasi Helper hanya menampilkan Koordinator RT yang persis sama atau fallback RW yang sah. Response browser tidak memuat nomor telepon Koordinator, sedangkan submit divalidasi ulang di backend sebelum data profil berubah.
+- Browser aktual memverifikasi domisili Pleburan RT 03/RW 05 hanya menampilkan tiga Koordinator RT 03. Ketika RT diubah menjadi 99, daftar beralih ke dua Koordinator RW 05 dan tidak mempertahankan pilihan RT lama.
+- Browser aktual dengan sesi Keluarga memverifikasi kontrol mode dan CTA Sprint 6 muncul saat flag aktif. Ketika proses server dijalankan dengan flag `false`, tidak ada kontrol mode, Lowongan, atau Cari Cepat; empty state kembali ke saran filter. Escape pada menu aktif menutup popover dan mengembalikan fokus ke trigger.
 
 ## Pemeriksaan yang masih wajib dilakukan sebelum acceptance
 
@@ -38,7 +42,10 @@ Dokumen ini hanya mencatat pemeriksaan yang benar-benar dilakukan. Status `Belum
 - Zoom 200%, `prefers-reduced-motion`, nama atau alamat panjang, dan badge `99+`.
 - State loading, empty, error, forbidden, conflict, dan retry yang memang tersedia pada tiap halaman.
 - Screenshot dan URL atau environment yang dipakai untuk setiap hasil di atas.
-- Ulangi `npm ci` pada runner dengan ruang disk cukup. Lint, typecheck, test, build, dan `git diff --check` sudah lulus setelah perubahan terakhir.
-- Runtime cloud matrix final lulus 283/283 tanpa skip. Gate source final menghasilkan lint 0 error dengan 60 warning lama, typecheck lulus, 269 pass dan 14 runtime skip dari total 283 test, build 91 halaman lulus, serta `git diff --check` lulus. Feature flag tetap belum boleh diaktifkan di production sebelum clean install, zoom 200 persen, state negatif non-forbidden, preview dry run, dan smoke production memiliki evidence.
+- Clean install kini lulus lokal dan sebelumnya juga lulus pada runner CI. Check CI untuk HEAD PR #31 yang baru tetap harus hijau sebelum merge.
+- Runtime cloud matrix final lulus 295/295 tanpa skip. Feature flag tetap belum boleh diaktifkan di production sebelum zoom 200 persen, state negatif non-forbidden, preview dry run lengkap, dan smoke production memiliki evidence.
+- Lima runtime test khusus Sprint 6 juga lulus dua kali berturut-turut tanpa reseed manual setelah fixture shared diberi reset sebelum dan sesudah suite. Evidence ini menutup ketergantungan terhadap urutan test untuk race Cari Cepat, withdraw, dan selection pelamar.
+- Browser lokal dengan feature flag aktif memverifikasi dropdown entry booking hanya berisi `Pilih dari Pelamar` dan `Cari Cepat`. Form Cari Cepat menampilkan batas 15 menit dan kondisi pembayaran, tanpa overflow. Mode langsung tanpa Helper telah dihapus dari entry ini; request HTTP sesi Keluarga membuktikan payload langsung tanpa Helper dan payload marketplace dengan Helper sama-sama ditolak `422` sesuai TDD sebelum insert.
+- Deployment preview PR #31 lulus smoke fail-closed. Landing dapat dibuka, akun demo Keluarga dapat login, dan akses langsung `/booking/new` dialihkan ke `/cari-helper` karena flag preview belum aktif. Halaman tujuan memiliki heading yang benar dan tidak mengalami horizontal overflow pada viewport browser smoke.
 
 Tidak ada artifact screenshot yang dapat diverifikasi di repository saat dokumen ini diperbarui. Karena itu, evidence lama yang mengklaim semua viewport lulus telah dicabut.

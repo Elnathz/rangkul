@@ -39,6 +39,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!validation.data.dokumen_identitas_lansia_url || !validation.data.dokumen_hubungan_keluarga_url) {
+      return apiResponse(
+        {
+          error: 'validation_error',
+          message: 'KTP lansia dan bukti hubungan keluarga wajib diunggah',
+          fieldErrors: {
+            dokumen_identitas_lansia_url: validation.data.dokumen_identitas_lansia_url ? [] : ['KTP lansia wajib diunggah'],
+            dokumen_hubungan_keluarga_url: validation.data.dokumen_hubungan_keluarga_url ? [] : ['Bukti hubungan keluarga wajib diunggah'],
+          },
+        },
+        400
+      );
+    }
+
     const {
       nama,
       alamat,

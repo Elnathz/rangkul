@@ -384,6 +384,8 @@ Test dijalankan dengan Node.js test runner melalui `npm run test`. Data demo lok
 
 ## API Documentation
 
+Kontrak manusia berada di [`docs/api-contract.md`](docs/api-contract.md). OpenAPI 3.1 yang dapat diimpor ke Postman, Bruno, Insomnia, Scalar, atau Swagger UI berada di [`docs/api/openapi.json`](docs/api/openapi.json). Mulai dari [`docs/api/README.md`](docs/api/README.md) untuk autentikasi, error, role, feature flag, dan inventaris domain.
+
 ### Base URL
 
 ```text
@@ -415,14 +417,14 @@ DELETE /api/lansia/:id
 #### Helper and Verification
 
 ```http
-POST /api/helper/apply
-GET  /api/helper/profile
-GET  /api/helper/queue
-PUT  /api/helper/:id/approve
-PUT  /api/helper/:id/reject
-GET  /api/helpers
-GET  /api/helpers/:id
-POST /api/storage/upload
+POST  /api/helpers/apply
+GET   /api/helper/profile
+PATCH /api/helper/profile
+GET   /api/koordinator/helpers
+PATCH /api/helpers/:id/status
+GET   /api/helpers
+GET   /api/helpers/:id
+POST  /api/storage/upload
 ```
 
 #### Koordinator and Approval
@@ -440,12 +442,19 @@ PUT   /api/admin/koordinator/:id/reject
 #### Booking and Tasks
 
 ```http
-POST  /api/booking/task
+POST  /api/tasks
+GET   /api/tasks/marketplace
 PATCH /api/tasks/:id/accept
+GET   /api/tasks/:id/applications
+POST  /api/tasks/:id/applications
+DELETE /api/tasks/:id/applications/me
+PATCH /api/tasks/:id/applications/:application_id/select
 PATCH /api/tasks/:id/start
 POST  /api/tasks/:id/extra-service
 PATCH /api/tasks/:id/extra-service/:eid
 ```
+
+`POST /api/booking/task`, `POST /api/helper/apply`, dan route approve/reject lama tetap tersedia sebagai alias kompatibilitas. Client baru memakai route canonical di atas.
 
 #### Notifications
 
@@ -457,22 +466,22 @@ PATCH /api/notifications/:id/read
 ### Example Request
 
 ```javascript
-const response = await fetch('/api/booking/task', {
+const response = await fetch('/api/tasks', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     lansia_id: 'uuid-lansia',
-    helper_id: 'uuid-helper-opsional',
     service_category_id: 'uuid-kategori',
     jadwal_waktu: '2026-08-23T08:00:00.000Z',
-    catatan: 'Tolong bantu mengingatkan jadwal minum obat pagi.'
+    catatan: 'Tolong bantu mengingatkan jadwal minum obat pagi.',
+    mode_penugasan: 'pelamar'
   })
 });
 
 const result = await response.json();
 ```
 
-Format response dan aturan role lengkap dirujuk dari [`docs/TDD_Rangkul.md`](docs/TDD_Rangkul.md), [`docs/api/booking.md`](docs/api/booking.md), dan dokumentasi API lain di folder [`docs/api`](docs/api).
+Mode `langsung` wajib membawa `helper_id`. Mode `pelamar` dan `cepat` harus tanpa `helper_id` dan hanya aktif ketika `SPRINT6_MATCHING_ENABLED=true`. Aturan role, response, dan lifecycle lengkap dirujuk dari [`docs/TDD_Rangkul.md`](docs/TDD_Rangkul.md), [`docs/api/booking.md`](docs/api/booking.md), dan dokumentasi API lain di folder [`docs/api`](docs/api).
 
 ## Testing
 

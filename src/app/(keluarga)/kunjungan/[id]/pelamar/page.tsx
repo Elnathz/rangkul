@@ -107,7 +107,7 @@ export default async function TaskApplicantsPage({ params }: PageProps) {
         id: helper.id,
         full_name: helper.users?.full_name || "Helper Rangkul",
         foto_wajah_url: helper.foto_wajah_url || null,
-        rating_avg: Number(helper.rating_avg) || 5.0,
+        rating_avg: Number(helper.rating_avg) || 0,
         total_tugas_selesai: Number(helper.total_tugas_selesai) || 0,
         tingkat_kepercayaan: helper.tingkat_kepercayaan || "terpercaya",
         jarak_km: jarakKm,

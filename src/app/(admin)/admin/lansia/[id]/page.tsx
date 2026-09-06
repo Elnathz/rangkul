@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
-  CheckCircle2, 
-  XCircle, 
   UserRound, 
   MapPin, 
   FileText, 
@@ -17,10 +15,10 @@ import {
   Mail, 
   Loader2, 
   AlertCircle,
-  ShieldCheck,
   Maximize2,
   ExternalLink,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/ui/SignedImage";
@@ -45,7 +43,6 @@ type LansiaDetail = {
   foto_url?: string | null;
   dokumen_identitas_lansia_url?: string | null;
   dokumen_hubungan_keluarga_url?: string | null;
-  verified_status?: "pending" | "verified" | "rejected";
   nama_keluarga?: string | null;
   email_keluarga?: string | null;
   telepon_keluarga?: string | null;
@@ -58,10 +55,12 @@ function DocumentPreviewCard({
 }: {
   title: string;
   path: string | null | undefined;
-  onOpenPreview: (title: string, resolvedUrl: string) => void;
+  onOpenPreview: (title: string, resolvedUrl: string, kind: "image" | "pdf") => void;
 }) {
   const { url: signedUrl, status } = useSignedFile(path);
+  const isPdf = Boolean(path && /\.pdf(?:$|[?#])/i.test(path));
   const displayUrl = path ? signedUrl : null;
+  const kind = isPdf ? "pdf" : "image";
 
   return (
     <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 transition hover:border-blue-300">
@@ -69,7 +68,7 @@ function DocumentPreviewCard({
         <p className="text-xs font-bold text-slate-800">{title}</p>
         {path ? (
           <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-            Berkas Terunggah
+            {isPdf ? "Dokumen PDF" : "Foto / gambar"}
           </span>
         ) : (
           <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
@@ -79,14 +78,22 @@ function DocumentPreviewCard({
       </div>
 
       <div 
-        onClick={() => displayUrl && onOpenPreview(title, displayUrl)}
-        className={`group relative min-h-[210px] w-full rounded-xl border border-slate-200 bg-white shadow-inner flex items-center justify-center transition-all ${
-          displayUrl ? "cursor-pointer hover:shadow-md" : ""
-        }`}
+        onClick={() => displayUrl && onOpenPreview(title, displayUrl, kind)}
+        className={`group relative min-h-[210px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-inner flex items-center justify-center transition-all hover:shadow-md ${displayUrl ? "cursor-pointer" : ""}`}
       >
         {status === "loading" && path ? (
           <div className="flex items-center justify-center p-8 text-slate-400">
             <Loader2 className="h-6 w-6 animate-spin text-blue-700" />
+          </div>
+        ) : displayUrl && isPdf ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-red-50 text-red-700">
+              <FileText className="size-7" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Dokumen PDF</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Buka di tab baru untuk membaca berkas lengkap.</p>
+            </div>
           </div>
         ) : displayUrl ? (
           <>
@@ -98,7 +105,7 @@ function DocumentPreviewCard({
             <div className="absolute inset-0 bg-slate-950/40 opacity-0 transition-opacity group-hover:opacity-100 flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
               <Maximize2 className="h-7 w-7" />
               <span className="text-xs font-bold px-3 py-1 bg-white/20 rounded-full border border-white/30 backdrop-blur-md">
-                Klik untuk memperbesar
+                Klik untuk memperbesar foto
               </span>
             </div>
           </>
@@ -110,15 +117,24 @@ function DocumentPreviewCard({
         )}
       </div>
 
-      {displayUrl && (
+      {displayUrl ? isPdf ? (
+        <a
+          href={displayUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full inline-flex min-h-11 items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-100 transition-colors"
+        >
+          <ExternalLink className="h-3.5 w-3.5" /> Buka dokumen PDF
+        </a>
+      ) : (
         <button
           type="button"
-          onClick={() => onOpenPreview(title, displayUrl)}
-          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 py-2 rounded-xl border border-blue-100 transition-colors"
+          onClick={() => onOpenPreview(title, displayUrl, "image")}
+          className="w-full inline-flex min-h-11 items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-100 transition-colors"
         >
-          <Maximize2 className="h-3.5 w-3.5" /> Buka Perbesar Foto {title}
+          <Maximize2 className="h-3.5 w-3.5" /> Buka perbesar foto
         </button>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -130,10 +146,9 @@ export default function AdminDetailLansiaPage() {
 
   const [lansia, setLansia] = useState<LansiaDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [lightbox, setLightbox] = useState<{ title: string; url: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ title: string; url: string; kind: "image" | "pdf" } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -157,26 +172,20 @@ export default function AdminDetailLansiaPage() {
     };
   }, [id]);
 
-  const handleVerify = async (status: "verified" | "rejected") => {
+  const handleDelete = async () => {
     if (!lansia) return;
-    setVerifying(true);
+    if (!window.confirm(`Hapus profil lansia ${lansia.nama}? Data akan disembunyikan dari platform.`)) return;
+    setDeleting(true);
     setError("");
-    setSuccessMsg("");
     try {
-      const response = await fetch("/api/koordinator/lansia", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lansia.id, status }),
-      });
+      const response = await fetch(`/api/admin/lansia/${lansia.id}`, { method: "DELETE" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || "Gagal memperbarui verifikasi");
-
-      setLansia((prev) => prev ? { ...prev, verified_status: status } : null);
-      setSuccessMsg(`Status lansia berhasil diubah menjadi ${status === "verified" ? "Terverifikasi" : "Ditolak"}.`);
+      if (!response.ok) throw new Error(payload.message || "Gagal menghapus profil lansia");
+      router.push("/admin/lansia");
     } catch (err: unknown) {
-      setError((err as Error).message || "Gagal memproses status verifikasi");
+      setError((err as Error).message || "Gagal menghapus profil lansia");
     } finally {
-      setVerifying(false);
+      setDeleting(false);
     }
   };
 
@@ -203,12 +212,10 @@ export default function AdminDetailLansiaPage() {
 
   if (!lansia) return null;
 
-  const status = lansia.verified_status ?? "verified";
-
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-3 py-6 pb-32 sm:px-6">
       {/* Top Bar Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => router.push("/admin/lansia")}
@@ -216,33 +223,16 @@ export default function AdminDetailLansiaPage() {
         >
           <ArrowLeft className="h-4 w-4" /> Kembali ke Data Lansia Platform
         </button>
-
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-            status === "verified"
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : status === "rejected"
-              ? "bg-red-50 text-red-700 border border-red-200"
-              : "bg-amber-50 text-amber-700 border border-amber-200"
-          }`}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={deleting}
+          onClick={handleDelete}
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
         >
-          {status === "verified" ? (
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          ) : status === "rejected" ? (
-            <XCircle className="h-3.5 w-3.5" />
-          ) : (
-            <ShieldCheck className="h-3.5 w-3.5" />
-          )}
-          {status === "verified" ? "Terverifikasi" : status === "rejected" ? "Ditolak" : "Perlu Verifikasi"}
-        </span>
+          <Trash2 className="h-4 w-4" aria-hidden="true" /> {deleting ? "Menghapus..." : "Hapus profil"}
+        </Button>
       </div>
-
-      {successMsg ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      ) : null}
 
       {error ? (
         <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
@@ -351,7 +341,7 @@ export default function AdminDetailLansiaPage() {
         </div>
       </div>
 
-      {/* Dokumen Ajuan Verifikasi (KTP & KK) */}
+      {/* Dokumen pendaftaran, dapat ditinjau bila diperlukan */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
@@ -359,8 +349,8 @@ export default function AdminDetailLansiaPage() {
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">Dokumen Berkas Pendaftaran (Klik Gambar untuk Memperbesar)</h3>
-              <p className="text-xs text-slate-500">KTP Lansia dan Dokumen Kartu Keluarga yang diajukan</p>
+              <h3 className="font-bold text-slate-900 text-sm">Dokumen berkas pendaftaran</h3>
+              <p className="text-xs text-slate-500">KTP lansia dan bukti hubungan keluarga. Dokumen belum melalui verifikasi manual.</p>
             </div>
           </div>
         </div>
@@ -369,42 +359,22 @@ export default function AdminDetailLansiaPage() {
           <DocumentPreviewCard
             title="1. KTP Lansia"
             path={lansia.dokumen_identitas_lansia_url}
+<<<<<<< HEAD
             onOpenPreview={(title, url) => setLightbox({ title, url })}
+=======
+            onOpenPreview={(title, url, kind) => setLightbox({ title, url, kind })}
+>>>>>>> origin/develop
           />
 
           <DocumentPreviewCard
             title="2. Dokumen Kartu Keluarga (KK)"
             path={lansia.dokumen_hubungan_keluarga_url}
+<<<<<<< HEAD
             onOpenPreview={(title, url) => setLightbox({ title, url })}
+=======
+            onOpenPreview={(title, url, kind) => setLightbox({ title, url, kind })}
+>>>>>>> origin/develop
           />
-        </div>
-      </div>
-
-      {/* Action Buttons for Verification */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h4 className="font-bold text-slate-900 text-sm">Aksi Verifikasi Admin</h4>
-          <p className="text-xs text-slate-500">Persetujuan platform untuk data diri dan berkas lansia.</p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={verifying}
-            onClick={() => handleVerify("rejected")}
-            className="w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 font-bold rounded-xl min-h-11 shrink-0 px-4"
-          >
-            <XCircle className="h-4 w-4 mr-1.5 shrink-0" /> Tolak Pendaftaran
-          </Button>
-          <Button
-            type="button"
-            disabled={verifying}
-            onClick={() => handleVerify("verified")}
-            className="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-md min-h-11 shrink-0 px-4"
-          >
-            <CheckCircle2 className="h-4 w-4 mr-1.5 shrink-0" /> Setujui Verifikasi
-          </Button>
         </div>
       </div>
 
@@ -436,11 +406,15 @@ export default function AdminDetailLansiaPage() {
             </div>
 
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/5">
-              <img
-                src={lightbox.url}
-                alt={lightbox.title}
-                className="max-h-[70vh] w-auto max-w-full object-contain rounded-xl shadow-lg border border-slate-200"
-              />
+              {lightbox.kind === "pdf" ? (
+                <iframe title={lightbox.title} src={lightbox.url} className="h-[70vh] w-full rounded-xl border border-slate-200 bg-white" />
+              ) : (
+                <img
+                  src={lightbox.url}
+                  alt={lightbox.title}
+                  className="max-h-[70vh] w-auto max-w-full object-contain rounded-xl shadow-lg border border-slate-200"
+                />
+              )}
             </div>
 
             <div className="border-t border-slate-100 px-6 py-3 bg-slate-50 flex justify-end">

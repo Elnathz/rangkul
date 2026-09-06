@@ -9,11 +9,11 @@ import {
 test("navigasi per peran hanya mengekspos tujuan yang nyata", () => {
   assert.deepEqual(
     ROLE_NAVIGATION.keluarga.map((item) => item.href),
-    ["/beranda", "/booking/new", "/kunjungan", "/lansia", "/beranda/pesan"],
+    ["/beranda", "/kunjungan", "/booking/new", "/beranda/pesan", "/beranda/profil"],
   );
   assert.deepEqual(
     ROLE_NAVIGATION.helper.map((item) => item.href),
-    ["/helper/dashboard", "/helper/tugas/baru", "/helper/tugas", "/helper/penghasilan", "/helper/pesan"],
+    ["/helper/dashboard", "/helper/tugas/baru", "/helper/tugas", "/helper/penghasilan", "/helper/pesan", "/helper/profil"],
   );
   assert.equal(
     ROLE_NAVIGATION.koordinator.some((item) => item.href === "/koordinator/pengawasan"),

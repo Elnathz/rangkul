@@ -2,8 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server';
 
 export async function getSignedUrl(path: string | null): Promise<string | null> {
   if (!path) return null;
-  // If it's already a full URL (e.g. from older dummy data), just return it
-  if (path.startsWith('http')) return path;
+  // If it's already a full URL or local asset path, just return it
+  if (path.startsWith('http') || path.startsWith('/')) return path;
 
   try {
     const adminSupabase = await createAdminClient();

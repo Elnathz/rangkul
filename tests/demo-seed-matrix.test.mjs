@@ -98,3 +98,22 @@ test("seed mengembalikan state marker yang dapat berubah selama demo", () => {
   assert.match(migration, /UPDATE public\.payments[\s\S]+task\.catatan = '\[DEMO_MATRIX\] Task dikerjakan'/);
   assert.match(migration, /DELETE FROM public\.emergency_alerts[\s\S]+task_id = v_task_id/);
 });
+
+test("fixture persetujuan Keluarga selalu memiliki layanan tambahan pending", () => {
+  assert.match(
+    migration,
+    /DELETE FROM public\.task_extra_services[\s\S]+\[DEMO_MATRIX\] Task menunggu Keluarga/,
+  );
+  assert.match(
+    migration,
+    /INSERT INTO public\.task_extra_services[\s\S]+menunggu_persetujuan_keluarga[\s\S]+\[DEMO_MATRIX\] Task menunggu Keluarga/,
+  );
+  assert.match(migration, /Task menunggu Keluarga'[\s\S]+harga_final = harga_dasar/);
+});
+
+test("blok deklarasi seed tidak mendeklarasikan variabel dua kali", () => {
+  const declarationBlock = migration.match(/DO \$\$\r?\nDECLARE([\s\S]*?)\r?\nBEGIN\r?\n\s+FOR user_data/)?.[1] ?? "";
+  assert.notEqual(declarationBlock, "");
+  assert.equal(declarationBlock.match(/^\s*lansia_5_id UUID;$/gm)?.length, 1);
+  assert.equal(declarationBlock.match(/^\s*category_id UUID;$/gm)?.length, 1);
+});

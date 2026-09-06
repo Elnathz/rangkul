@@ -9,6 +9,7 @@ test("Sprint 6 matching default off dan route mutasinya berhenti sebelum side ef
   const booking = read("src/app/api/booking/task/route.ts");
   const marketplace = read("src/app/api/tasks/marketplace/route.ts");
   const accept = read("src/app/api/tasks/[id]/accept/route.ts");
+  const bookingClient = read("src/components/keluarga/booking/BookingNewClient.tsx");
   const envExample = read(".env.example");
 
   assert.match(flag, /return value === "true"/);
@@ -29,4 +30,10 @@ test("Sprint 6 matching default off dan route mutasinya berhenti sebelum side ef
   );
   assert.match(accept, /mode_penugasan !== "langsung" && !isSprint6MatchingEnabled\(\)/);
   assert.ok(accept.indexOf("!isSprint6MatchingEnabled()") < accept.indexOf("accept_quick_task"), "quick accept harus menolak request sebelum RPC");
+  assert.match(
+    bookingClient,
+    /\["pelamar",\s*"cepat"\]/,
+    "entry booking umum hanya menawarkan dua mode Sprint 6",
+  );
+  assert.match(booking, /mode !== 'langsung' && !isSprint6MatchingEnabled\(\)/);
 });

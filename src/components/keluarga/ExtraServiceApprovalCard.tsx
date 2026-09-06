@@ -46,7 +46,7 @@ export function ExtraServiceApprovalCard({
       setDecision(null);
       setFeedback({
         title: decision === "disetujui" ? "Layanan tambahan disetujui" : "Layanan tambahan ditolak",
-        description: result.message || "Status tugas telah diperbarui.",
+        description: result.message || "Status kunjungan telah diperbarui.",
         tone: "success",
       });
       router.refresh();
@@ -86,12 +86,12 @@ export function ExtraServiceApprovalCard({
         description={feedback?.description || ""}
         tone={feedback?.tone || "success"}
       />
-      <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+      <section className="rounded-[18px] border border-amber-200 bg-[linear-gradient(135deg,#fff7e8_0%,#fffdf8_100%)] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-amber-800">Menunggu keputusan kamu</p>
+            <p className="text-xs font-bold text-amber-800">Keputusan Anda diperlukan</p>
             <h2 className="mt-1 text-lg font-black text-slate-950">{service.nama_layanan}</h2>
-            <p className="mt-1 text-sm text-slate-600">Helper mengajukan perubahan biaya sebelum melanjutkan tugas.</p>
+            <p className="mt-1 text-sm text-slate-600">Helper mengajukan layanan tambahan sebelum melanjutkan kunjungan.</p>
           </div>
           <div className="text-right">
             <p className="text-xs font-semibold text-slate-500">Tambahan</p>

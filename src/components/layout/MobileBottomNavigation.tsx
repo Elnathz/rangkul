@@ -22,7 +22,12 @@ export function MobileBottomNavigation({ role, items, badges }: MobileBottomNavi
   const prefersReducedMotion = useReducedMotion();
   const mobileItems = role === "keluarga"
     ? [...items].sort((left, right) => {
-      const order = ["/beranda", "/kunjungan", "/booking/new", "/lansia", "/beranda/pesan"];
+      const order = ["/beranda", "/kunjungan", "/booking/new", "/beranda/pesan", "/beranda/profil"];
+      return order.indexOf(left.href) - order.indexOf(right.href);
+    })
+    : role === "helper"
+    ? [...items].sort((left, right) => {
+      const order = ["/helper/dashboard", "/helper/tugas/baru", "/helper/tugas", "/helper/penghasilan", "/helper/pesan"];
       return order.indexOf(left.href) - order.indexOf(right.href);
     })
     : role === "koordinator"
