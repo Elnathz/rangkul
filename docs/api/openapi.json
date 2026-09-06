@@ -1656,6 +1656,49 @@
           }
         }
       }
+    },
+    "/api/users/me/delete": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Menganonimkan dan menutup akun pengguna",
+        "description": "Ketik HAPUS AKUN untuk menghapus data langsung, membersihkan object private, dan menutup sesi Auth. Histori transaksi dipertahankan.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirmation"
+                ],
+                "properties": {
+                  "confirmation": {
+                    "type": "string",
+                    "const": "HAPUS AKUN"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Akun dianonimkan dan Auth ditutup"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
     }
   },
   "components": {

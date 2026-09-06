@@ -48,7 +48,7 @@ export async function GET() {
         )
       `)
       .eq('status', 'pending_verification')
-      .ilike('wilayah_domisili', `%${koordinatorProfile.wilayah}%`);
+      .ilike('wilayah_domisili', '%' + koordinatorProfile.wilayah + '%');
 
     if (helperError) {
       return createApiError('server_error', helperError.message, 500);

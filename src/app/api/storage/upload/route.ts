@@ -2,9 +2,11 @@ import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import {
   ALLOWED_FILE_TYPES,
-  DOC_TYPES,
+  canUploadDocumentType,
   MAX_FILE_SIZE,
+  uploadSchema,
 } from '@/lib/validations/storage';
+import { extractOwnedPrivateObjectPath } from '@/lib/storage/private-object';
 
 export async function POST(request: Request) {
   try {
@@ -23,8 +25,15 @@ export async function POST(request: Request) {
       return createApiError('validation_error', 'File wajib diisi', 400);
     }
 
-    if (!docType || !(DOC_TYPES as readonly string[]).includes(docType)) {
+    const docTypeValidation = uploadSchema.safeParse({ docType });
+    if (!docTypeValidation.success) {
       return createApiError('validation_error', 'Tipe dokumen tidak valid', 400);
+    }
+
+    const { data: profile } = await supabase.from('users').select('role').eq('id', authUser.id).maybeSingle();
+    const role = profile?.role ?? (authUser.user_metadata?.role as string | undefined);
+    if (!canUploadDocumentType(role, docTypeValidation.data.docType)) {
+      return createApiError('forbidden', 'Role Anda tidak dapat mengunggah tipe file ini', 403);
     }
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
@@ -47,7 +56,10 @@ export async function POST(request: Request) {
     }
 
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filePath = `${authUser.id}/${docType}/${Date.now()}-${sanitizedFileName}`;
+    const filePath = `${authUser.id}/${docTypeValidation.data.docType}/${Date.now()}-${sanitizedFileName}`;
+    if (!extractOwnedPrivateObjectPath(filePath, authUser.id, docTypeValidation.data.docType)) {
+      return createApiError('validation_error', 'Lokasi file privat tidak valid', 422);
+    }
 
     const adminSupabase = await createAdminClient();
 

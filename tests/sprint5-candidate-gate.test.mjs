@@ -13,27 +13,27 @@ test("Sprint 6 matching default off dan route mutasinya berhenti sebelum side ef
   const envExample = read(".env.example");
 
   assert.match(flag, /return value === "true"/);
-  assert.match(envExample, /^SPRINT6_MATCHING_ENABLED=false$/m);
+  assert.match(envExample, /^FLEXIBLE_ASSIGNMENT_ENABLED=false$/m);
 
   for (const route of [booking, marketplace, accept]) {
-    assert.match(route, /isSprint6MatchingEnabled/);
+    assert.match(route, /isFlexibleAssignmentEnabled/);
     assert.match(route, /createApiError\(['"]not_found['"], ['"]Fitur belum tersedia['"], 404\)/);
   }
 
   assert.ok(
-    booking.indexOf("!isSprint6MatchingEnabled()") < booking.indexOf("from('tasks')"),
+    booking.indexOf("!isFlexibleAssignmentEnabled()") < booking.indexOf("from('tasks')"),
     "booking harus menolak mode Sprint 6 sebelum insert task",
   );
   assert.ok(
-    marketplace.indexOf("isSprint6MatchingEnabled") < marketplace.indexOf(".rpc(\"get_task_marketplace\""),
+    marketplace.indexOf("isFlexibleAssignmentEnabled") < marketplace.indexOf(".rpc(\"get_task_marketplace\""),
     "marketplace harus menolak request sebelum RPC",
   );
-  assert.match(accept, /mode_penugasan !== "langsung" && !isSprint6MatchingEnabled\(\)/);
-  assert.ok(accept.indexOf("!isSprint6MatchingEnabled()") < accept.indexOf("accept_quick_task"), "quick accept harus menolak request sebelum RPC");
+  assert.match(accept, /mode_penugasan !== "langsung" && !isFlexibleAssignmentEnabled\(\)/);
+  assert.ok(accept.indexOf("!isFlexibleAssignmentEnabled()") < accept.indexOf("accept_quick_task"), "quick accept harus menolak request sebelum RPC");
   assert.match(
     bookingClient,
     /\["pelamar",\s*"cepat"\]/,
     "entry booking umum hanya menawarkan dua mode Sprint 6",
   );
-  assert.match(booking, /mode !== 'langsung' && !isSprint6MatchingEnabled\(\)/);
+  assert.match(booking, /mode !== 'langsung' && !isFlexibleAssignmentEnabled\(\)/);
 });

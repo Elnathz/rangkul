@@ -44,7 +44,7 @@ export async function GET() {
         .maybeSingle();
 
       if (kp?.wilayah) {
-        query = query.ilike('kecamatan', `%${kp.wilayah}%`);
+        query = query.ilike('kecamatan', '%' + kp.wilayah + '%');
       }
     }
 

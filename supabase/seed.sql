@@ -322,15 +322,15 @@ BEGIN
     status, tingkat_kepercayaan, tugas_selesai_berturut, total_tugas_selesai
   )
   VALUES
-    (gen_random_uuid(), helper_1_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 02.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0041, 110.4371, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'terpercaya', 7, 7),
-    (gen_random_uuid(), helper_2_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 03.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0052, 110.4382, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 6, 6),
-    (gen_random_uuid(), helper_3_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 04.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0062, 110.4392, TRUE, 4, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 8, 8),
-    (gen_random_uuid(), helper_4_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper verified dengan fallback Admin untuk wilayah baru.', 'RT 05 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0072, 110.4402, TRUE, 5, NULL, TRUE, 'verified', 'terpercaya', 5, 5),
-    (gen_random_uuid(), helper_5_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper baru yang masih probation.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0043, 110.4373, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'probation', 1, 1),
-    (gen_random_uuid(), helper_6_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', '[DEMO_TRUST_PROMOTION] Helper probation dengan empat tugas bersih.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0053, 110.4383, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'probation', 4, 4),
-    (gen_random_uuid(), helper_7_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper dengan dua laporan aktif untuk demo moderasi.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0063, 110.4393, FALSE, 4, koordinator_rt_3_id, FALSE, 'under_review', 'probation', 0, 0),
-    (gen_random_uuid(), helper_8_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah RT 01.', 'RT 01 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0046, 110.4376, TRUE, 2, koordinator_rt_1_id, FALSE, 'verified', 'terpercaya', 5, 5),
-    (gen_random_uuid(), helper_9_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper terpercaya wilayah Kedungpane.', 'RT 01 / RW 02, Kelurahan Kedungpane, Kecamatan Mijen, Kota Semarang, Jawa Tengah', -7.0765, 110.3276, TRUE, 5, koordinator_kedungpane_id, FALSE, 'verified', 'terpercaya', 6, 6)
+    (gen_random_uuid(), helper_1_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Rini sudah tiga tahun mendampingi tetangga lanjut usia di RT 02. Ia terbiasa menjemput obat yang sudah disiapkan keluarga, menemani percakapan sore, dan menuliskan kabar kunjungan dengan bahasa sederhana. Pengalaman itu membuatnya peka pada perubahan energi tanpa mengambil keputusan kesehatan keluarga.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0041, 110.4371, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'terpercaya', 7, 7),
+    (gen_random_uuid(), helper_2_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Dedi berpengalaman menjadi relawan karang taruna dan mendampingi orang tuanya saat pemulihan aktivitas harian. Ia paling sering membantu belanja ringan, mengingatkan jadwal yang ditulis keluarga, dan memastikan pintu rumah terkunci sebelum pulang. Ia selalu menghubungi keluarga bila menemukan hal di luar catatan kunjungan.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0052, 110.4382, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 6, 6),
+    (gen_random_uuid(), helper_3_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Sari terbiasa mendampingi neneknya dan beberapa warga di RT 04 selama lebih dari dua tahun. Ia sabar menemani membaca, merapikan ruang yang ringan, dan membantu menggunakan telepon untuk video call keluarga. Catatan kunjungannya selalu memisahkan apa yang ia lihat dari pesan yang disampaikan oleh keluarga.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0062, 110.4392, TRUE, 4, koordinator_rt_3_id, FALSE, 'verified', 'terpercaya', 8, 8),
+    (gen_random_uuid(), helper_4_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Yusuf memiliki pengalaman kerja di layanan pelanggan dan menjadi pendamping sukarela ketika komunitas membuka pos kunjungan. Ia terbiasa berkomunikasi tenang, mengulang penjelasan tanpa menggurui, dan meminta persetujuan keluarga sebelum membantu hal di luar layanan. Profilnya ditinjau melalui jalur fallback Admin untuk wilayah baru.', 'RT 05 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0072, 110.4402, TRUE, 5, NULL, TRUE, 'verified', 'terpercaya', 5, 5),
+    (gen_random_uuid(), helper_5_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Dewi baru bergabung setelah beberapa bulan mendampingi bibinya dan membantu mengatur belanja serta rutinitas rumah. Ia masih probation dan memilih layanan yang ringan agar dapat belajar mencatat waktu, mengonfirmasi kebutuhan, dan menutup kunjungan dengan laporan yang rapi. Koordinator memantau konsistensinya sebelum radius layanan diperluas.', 'RT 02 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0043, 110.4373, TRUE, 2, koordinator_rt_2_id, FALSE, 'verified', 'probation', 1, 1),
+    (gen_random_uuid(), helper_6_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', '[DEMO_TRUST_PROMOTION] Arif pernah menjadi pengurus kegiatan warga dan selama ini membantu empat kunjungan sederhana tanpa laporan yang terlewat. Ia nyaman mendampingi percakapan, mengantar kebutuhan yang sudah dibayar keluarga, dan mengabari koordinator ketika jadwal berubah. Statusnya masih probation supaya proses promosi tetap dapat dilihat di demo.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0053, 110.4383, TRUE, 3, koordinator_rt_3_id, FALSE, 'verified', 'probation', 4, 4),
+    (gen_random_uuid(), helper_7_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Lina memiliki pengalaman mendampingi kegiatan warga dan sering membantu percakapan singkat di rumah lansia. Dua laporan komunitas sedang ditinjau sehingga ketersediaannya dimatikan sementara. Narasi ini memperlihatkan bahwa laporan bukan vonis, melainkan alasan untuk pemeriksaan koordinator dan kesempatan memberi klarifikasi.', 'RT 04 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0063, 110.4393, FALSE, 4, koordinator_rt_3_id, FALSE, 'under_review', 'probation', 0, 0),
+    (gen_random_uuid(), helper_8_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Fajar sudah lima kali mendampingi tetangga di RT 01 dan dikenal tepat waktu ketika membantu belanja harian atau menemani jalan di halaman. Ia membawa catatan kecil berisi permintaan keluarga, mengulang detail sebelum berangkat, dan menulis ringkasan setelah selesai agar kabar tetap tersambung.', 'RT 01 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0046, 110.4376, TRUE, 2, koordinator_rt_1_id, FALSE, 'verified', 'terpercaya', 5, 5),
+    (gen_random_uuid(), helper_9_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Bagus tinggal dekat Kedungpane dan berpengalaman membantu orang tuanya mengatur belanja, percakapan, serta penggunaan ponsel sederhana. Ia memilih radius lima kilometer agar dapat datang tepat waktu, mengonfirmasi titik temu dengan keluarga, dan tidak menjanjikan bantuan yang berada di luar layanan yang dipilih.', 'RT 01 / RW 02, Kelurahan Kedungpane, Kecamatan Mijen, Kota Semarang, Jawa Tengah', -7.0765, 110.3276, TRUE, 5, koordinator_kedungpane_id, FALSE, 'verified', 'terpercaya', 6, 6)
   ON CONFLICT (user_id) DO UPDATE SET
     ktp_url = EXCLUDED.ktp_url,
     bio = EXCLUDED.bio,
@@ -387,28 +387,28 @@ BEGIN
 
   category_id := ringan_category_id;
 
-  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
-  SELECT gen_random_uuid(), keluarga_1_id, 'Giorno', 'Jl. Pleburan Barat No. 12, RT 03 / RW 05, Semarang Selatan', -7.0054, 110.4388, 'Perlu ditemani mengobrol dan diingatkan minum obat.'
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, umur, tingkat_mobilitas, kebutuhan_khusus, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_1_id, 'Giorno', 'Jl. Pleburan Barat No. 12, RT 03 / RW 05, Semarang Selatan', -7.0054, 110.4388, 77, 'mandiri_dengan_pengawasan', 'Pengingat rutinitas keluarga dan teman berbicara.', 'Keluarga mencatat bahwa Giorno masih mandiri untuk aktivitas dasar, tetapi lebih tenang jika ada teman berbicara dan pengingat rutinitas yang sudah mereka susun. Pendamping dapat menemani percakapan, membantu mengambil barang ringan, dan menyampaikan perubahan suasana kepada keluarga tanpa menilai atau mengubah dukungan harian.'
   WHERE keluarga_1_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_1_id AND deleted_at IS NULL);
 
-  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
-  SELECT gen_random_uuid(), keluarga_2_id, 'Mbah Demo Dua', 'Jl. Pleburan Timur No. 2, RT 02 / RW 05, Semarang Selatan', -7.0042, 110.4372, 'Perlu ditemani berjalan ringan.'
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, umur, tingkat_mobilitas, kebutuhan_khusus, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_2_id, 'Mbah Demo Dua', 'Jl. Pleburan Timur No. 2, RT 02 / RW 05, Semarang Selatan', -7.0042, 110.4372, 72, 'perlu_pendampingan_ringan', 'Jadwal makan dan minum perlu diingatkan oleh keluarga.', 'Keluarga menyampaikan bahwa Mbah Demo Dua lebih nyaman berjalan pelan di halaman dan perlu pegangan saat berpindah dari kursi ke teras. Pendamping cukup menemani aktivitas ringan, memperhatikan rasa lelah, lalu mengabari keluarga bila rutinitas hari itu berubah.'
   WHERE keluarga_2_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_2_id AND nama = 'Mbah Demo Dua');
 
-  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
-  SELECT gen_random_uuid(), keluarga_3_id, 'Mbah Demo Tiga', 'Jl. Pleburan Timur No. 3, RT 03 / RW 05, Semarang Selatan', -7.0052, 110.4382, 'Perlu diingatkan jadwal makan.'
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, umur, tingkat_mobilitas, kebutuhan_khusus, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_3_id, 'Mbah Demo Tiga', 'Jl. Pleburan Timur No. 3, RT 03 / RW 05, Semarang Selatan', -7.0052, 110.4382, 81, 'mandiri_dengan_pengawasan', 'Pengingat jadwal makan dan bantuan membuka aplikasi panggilan.', 'Mbah Demo Tiga masih dapat beraktivitas sendiri di rumah, tetapi keluarga ingin ada teman berbicara ketika siang terasa sepi. Ia kadang lupa urutan jadwal makan, sehingga pendamping mengikuti catatan keluarga, membantu membuka panggilan video, dan tidak membuat perubahan pada rutinitas tanpa persetujuan keluarga.'
   WHERE keluarga_3_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_3_id AND nama = 'Mbah Demo Tiga');
 
-  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
-  SELECT gen_random_uuid(), keluarga_4_id, 'Mbah Demo Empat', 'Jl. Pleburan Timur No. 4, RT 04 / RW 05, Semarang Selatan', -7.0062, 110.4392, 'Senang berbincang dan membaca.'
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, umur, tingkat_mobilitas, kebutuhan_khusus, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_4_id, 'Mbah Demo Empat', 'Jl. Pleburan Timur No. 4, RT 04 / RW 05, Semarang Selatan', -7.0062, 110.4392, 68, 'mandiri', 'Teman membaca koran dan pengingat membawa kacamata.', 'Mbah Demo Empat menikmati koran pagi dan cerita tentang kebun. Keluarga hanya meminta pendamping menjaga suasana tetap santai, membantu mengambil bacaan dari rak yang rendah, serta menulis satu dua kalimat tentang kegiatan hari itu. Pendamping tidak perlu menafsirkan keluhan atau memberi saran di luar layanan.'
   WHERE keluarga_4_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_4_id AND nama = 'Mbah Demo Empat');
 
-  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, catatan_kondisi)
-  SELECT gen_random_uuid(), keluarga_5_id, 'Bu Sulastri', 'Jl. Kedungpane Raya No. 8, RT 01 / RW 02, Mijen', -7.0760, 110.3270, 'Senang berkebun dan berjalan di pagi hari.'
+  INSERT INTO public.lansia_profiles (id, keluarga_id, nama, alamat, lat, lng, umur, tingkat_mobilitas, kebutuhan_khusus, catatan_kondisi)
+  SELECT gen_random_uuid(), keluarga_5_id, 'Bu Sulastri', 'Jl. Kedungpane Raya No. 8, RT 01 / RW 02, Mijen', -7.0760, 110.3270, 76, 'perlu_pendampingan_ringan', 'Waktu istirahat dan air minum perlu diingatkan saat berkebun.', 'Bu Sulastri masih senang menyiram tanaman pada pagi hari, tetapi keluarga melihat ia lebih cepat lelah setelah berdiri lama. Pendamping menemani dari jalur yang aman, menyiapkan kursi dan air yang sudah disediakan keluarga, lalu mencatat apakah kegiatan berlangsung nyaman tanpa menyimpulkan kondisi kesehatan.'
   WHERE keluarga_5_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.lansia_profiles WHERE keluarga_id = keluarga_5_id AND nama = 'Bu Sulastri');
 
@@ -429,7 +429,10 @@ BEGIN
       kecamatan = 'Semarang Selatan',
       kabupaten_kota = 'Kota Semarang',
       provinsi = 'Jawa Tengah',
-      catatan_kondisi = 'Perlu ditemani mengobrol dan diingatkan minum obat.',
+      umur = 77,
+      tingkat_mobilitas = 'mandiri_dengan_pengawasan',
+      kebutuhan_khusus = 'Pengingat rutinitas keluarga dan teman berbicara.',
+      catatan_kondisi = 'Keluarga mencatat bahwa Giorno masih mandiri untuk aktivitas dasar, tetapi lebih tenang jika ada teman berbicara dan pengingat rutinitas yang sudah mereka susun. Pendamping dapat menemani percakapan, membantu mengambil barang ringan, dan menyampaikan perubahan suasana kepada keluarga tanpa menilai atau mengubah dukungan harian.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
@@ -444,6 +447,10 @@ BEGIN
       kecamatan = 'Semarang Selatan',
       kabupaten_kota = 'Kota Semarang',
       provinsi = 'Jawa Tengah',
+      umur = 72,
+      tingkat_mobilitas = 'perlu_pendampingan_ringan',
+      kebutuhan_khusus = 'Jadwal makan dan minum perlu diingatkan oleh keluarga.',
+      catatan_kondisi = 'Keluarga menyampaikan bahwa Mbah Demo Dua lebih nyaman berjalan pelan di halaman dan perlu pegangan saat berpindah dari kursi ke teras. Pendamping cukup menemani aktivitas ringan, memperhatikan rasa lelah, lalu mengabari keluarga bila rutinitas hari itu berubah.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
@@ -458,6 +465,10 @@ BEGIN
       kecamatan = 'Semarang Selatan',
       kabupaten_kota = 'Kota Semarang',
       provinsi = 'Jawa Tengah',
+      umur = 81,
+      tingkat_mobilitas = 'mandiri_dengan_pengawasan',
+      kebutuhan_khusus = 'Pengingat jadwal makan dan bantuan membuka aplikasi panggilan.',
+      catatan_kondisi = 'Mbah Demo Tiga masih dapat beraktivitas sendiri di rumah, tetapi keluarga ingin ada teman berbicara ketika siang terasa sepi. Ia kadang lupa urutan jadwal makan, sehingga pendamping mengikuti catatan keluarga, membantu membuka panggilan video, dan tidak membuat perubahan pada rutinitas tanpa persetujuan keluarga.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
@@ -472,6 +483,10 @@ BEGIN
       kecamatan = 'Semarang Selatan',
       kabupaten_kota = 'Kota Semarang',
       provinsi = 'Jawa Tengah',
+      umur = 68,
+      tingkat_mobilitas = 'mandiri',
+      kebutuhan_khusus = 'Teman membaca koran dan pengingat membawa kacamata.',
+      catatan_kondisi = 'Mbah Demo Empat menikmati koran pagi dan cerita tentang kebun. Keluarga hanya meminta pendamping menjaga suasana tetap santai, membantu mengambil bacaan dari rak yang rendah, serta menulis satu dua kalimat tentang kegiatan hari itu. Pendamping tidak perlu menafsirkan keluhan atau memberi saran di luar layanan.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
@@ -486,6 +501,10 @@ BEGIN
       kecamatan = 'Mijen',
       kabupaten_kota = 'Kota Semarang',
       provinsi = 'Jawa Tengah',
+      umur = 76,
+      tingkat_mobilitas = 'perlu_pendampingan_ringan',
+      kebutuhan_khusus = 'Waktu istirahat dan air minum perlu diingatkan saat berkebun.',
+      catatan_kondisi = 'Bu Sulastri masih senang menyiram tanaman pada pagi hari, tetapi keluarga melihat ia lebih cepat lelah setelah berdiri lama. Pendamping menemani dari jalur yang aman, menyiapkan kursi dan air yang sudah disediakan keluarga, lalu mencatat apakah kegiatan berlangsung nyaman tanpa menyimpulkan kondisi kesehatan.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
@@ -607,7 +626,7 @@ BEGIN
 
   IF core_helper_user_id IS NOT NULL THEN
     INSERT INTO public.helper_profiles (id, user_id, ktp_url, bio, wilayah_domisili, domisili_lat, domisili_lng, is_available, radius_layanan_km, koordinator_id, status, tingkat_kepercayaan)
-    VALUES (gen_random_uuid(), core_helper_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Helper demo utama Mas Burgas.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0051, 110.4381, TRUE, 5, core_koordinator_profile_id, 'verified', 'probation')
+    VALUES (gen_random_uuid(), core_helper_user_id, 'demo/identitas_lansia/identitas-lansia-demo.png', 'Andi sudah beberapa tahun membantu keluarga di sekitar Pleburan mengantar kebutuhan harian dan menemani lansia menggunakan ponsel. Ia terbiasa mengonfirmasi permintaan sebelum berangkat, menjaga percakapan tetap nyaman, dan menulis kabar singkat setelah kunjungan agar keluarga dapat mengikuti kegiatan dari jauh.', 'RT 03 / RW 05, Kelurahan Pleburan, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah', -7.0051, 110.4381, TRUE, 5, core_koordinator_profile_id, 'verified', 'probation')
     ON CONFLICT (user_id) DO UPDATE SET
       ktp_url = EXCLUDED.ktp_url,
       bio = EXCLUDED.bio,
@@ -1066,7 +1085,6 @@ SET helper_id = NULL,
     completed_at = NULL,
     cancelled_at = NULL,
     cancellation_reason = NULL,
-    expires_at = NOW() + INTERVAL '1 hour',
     updated_at = NOW()
 WHERE catatan = '[DEMO_MATRIX] Task diajukan marketplace';
 
@@ -1197,8 +1215,8 @@ UPDATE public.payments payment
 SET amount = 50000,
     jumlah_total = 50000,
     helper_share = 45000,
-    platform_fee = 1500,
-    koordinator_share = 3500,
+    platform_fee = 3500,
+    koordinator_share = 1500,
     status = 'held_escrow',
     payment_method = 'midtrans',
     held_at = NOW() - INTERVAL '1 hour',
@@ -1213,8 +1231,8 @@ UPDATE public.payments payment
 SET amount = 70000,
     jumlah_total = 70000,
     helper_share = 63000,
-    platform_fee = 2100,
-    koordinator_share = 4900,
+    platform_fee = 4900,
+    koordinator_share = 2100,
     status = 'released',
     payment_method = 'midtrans',
     held_at = NOW() - INTERVAL '4 days',

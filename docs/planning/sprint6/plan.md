@@ -76,7 +76,7 @@ Blocker ini harus hijau sebelum feature flag Sprint 6 dapat dipertimbangkan akti
 - [x] Kandidat Koordinator memakai wilayah canonical. Koordinator RT yang persis sama diprioritaskan, sedangkan Koordinator RW hanya dikembalikan bila Koordinator RT tidak tersedia.
 - [x] `POST /api/helper/apply` menghitung ulang eligibility Koordinator. `koordinator_id` lintas RT/RW ditolak `422` sebelum profil Helper diubah.
 - [x] Browser hanya menerima nama, tingkat, dan label wilayah Koordinator. Nomor telepon serta field lokasi terstruktur tidak ikut dikirim.
-- [x] Katalog Keluarga membaca `matching_enabled` dari respons server. Dropdown mode, CTA Lowongan, dan CTA Cari Cepat tidak dirender ketika `SPRINT6_MATCHING_ENABLED` nonaktif, sehingga redirect fail-closed tidak membentuk dead end.
+- [x] Katalog Keluarga membaca `matching_enabled` dari respons server. Dropdown mode, CTA Lowongan, dan CTA Cari Cepat tidak dirender ketika `FLEXIBLE_ASSIGNMENT_ENABLED` nonaktif, sehingga entry booking tetap memberi langkah memilih Helper tanpa dead end.
 - [x] OpenAPI diperbarui agar role, nama parameter katalog, kontrak feature flag, dan endpoint pencarian Koordinator sama dengan kode.
 - [x] Unit test membuktikan prioritas RT, fallback RW, penolakan Koordinator salah wilayah, dan gating CTA. Matrix runtime cloud lulus 295/295 tanpa skip.
 
@@ -85,7 +85,7 @@ Blocker ini harus hijau sebelum feature flag Sprint 6 dapat dipertimbangkan akti
 - Sprint 6 berlangsung 3-5 September 2026. Deadline teknis internal adalah 5 September pukul 18.00 WIB.
 - Semua perubahan bekerja di branch fitur dan terintegrasi ke `develop`. PR `develop` ke `main` hanya dibuat setelah quality gate Sprint 6 hijau.
 - Tanggal 6 September tidak boleh dipakai untuk menambah fitur. Pukul 00.00-12.00 WIB hanya untuk verifikasi production, akun demo, README, video cadangan, repository, dan bukti submission.
-- `SPRINT6_MATCHING_ENABLED` default `false`. API dan UI harus fail closed ketika flag tidak aktif.
+- `FLEXIBLE_ASSIGNMENT_ENABLED` default `false`. API dan UI harus fail closed ketika mode penugasan fleksibel tidak aktif.
 - Mode `langsung` adalah regression baseline. Request lama tanpa `mode_penugasan` diperlakukan sebagai `langsung`.
 - State task tetap `diajukan`, `menunggu_persetujuan_koordinator`, `dikonfirmasi`, `dikerjakan`, `menunggu_persetujuan_keluarga`, `selesai`, dan `dibatalkan`.
 - Tidak ada bidding, negosiasi harga, auto-dispatch algorithm, live map, ETA, atau klaim layanan darurat.
@@ -242,7 +242,7 @@ Jika satu owner terlambat, owner lain hanya mengambil task yang sudah memiliki i
 
 **Interfaces:**
 
-- Produces: `isSprint6MatchingEnabled(value?: string): boolean`.
+- Produces: `isFlexibleAssignmentEnabled(value?: string): boolean`.
 - Produces: `TaskAssignmentMode`, `CreateDirectTaskInput`, `CreateApplicantTaskInput`, dan `CreateQuickTaskInput` dari validation module.
 - Consumes: TDD §3.14 sebagai satu-satunya sumber kombinasi mode, helper, dan jadwal.
 
@@ -250,10 +250,10 @@ Jika satu owner terlambat, owner lain hanya mengambil task yang sudah memiliki i
 
 ```js
 test("Sprint 6 matching default off dan hanya aktif untuk literal true", () => {
-  assert.equal(isSprint6MatchingEnabled(undefined), false);
-  assert.equal(isSprint6MatchingEnabled("false"), false);
-  assert.equal(isSprint6MatchingEnabled("TRUE"), false);
-  assert.equal(isSprint6MatchingEnabled("true"), true);
+  assert.equal(isFlexibleAssignmentEnabled(undefined), false);
+  assert.equal(isFlexibleAssignmentEnabled("false"), false);
+  assert.equal(isFlexibleAssignmentEnabled("TRUE"), false);
+  assert.equal(isFlexibleAssignmentEnabled("true"), true);
 });
 ```
 
@@ -263,14 +263,14 @@ Expected: FAIL karena module belum ada.
 - [ ] **Step 2: Implementasikan feature flag minimal**
 
 ```ts
-export function isSprint6MatchingEnabled(
-  value = process.env.SPRINT6_MATCHING_ENABLED,
+export function isFlexibleAssignmentEnabled(
+  value = process.env.FLEXIBLE_ASSIGNMENT_ENABLED,
 ): boolean {
   return value === "true";
 }
 ```
 
-Tambahkan `SPRINT6_MATCHING_ENABLED=false` ke `.env.example`. Jangan memakai `NEXT_PUBLIC_` karena API adalah authority dan flag deployment tidak perlu masuk bundle browser.
+Tambahkan `FLEXIBLE_ASSIGNMENT_ENABLED=false` ke `.env.example`. Jangan memakai `NEXT_PUBLIC_` karena API adalah authority dan flag deployment tidak perlu masuk bundle browser.
 
 - [ ] **Step 3: Jalankan test flag sampai lulus**
 
@@ -1242,11 +1242,11 @@ Untuk 375px, 768px, 1024px, dan 1440px periksa mode selector, booking form, appl
 
 - [ ] **Step 5: Verifikasi feature flag deployment**
 
-- Production sebelum keputusan go/no-go: `SPRINT6_MATCHING_ENABLED=false` atau tidak diset.
-- Preview branch Sprint 6: `SPRINT6_MATCHING_ENABLED=true` untuk dry run kedua mode.
+- Production sebelum keputusan go/no-go: `FLEXIBLE_ASSIGNMENT_ENABLED=false` atau tidak diset.
+- Preview branch mode fleksibel: `FLEXIBLE_ASSIGNMENT_ENABLED=true` untuk dry run kedua mode.
 - API Sprint 6 saat off: `404` tanpa side effect.
 - Existing direct booking, payment, report, dan Riwayat tetap berjalan saat off.
-- Setelah semua gate hijau, set production `SPRINT6_MATCHING_ENABLED=true`, deploy candidate yang sama dengan hasil quality gate, lalu ulangi smoke test semua role.
+- Setelah semua gate hijau, set production `FLEXIBLE_ASSIGNMENT_ENABLED=true`, deploy candidate yang sama dengan hasil quality gate, lalu ulangi smoke test semua role.
 - Jika deployment production gagal smoke test, kembalikan flag ke `false` dan gunakan baseline Sprint 5. Jangan menambal fitur baru pada 6 September.
 
 - [ ] **Step 6: Ambil keputusan teknis go/no-go paling lambat 5 September 18.00 WIB**
