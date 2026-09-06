@@ -53,9 +53,8 @@ test("detail kunjungan menandatangani foto private setelah ownership dan membaca
   assert.match(familyDetailPage, /\.eq\("keluarga_id", user\.id\)/);
   assert.match(familyDetailPage, /resolvePrivatePhotoUrl/);
   assert.match(familyDetailPage, /createSignedUrl/);
-  assert.match(familyDetailPage, /payments \( status, payment_method, held_at, released_at \)/);
-  assert.match(familyDetail, /task\.payment\?\.status === "released"/);
-  assert.match(familyDetail, /Dana kunjungan sudah dicairkan/);
+  assert.match(familyDetailPage, /payments \( status, payment_method, (?:jumlah_total, )?held_at, released_at \)/);
+  assert.match(familyDetail, /paymentStatus=\{task\.payment\?\.status\}/);
 });
 
 test("migration demo mengarahkan Helper ke akun Andi", () => {

@@ -37,12 +37,28 @@ test("hero menjelaskan Rangkul tanpa search atau kategori yang mengganggu cerita
   assert.match(hero, /Lihat Cara Kerja/);
 });
 
-test("pilihan peran tidak menjual pendapatan atau komisi sebagai klaim landing", () => {
+test("simulasi hasil role memakai aturan TDD dan tidak menjanjikan pendapatan", () => {
   const roles = readFileSync("src/components/landing/RolesSection.tsx", "utf8");
 
-  assert.doesNotMatch(roles, /90%/);
-  assert.doesNotMatch(roles, /3%/);
-  assert.doesNotMatch(roles, /pendapatanmu/);
+  assert.match(roles, /90%/);
+  assert.match(roles, /3%/);
+  assert.match(roles, /Simulasi, bukan jaminan/);
+  assert.match(roles, /pembayaran dirilis/);
+  assert.match(roles, /harga_dasar/);
+  assert.doesNotMatch(roles, /gaji|penghasilan pasti|jaminan pendapatan/i);
+});
+
+test("simulator hasil hanya memakai katalog layanan resmi", () => {
+  const roles = readFileSync("src/components/landing/RolesSection.tsx", "utf8");
+
+  for (const service of ["Antar Obat", "Pengingat Obat", "Belanja Kebutuhan", "Menemani Mengobrol", "Membersihkan Rumah Ringan", "Bantuan Teknologi", "Kontrol Kesehatan"]) {
+    assert.match(roles, new RegExp(service));
+  }
+  assert.match(roles, /35000/);
+  assert.match(roles, /25000/);
+  assert.match(roles, /120000/);
+  assert.match(roles, /90/);
+  assert.match(roles, /3/);
 });
 
 test("alur landing membawa pengunjung dari masalah ke kontrol keluarga", () => {

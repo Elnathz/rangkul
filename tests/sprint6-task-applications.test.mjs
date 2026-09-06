@@ -88,8 +88,9 @@ test("Sprint 6 frontend pages and components mobile-first contract", () => {
   assert.match(applyButton, /min-h-\[44px\]|min-h-\[48px\]/);
 
   // Link integrasi antrean pelamar pada detail keluarga
-  assert.match(detailKeluarga, /\/kunjungan\/\$\{task\.id\}\/pelamar/);
-  assert.match(detailKeluarga, /Pilih dari Pelamar/);
+  const actionPanel = read("src/components/keluarga/task-detail/TaskNextActionPanel.tsx");
+  assert.match(actionPanel, /\/kunjungan\/\$\{taskId\}\/pelamar/);
+  assert.match(applicantsClient, /Pilih dari Pelamar/);
 
   // Integrasi ApplyTaskButton pada detail tugas helper
   assert.match(detailHelper, /ApplyTaskButton/);

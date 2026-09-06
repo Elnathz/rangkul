@@ -54,7 +54,7 @@ test("beranda Keluarga memakai permukaan brand biru sebagai puncak hierarki aksi
 test("aksi sekunder beranda Keluarga tetap memiliki target sentuh minimum", () => {
   const page = readFileSync("src/app/(keluarga)/beranda/page.tsx", "utf8");
 
-  assert.match(page, /href="\/lansia"\s+className="[^"]*min-h-11[^"]*"/);
+  assert.match(page, /href="\/beranda\/profil"\s+className="[^"]*min-h-11[^"]*"/);
   assert.match(page, /className="min-h-11 gap-1 rounded-xl text-xs font-semibold"[\s\S]{0,100}href="\/lansia\/tambah"/);
   assert.match(page, /href="\/kunjungan"\s+className="[^"]*min-h-11[^"]*"/);
 });

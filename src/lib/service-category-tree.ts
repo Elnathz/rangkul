@@ -19,7 +19,13 @@ export type ServiceCategoryGroup = {
 
 export function getSelectableServiceCategories(rows: ServiceCategoryRow[]): SelectableServiceCategory[] {
   const categoryById = new Map(rows.map((row) => [row.id, row]));
-  const parentIds = new Set(rows.flatMap((row) => (row.parent_id ? [row.parent_id] : [])));
+  // An inactive child must not hide an otherwise selectable parent. Admin can
+  // deactivate a child while keeping the parent as a standalone service.
+  const parentIds = new Set(
+    rows
+      .filter((row) => row.is_active)
+      .flatMap((row) => (row.parent_id ? [row.parent_id] : [])),
+  );
 
   return rows
     .filter((row) => row.is_active && !parentIds.has(row.id))

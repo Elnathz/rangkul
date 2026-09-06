@@ -3,6 +3,7 @@ import { apiResponse, createApiError } from '@/lib/api-response';
 import { distanceInKm } from '@/lib/geo';
 import { isUrgentProbationBooking } from '@/lib/helper/task-acceptance';
 import { isSprint6MatchingEnabled } from '@/lib/features/sprint6-matching';
+import { getSelectableServiceCategories, type ServiceCategoryRow } from '@/lib/service-category-tree';
 
 // GET /api/helpers — Katalog helper verified dengan filter radius dan kategori
 // Query params: lat (float), lng (float), radius_km (float, default 10), category_id (uuid)
@@ -41,7 +42,8 @@ export async function GET(request: Request) {
         tingkat_kepercayaan, verified_by_admin_fallback,
         users!inner ( id, full_name ),
         helper_service_categories (
-          service_categories ( id, nama, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, jarak_min_km, jarak_max_km )
+          service_category_id,
+          service_categories ( id, nama, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, is_active, parent_id, jarak_min_km, jarak_max_km )
         )
       `)
       .eq('status', 'verified')
@@ -58,8 +60,22 @@ export async function GET(request: Request) {
       return createApiError('server_error', error.message, 500);
     }
 
+    const { data: categoryRows, error: categoryError } = await supabase
+      .from('service_categories')
+      .select('id, nama, tingkat, parent_id, is_active')
+      .or('is_active.eq.true,parent_id.is.null');
+    if (categoryError) return createApiError('server_error', categoryError.message, 500);
+    const selectableCategoryIds = new Set(
+      getSelectableServiceCategories((categoryRows ?? []) as ServiceCategoryRow[]).map((category) => category.id),
+    );
+
     let filtered = (helpers ?? []).map((helper) => ({
       ...helper,
+      // Keep stale or parent category links out of the public catalog. The
+      // helper profile mutation validates the same leaf-only rule.
+      helper_service_categories: (helper.helper_service_categories ?? []).filter((item) =>
+        selectableCategoryIds.has(item.service_category_id ?? item.service_categories?.id),
+      ),
       jarak_km: lat !== null && lng !== null && helper.domisili_lat !== null && helper.domisili_lng !== null
         ? Number(distanceInKm(lat, lng, helper.domisili_lat, helper.domisili_lng).toFixed(2))
         : null,

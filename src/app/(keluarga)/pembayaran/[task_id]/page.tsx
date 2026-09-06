@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { formatPaymentDeadline, getPaymentPresentation, paymentRequiresCompletion } from "@/components/keluarga/task-detail/task-detail-presentation";
 
 declare global {
   interface Window {
@@ -12,7 +13,7 @@ declare global {
   }
 }
 
-type Task = { id: string; status: string; harga_dasar: number; harga_final: number };
+type Task = { id: string; status: string; jadwal_waktu: string; harga_dasar: number; harga_final: number };
 type Payment = {
   status: string;
   amount: number;
@@ -146,21 +147,40 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
   const isHeld = payment?.status === "held_escrow";
   const isReleased = payment?.status === "released";
   const isRefunded = payment?.status === "refunded" || payment?.status === "dibatalkan_kompensasi";
+  const isDisputed = payment?.status === "disputed";
+  const canStartPayment = ["dikonfirmasi", "dikerjakan", "selesai"].includes(task.status);
+  const paymentPresentation = getPaymentPresentation(payment?.status, task.status as "dikonfirmasi" | "dikerjakan" | "selesai" | "diajukan" | "menunggu_persetujuan_koordinator" | "menunggu_persetujuan_keluarga" | "dibatalkan", task.jadwal_waktu);
+  const canCheckout = canStartPayment && paymentRequiresCompletion(payment?.status, task.status as "dikonfirmasi" | "dikerjakan" | "selesai" | "diajukan" | "menunggu_persetujuan_koordinator" | "menunggu_persetujuan_keluarga" | "dibatalkan", task.jadwal_waktu);
+  const paymentDeadline = formatPaymentDeadline(task.jadwal_waktu);
   const canRelease = isHeld && task.status === "selesai";
+  const unavailablePaymentMessage = task.status === "menunggu_persetujuan_keluarga"
+    ? "Tunggu keputusan layanan tambahan. Total pembayaran akan diperbarui setelah keputusan selesai."
+    : task.status === "dibatalkan"
+      ? "Kunjungan ini sudah dibatalkan. Tidak ada pembayaran baru yang perlu dilakukan."
+      : "Belum perlu dibayar. Pembayaran tersedia setelah Kunjungan dikonfirmasi.";
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
       <Link href={`/kunjungan/${taskId}`} className="mb-8 inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" />Kembali ke Kunjungan</Link>
       <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-900">Pembayaran Kunjungan</h1>
       <p className="mb-8 font-medium text-slate-500">Pembayaran diproses melalui Midtrans Sandbox atau Saldo Demo. Status akhir hanya mengikuti webhook / RPC server.</p>
+      {canCheckout && paymentDeadline ? (
+        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-extrabold">Batas pembayaran</p>
+          <p className="mt-1">Selesaikan sebelum <time dateTime={task.jadwal_waktu}>{paymentDeadline}</time> agar kunjungan tetap berjalan sesuai jadwal.</p>
+        </div>
+      ) : null}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0D47A1] to-blue-800 p-6 text-white shadow-xl"><Wallet className="absolute right-8 top-8 h-28 w-28 opacity-10" /><p className="relative text-sm text-blue-100">Total dari server</p><h2 className="relative mt-1 text-4xl font-black tabular-nums">{money(task.harga_final)}</h2><div className="relative mt-6 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm"><ShieldCheck className="h-4 w-4 text-green-300" />{snapReady ? "Midtrans Sandbox siap" : "Menyiapkan Midtrans Sandbox"}</div></div>
       <div className="mb-8 space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm"><h3 className="text-lg font-bold text-slate-900">Rincian Transaksi</h3><div className="flex justify-between text-sm text-slate-600"><span>Harga dasar layanan</span><span className="font-semibold text-slate-900">{money(task.harga_dasar)}</span></div>{task.harga_final !== task.harga_dasar && <div className="flex justify-between text-sm text-slate-600"><span>Layanan tambahan disetujui</span><span className="font-semibold text-slate-900">{money(task.harga_final - task.harga_dasar)}</span></div>}<div className="flex justify-between border-t border-slate-100 pt-4 text-lg font-black text-slate-900"><span>Total bayar</span><span className="text-[#0D47A1]">{money(task.harga_final)}</span></div>{payment && <p className="text-sm text-slate-500">Status: <span className="font-bold text-slate-900">{payment.status}</span></p>}</div>
       {error && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {isHeld && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah diterima dan ditahan sampai Keluarga mengonfirmasi tugas selesai.</div>}
       {isHeld && !canRelease && <div className="mb-4 rounded-xl bg-blue-50 p-4 text-sm font-medium text-blue-800">Tunggu Helper mengirim laporan kunjungan. Tombol pencairan muncul setelah task berstatus selesai.</div>}
       {isReleased && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah dicairkan ke pihak terkait.</div>}
-      {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses refund atau kompensasi.</div>}
-      {!isHeld && !isReleased && !isRefunded && (
+      {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses pengembalian atau kompensasi.</div>}
+      {isDisputed && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sedang ditinjau. Kami akan memberi pembaruan setelah ada keputusan.</div>}
+      {paymentPresentation.tone === "danger" && <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">{paymentPresentation.description}</div>}
+      {!canStartPayment && !payment && <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-900">{unavailablePaymentMessage}</div>}
+      {canCheckout && (
         <div className="space-y-3">
           <Button onClick={handlePayment} disabled={processing} className="h-14 w-full rounded-2xl bg-brand-gradient text-lg font-bold text-white shadow-xl">
             {processing ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" />Menyiapkan Midtrans...</> : "Bayar dengan Midtrans"}

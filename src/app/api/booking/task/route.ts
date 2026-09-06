@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     // Fetch category and its tingkat
     const { data: category, error: catError } = await supabase
       .from('service_categories')
-      .select('harga_dasar, is_high_risk, is_active, jarak_min_km, jarak_max_km')
+      .select('harga_dasar, is_high_risk, is_active, parent_id, jarak_min_km, jarak_max_km')
       .eq('id', service_category_id)
       .single();
 
@@ -59,6 +59,17 @@ export async function POST(request: Request) {
     
     if (!category.is_active) {
       return createApiError('validation_error', 'Kategori layanan tidak aktif atau merupakan parent category', 400);
+    }
+
+    const { data: activeChildren, error: childError } = await supabase
+      .from('service_categories')
+      .select('id')
+      .eq('parent_id', service_category_id)
+      .eq('is_active', true)
+      .limit(1);
+    if (childError) return createApiError('server_error', childError.message, 500);
+    if (activeChildren?.length) {
+      return createApiError('validation_error', 'Kategori induk hanya digunakan untuk mengelompokkan layanan', 422);
     }
 
     const mode = mode_penugasan ?? 'langsung';

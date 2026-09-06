@@ -43,7 +43,7 @@ export default function CariHelperPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/lansia").then((response) => response.json()),
-      fetch("/api/categories").then((response) => response.json()),
+      fetch("/api/categories", { cache: "no-store" }).then((response) => response.json()),
     ])
       .then(([lansiaData, categoryData]) => {
         setLansias(lansiaData.profiles ?? []);

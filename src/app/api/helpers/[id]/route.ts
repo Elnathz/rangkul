@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
+import { getSelectableServiceCategories, type ServiceCategoryRow } from '@/lib/service-category-tree';
 
 // GET /api/helpers/[id] — Detail satu Helper verified
 export async function GET(
@@ -26,7 +27,8 @@ export async function GET(
         created_at,
         users!inner ( id, full_name ),
         helper_service_categories (
-          service_categories ( id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, jarak_min_km, jarak_max_km )
+          service_category_id,
+          service_categories ( id, nama, deskripsi, estimasi_durasi_menit, harga_dasar, tingkat, is_high_risk, is_active, parent_id, jarak_min_km, jarak_max_km )
         )
       `)
       .eq('id', id)
@@ -36,6 +38,18 @@ export async function GET(
     if (error || !helper) {
       return createApiError('not_found', 'Helper tidak ditemukan atau tidak tersedia', 404);
     }
+
+    const { data: categoryRows, error: categoryError } = await supabase
+      .from('service_categories')
+      .select('id, nama, tingkat, parent_id, is_active')
+      .or('is_active.eq.true,parent_id.is.null');
+    if (categoryError) return createApiError('server_error', categoryError.message, 500);
+    const selectableCategoryIds = new Set(
+      getSelectableServiceCategories((categoryRows ?? []) as ServiceCategoryRow[]).map((category) => category.id),
+    );
+    helper.helper_service_categories = (helper.helper_service_categories ?? []).filter((item) =>
+      selectableCategoryIds.has(item.service_category_id ?? item.service_categories?.id),
+    );
 
     return apiResponse({ helper }, 200);
   } catch (error: unknown) {

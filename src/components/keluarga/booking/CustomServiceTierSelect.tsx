@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronDown, Check, Clock, AlertCircle, Sparkles, X, Search, LayoutGrid } from "lucide-react";
 import ServiceSelectionModal from "@/components/services/ServiceSelectionModal";
+import { getSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
 
 export type ServiceCategoryItem = {
   id: string;
@@ -13,6 +14,7 @@ export type ServiceCategoryItem = {
   is_high_risk?: boolean;
   parent_id?: string | null;
   parentName?: string | null;
+  is_active?: boolean;
 };
 
 type TingkatTabKey = "semua" | "ringan" | "sedang" | "berat";
@@ -87,13 +89,31 @@ export default function CustomServiceTierSelect({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const triggerButtonRef = React.useRef<HTMLButtonElement>(null);
 
+  // Normalize the catalog at the component boundary as a defense-in-depth
+  // guard. Admin parent rows are labels only and must never become booking
+  // choices, even when a caller fetched the raw table directly.
+  const selectableCategories = React.useMemo(() => {
+    const rows = categories.map((category) => ({
+      ...category,
+      tingkat: category.tingkat === "berat" || category.tingkat === "sedang" ? category.tingkat : "ringan",
+      parent_id: category.parent_id ?? null,
+      is_active: category.is_active ?? true,
+    })) as ServiceCategoryRow[];
+    const selectable = getSelectableServiceCategories(rows);
+    const byId = new Map(categories.map((category) => [category.id, category]));
+    return selectable.map((category) => ({
+      ...byId.get(category.id),
+      ...category,
+    })) as ServiceCategoryItem[];
+  }, [categories]);
+
   // Filter allowed categories
   const filteredCategories = React.useMemo(() => {
     if (!allowHighRisk) {
-      return categories.filter((c) => !c.is_high_risk && c.tingkat !== "berat");
+      return selectableCategories.filter((c) => !c.is_high_risk && c.tingkat !== "berat");
     }
-    return categories;
-  }, [categories, allowHighRisk]);
+    return selectableCategories;
+  }, [selectableCategories, allowHighRisk]);
 
   // Available tiers in this dataset
   const availableTiers = React.useMemo(() => {
