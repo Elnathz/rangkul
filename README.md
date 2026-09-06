@@ -117,21 +117,42 @@ Gunakan akun demo di bagian [Data Demo dan Seeder](#data-demo-dan-seeder). Data 
 
 ### Screenshot Aplikasi
 
-Screenshot tidak di-embed agar dokumentasi tidak menampilkan gambar yang sudah kedaluwarsa. Setelah mengambil screenshot dari live demo atau lokal, simpan file sesuai path berikut:
+<div align="center">
 
-| Tampilan | Path file yang digunakan |
-| --- | --- |
-| Landing page desktop | `docs/screenshots/landing-desktop-1440.png` |
-| Landing page mobile | `docs/screenshots/landing-mobile-375.png` |
-| Dashboard Keluarga | `docs/screenshots/dashboard-keluarga-1440.png` |
-| Dashboard Helper | `docs/screenshots/dashboard-helper-1440.png` |
-| Dashboard Koordinator | `docs/screenshots/dashboard-koordinator-1440.png` |
-| Dashboard Admin | `docs/screenshots/dashboard-admin-1440.png` |
-| Detail kunjungan | `docs/screenshots/detail-kunjungan-1440.png` |
-| Riwayat Rangkul | `docs/screenshots/riwayat-rangkul-1440.png` |
-| Peta wilayah demo | `docs/screenshots/peta-wilayah-demo-1440.png` |
+<img src="docs/screenshots/landing-desktop-1440.png" alt="Landing Page Desktop" width="800" />
+<p><em>Landing page pada viewport desktop (1440px)</em></p>
 
-Folder tujuan screenshot: `docs/screenshots/`. Repository saat ini sudah memiliki beberapa contoh capture desktop, tetapi nama path di atas menjadi konvensi agar screenshot baru mudah dicari dan diganti.
+<img src="docs/screenshots/landing-mobile-375.png" alt="Landing Page Mobile" width="360" />
+<p><em>Landing page pada viewport mobile (375px)</em></p>
+
+<img src="docs/screenshots/dashboard-keluarga-1440.png" alt="Dashboard Keluarga" width="800" />
+<p><em>Dashboard Keluarga: ringkasan profil lansia, status kunjungan, dan akses cepat pencarian Helper</em></p>
+
+<img src="docs/screenshots/dashboard-helper-1440.png" alt="Dashboard Helper" width="800" />
+<p><em>Dashboard Helper: jangkauan radius tugas, daftar tugas aktif, dan status verifikasi</em></p>
+
+<img src="docs/screenshots/dashboard-koordinator-1440.png" alt="Dashboard Koordinator" width="800" />
+<p><em>Dashboard Koordinator: antrean verifikasi Helper wilayah dan pemantauan tugas</em></p>
+
+<img src="docs/screenshots/dashboard-admin-1440.png" alt="Dashboard Admin" width="800" />
+<p><em>Dashboard Admin: manajemen pengguna, persetujuan Koordinator, dan tata kelola platform</em></p>
+
+<img src="docs/screenshots/fitur-kunjungan-1440.png" alt="Detail Kunjungan" width="800" />
+<p><em>Detail kunjungan: lini masa status penugasan, bukti pengerjaan, dan catatan laporan</em></p>
+
+</div>
+
+### Berkas Uji Coba untuk Pengujian Upload
+
+Saat melakukan demo atau pengujian pada fitur unggah berkas (seperti verifikasi dokumen Helper, pendaftaran Koordinator, atau pelengkap profil), penguji dapat langsung menggunakan berkas simulasi yang telah disediakan di folder [`docs/demo/`](docs/demo):
+
+| Berkas | Path Berkas | Peruntukan Uji Coba |
+| --- | --- | --- |
+| **KTP Demo** | [`docs/demo/demoKTP.jpeg`](docs/demo/demoKTP.jpeg) | Form verifikasi identitas Helper atau pendaftaran pengguna |
+| **Kartu Keluarga Demo** | [`docs/demo/demoKK.jpeg`](docs/demo/demoKK.jpeg) | Verifikasi data domisili keluarga dan hubungan lansia |
+| **Surat Keterangan RT Demo** | [`docs/demo/demoKeteranganRT.jpeg`](docs/demo/demoKeteranganRT.jpeg) | Bukti penugasan Koordinator RT/RW atau pengantar domisili |
+
+Berkas di atas menggunakan data fiktif dan aman digunakan untuk demonstrasi alur tanpa perlu mengunggah dokumen kependudukan asli.
 
 ## Teknologi
 
