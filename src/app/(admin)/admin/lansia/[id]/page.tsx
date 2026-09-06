@@ -359,21 +359,13 @@ export default function AdminDetailLansiaPage() {
           <DocumentPreviewCard
             title="1. KTP Lansia"
             path={lansia.dokumen_identitas_lansia_url}
-<<<<<<< HEAD
-            onOpenPreview={(title, url) => setLightbox({ title, url })}
-=======
             onOpenPreview={(title, url, kind) => setLightbox({ title, url, kind })}
->>>>>>> origin/develop
           />
 
           <DocumentPreviewCard
             title="2. Dokumen Kartu Keluarga (KK)"
             path={lansia.dokumen_hubungan_keluarga_url}
-<<<<<<< HEAD
-            onOpenPreview={(title, url) => setLightbox({ title, url })}
-=======
             onOpenPreview={(title, url, kind) => setLightbox({ title, url, kind })}
->>>>>>> origin/develop
           />
         </div>
       </div>

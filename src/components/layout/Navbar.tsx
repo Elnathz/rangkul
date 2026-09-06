@@ -95,6 +95,8 @@ export default function Navbar() {
     };
   }, [profileOpen]);
 
+  const role = isAppRole(user?.user_metadata?.role) ? user.user_metadata.role : null;
+  const username = String(user?.user_metadata?.full_name ?? user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Profil");
   const isNoSidebarPage = pathname === "/koordinator/pengajuan" || pathname === "/koordinator/profil/edit";
   const rawMetaAvatar = (user?.user_metadata?.avatar_url || user?.user_metadata?.foto_url || null) as string | null;
   const isDirectAvatar = Boolean(rawMetaAvatar && (rawMetaAvatar.startsWith("http://") || rawMetaAvatar.startsWith("https://") || rawMetaAvatar.startsWith("/")));
