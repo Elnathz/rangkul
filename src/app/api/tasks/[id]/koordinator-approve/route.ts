@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { apiResponse, createApiError } from "@/lib/api-response";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -7,7 +7,8 @@ type TaskRelation = {
   status: string;
   helper_id: string | null;
   expires_at: string | null;
-  helper_profiles: { koordinator_id: string | null } | { koordinator_id: string | null }[] | null;
+  helper_profiles: { id: string; koordinator_id: string | null; verified_by_admin_fallback?: boolean } | { id: string; koordinator_id: string | null; verified_by_admin_fallback?: boolean }[] | null;
+  lansia_profiles: { kelurahan: string | null; kecamatan: string | null; rw: number | null; rt: number | null } | { kelurahan: string | null; kecamatan: string | null; rw: number | null; rt: number | null }[] | null;
 };
 
 function getRelation<T>(value: T | T[] | null) {
@@ -26,31 +27,41 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     const { data: userProfile, error: userError } = await supabase
       .from("users")
-      .select("role")
+      .select("role, kelurahan, kecamatan, rw, rt")
       .eq("id", user.id)
       .single();
 
-    if (userError || userProfile?.role !== "koordinator") {
-      return createApiError("forbidden", "Hanya Koordinator yang dapat menyetujui tugas", 403);
+    if (userError || (userProfile?.role !== "koordinator" && userProfile?.role !== "admin")) {
+      return createApiError("forbidden", "Hanya Koordinator atau Admin yang dapat menyetujui tugas", 403);
     }
 
-    const { data: koordinator, error: koordinatorError } = await supabase
-      .from("koordinator_profiles")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    let koordinatorProfileId: string | null = null;
+    if (userProfile.role === "koordinator") {
+      const { data: koordinator, error: koordinatorError } = await supabase
+        .from("koordinator_profiles")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    if (koordinatorError || !koordinator) {
-      return createApiError("not_found", "Profil Koordinator tidak ditemukan", 404);
+      if (koordinatorError || !koordinator) {
+        return createApiError("not_found", "Profil Koordinator tidak ditemukan", 404);
+      }
+
+      if (koordinator.status !== "verified") {
+        return createApiError("forbidden", "Akun Koordinator belum diverifikasi", 403);
+      }
+
+      koordinatorProfileId = koordinator.id;
     }
 
-    if (koordinator.status !== "verified") {
-      return createApiError("forbidden", "Akun Koordinator belum diverifikasi", 403);
-    }
-
-    const { data: taskRow, error: taskError } = await supabase
+    const taskWriter = await createAdminClient();
+    const { data: taskRow, error: taskError } = await taskWriter
       .from("tasks")
-      .select("id, status, helper_id, expires_at, helper_profiles!inner ( koordinator_id )")
+      .select(`
+        id, status, helper_id, expires_at,
+        helper_profiles ( id, koordinator_id, verified_by_admin_fallback ),
+        lansia_profiles ( kelurahan, kecamatan, rw, rt )
+      `)
       .eq("id", id)
       .maybeSingle();
 
@@ -64,6 +75,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     const task = taskRow as unknown as TaskRelation;
     const helper = getRelation(task.helper_profiles);
+    const lansia = getRelation(task.lansia_profiles);
 
     if (!task.expires_at || new Date(task.expires_at).getTime() <= Date.now()) {
       return createApiError("conflict", "Batas waktu persetujuan Koordinator sudah lewat", 409);
@@ -71,13 +83,28 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     if (
       task.status !== "menunggu_persetujuan_koordinator" ||
-      !task.helper_id ||
-      helper?.koordinator_id !== koordinator.id
+      !task.helper_id
     ) {
       return createApiError("conflict", "Tugas sudah berubah atau tidak membutuhkan persetujuan Anda", 409);
     }
 
-    const { data: approvedTask, error: approveError } = await supabase
+    if (userProfile.role !== "admin") {
+      // 1. Koordinator asal Helper
+      const isHelperKoordinator = helper?.koordinator_id === koordinatorProfileId;
+
+      // 2. Koordinator wilayah tugas/lansia (jika helper fallback admin / tanpa koordinator terpasang)
+      const isFallbackHelper = !helper?.koordinator_id || helper?.verified_by_admin_fallback === true;
+      const isTaskRegionKoordinator = isFallbackHelper && Boolean(
+        (lansia?.kelurahan && userProfile.kelurahan && lansia.kelurahan.toLowerCase().trim() === userProfile.kelurahan.toLowerCase().trim()) ||
+        (lansia?.kecamatan && userProfile.kecamatan && lansia.kecamatan.toLowerCase().trim() === userProfile.kecamatan.toLowerCase().trim())
+      );
+
+      if (!isHelperKoordinator && !isTaskRegionKoordinator) {
+        return createApiError("conflict", "Tugas sudah berubah atau tidak membutuhkan persetujuan Anda", 409);
+      }
+    }
+
+    const { data: approvedTask, error: approveError } = await taskWriter
       .from("tasks")
       .update({ status: "dikonfirmasi" })
       .eq("id", id)
@@ -95,7 +122,9 @@ export async function PATCH(_request: Request, context: RouteContext) {
     }
 
     return apiResponse({
-      message: "Tugas disetujui dan Helper dapat melanjutkan ke jadwal tugas",
+      message: userProfile.role === "admin"
+        ? "Tugas disetujui oleh Admin Platform dan Helper dapat melanjutkan ke jadwal tugas"
+        : "Tugas disetujui dan Helper dapat melanjutkan ke jadwal tugas",
       task: approvedTask,
     });
   } catch (error: unknown) {
