@@ -1,6 +1,7 @@
 import { apiResponse, createApiError } from "@/lib/api-response";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { demoWalletTopupSchema } from "@/lib/validations/demo-wallet";
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -61,14 +62,29 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return createApiError("unauthorized", "Sesi tidak valid", 401);
 
-    const { data: wallet, error } = await supabase
+    const admin = await createAdminClient();
+
+    const { data: wallet, error } = await admin
       .from("demo_wallets")
-      .select("saldo, updated_at")
+      .select("id, saldo, updated_at")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (error) return createApiError("server_error", "Gagal mengambil saldo", 500);
-    return apiResponse({ saldo: wallet?.saldo ?? 0, updated_at: wallet?.updated_at ?? null });
+
+    const { data: transactions } = await admin
+      .from("demo_wallet_ledger")
+      .select("id, amount, saldo_setelah, alasan, entry_type, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    return apiResponse({
+      saldo: Number(wallet?.saldo ?? 0),
+      updated_at: wallet?.updated_at ?? null,
+      wallet_id: wallet?.id ?? null,
+      transactions: transactions ?? [],
+    });
   } catch {
     return createApiError("server_error", "Terjadi kesalahan server", 500);
   }
