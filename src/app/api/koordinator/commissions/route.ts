@@ -62,11 +62,33 @@ export async function GET(request: Request) {
       query = query.lte("released_at", toDate);
     }
 
-    const { data: payments, count, error } = await query
-      .order("released_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    let summaryQuery = adminSupabase
+      .from("payments")
+      .select(`
+        koordinator_share,
+        tasks!inner (
+          helper_profiles!inner ( koordinator_id )
+        )
+      `)
+      .eq("status", "released")
+      .eq("tasks.helper_profiles.koordinator_id", profile.id);
 
-    if (error) {
+    if (fromDate) {
+      summaryQuery = summaryQuery.gte("released_at", fromDate);
+    }
+    if (toDate) {
+      summaryQuery = summaryQuery.lte("released_at", toDate);
+    }
+
+    const [
+      { data: payments, count, error },
+      { data: summaryRows, error: summaryError },
+    ] = await Promise.all([
+      query.order("released_at", { ascending: false }).range(offset, offset + limit - 1),
+      summaryQuery,
+    ]);
+
+    if (error || summaryError) {
       console.error("Commissions query error:", error);
       return createApiError("server_error", "Gagal mengambil data komisi", 500);
     }
@@ -83,7 +105,10 @@ export async function GET(request: Request) {
       };
     });
 
-    const totalCommission = items.reduce((sum, item) => sum + Number(item.koordinator_share || 0), 0);
+    const totalCommission = (summaryRows || []).reduce(
+      (sum: number, payment: { koordinator_share?: number | null }) => sum + Number(payment.koordinator_share || 0),
+      0,
+    );
     const totalTransactions = count || 0;
 
     return apiResponse({

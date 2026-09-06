@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUploadFile } from "@/lib/storage/file-validation";
 
 export default function KoordinatorPengajuanPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -46,6 +49,20 @@ export default function KoordinatorPengajuanPage() {
     if (!skFile) {
       setErrorMsg("Harap mengunggah SK Jabatan / Bukti Kepengurusan.");
       return;
+    }
+
+    const uploadChecks: Array<[File | null, "image" | "document", string]> = [
+      [skFile, "document", "SK Jabatan"],
+      [ktpFile, "document", "KTP"],
+      [fotoWajahFile, "image", "Foto wajah"],
+    ];
+    for (const [file, kind, label] of uploadChecks) {
+      if (!file) continue;
+      const fileError = validateUploadFile(file, { kind, label });
+      if (fileError) {
+        setErrorMsg(fileError);
+        return;
+      }
     }
     
     setLoading(true);
@@ -162,6 +179,14 @@ export default function KoordinatorPengajuanPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 md:p-10 mb-20 bg-white rounded-2xl border border-slate-200 shadow-sm mt-8">
+      <Link
+        href="/koordinator/dashboard"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all sm:text-sm"
+      >
+        <ChevronLeft className="w-4 h-4 text-slate-600 shrink-0" />
+        <span>Kembali ke Beranda</span>
+      </Link>
+
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold block text-[#0D47A1]">
           Pengajuan Akses Koordinator
@@ -172,8 +197,18 @@ export default function KoordinatorPengajuanPage() {
       </div>
       
       {errorMsg && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl">
-          {errorMsg}
+        <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl space-y-3">
+          <p>{errorMsg}</p>
+          {errorMsg.toLowerCase().includes("verified") && (
+            <div className="pt-1">
+              <Link
+                href="/koordinator/antrean"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D47A1] text-white font-bold text-xs rounded-xl shadow-xs hover:bg-blue-800 transition-all active:scale-95"
+              >
+                <span>Buka Antrean Verifikasi Helper</span>
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -283,9 +318,18 @@ export default function KoordinatorPengajuanPage() {
               htmlFor="foto_wajah_upload"
               className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
             >
-              <input type="file" accept="image/jpeg,image/png" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+              <input type="file" accept={IMAGE_ACCEPT} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    const fileError = validateUploadFile(file, { kind: "image", label: "Foto wajah" });
+                    if (fileError) {
+                      setErrorMsg(fileError);
+                      e.target.value = "";
+                      setFotoWajahFile(null);
+                      setFotoWajahPreview(null);
+                      return;
+                    }
+                    setErrorMsg("");
                     setFotoWajahFile(file);
                     if (file.type.startsWith('image/')) setFotoWajahPreview(URL.createObjectURL(file));
                     else setFotoWajahPreview(null);
@@ -310,7 +354,7 @@ export default function KoordinatorPengajuanPage() {
                   </div>
                   <div className="relative z-10">
                     <p className="text-sm font-semibold text-slate-700">Upload Foto Wajah (Opsional)</p>
-                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB (JPG, PNG)</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB, JPG atau PNG</p>
                   </div>
                 </>
               )}
@@ -320,9 +364,18 @@ export default function KoordinatorPengajuanPage() {
               htmlFor="ktp_upload"
               className="relative border border-dashed border-slate-300 rounded-xl p-6 text-center flex flex-col justify-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
             >
-              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+              <input type="file" accept={DOCUMENT_ACCEPT} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    const fileError = validateUploadFile(file, { kind: "document", label: "KTP" });
+                    if (fileError) {
+                      setErrorMsg(fileError);
+                      e.target.value = "";
+                      setKtpFile(null);
+                      setKtpPreview(null);
+                      return;
+                    }
+                    setErrorMsg("");
                     setKtpFile(file);
                     if (file.type.startsWith('image/')) setKtpPreview(URL.createObjectURL(file));
                     else setKtpPreview(null);
@@ -347,7 +400,7 @@ export default function KoordinatorPengajuanPage() {
                   </div>
                   <div className="relative z-10">
                     <p className="text-sm font-semibold text-slate-700">Upload KTP (Opsional)</p>
-                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB (JPG, PNG)</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB, JPG, PNG, atau PDF</p>
                   </div>
                 </>
               )}
@@ -357,9 +410,18 @@ export default function KoordinatorPengajuanPage() {
               htmlFor="sk_upload"
               className="relative border border-dashed border-slate-300 rounded-xl flex flex-col justify-center p-6 text-center space-y-3 bg-slate-50 hover:bg-[#F5F8FC] hover:border-[#0D47A1]/40 transition-colors cursor-pointer group overflow-hidden min-h-[160px]"
             >
-              <input type="file" accept="image/jpeg,image/png,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
+              <input type="file" accept={DOCUMENT_ACCEPT} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    const fileError = validateUploadFile(file, { kind: "document", label: "SK Jabatan" });
+                    if (fileError) {
+                      setErrorMsg(fileError);
+                      e.target.value = "";
+                      setSkFile(null);
+                      setSkPreview(null);
+                      return;
+                    }
+                    setErrorMsg("");
                     setSkFile(file);
                     if (file.type.startsWith('image/')) setSkPreview(URL.createObjectURL(file));
                     else setSkPreview(null);
@@ -386,7 +448,7 @@ export default function KoordinatorPengajuanPage() {
                   </div>
                   <div className="relative z-10">
                     <p className="text-sm font-semibold text-slate-700">{skFile ? skFile.name : 'SK Jabatan / Bukti Kepengurusan'} <span className="text-red-500">*</span></p>
-                    <p className="text-xs text-slate-500 mt-1">Foto SK Kelurahan atau Sertifikat Resmi</p>
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB, JPG, PNG, atau PDF</p>
                   </div>
                 </>
               )}

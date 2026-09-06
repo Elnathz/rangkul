@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Clock, RotateCcw, Shield, ShieldAlert, UserRound, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Shield, ShieldAlert, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ReportItem = {

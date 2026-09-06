@@ -70,6 +70,7 @@ export async function GET(request: Request) {
       notifications: notifications || [],
       unread_count: unreadCount || 0,
       badges,
+      role: role || null,
     });
   } catch (error: unknown) {
     return createApiError(

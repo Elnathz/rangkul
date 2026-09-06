@@ -95,15 +95,15 @@ test("runtime cloud: wrong region, fallback aktif, alasan wajib, dan review appe
   const password = "Rangkul2026*";
   const [{ error: adminAuthError }, { error: coordinatorAuthError }] = await Promise.all([
     admin.auth.signInWithPassword({ email: "demoadmin@rangkul.id", password }),
-    wrongCoordinator.auth.signInWithPassword({ email: "demokoordinator2@rangkul.id", password }),
+    wrongCoordinator.auth.signInWithPassword({ email: "sulikoordinator@rangkul.id", password }),
   ]);
   assert.equal(adminAuthError, null, adminAuthError?.message);
   assert.equal(coordinatorAuthError, null, coordinatorAuthError?.message);
 
   const [{ data: helperUser }, { data: reporter }, { data: fallbackUser }] = await Promise.all([
-    service.from("users").select("id").eq("email", "demohelper3@rangkul.id").single(),
-    service.from("users").select("id").eq("email", "demokeluarga@rangkul.id").single(),
-    service.from("users").select("id").eq("email", "demohelper6@rangkul.id").single(),
+    service.from("users").select("id").eq("email", "dedihelper@rangkul.id").single(),
+    service.from("users").select("id").eq("email", "ratnakeluarga@rangkul.id").single(),
+    service.from("users").select("id").eq("email", "dewihelper@rangkul.id").single(),
   ]);
   const { data: reportedHelper } = await service.from("helper_profiles").select("id, status, tingkat_kepercayaan, tugas_selesai_berturut").eq("user_id", helperUser.id).single();
   const reportedHelperBackup = { status: reportedHelper.status, tingkat_kepercayaan: reportedHelper.tingkat_kepercayaan, tugas_selesai_berturut: reportedHelper.tugas_selesai_berturut };

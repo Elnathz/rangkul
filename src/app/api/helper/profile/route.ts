@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { apiResponse, createApiError } from '@/lib/api-response';
 import { helperProfileUpdateSchema } from '@/lib/validations/helper';
 import type { Database } from '@/types/database';
+import { getSelectableServiceCategories, type ServiceCategoryRow } from '@/lib/service-category-tree';
 
 // GET /api/helper/profile — Helper melihat status profilnya sendiri
 export async function GET() {
@@ -65,18 +66,22 @@ export async function PATCH(request: Request) {
     if (input.kategori_ids) {
       const { data: categories, error: categoriesError } = await supabase
         .from('service_categories')
-        .select('id')
-        .in('id', input.kategori_ids)
-        .eq('is_active', true);
+        .select('id, nama, tingkat, parent_id, is_active')
+        .or('is_active.eq.true,parent_id.is.null');
       if (categoriesError) return createApiError('server_error', categoriesError.message, 500);
-      if (!categories || categories.length !== new Set(input.kategori_ids).size) {
-        return createApiError('validation_error', 'Satu atau lebih kategori tidak aktif atau tidak valid', 422);
+      const selectableIds = new Set(
+        getSelectableServiceCategories((categories ?? []) as ServiceCategoryRow[]).map((category) => category.id),
+      );
+      const uniqueIds = new Set(input.kategori_ids);
+      if (uniqueIds.size !== input.kategori_ids.length || [...uniqueIds].some((id) => !selectableIds.has(id))) {
+        return createApiError('validation_error', 'Satu atau lebih kategori tidak aktif atau bukan layanan yang dapat dipilih', 422);
       }
     }
 
     const wilayahChanged = input.wilayah_domisili !== undefined && input.wilayah_domisili !== existing.wilayah_domisili;
     const updates: Database['public']['Tables']['helper_profiles']['Update'] = {
       ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
+      ...(input.is_available !== undefined ? { is_available: input.is_available } : {}),
       ...(input.wilayah_domisili !== undefined ? { wilayah_domisili: input.wilayah_domisili } : {}),
       ...(input.domisili_lat !== undefined ? { domisili_lat: input.domisili_lat } : {}),
       ...(input.domisili_lng !== undefined ? { domisili_lng: input.domisili_lng } : {}),
@@ -89,7 +94,7 @@ export async function PATCH(request: Request) {
       .from('helper_profiles')
       .update(updates)
       .eq('id', existing.id)
-      .select('id, status, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km')
+      .select('id, status, wilayah_domisili, domisili_lat, domisili_lng, radius_layanan_km, is_available')
       .single();
     if (updateError) return createApiError('server_error', updateError.message, 500);
 

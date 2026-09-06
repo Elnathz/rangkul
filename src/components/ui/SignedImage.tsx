@@ -8,9 +8,10 @@ type SignedImageProps = {
   alt: string;
   className?: string;
   fallbackClassName?: string;
+  fallback?: React.ReactNode;
 };
 
-export function SignedImage({ path, alt, className, fallbackClassName }: SignedImageProps) {
+export function SignedImage({ path, alt, className, fallbackClassName, fallback }: SignedImageProps) {
   const { url, status } = useSignedFile(path);
 
   if (status === "loading") {
@@ -22,6 +23,7 @@ export function SignedImage({ path, alt, className, fallbackClassName }: SignedI
   }
 
   if (status === "forbidden") {
+    if (fallback) return <>{fallback}</>;
     return (
       <div className={`flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-400 ${fallbackClassName ?? ""}`}>
         <Lock className="h-5 w-5" />
@@ -31,6 +33,7 @@ export function SignedImage({ path, alt, className, fallbackClassName }: SignedI
   }
 
   if (status === "error" || !url) {
+    if (fallback) return <>{fallback}</>;
     return (
       <div className={`flex items-center justify-center bg-slate-100 text-slate-400 ${fallbackClassName ?? ""}`}>
         <span className="text-xs">Dokumen tidak tersedia</span>

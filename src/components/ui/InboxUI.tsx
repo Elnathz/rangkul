@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCheck, Loader2, Search, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 
 type Conversation = { id: string; sender_id: string; receiver_id: string; task_id: string | null; message: string; created_at: string; read_at: string | null };
 type Message = Conversation;
@@ -48,6 +49,45 @@ export default function InboxUI({ role }: InboxUIProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMessages(selected).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Pesan tidak dapat dimuat"));
   }, [selected]);
+
+  useEffect(() => {
+    if (!viewerId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`inbox-messages-${viewerId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${viewerId}`,
+        },
+        () => {
+          void loadConversations();
+          if (selected?.task_id) void loadMessages(selected);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `sender_id=eq.${viewerId}`,
+        },
+        () => {
+          void loadConversations();
+          if (selected?.task_id) void loadMessages(selected);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [viewerId, selected]);
 
   const sendMessage = async () => {
     if (!draft.trim() || !selected?.task_id) return;

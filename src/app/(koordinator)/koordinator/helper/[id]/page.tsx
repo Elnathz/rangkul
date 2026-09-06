@@ -116,12 +116,13 @@ export default async function KoordinatorDetailHelperPage({ params }: { params: 
   return (
     <KoordinatorStatusGuard koordinator={koordinator}>
       <div className="p-4 sm:p-6 lg:p-8 font-sans pb-24 max-w-4xl mx-auto space-y-6">
-        <Button variant="ghost" size="sm" asChild className="rounded-full hover:bg-gray-100 mb-2">
-          <Link href="/koordinator/antrean">
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            Kembali ke Antrean
-          </Link>
-        </Button>
+        <Link
+          href="/koordinator/antrean"
+          className="mb-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all sm:text-sm"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-600 shrink-0" />
+          <span>Kembali ke Antrean</span>
+        </Link>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start gap-4">

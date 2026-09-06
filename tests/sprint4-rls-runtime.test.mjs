@@ -21,6 +21,11 @@ const credentialsAvailable = Boolean(url && anonKey);
 const serviceRoleAvailable = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const password = "Rangkul2026*";
 
+test("migration menutup kembali policy user Helper publik yang tidak sesuai scope wilayah", async () => {
+  const migration = await readFile("supabase/migrations/20260904130200_remove_public_helper_user_policy.sql", "utf8");
+  assert.match(migration, /DROP POLICY IF EXISTS "Authenticated can read public helper user profiles" ON public\.users/);
+});
+
 async function signIn(email) {
   const client = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -35,8 +40,8 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable },
   async () => {
     const [familyA, familyB] = await Promise.all([
-      signIn("demokeluarga@rangkul.id"),
-      signIn("demokeluarga2@rangkul.id"),
+      signIn("ratnakeluarga@rangkul.id"),
+      signIn("mayakeluarga@rangkul.id"),
     ]);
 
     const { data: leakedUsers, error: leakedUsersError } = await familyA.client
@@ -53,7 +58,7 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable || !serviceRoleAvailable },
   async () => {
     const [{ client: familyA }, service] = await Promise.all([
-      signIn("demokeluarga@rangkul.id"),
+      signIn("ratnakeluarga@rangkul.id"),
       Promise.resolve(createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false },
       })),
@@ -62,7 +67,7 @@ test(
     const { data: otherFamily, error: otherFamilyError } = await service
       .from("users")
       .select("id")
-      .eq("email", "demokeluarga4@rangkul.id")
+      .eq("email", "dewikeluarga@rangkul.id")
       .single();
     assert.equal(otherFamilyError, null, otherFamilyError?.message);
 
@@ -102,7 +107,7 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable || !serviceRoleAvailable },
   async () => {
     const [{ client: helper, userId: helperUserId }, service] = await Promise.all([
-      signIn("demohelper2@rangkul.id"),
+      signIn("rinihelper@rangkul.id"),
       Promise.resolve(createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false },
       })),
@@ -144,8 +149,8 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable || !serviceRoleAvailable },
   async () => {
     const [{ client: coordinatorRt }, { client: coordinatorRw }, service] = await Promise.all([
-      signIn("demokoordinator2@rangkul.id"),
-      signIn("demokoordinator4@rangkul.id"),
+      signIn("budikoordinator@rangkul.id"),
+      signIn("rahmatkoordinator@rangkul.id"),
       Promise.resolve(createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false },
       })),
@@ -155,12 +160,12 @@ test(
       service
       .from("users")
       .select("id")
-      .eq("email", "demohelper3@rangkul.id")
+      .eq("email", "dedihelper@rangkul.id")
       .single(),
       service
         .from("users")
         .select("id")
-        .eq("email", "demohelper8@rangkul.id")
+        .eq("email", "linahelper@rangkul.id")
         .single(),
     ]);
     assert.equal(helperUserError, null, helperUserError?.message);
@@ -217,7 +222,7 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable || !serviceRoleAvailable },
   async () => {
     const [{ client: helper, userId: helperUserId }, service] = await Promise.all([
-      signIn("demohelper4@rangkul.id"),
+      signIn("sarihelper@rangkul.id"),
       Promise.resolve(createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false },
       })),
@@ -279,9 +284,9 @@ test(
   { skip: !integrationEnabled || !credentialsAvailable },
   async () => {
     const [{ client: family }, { client: helper }, { client: coordinator }, { client: admin }] = await Promise.all([
-      signIn("demokeluarga@rangkul.id"),
-      signIn("demohelper2@rangkul.id"),
-      signIn("demokoordinator2@rangkul.id"),
+      signIn("ratnakeluarga@rangkul.id"),
+      signIn("rinihelper@rangkul.id"),
+      signIn("budikoordinator@rangkul.id"),
       signIn("demoadmin@rangkul.id"),
     ]);
 

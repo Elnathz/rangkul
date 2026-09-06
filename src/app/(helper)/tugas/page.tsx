@@ -52,7 +52,7 @@ export default async function TugasHelperPage() {
     .maybeSingle();
 
   if (!profile) {
-    return <TaskBoardClient tasks={[]} helperId="" />;
+    redirect("/beranda");
   }
 
   const taskReader = await createAdminClient();

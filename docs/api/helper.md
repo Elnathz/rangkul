@@ -1,94 +1,73 @@
-# Helper Profile API
+# Helper API
 
-## Create/Update Profile
+Sumber kebenaran aturan verifikasi, radius, kategori, dan status Helper adalah `docs/TDD_Rangkul.md` §3.3, §7, dan §8.
 
-**POST** `/api/helper/profile`
+## Pengajuan profil
 
-Creates or updates a helper profile. Requires `helper` role.
+`POST /api/helpers/apply` adalah route canonical. `POST /api/helper/apply` tetap tersedia sebagai alias kompatibilitas.
 
-### Request Body
+Role: `helper`.
 
-```json
-{
-  "bio": "string (max 500 characters)",
-  "wilayah_domisili": "string",
-  "domisili_lat": "number",
-  "domisili_lng": "number",
-  "radius_layanan_km": "number (min 1, max 25)",
-  "ktp_url": "string"
-}
-```
+Body memuat:
 
-### Validation Rules
+- `bio`, maksimal 500 karakter.
+- `wilayah_domisili` dan struktur wilayah `provinsi`, `kabupaten_kota`, `kecamatan`, `kelurahan`, `rt`, `rw`.
+- `domisili_lat`, `domisili_lng`, dan `radius_layanan_km` antara 1 sampai 25 km.
+- `ktp_url` serta `foto_wajah_url` sebagai object path storage privat milik actor, bukan URL publik.
+- `kategori_ids`, minimal satu ID kategori aktif.
+- `koordinator_id` opsional sesuai jalur verifikasi wilayah.
 
-| Field | Rules |
-|-------|-------|
-| `bio` | - Maksimal 500 karakter (optional) |
-| `wilayah_domisili` | - Minimal 3 karakter |
-| `domisili_lat` | - Required number |
-| `domisili_lng` | - Required number |
-| `radius_layanan_km` | - Minimal 1 km<br>- Maksimal 25 km<br>- Default: 5 km |
-| `ktp_url` | - Required valid URL |
+Response sukses `201` mengembalikan `message` dan `helper_profile_id`. Validasi payload menghasilkan `422`; profil aktif yang sudah ada menghasilkan `409`.
 
-### Response
+## Membaca profil sendiri
 
-#### Success (200/201)
+`GET /api/helper/profile`
+
+Role: `helper`. Response `200`:
 
 ```json
 {
-  "message": "Profil helper berhasil disimpan",
   "profile": {
     "id": "uuid",
-    "user_id": "uuid",
-    "bio": "string",
-    "wilayah_domisili": "string",
-    "domisili_lat": "number",
-    "domisili_lng": "number",
-    "radius_layanan_km": "number",
-    "ktp_url": "string",
-    "created_at": "ISO 8601 datetime",
-    "updated_at": "ISO 8601 datetime"
+    "status": "verified",
+    "tingkat_kepercayaan": "terpercaya",
+    "wilayah_domisili": "Pleburan",
+    "radius_layanan_km": 5,
+    "is_available": true,
+    "helper_service_categories": []
   }
 }
 ```
 
-#### Validation Error (400)
+KTP dan dokumen privat tidak dikembalikan oleh endpoint profil operasional ini.
+
+## Memperbarui profil operasional
+
+`PATCH /api/helper/profile`
+
+Semua field opsional:
 
 ```json
 {
-  "error": "validation_error",
-  "message": "Data input tidak valid",
-  "fieldErrors": {
-    "bio": ["Bio maksimal 500 karakter"],
-    "wilayah_domisili": ["Wilayah domisili wajib diisi"],
-    "ktp_url": ["URL KTP tidak valid"]
-  }
+  "bio": "Mendampingi aktivitas ringan dan percakapan sehari-hari.",
+  "is_available": true,
+  "wilayah_domisili": "Pleburan",
+  "domisili_lat": -7.005,
+  "domisili_lng": 110.438,
+  "radius_layanan_km": 5,
+  "kategori_ids": ["uuid-kategori"]
 }
 ```
 
-#### Unauthorized (401)
+- Mengubah `wilayah_domisili` mengembalikan status ke `pending_verification`, mengosongkan `koordinator_id`, dan membutuhkan verifikasi ulang.
+- `kategori_ids` hanya menerima kategori aktif.
+- `is_available` hanya mengubah kesiapan menerima peluang. Eligibility akhir tetap diperiksa server saat apply, select, atau accept.
+- Validation error menghasilkan `422`.
 
-```json
-{
-  "error": "unauthorized",
-  "message": "Anda harus login untuk mengakses resource ini"
-}
-```
+## Review status
 
-#### Forbidden (403)
+`PATCH /api/helpers/{id}/status`
 
-```json
-{
-  "error": "forbidden",
-  "message": "Hanya role helper yang dapat membuat profil helper"
-}
-```
+Actor dan action mengikuti scope Koordinator atau Admin yang didefinisikan TDD. Action canonical: `approve`, `reject`, atau `suspend`. Route approve/reject lama hanya alias kompatibilitas.
 
-#### Server Error (500)
-
-```json
-{
-  "error": "server_error",
-  "message": "Terjadi kesalahan server"
-}
-```
+Keputusan tidak boleh bergantung pada field wilayah yang dikirim browser. Server dan RLS memakai profil actor serta relasi wilayah yang tersimpan.

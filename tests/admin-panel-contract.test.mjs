@@ -21,9 +21,9 @@ test("Admin pengguna memiliki tabs berdasarkan role", () => {
 });
 
 test("navigasi Admin menyediakan akses ke fallback verifikasi Helper", () => {
-  const layout = read("src/app/(admin)/layout.tsx");
-  assert.match(layout, /href: "\/admin\/helpers\/fallback"/);
-  assert.match(layout, /label: "Fallback verifikasi"/);
+  const navigation = read("src/lib/navigation/role-navigation.ts");
+  assert.match(navigation, /href: "\/admin\/helpers\/fallback"/);
+  assert.match(navigation, /label: "Fallback verifikasi"/);
 });
 
 test("mutation Admin membuat audit log dan memakai Auth Admin API untuk hapus", () => {

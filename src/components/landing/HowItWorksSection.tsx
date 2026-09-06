@@ -1,62 +1,29 @@
-import { MapPin, ClipboardList, ShieldCheck } from "lucide-react";
+import { MapPinned, ShieldCheck, UserRoundCheck } from "lucide-react";
 
-// Langkah-langkah dipindahkan ke StepsSection.tsx
+const principles = [
+  { icon: UserRoundCheck, title: "Verifikasi berbasis komunitas", description: "Helper melalui proses verifikasi oleh Koordinator wilayah. Status verifikasi terlihat sebelum keluarga membuat kunjungan." },
+  { icon: MapPinned, title: "Jangkauan layanan yang jelas", description: "Ketersediaan Helper mempertimbangkan layanan yang dipilih, jadwal, dan radius layanan yang mereka tetapkan." },
+  { icon: ShieldCheck, title: "Persetujuan tetap di tangan keluarga", description: "Layanan tambahan hanya dapat dilanjutkan setelah keluarga meninjau dan menyetujuinya." },
+];
 
 export default function HowItWorksSection() {
   return (
-    <section id="apa-itu-rangkul" className="py-20 bg-[#F5F8FC]">
-      <div className="max-w-7xl mx-auto px-6">
-
-        {/* Penjelasan Rangkul */}
-        <div className="text-center mb-16">
-          <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mb-5">
-            Apa itu Rangkul?
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-base leading-relaxed mb-10">
-            Rangkul menghubungkan keluarga dengan pendamping lokal yang diverifikasi langsung oleh Koordinator RT/RW setempat. Kami hadir untuk membantu Anda merawat dan memantau kondisi lansia dengan aman.
-          </p>
-
-          {/* Tiga pilar Rangkul */}
-          <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto mb-16">
-            {[
-              {
-                icon: MapPin,
-                title: "Dekat & Dikenal",
-                desc: "Helper berdomisili di RT/RW yang sama. Mereka adalah tetangga yang diverifikasi oleh Ketua RT/RW setempat.",
-                color: "bg-teal-50 border-teal-100",
-                textColor: "text-teal-700",
-              },
-              {
-                icon: ClipboardList,
-                title: "Terstruktur",
-                desc: "Setiap kunjungan akan menghasilkan laporan kondisi lansia yang dapat dipantau oleh Keluarga dari mana saja.",
-                color: "bg-blue-50 border-blue-100",
-                textColor: "text-blue-700",
-              },
-              {
-                icon: ShieldCheck,
-                title: "Terpercaya",
-                desc: "Sistem harga pasti, verifikasi ketat, dan peran aktif Koordinator memastikan keamanan serta transparansi di setiap pemesanan.",
-                color: "bg-indigo-50 border-indigo-100",
-                textColor: "text-indigo-700",
-              },
-            ].map((p) => (
-              <div
-                key={p.title}
-                className={`rounded-2xl border p-5 text-left ${p.color}`}
-              >
-                <div className={`mb-4 w-10 h-10 flex items-center justify-center rounded-xl bg-white/50 shadow-sm ${p.textColor}`}>
-                   <p.icon className="w-5 h-5" />
-                </div>
-                <h3 className={`font-display font-bold text-sm mb-2 ${p.textColor}`}>
-                  {p.title}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {p.desc}
-                </p>
-              </div>
-            ))}
+    <section id="apa-itu-rangkul" className="bg-white py-14 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="max-w-2xl">
+          <p className="text-sm font-bold text-[#0D47A1]">KEPERCAYAAN YANG TERLIHAT</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Pendampingan yang tetap berada dalam kendali keluarga.</h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">Rangkul tidak meminta keluarga menyerahkan keputusan penting. Setiap kunjungan dibangun dengan informasi, batas, dan persetujuan yang jelas.</p>
         </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-3 md:gap-6">
+          {principles.map(({ icon: Icon, title, description }) => (
+            <article key={title} className="rounded-2xl border border-border bg-surface-subtle p-5 sm:p-6">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#0D47A1]" aria-hidden="true"><Icon className="h-5 w-5" /></span>
+              <h3 className="mt-5 text-lg font-bold text-foreground">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { AlertTriangle, CheckCircle2, Clock, MapPin, PhoneCall, ShieldAlert, Check } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, PhoneCall, ShieldAlert, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
@@ -45,7 +45,7 @@ export function KoordinatorEmergencyClient({ initialAlerts }: { initialAlerts: E
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'emergency_alerts' },
-        (payload) => {
+        () => {
           router.refresh(); // Refresh server data on any change
         }
       )
@@ -110,22 +110,22 @@ export function KoordinatorEmergencyClient({ initialAlerts }: { initialAlerts: E
 
   if (alerts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-6">
-        <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
-          <ShieldAlert className="w-8 h-8" />
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-white rounded-2xl border border-slate-100 shadow-xs mt-4">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+          <ShieldAlert className="w-6 h-6 sm:w-8 sm:h-8" />
         </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-1">Tidak ada keadaan darurat</h3>
-        <p className="text-slate-500 text-sm max-w-sm">Wilayah Anda aman. Tidak ada laporan SOS aktif dari Helper yang sedang bertugas.</p>
+        <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1">Tidak ada keadaan darurat</h3>
+        <p className="text-slate-500 text-xs sm:text-sm max-w-sm">Wilayah Anda aman. Tidak ada laporan SOS aktif dari Helper yang sedang bertugas.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 mt-6">
+    <div className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
       {alerts.map((alert) => (
         <div 
           key={alert.id} 
-          className={`p-5 rounded-2xl border shadow-sm transition-all relative overflow-hidden ${
+          className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border shadow-xs transition-all relative overflow-hidden ${
             alert.status === 'active' 
               ? 'bg-red-50/30 border-red-200' 
               : 'bg-white border-slate-200'
@@ -135,31 +135,31 @@ export function KoordinatorEmergencyClient({ initialAlerts }: { initialAlerts: E
             <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
           )}
           
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div className="space-y-3 flex-1">
-              <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
+            <div className="space-y-2.5 flex-1">
+              <div className="flex items-center gap-2.5">
                 {getStatusBadge(alert.status)}
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-[11px] sm:text-xs font-medium text-slate-500">
                   {format(new Date(alert.created_at), "dd MMM yyyy, HH:mm", { locale: localeId })}
                 </span>
               </div>
               
               <div>
-                <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
                   Sinyal Darurat (SOS) dari Helper
                 </h3>
-                <p className="text-sm font-medium text-slate-700 mt-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-700 mt-0.5 sm:mt-1">
                   Tugas: {alert.tasks?.judul || "Pekerjaan tidak diketahui"}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-100/50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100/50">
                 <div>
-                  <p className="text-xs text-slate-500 font-medium mb-1">Pengirim Sinyal (Helper)</p>
+                  <p className="text-[11px] text-slate-500 font-medium mb-0.5">Pengirim Sinyal (Helper)</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-800">{alert.trigger?.full_name || "Unknown"}</span>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-800">{alert.trigger?.full_name || "Unknown"}</span>
                     {alert.trigger?.phone && (
-                      <a href={`tel:${alert.trigger.phone}`} className="text-blue-600 hover:text-blue-700" title="Hubungi">
+                      <a href={`tel:${alert.trigger.phone}`} className="text-blue-600 hover:text-blue-700 p-1" title="Hubungi">
                         <PhoneCall className="w-3.5 h-3.5" />
                       </a>
                     )}
@@ -168,18 +168,18 @@ export function KoordinatorEmergencyClient({ initialAlerts }: { initialAlerts: E
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0 shrink-0">
+            <div className="flex flex-col sm:flex-row gap-2 mt-2 md:mt-0 shrink-0">
               {alert.status === 'active' && (
                 <button
                   onClick={() => handleAcknowledge(alert.id)}
                   disabled={isProcessing === alert.id}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-red-200"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors shadow-xs shadow-red-200"
                 >
                   {isProcessing === alert.id ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Tandai Diketahui
                     </>
                   )}

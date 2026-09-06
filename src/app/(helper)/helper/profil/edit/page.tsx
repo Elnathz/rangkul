@@ -12,6 +12,7 @@ import LocationPicker from "@/components/ui/LocationPicker";
 import RegionSelect from "@/components/ui/RegionSelect";
 import { parseRegionAddress } from "@/lib/region-address";
 import { getSelectableServiceCategories, groupSelectableServiceCategories, type ServiceCategoryRow } from "@/lib/service-category-tree";
+import ServiceSelectionModal from "@/components/services/ServiceSelectionModal";
 
 type ServiceCategory = ServiceCategoryRow & { parentName: string | null };
 type RegionValue = { provinsi: string; kota: string; kecamatan: string; kelurahan: string };
@@ -50,22 +51,38 @@ export default function HelperEditProfilPage() {
   const [fotoFileName, setFotoFileName] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
 
-  const tiers: { id: ServiceCategory["tingkat"]; title: string; desc: string }[] = [
+  const tiers: {
+    id: ServiceCategory["tingkat"];
+    title: string;
+    desc: string;
+    badge: string;
+    tabActiveClass: string;
+    badgeClass: string;
+  }[] = [
     {
       id: "ringan",
-      title: "Ringan",
-      desc: "Aktivitas harian ringan dan non-medis."
+      title: "Tingkat Ringan",
+      desc: "Pendampingan sosial, empati, dan kehadiran emosional non-medis.",
+      badge: "Mandiri · Risiko Rendah",
+      tabActiveClass: "border-emerald-600 text-emerald-800 bg-emerald-50/70 font-bold",
+      badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
     },
     {
       id: "sedang",
-      title: "Sedang",
-      desc: "Bantuan rutinitas harian untuk lansia semi-mandiri."
+      title: "Tingkat Sedang",
+      desc: "Bantuan rutinitas harian, mobilitas, dan logistik sekitar.",
+      badge: "Bantuan Harian",
+      tabActiveClass: "border-blue-600 text-blue-800 bg-blue-50/70 font-bold",
+      badgeClass: "bg-blue-100 text-blue-800 border-blue-300",
     },
     {
       id: "berat",
-      title: "Berat",
-      desc: "Perawatan khusus dan penanganan medis dasar."
-    }
+      title: "Tingkat Berat",
+      desc: "Perawatan fisik penuh dan kontrol fasilitas kesehatan.",
+      badge: "Persetujuan Koordinator",
+      tabActiveClass: "border-amber-600 text-amber-800 bg-amber-50/70 font-bold",
+      badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+    },
   ];
 
   const getSnapshot = (nextForm = form, nextKategoriIds = kategoriIds) => JSON.stringify({
@@ -388,22 +405,43 @@ export default function HelperEditProfilPage() {
               <div className="space-y-6">
                 <p className="text-xs text-slate-500 mb-4">Tentukan tugas apa saja yang siap Anda tangani. Pilihlah sesuai dengan kapasitas fisik dan kompetensi Anda.</p>
                 {/* Preview Tabs */}
-                <div className="flex gap-2 mb-4 border-b border-gray-100 overflow-x-auto hide-scrollbar">
+                <div className="flex gap-2 border-b border-gray-100 overflow-x-auto hide-scrollbar pb-1">
                    {tiers.map((tier) => (
                      <button
                        key={tier.id}
                        type="button"
                        onClick={() => setCatTab(tier.id)}
-                       className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+                       className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
                          catTab === tier.id 
-                           ? 'border-[#0D47A1] text-[#0D47A1] bg-blue-50/40' 
+                           ? tier.tabActiveClass 
                            : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                        }`}
                      >
-                       {tier.title}
+                       <span>{tier.title}</span>
+                       <span className={`text-[11px] px-2 py-0.5 rounded-full border ${tier.badgeClass}`}>
+                         {tier.badge}
+                       </span>
                      </button>
                    ))}
                 </div>
+
+                {(() => {
+                  const activeTier = tiers.find(t => t.id === catTab);
+                  if (!activeTier) return null;
+                  return (
+                    <div className="mb-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-600 flex items-start gap-2.5">
+                      <ShieldCheck className="size-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-slate-800">{activeTier.desc}</p>
+                        {activeTier.id === "berat" && (
+                          <p className="mt-1 text-amber-800 font-medium">
+                            Kategori tingkat berat mencakup kontrol faskes/kebutuhan khusus dan penugasannya memerlukan persetujuan Koordinator.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 <div className="space-y-4 mb-2">
                   {(() => {
@@ -546,87 +584,17 @@ export default function HelperEditProfilPage() {
         </form>
       </div>
       
-      {/* --- Modal Kategori --- */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-              <h2 className="text-xl font-bold text-gray-900">Pilih Kategori Layanan</h2>
-              <button 
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="flex px-6 border-b border-gray-100 shrink-0 bg-white">
-              {tiers.map(tier => (
-                <button
-                  key={tier.id}
-                  type="button"
-                  onClick={() => setModalActiveTab(tier.id)}
-                  className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
-                    modalActiveTab === tier.id 
-                      ? 'border-[#0D47A1] text-[#0D47A1]' 
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {tier.title}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1 bg-slate-50/50">
-              {(() => {
-                const activeTier = tiers.find(t => t.id === modalActiveTab);
-                if (!activeTier) return null;
-                const filteredDbCats = dbCategories.filter(c => c.tingkat === activeTier.id);
-                
-                return (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-blue-50 shadow-sm">
-                      <p className="text-xs text-gray-500 font-semibold">{filteredDbCats.length} kategori dalam kelompok ini.</p>
-                      <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => selectAllInTab(modalActiveTab)}>Pilih Semua</Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] text-red-500" onClick={() => deselectAllInTab(modalActiveTab)}>Hapus Semua</Button>
-                      </div>
-                    </div>
-                    <div className="space-y-5">
-                      {groupSelectableServiceCategories(filteredDbCats).map((group) => (
-                        <section key={group.key} className="space-y-2">
-                          {group.parentName && <div className="flex items-center gap-2 border-b border-slate-200 pb-2"><h4 className="text-sm font-bold text-slate-900">{group.parentName}</h4><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Parent</span></div>}
-                          <div className={group.parentName ? "grid grid-cols-1 gap-3 border-l-2 border-blue-100 pl-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                            {group.items.map((cat) => {
-                              const isSelected = kategoriIds.includes(cat.id);
-                              return (
-                                <label key={cat.id} className={`flex items-start gap-3 rounded-xl border p-3 transition-all ${isSelected ? 'border-[#0D47A1] bg-blue-50/50' : 'border-gray-200 bg-white shadow-sm hover:border-blue-200'}`}>
-                                  <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : 'border-gray-300 bg-white'}`}>
-                                    {isSelected && <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                  </div>
-                                  <span className={`text-sm font-semibold leading-snug ${isSelected ? 'text-[#0D47A1]' : 'text-gray-700'}`}>{cat.nama}</span>
-                                  <input type="checkbox" checked={isSelected} onChange={() => toggleKategori(cat.id)} className="hidden" />
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </section>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-            
-            <div className="p-4 border-t border-gray-100 bg-white flex justify-end shrink-0">
-              <Button type="button" onClick={() => setModalOpen(false)} className="bg-[#0D47A1] hover:bg-blue-800 text-white rounded-xl font-bold px-8">
-                Selesai
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Universal ServiceSelectionModal */}
+      <ServiceSelectionModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        mode="multiple"
+        categories={dbCategories}
+        selectedIds={kategoriIds}
+        onConfirm={(ids) => setKategoriIds(ids)}
+        title="Pilih Kategori Layanan"
+        subtitle="Pilih kategori layanan yang Anda sediakan untuk keluarga lansia."
+      />
     </div>
   );
 }

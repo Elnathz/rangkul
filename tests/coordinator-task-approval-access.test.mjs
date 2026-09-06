@@ -4,14 +4,14 @@ import { test } from "node:test";
 
 const read = (path) => readFile(path, "utf8");
 
-test("akun inti mbahburgas disemai sebagai Koordinator terverifikasi di wilayahnya", async () => {
+test("akun inti Wagiman disemai sebagai Koordinator terverifikasi di wilayahnya", async () => {
   const [seed, adminSeedRoute] = await Promise.all([
     read("supabase/seed.sql"),
     read("src/app/api/admin/seed-demo-users/route.ts"),
   ]);
 
-  assert.match(seed, /'demokoordinator@rangkul\.id'[^\n]*'mbahburgas'[^\n]*'Jl\. Pleburan Barat No\. 18'[^\n]*3[^\n]*5/i);
-  assert.match(seed, /'demohelper@rangkul\.id'[^\n]*'masburgas'[^\n]*'Jl\. Pleburan Barat No\. 28'[^\n]*3[^\n]*5/i);
+  assert.match(seed, /'wagimankoordinator@rangkul\.id'[^\n]*'wagimankoordinator'[^\n]*'Jl\. Pleburan Barat No\. 18'[^\n]*3[^\n]*5/i);
+  assert.match(seed, /'andihelper@rangkul\.id'[^\n]*'andihelper'[^\n]*'Jl\. Pleburan Barat No\. 28'[^\n]*3[^\n]*5/i);
 
   const coreCoordinatorSeed = seed.slice(
     seed.indexOf("IF core_koordinator_user_id IS NOT NULL"),
@@ -31,14 +31,14 @@ test("akun inti mbahburgas disemai sebagai Koordinator terverifikasi di wilayahn
   assert.match(seed, /existing_helper_id[^\n]*'\[DEMO_MATRIX\] Task menunggu Koordinator'/);
 
   const coordinatorProfilesStart = adminSeedRoute.indexOf("const coordinatorProfiles");
-  const mbahProfileStart = adminSeedRoute.indexOf("username: 'mbahburgas'", coordinatorProfilesStart);
-  const mbahProfile = adminSeedRoute.slice(
-    mbahProfileStart,
-    adminSeedRoute.indexOf("username: 'demokoordinator2'", mbahProfileStart),
+  const wagimanProfileStart = adminSeedRoute.indexOf("username: 'wagimankoordinator'", coordinatorProfilesStart);
+  const wagimanProfile = adminSeedRoute.slice(
+    wagimanProfileStart,
+    adminSeedRoute.indexOf("username: 'sulikoordinator'", wagimanProfileStart),
   );
-  assert.match(mbahProfile, /status: 'verified'/);
-  assert.match(mbahProfile, /dokumen_url: 'demo\/dokumen_koordinator\/dokumen-koordinator-demo\.pdf'/);
-  assert.match(mbahProfile, /diverifikasi_oleh: 'demoadmin'/);
+  assert.match(wagimanProfile, /status: 'verified'/);
+  assert.match(wagimanProfile, /dokumen_url: 'demo\/dokumen_koordinator\/dokumen-koordinator-demo\.pdf'/);
+  assert.match(wagimanProfile, /diverifikasi_oleh: 'demoadmin'/);
 });
 
 test("halaman persetujuan tidak menganggap kegagalan API sebagai profil belum diajukan", async () => {

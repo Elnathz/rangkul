@@ -4,6 +4,7 @@ import {
   canHelperAcceptTask,
   getTaskAcceptanceStatus,
 } from "@/lib/helper/task-acceptance";
+import { isSprint6MatchingEnabled } from "@/lib/features/sprint6-matching";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -92,12 +93,15 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const task = taskRow as unknown as TaskRelations & { mode_penugasan?: string };
 
+    if (task.mode_penugasan !== "langsung" && !isSprint6MatchingEnabled()) {
+      return createApiError("not_found", "Fitur belum tersedia", 404);
+    }
+
     // Mode Cepat handling via RPC
     if (task.mode_penugasan === "cepat") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc("accept_quick_task", {
         p_task_id: taskId,
-        p_helper_user_id: user.id,
       });
 
       if (rpcErr) {

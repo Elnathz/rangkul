@@ -18,6 +18,12 @@ test("expiry RPC only cancels unaccepted expired tasks", () => {
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.expire_pending_tasks\(\) TO service_role/);
 });
 
+test("approval Koordinator juga ikut kedaluwarsa pada RPC yang sama", () => {
+  assert.match(migration, /status = 'diajukan'/);
+  assert.match(migration, /menunggu_persetujuan_koordinator/);
+  assert.match(migration, /expires_at <= NOW\(\)/);
+});
+
 test("scheduled job invokes the expiry RPC with the service role", () => {
   assert.match(workflow, /rest\/v1\/rpc\/expire_pending_tasks/);
   assert.match(workflow, /-X POST/);

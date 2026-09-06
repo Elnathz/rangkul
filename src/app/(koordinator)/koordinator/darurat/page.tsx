@@ -105,14 +105,14 @@ export default async function DaruratPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
-          <ShieldAlert className="w-6 h-6" />
+    <div className="max-w-4xl mx-auto space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="w-9 h-9 sm:w-11 sm:h-11 bg-red-100 text-red-600 rounded-xl flex items-center justify-center shrink-0 shadow-xs">
+          <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Status Darurat</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Status Darurat</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Pantau dan tangani sinyal darurat (SOS) dari Helper di wilayah Anda
           </p>
         </div>

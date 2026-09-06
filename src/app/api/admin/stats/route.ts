@@ -9,8 +9,11 @@ export async function GET() {
     const activeUsers = await supabase.from("users").select("id", { count: "exact", head: true }).eq("account_status", "active");
     const helpers = await supabase.from("helper_profiles").select("id", { count: "exact", head: true });
     const verifiedHelpers = await supabase.from("helper_profiles").select("id", { count: "exact", head: true }).eq("status", "verified");
+    const pendingCoordinators = await supabase.from("koordinator_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_verification");
+    const underReviewHelpers = await supabase.from("helper_profiles").select("id", { count: "exact", head: true }).eq("status", "under_review");
     const tasks = await supabase.from("tasks").select("id", { count: "exact", head: true });
     const reports = await supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "menunggu");
+    const pendingAppeals = await supabase.from("appeals").select("id", { count: "exact", head: true }).eq("status", "menunggu");
     const taskRows = await supabase.from("tasks").select("status");
     const releasedPayments = await supabase.from("payments").select("jumlah_total").eq("status", "released");
     const auditLogs = await supabase
@@ -19,7 +22,7 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const countErrors = [users, activeUsers, helpers, verifiedHelpers, tasks, reports].filter(
+    const countErrors = [users, activeUsers, helpers, verifiedHelpers, pendingCoordinators, underReviewHelpers, tasks, reports, pendingAppeals].filter(
       (result) => result.error,
     );
     const rowErrors = [taskRows, releasedPayments, auditLogs].filter((result) => result.error);
@@ -45,8 +48,11 @@ export async function GET() {
           activeUsers: activeUsers.count ?? 0,
           helpers: helpers.count ?? 0,
           verifiedHelpers: verifiedHelpers.count ?? 0,
+          pendingCoordinators: pendingCoordinators.count ?? 0,
+          underReviewHelpers: underReviewHelpers.count ?? 0,
           tasks: tasks.count ?? 0,
           pendingReports: reports.count ?? 0,
+          pendingAppeals: pendingAppeals.count ?? 0,
         },
         taskBreakdown,
         gmv,
