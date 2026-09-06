@@ -51,23 +51,17 @@ type LansiaDetail = {
   telepon_keluarga?: string | null;
 };
 
-// Sample placeholder documents if no file was uploaded during demo creation
-const SAMPLE_KTP = "https://images.unsplash.com/photo-1618042164219-62c820f10723?q=80&w=1000&auto=format&fit=crop";
-const SAMPLE_KK = "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=1000&auto=format&fit=crop";
-
 function DocumentPreviewCard({
   title,
   path,
-  fallbackSampleUrl,
   onOpenPreview
 }: {
   title: string;
   path: string | null | undefined;
-  fallbackSampleUrl: string;
   onOpenPreview: (title: string, resolvedUrl: string) => void;
 }) {
   const { url: signedUrl, status } = useSignedFile(path);
-  const displayUrl = signedUrl || (path ? null : fallbackSampleUrl);
+  const displayUrl = path ? signedUrl : null;
 
   return (
     <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 transition hover:border-blue-300">
@@ -78,15 +72,17 @@ function DocumentPreviewCard({
             Berkas Terunggah
           </span>
         ) : (
-          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-            Dokumen Contoh (Demo)
+          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+            Belum Diunggah
           </span>
         )}
       </div>
 
       <div 
         onClick={() => displayUrl && onOpenPreview(title, displayUrl)}
-        className="group relative min-h-[210px] w-full cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-inner flex items-center justify-center transition-all hover:shadow-md"
+        className={`group relative min-h-[210px] w-full rounded-xl border border-slate-200 bg-white shadow-inner flex items-center justify-center transition-all ${
+          displayUrl ? "cursor-pointer hover:shadow-md" : ""
+        }`}
       >
         {status === "loading" && path ? (
           <div className="flex items-center justify-center p-8 text-slate-400">
@@ -109,7 +105,7 @@ function DocumentPreviewCard({
         ) : (
           <div className="p-6 text-center">
             <FileText className="mx-auto h-8 w-8 text-slate-300" />
-            <p className="mt-2 text-xs font-medium text-slate-400">Dokumen tidak tersedia</p>
+            <p className="mt-2 text-xs font-medium text-slate-400">Dokumen belum diunggah</p>
           </div>
         )}
       </div>
@@ -373,14 +369,12 @@ export default function AdminDetailLansiaPage() {
           <DocumentPreviewCard
             title="1. KTP Lansia"
             path={lansia.dokumen_identitas_lansia_url}
-            fallbackSampleUrl={SAMPLE_KTP}
             onOpenPreview={(title, url) => setLightbox({ title, url })}
           />
 
           <DocumentPreviewCard
             title="2. Dokumen Kartu Keluarga (KK)"
             path={lansia.dokumen_hubungan_keluarga_url}
-            fallbackSampleUrl={SAMPLE_KK}
             onOpenPreview={(title, url) => setLightbox({ title, url })}
           />
         </div>

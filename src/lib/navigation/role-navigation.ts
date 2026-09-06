@@ -39,7 +39,7 @@ export const ROLE_NAVIGATION: Record<AppRole, readonly NavigationItem[]> = {
   koordinator: [
     { href: "/koordinator/dashboard", label: "Beranda", icon: "home", group: "Beranda" },
     { href: "/koordinator/lansia", label: "Verifikasi Lansia", icon: "users", group: "Operasional" },
-    { href: "/koordinator/antrean", label: "Verifikasi Helper", icon: "users", aliases: ["/koordinator/pengajuan"], group: "Operasional" },
+    { href: "/koordinator/antrean", label: "Verifikasi Helper", icon: "users", group: "Operasional" },
     { href: "/koordinator/persetujuan", label: "Persetujuan Kunjungan", icon: "clipboard", aliases: ["/koordinator/antrean-persetujuan"], group: "Operasional" },
     { href: "/koordinator/helper", label: "Helper Wilayah", icon: "shield", group: "Operasional" },
     { href: "/koordinator/darurat", label: "Darurat", icon: "alert", group: "Risiko & Laporan" },
