@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
-  CheckCircle2, 
-  XCircle, 
   UserRound, 
   MapPin, 
   FileText, 
@@ -17,10 +15,10 @@ import {
   Mail, 
   Loader2, 
   AlertCircle,
-  ShieldCheck,
   Maximize2,
   ExternalLink,
-  X
+  X,
+  HeartHandshake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/ui/SignedImage";
@@ -36,8 +34,8 @@ type LansiaDetail = {
   tingkat_mobilitas?: string | null;
   kebutuhan_khusus?: string | null;
   alamat?: string | null;
-  rt?: string | null;
-  rw?: string | null;
+  rt?: number | null;
+  rw?: number | null;
   kelurahan?: string | null;
   kecamatan?: string | null;
   kabupaten_kota?: string | null;
@@ -45,7 +43,6 @@ type LansiaDetail = {
   foto_url?: string | null;
   dokumen_identitas_lansia_url?: string | null;
   dokumen_hubungan_keluarga_url?: string | null;
-  verified_status?: "pending" | "verified" | "rejected";
   nama_keluarga?: string | null;
   email_keluarga?: string | null;
   telepon_keluarga?: string | null;
@@ -134,9 +131,7 @@ export default function KoordinatorDetailLansiaPage() {
 
   const [lansia, setLansia] = useState<LansiaDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
   const [lightbox, setLightbox] = useState<{ title: string; url: string } | null>(null);
 
   useEffect(() => {
@@ -161,29 +156,6 @@ export default function KoordinatorDetailLansiaPage() {
     };
   }, [id]);
 
-  const handleVerify = async (status: "verified" | "rejected") => {
-    if (!lansia) return;
-    setVerifying(true);
-    setError("");
-    setSuccessMsg("");
-    try {
-      const response = await fetch("/api/koordinator/lansia", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lansia.id, status }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || "Gagal memperbarui verifikasi");
-
-      setLansia((prev) => prev ? { ...prev, verified_status: status } : null);
-      setSuccessMsg(`Status lansia berhasil diubah menjadi ${status === "verified" ? "Terverifikasi" : "Ditolak"}.`);
-    } catch (err: unknown) {
-      setError((err as Error).message || "Gagal memproses status verifikasi");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -198,16 +170,14 @@ export default function KoordinatorDetailLansiaPage() {
         <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
         <h2 className="mt-4 text-lg font-bold text-slate-800">Gagal Memuat Data Lansia</h2>
         <p className="mt-2 text-sm text-slate-600">{error}</p>
-        <Button onClick={() => router.push("/koordinator/lansia")} className="mt-4 rounded-xl">
-          Kembali ke Daftar Lansia
+        <Button onClick={() => router.push("/koordinator/lansia")} className="mt-4 rounded-xl font-bold">
+          Kembali ke Data Lansia
         </Button>
       </div>
     );
   }
 
   if (!lansia) return null;
-
-  const status = lansia.verified_status ?? "verified";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-3 py-6 pb-32 sm:px-6">
@@ -216,44 +186,16 @@ export default function KoordinatorDetailLansiaPage() {
         <button
           type="button"
           onClick={() => router.push("/koordinator/lansia")}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-700 hover:text-slate-950 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Verifikasi Lansia
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Data Lansia Wilayah
         </button>
 
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-            status === "verified"
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : status === "rejected"
-              ? "bg-red-50 text-red-700 border border-red-200"
-              : "bg-amber-50 text-amber-700 border border-amber-200"
-          }`}
-        >
-          {status === "verified" ? (
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          ) : status === "rejected" ? (
-            <XCircle className="h-3.5 w-3.5" />
-          ) : (
-            <ShieldCheck className="h-3.5 w-3.5" />
-          )}
-          {status === "verified" ? "Terverifikasi" : status === "rejected" ? "Ditolak" : "Perlu Verifikasi"}
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+          <HeartHandshake className="h-3.5 w-3.5 text-blue-700" />
+          Warga Wilayah
         </span>
       </div>
-
-      {successMsg ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
-          <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
-          <span>{error}</span>
-        </div>
-      ) : null}
 
       {/* Header Profile Info */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
@@ -270,9 +212,11 @@ export default function KoordinatorDetailLansiaPage() {
             <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{lansia.nama}</h1>
             
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-              <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                <Calendar className="h-3.5 w-3.5" /> {lansia.umur ?? "-"} Tahun
-              </span>
+              {typeof lansia.umur === "number" && lansia.umur > 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                  <Calendar className="h-3.5 w-3.5" /> {lansia.umur} Tahun
+                </span>
+              ) : null}
               <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
                 <Activity className="h-3.5 w-3.5" /> {lansia.tingkat_mobilitas || "Mobilitas Standar"}
               </span>
@@ -301,52 +245,60 @@ export default function KoordinatorDetailLansiaPage() {
               <UserRound className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">Data Penanggung Jawab / Keluarga</h3>
-              <p className="text-xs text-slate-500">Akun keluarga yang mendaftarkan lansia</p>
+              <h3 className="font-bold text-slate-900 text-sm">Informasi Keluarga Penanggung Jawab</h3>
+              <p className="text-xs text-slate-500">Kontak darurat dan pendaftar lansia</p>
             </div>
           </div>
 
           <div className="space-y-3 text-xs">
             <div>
-              <p className="text-slate-400 font-medium">Nama Keluarga</p>
+              <span className="text-slate-400 block text-[11px] font-medium">Nama Anggota Keluarga</span>
               <p className="font-bold text-slate-800 text-sm mt-0.5">{lansia.nama_keluarga || "Keluarga Rangkul"}</p>
             </div>
-            {lansia.email_keluarga ? (
-              <div className="flex items-center gap-2 text-slate-700">
-                <Mail className="h-4 w-4 text-slate-400 shrink-0" />
-                <span>{lansia.email_keluarga}</span>
+            {lansia.telepon_keluarga ? (
+              <div>
+                <span className="text-slate-400 block text-[11px] font-medium">Nomor Telepon / WhatsApp</span>
+                <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-slate-400" />
+                  <a href={`tel:${lansia.telepon_keluarga}`} className="text-blue-700 hover:underline">
+                    {lansia.telepon_keluarga}
+                  </a>
+                </p>
               </div>
             ) : null}
-            {lansia.telepon_keluarga ? (
-              <div className="flex items-center gap-2 text-slate-700">
-                <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                <span>{lansia.telepon_keluarga}</span>
+            {lansia.email_keluarga ? (
+              <div>
+                <span className="text-slate-400 block text-[11px] font-medium">Email Kontak</span>
+                <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-slate-400" />
+                  <span>{lansia.email_keluarga}</span>
+                </p>
               </div>
             ) : null}
           </div>
         </div>
 
-        {/* Kondisi Medis & Kebutuhan */}
+        {/* Catatan Kondisi Khusus & Medis */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
               <Stethoscope className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">Kondisi Medis & Catatan Kesehatan</h3>
-              <p className="text-xs text-slate-500">Catatan khusus dari keluarga</p>
+              <h3 className="font-bold text-slate-900 text-sm">Catatan Kondisi & Kebutuhan</h3>
+              <p className="text-xs text-slate-500">Perhatian khusus yang perlu diketahui Koordinator & Helper</p>
             </div>
           </div>
 
           <div className="space-y-3 text-xs">
             <div>
-              <p className="text-slate-400 font-medium">Catatan Kondisi</p>
-              <p className="font-semibold text-slate-700 mt-0.5 leading-relaxed">
-                {lansia.catatan_kondisi || "Tidak ada catatan khusus."}
+              <span className="text-slate-400 block text-[11px] font-medium">Catatan Kondisi Harian</span>
+              <p className="font-semibold text-slate-700 mt-0.5 leading-relaxed italic bg-slate-50 p-3 rounded-xl border border-slate-100">
+                &ldquo;{lansia.catatan_kondisi || "Tidak ada catatan kondisi khusus."}&rdquo;
               </p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Kebutuhan Khusus</p>
+              <span className="text-slate-400 block text-[11px] font-medium">Kebutuhan Khusus / Alergi</span>
               <p className="font-semibold text-slate-700 mt-0.5 leading-relaxed">
                 {lansia.kebutuhan_khusus || "Tidak ada kebutuhan khusus spesifik."}
               </p>
@@ -355,7 +307,7 @@ export default function KoordinatorDetailLansiaPage() {
         </div>
       </div>
 
-      {/* Dokumen Ajuan Verifikasi (KTP & KK) */}
+      {/* Dokumen Identitas & Hubungan Keluarga */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
@@ -363,8 +315,8 @@ export default function KoordinatorDetailLansiaPage() {
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">Dokumen Berkas Pendaftaran (Klik Gambar untuk Memperbesar)</h3>
-              <p className="text-xs text-slate-500">KTP Lansia dan Dokumen Kartu Keluarga yang diajukan</p>
+              <h3 className="font-bold text-slate-900 text-sm">Dokumen Berkas Pendaftaran</h3>
+              <p className="text-xs text-slate-500">KTP Lansia dan Dokumen Hubungan Keluarga untuk referensi komunitas</p>
             </div>
           </div>
         </div>
@@ -386,30 +338,31 @@ export default function KoordinatorDetailLansiaPage() {
         </div>
       </div>
 
-      {/* Action Buttons for Verification */}
+      {/* Footer Navigation & Call Family Button */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h4 className="font-bold text-slate-900 text-sm">Aksi Verifikasi Koordinator</h4>
-          <p className="text-xs text-slate-500">Pastikan data dan dokumen lansia sudah sesuai sebelum menyetujui.</p>
+          <h4 className="font-bold text-slate-900 text-sm">Pemantauan Komunitas</h4>
+          <p className="text-xs text-slate-500">
+            Data ini digunakan untuk memastikan ketersediaan relawan Helper dan pemantauan warga lansia di wilayah Anda.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          {lansia.telepon_keluarga ? (
+            <a
+              href={`tel:${lansia.telepon_keluarga}`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition active:scale-95"
+            >
+              <Phone className="h-4 w-4 text-slate-500 shrink-0" />
+              <span>Hubungi Keluarga</span>
+            </a>
+          ) : null}
           <Button
             type="button"
-            variant="outline"
-            disabled={verifying}
-            onClick={() => handleVerify("rejected")}
-            className="w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 font-bold rounded-xl min-h-11 shrink-0 px-4"
+            onClick={() => router.push("/koordinator/lansia")}
+            className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-xs min-h-11 shrink-0 px-5 active:scale-95"
           >
-            <XCircle className="h-4 w-4 mr-1.5 shrink-0" /> Tolak Pendaftaran
-          </Button>
-          <Button
-            type="button"
-            disabled={verifying}
-            onClick={() => handleVerify("verified")}
-            className="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-md min-h-11 shrink-0 px-4"
-          >
-            <CheckCircle2 className="h-4 w-4 mr-1.5 shrink-0" /> Setujui Verifikasi
+            Kembali ke Daftar Lansia
           </Button>
         </div>
       </div>

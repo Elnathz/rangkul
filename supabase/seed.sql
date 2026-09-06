@@ -423,6 +423,12 @@ BEGIN
       alamat = 'Jl. Pleburan Barat No. 12, RT 03 / RW 05, Semarang Selatan',
       lat = -7.0054,
       lng = 110.4388,
+      rt = 3,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
       catatan_kondisi = 'Perlu ditemani mengobrol dan diingatkan minum obat.',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
@@ -432,10 +438,58 @@ BEGIN
   UPDATE public.lansia_profiles
   SET lat = -7.0042,
       lng = 110.4372,
+      rt = 2,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
       dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
       dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
       updated_at = NOW()
-  WHERE id IN (lansia_2_id, lansia_3_id, lansia_4_id, lansia_5_id);
+  WHERE id = lansia_2_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0052,
+      lng = 110.4382,
+      rt = 3,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_3_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0062,
+      lng = 110.4392,
+      rt = 4,
+      rw = 5,
+      kelurahan = 'Pleburan',
+      kecamatan = 'Semarang Selatan',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_4_id;
+
+  UPDATE public.lansia_profiles
+  SET lat = -7.0760,
+      lng = 110.3270,
+      rt = 1,
+      rw = 2,
+      kelurahan = 'Kedungpane',
+      kecamatan = 'Mijen',
+      kabupaten_kota = 'Kota Semarang',
+      provinsi = 'Jawa Tengah',
+      dokumen_identitas_lansia_url = 'demo/identitas_lansia/identitas-lansia-demo.png',
+      dokumen_hubungan_keluarga_url = 'demo/hubungan_keluarga/hubungan-keluarga-demo.pdf',
+      updated_at = NOW()
+  WHERE id = lansia_5_id;
 
   INSERT INTO public.helper_service_categories (helper_id, service_category_id)
   SELECT helper_id, category_id
