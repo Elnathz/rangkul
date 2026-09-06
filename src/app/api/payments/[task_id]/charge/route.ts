@@ -14,13 +14,16 @@ export async function POST(request: Request, context: RouteContext) {
 
     const { data: task, error: taskError } = await supabase
       .from("tasks")
-      .select("id, keluarga_id, harga_final, status")
+      .select("id, keluarga_id, harga_final, status, jadwal_waktu")
       .eq("id", taskId)
       .eq("keluarga_id", user.id)
       .maybeSingle();
     if (taskError || !task) return createApiError("not_found", "Tugas tidak ditemukan", 404);
     if (!["dikonfirmasi", "dikerjakan", "selesai"].includes(task.status)) {
       return createApiError("conflict", "Tugas belum berada pada tahap pembayaran", 409);
+    }
+    if (task.status === "dikonfirmasi" && new Date(task.jadwal_waktu).getTime() <= Date.now()) {
+      return createApiError("conflict", "Batas pembayaran sudah lewat. Kunjungan ini tidak dapat lagi diproses.", 409);
     }
 
     // 1. Prepare payment intent and get deterministic order ID

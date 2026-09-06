@@ -43,6 +43,25 @@ export type PaymentPresentation = {
   tone: "muted" | "warning" | "success" | "danger";
 };
 
+const PAYMENT_ELIGIBLE_TASK_STATUSES: TaskStatus[] = ["dikonfirmasi", "dikerjakan", "selesai"];
+
+function paymentDeadlineHasPassed(jadwalWaktu?: string | null) {
+  if (!jadwalWaktu) return false;
+  const timestamp = Date.parse(jadwalWaktu);
+  return Number.isFinite(timestamp) && timestamp <= Date.now();
+}
+
+export function paymentRequiresCompletion(
+  paymentStatus: string | null | undefined,
+  taskStatus: TaskStatus,
+  jadwalWaktu?: string | null,
+) {
+  const hasOutstandingPayment = paymentStatus === "pending"
+    || (!paymentStatus && PAYMENT_ELIGIBLE_TASK_STATUSES.includes(taskStatus));
+
+  return hasOutstandingPayment && !paymentDeadlineHasPassed(jadwalWaktu);
+}
+
 type PresentationInput = {
   status: TaskStatus;
   modePenugasan: string | null | undefined;
@@ -253,7 +272,23 @@ export function getHealthScorePresentation(score: number) {
 export function getPaymentPresentation(
   paymentStatus: string | null | undefined,
   taskStatus: TaskStatus,
+  jadwalWaktu?: string | null,
 ): PaymentPresentation {
+  const hasOutstandingPayment = paymentStatus === "pending"
+    || (!paymentStatus && PAYMENT_ELIGIBLE_TASK_STATUSES.includes(taskStatus));
+
+  if (hasOutstandingPayment && paymentDeadlineHasPassed(jadwalWaktu)) {
+    const isConfirmedBeforeStart = taskStatus === "dikonfirmasi";
+    return {
+      label: "Batas pembayaran telah lewat",
+      description: isConfirmedBeforeStart
+        ? "Jadwal kunjungan telah lewat sebelum pembayaran diterima. Sistem akan membatalkan kunjungan ini secara otomatis."
+        : "Jadwal kunjungan sudah lewat dan pembayaran belum tercatat. Status kunjungan perlu ditinjau oleh tim Rangkul.",
+      actionLabel: null,
+      tone: "danger",
+    };
+  }
+
   if (!paymentStatus) {
     if (taskStatus === "dibatalkan") {
       return {
@@ -273,7 +308,7 @@ export function getPaymentPresentation(
       };
     }
 
-    if (["dikonfirmasi", "dikerjakan", "selesai"].includes(taskStatus)) {
+    if (PAYMENT_ELIGIBLE_TASK_STATUSES.includes(taskStatus)) {
       return {
         label: "Pembayaran perlu diselesaikan",
         description: "Selesaikan pembayaran untuk mengamankan Kunjungan sesuai jadwal.",

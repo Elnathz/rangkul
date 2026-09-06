@@ -295,6 +295,8 @@ Keluarga membayar `harga_final` (harga_dasar + total layanan tambahan yang diset
 
 Yang berhak menandai "selesai & dibayar" adalah Keluarga. Auto-release jika Keluarga tidak merespons dalam 3x24 jam. Pembayaran online-only (bukan tunai paralel) supaya komisi Koordinator & platform fee bisa ditegakkan dan diverifikasi. Setiap event pembayaran dicatat di `transaction_logs`.
 
+**Batas pembayaran:** Pembayaran harus berstatus `held_escrow` paling lambat saat `jadwal_waktu` dimulai. Helper tidak dapat check-in sebelum pembayaran diterima. Scheduled job yang berjalan setiap lima menit membatalkan Kunjungan `dikonfirmasi` yang sudah melewati jadwal tanpa pembayaran diterima, lalu memberi notifikasi kepada Keluarga. Tidak ada status baru: pembatalan menggunakan `dibatalkan` dengan alasan sistem yang jelas.
+
 **Komisi Koordinator** dihitung dari transaksi yang berhasil diselesaikan di wilayahnya — bukan dari jumlah persetujuan Helper baru — supaya tidak ada insentif "asal setuju" yang melemahkan kualitas verifikasi.
 
 ### 3.5 Data Lansia — Soft Delete

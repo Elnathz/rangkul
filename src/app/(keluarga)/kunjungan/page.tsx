@@ -37,6 +37,7 @@ type RawTaskRow = {
     users: Relation<{ full_name: string }>;
   }>;
   task_applications?: Array<{ id: string; status: string }> | null;
+  payments?: Relation<{ status: string }>;
 };
 
 function relation<T>(value: Relation<T>) {
@@ -66,7 +67,8 @@ export default async function KunjunganPage() {
       lansia_profiles!inner ( nama, alamat, rt, rw, kelurahan, kecamatan, kabupaten_kota, provinsi, foto_url ),
       service_categories!inner ( nama, estimasi_durasi_menit ),
       helper_profiles ( id, foto_wajah_url, users ( full_name ) ),
-      task_applications ( id, status )
+      task_applications ( id, status ),
+      payments ( status )
     `)
     .eq("keluarga_id", user.id)
     .order("jadwal_waktu", { ascending: false });
@@ -114,6 +116,7 @@ export default async function KunjunganPage() {
         service_categories: relation(task.service_categories),
         helper_profiles: signedHelper,
         applicant_count: applicantCount,
+        payment_status: relation(task.payments)?.status ?? null,
       };
     })
   );

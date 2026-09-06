@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getPaymentPresentation, paymentRequiresCompletion } from "@/components/keluarga/task-detail/task-detail-presentation";
 
 declare global {
   interface Window {
@@ -12,7 +13,7 @@ declare global {
   }
 }
 
-type Task = { id: string; status: string; harga_dasar: number; harga_final: number };
+type Task = { id: string; status: string; jadwal_waktu: string; harga_dasar: number; harga_final: number };
 type Payment = {
   status: string;
   amount: number;
@@ -148,7 +149,8 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
   const isRefunded = payment?.status === "refunded" || payment?.status === "dibatalkan_kompensasi";
   const isDisputed = payment?.status === "disputed";
   const canStartPayment = ["dikonfirmasi", "dikerjakan", "selesai"].includes(task.status);
-  const canCheckout = canStartPayment && (!payment || payment.status === "pending");
+  const paymentPresentation = getPaymentPresentation(payment?.status, task.status as "dikonfirmasi" | "dikerjakan" | "selesai" | "diajukan" | "menunggu_persetujuan_koordinator" | "menunggu_persetujuan_keluarga" | "dibatalkan", task.jadwal_waktu);
+  const canCheckout = canStartPayment && paymentRequiresCompletion(payment?.status, task.status as "dikonfirmasi" | "dikerjakan" | "selesai" | "diajukan" | "menunggu_persetujuan_koordinator" | "menunggu_persetujuan_keluarga" | "dibatalkan", task.jadwal_waktu);
   const canRelease = isHeld && task.status === "selesai";
   const unavailablePaymentMessage = task.status === "menunggu_persetujuan_keluarga"
     ? "Tunggu keputusan layanan tambahan. Total pembayaran akan diperbarui setelah keputusan selesai."
@@ -169,6 +171,7 @@ export default function PembayaranPage({ params }: { params: Promise<{ task_id: 
       {isReleased && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">Pembayaran sudah dicairkan ke pihak terkait.</div>}
       {isRefunded && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sudah masuk proses pengembalian atau kompensasi.</div>}
       {isDisputed && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Pembayaran sedang ditinjau. Kami akan memberi pembaruan setelah ada keputusan.</div>}
+      {paymentPresentation.tone === "danger" && <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">{paymentPresentation.description}</div>}
       {!canStartPayment && !payment && <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-900">{unavailablePaymentMessage}</div>}
       {canCheckout && (
         <div className="space-y-3">

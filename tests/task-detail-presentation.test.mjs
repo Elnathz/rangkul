@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   getHealthScorePresentation,
   getPaymentPresentation,
+  paymentRequiresCompletion,
   getTaskDetailPresentation,
   sanitizeUserFacingText,
   shortTaskReference,
@@ -13,6 +14,9 @@ import {
 const detailSource = () => fs.readFileSync("src/components/keluarga/RealTaskDetailClient.tsx", "utf8");
 const applicantSource = () => fs.readFileSync("src/app/(keluarga)/kunjungan/[id]/pelamar/page.tsx", "utf8");
 const paymentPageSource = () => fs.readFileSync("src/app/(keluarga)/pembayaran/[task_id]/page.tsx", "utf8");
+const dashboardSource = () => fs.readFileSync("src/app/(keluarga)/beranda/page.tsx", "utf8");
+const visitListSource = () => fs.readFileSync("src/components/keluarga/KunjunganListClient.tsx", "utf8");
+const visitPageSource = () => fs.readFileSync("src/app/(keluarga)/kunjungan/page.tsx", "utf8");
 
 test("reference kunjungan ringkas dan marker demo tidak pernah tampil", () => {
   assert.equal(shortTaskReference("8f95e654-8f92-45f3-8b18-29c19d656921"), "#8F95E654");
@@ -128,14 +132,58 @@ test("pembayaran menjelaskan tindakan tanpa menampilkan status teknis", () => {
   assert.equal(getPaymentPresentation(null, "dibatalkan").label, "Tidak ada pembayaran untuk dikembalikan");
 });
 
+test("pembayaran yang sudah diterima tidak lagi diperlakukan sebagai tagihan", () => {
+  assert.equal(paymentRequiresCompletion("held_escrow", "dikerjakan"), false);
+  assert.equal(paymentRequiresCompletion("released", "selesai"), false);
+  assert.equal(paymentRequiresCompletion("pending", "dikonfirmasi"), true);
+  assert.equal(paymentRequiresCompletion(null, "dikonfirmasi"), true);
+});
+
+test("tagihan lewat jadwal tidak menawarkan checkout yang sudah tidak layak", () => {
+  const payment = getPaymentPresentation("pending", "dikonfirmasi", "2026-08-27T10:04:00.000Z");
+
+  assert.equal(payment.label, "Batas pembayaran telah lewat");
+  assert.equal(payment.actionLabel, null);
+  assert.equal(payment.tone, "danger");
+  assert.match(payment.description, /membatalkan/);
+
+  const legacyStartedPayment = getPaymentPresentation("pending", "dikerjakan", "2026-08-27T10:04:00.000Z");
+  assert.match(legacyStartedPayment.description, /perlu ditinjau/);
+});
+
 test("halaman pembayaran tidak menawarkan checkout sebelum kunjungan layak dibayar", () => {
   const source = paymentPageSource();
 
   assert.match(source, /const canStartPayment = \["dikonfirmasi", "dikerjakan", "selesai"\]\.includes\(task\.status\);/);
   assert.match(source, /Belum perlu dibayar/);
   assert.match(source, /Pembayaran tersedia setelah Kunjungan dikonfirmasi/);
-  assert.match(source, /const canCheckout = canStartPayment && \(!payment \|\| payment\.status === "pending"\);/);
+  assert.match(source, /paymentRequiresCompletion/);
+  assert.match(source, /paymentPresentation\.tone === "danger"/);
   assert.match(source, /\{canCheckout && \(/);
+});
+
+test("pembayaran yang perlu diselesaikan diprioritaskan di detail dan daftar Kunjungan", () => {
+  const detail = detailSource();
+  const dashboard = dashboardSource();
+  const list = visitListSource();
+  const visitPage = visitPageSource();
+
+  assert.match(detail, /PaymentPriorityNotice/);
+  assert.ok(detail.lastIndexOf("PaymentPriorityNotice") < detail.lastIndexOf("TaskLifecycleStepper"));
+  assert.match(dashboard, /getPaymentPresentation/);
+  assert.match(dashboard, /paymentRequiresCompletion/);
+  assert.match(list, /getPaymentPresentation/);
+  assert.match(list, /paymentRequiresCompletion/);
+  assert.match(visitPage, /payments\?: Relation<\{ status: string \}>/);
+  assert.match(visitPage, /payment_status: relation\(task\.payments\)\?\.status/);
+});
+
+test("dashboard membedakan kunjungan aktif dari kunjungan mendatang", () => {
+  const dashboard = dashboardSource();
+
+  assert.match(dashboard, /\.in\("status", \["dikerjakan", "menunggu_persetujuan_keluarga"\]\)/);
+  assert.match(dashboard, /\.in\("status", \["diajukan", "menunggu_persetujuan_koordinator", "dikonfirmasi"\]\)/);
+  assert.match(dashboard, /\.gte\("jadwal_waktu", now\)/);
 });
 
 test("orchestrator menggunakan shell lifecycle dan tidak memproduksi rating palsu", () => {

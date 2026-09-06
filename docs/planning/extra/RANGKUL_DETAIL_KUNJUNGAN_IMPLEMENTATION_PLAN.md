@@ -52,6 +52,9 @@ Mengubah `/kunjungan/[id]` menjadi halaman operasional berbasis lifecycle. Statu
 - Rapikan `src/components/keluarga/TaskScheduleActions.tsx` agar memakai istilah Kunjungan dan hanya merender capability yang diizinkan status.
 - Integrasikan `ExtraServiceApprovalCard` tanpa mengubah endpoint atau aturan harga.
 - Selaraskan halaman pembayaran langsung dengan kelayakan yang sama. Jangan tampilkan checkout sebelum `dikonfirmasi`, `dikerjakan`, atau `selesai`.
+- Pisahkan status operasional dari status pembayaran pada detail, dashboard, dan daftar Kunjungan. Jika pembayaran masih perlu diselesaikan, tampilkan tindakan itu sebelum lifecycle tanpa menyamarkan status Kunjungan yang sebenarnya.
+- Definisikan Kunjungan Mendatang sebagai `diajukan`, menunggu persetujuan Koordinator, atau `dikonfirmasi` dengan jadwal masa depan. Kunjungan aktif hanya mencakup `dikerjakan` dan menunggu persetujuan Keluarga.
+- Tegakkan batas pembayaran pada waktu mulai jadwal: Helper hanya dapat memulai Kunjungan setelah dana diterima, dan Kunjungan terkonfirmasi yang melewati jadwal tanpa dana diterima dibatalkan oleh scheduled job. Keputusan ini ditambahkan ke TDD §3.4 sebelum kode dan migrasi ditulis.
 
 ### Data server
 
@@ -104,6 +107,11 @@ Setelah perubahan terakhir:
 - [x] Model presentasi dan primitive bersama selesai.
 - [x] Server query dan jumlah pelamar selesai.
 - [x] Orchestrator state-aware selesai.
+- [x] Pembayaran yang perlu diselesaikan diprioritaskan di detail, dashboard, dan daftar Kunjungan.
+- [x] Query dashboard membedakan Kunjungan aktif dari Kunjungan Mendatang.
+- [x] Batas pembayaran dan expiry Kunjungan belum dibayar ditambahkan ke TDD, backend, scheduled job, dan UI.
+- [x] Relasi payment satu-ke-satu dinormalisasi sebelum render, sehingga status `held_escrow` atau `released` tidak jatuh ke fallback CTA bayar.
+- [x] Copy overdue dibedakan antara Kunjungan terkonfirmasi yang akan dibatalkan otomatis dan record lama yang perlu ditinjau tim.
 - [x] Browser QA desktop untuk persetujuan Koordinator, terjadwal, dikerjakan, persetujuan Keluarga, selesai, dan dibatalkan selesai.
 - [ ] Capture browser 375px dan 768px masih perlu karena automation browser yang tersedia tidak menyediakan viewport emulation; kontrak responsive source sudah dijalankan.
 - [x] Evidence dan progress sprint diperbarui.

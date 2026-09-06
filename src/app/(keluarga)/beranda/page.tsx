@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock, Heart, HeartPulse, Plus, Sparkles, UsersRound } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarDays, Clock, CreditCard, Heart, HeartPulse, Plus, Sparkles, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { createClient } from "@/lib/supabase/server";
 import { canRolePerformTaskAction, getTaskStatusPresentation } from "@/lib/tasks/task-status-presentation";
+import { getPaymentPresentation, paymentRequiresCompletion } from "@/components/keluarga/task-detail/task-detail-presentation";
 
 export default async function BerandaKeluargaPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const now = new Date().toISOString();
 
   const [
     { data: profile },
@@ -33,17 +35,19 @@ export default async function BerandaKeluargaPage() {
         id, status, jadwal_waktu, started_at,
         lansia_profiles(nama),
         service_categories(nama),
-        helper_profiles(users(full_name))
+        helper_profiles(users(full_name)),
+        payments(status)
       `)
       .eq("keluarga_id", user.id)
-      .in("status", ["dikonfirmasi", "dikerjakan", "menunggu_persetujuan_keluarga"])
+      .in("status", ["dikerjakan", "menunggu_persetujuan_keluarga"])
       .order("jadwal_waktu", { ascending: true })
       .limit(1),
     supabase
       .from("tasks")
-      .select("id, status, jadwal_waktu, lansia_profiles(nama), service_categories(nama)")
+      .select("id, status, jadwal_waktu, lansia_profiles(nama), service_categories(nama), payments(status)")
       .eq("keluarga_id", user.id)
-      .in("status", ["diajukan", "menunggu_persetujuan_koordinator"])
+      .in("status", ["diajukan", "menunggu_persetujuan_koordinator", "dikonfirmasi"])
+      .gte("jadwal_waktu", now)
       .order("jadwal_waktu", { ascending: true })
       .limit(3),
     supabase
@@ -58,6 +62,15 @@ export default async function BerandaKeluargaPage() {
 
   const activeTask = activeTasks?.[0];
   const activeStatus = activeTask ? getTaskStatusPresentation(activeTask.status as TaskStatus) : null;
+  const activePaymentRow = Array.isArray(activeTask?.payments) ? activeTask?.payments[0] : activeTask?.payments;
+  const activePayment = activeTask
+    ? getPaymentPresentation(activePaymentRow?.status, activeTask.status as TaskStatus, activeTask.jadwal_waktu)
+    : null;
+  const paymentNeedsAction = activeTask
+    ? paymentRequiresCompletion(activePaymentRow?.status, activeTask.status as TaskStatus, activeTask.jadwal_waktu)
+    : false;
+  const paymentDeadlineOverdue = activePayment?.tone === "danger";
+  const showPaymentNotice = paymentNeedsAction || paymentDeadlineOverdue;
   const canCancel = activeTask ? canRolePerformTaskAction(activeTask.status as TaskStatus, "keluarga", "cancel") : false;
 
   const rawSnapshot = latestCompleted?.health_snapshots;
@@ -138,19 +151,21 @@ export default async function BerandaKeluargaPage() {
 
       {/* 2. Active Visit / Needs Attention Card */}
       {activeTask && activeStatus ? (
-        <section className="overflow-hidden rounded-[18px] border-2 border-[#0D47A1]/30 bg-white shadow-sm">
-          <div className="flex items-center justify-between bg-[#EEF5FF] px-5 py-3.5 border-b border-[#0D47A1]/15">
+        <section className={`overflow-hidden rounded-[18px] border-2 bg-white shadow-sm ${showPaymentNotice ? "border-amber-300" : "border-[#0D47A1]/30"}`}>
+          <div className={`flex flex-col gap-2 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between ${showPaymentNotice ? "border-b border-amber-200 bg-amber-50" : "border-b border-[#0D47A1]/15 bg-[#EEF5FF]"}`}>
             <div className="flex items-center gap-2">
-              <span className="relative flex size-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0D47A1] opacity-75"></span>
-                <span className="relative inline-flex size-2.5 rounded-full bg-[#0D47A1]"></span>
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#0D47A1]">
-                Kunjungan Sedang Berlangsung
+              {showPaymentNotice ? <AlertCircle className="size-4 text-amber-700" aria-hidden="true" /> : (
+                <span className="relative flex size-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0D47A1] opacity-75" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-[#0D47A1]" />
+                </span>
+              )}
+              <span className={`text-xs font-bold uppercase tracking-wider ${showPaymentNotice ? "text-amber-900" : "text-[#0D47A1]"}`}>
+                {showPaymentNotice ? activePayment?.label : "Kunjungan sedang berlangsung"}
               </span>
             </div>
-            <span className="inline-flex rounded-full bg-[#0D47A1] px-3 py-0.5 text-xs font-bold text-white">
-              {activeStatus.label}
+            <span className="inline-flex w-fit rounded-full bg-[#0D47A1] px-3 py-0.5 text-xs font-bold text-white">
+              {paymentDeadlineOverdue ? "Jadwal terlewat" : paymentNeedsAction ? "Menunggu pembayaran" : activeStatus.label}
             </span>
           </div>
 
@@ -177,8 +192,16 @@ export default async function BerandaKeluargaPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                {paymentNeedsAction && activePayment ? (
+                  <Button asChild className="min-h-11 bg-[#0D47A1] text-white hover:bg-[#0D47A1]/90">
+                    <Link href={`/pembayaran/${activeTask.id}`} className="flex items-center gap-2">
+                      <CreditCard className="size-4" aria-hidden="true" />
+                      {activePayment.actionLabel}
+                    </Link>
+                  </Button>
+                ) : null}
                 <Button asChild className="min-h-11 bg-[#0D47A1] text-white hover:bg-[#0D47A1]/90">
-                  <Link href={`/kunjungan/${activeTask.id}`}>Lihat Status</Link>
+                  <Link href={`/kunjungan/${activeTask.id}`}>{paymentNeedsAction ? "Lihat Kunjungan" : "Lihat Status"}</Link>
                 </Button>
                 <Button asChild variant="outline" className="min-h-11 border-border text-foreground hover:bg-muted/40">
                   <Link href={`/pesan`}>Hubungi Helper</Link>
@@ -190,8 +213,8 @@ export default async function BerandaKeluargaPage() {
                 )}
               </div>
             </div>
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground bg-[#F8FAFD] p-3 rounded-xl border border-border/60">
-              {activeStatus.description}
+            <p className={`mt-4 rounded-xl border p-3 text-xs leading-relaxed ${showPaymentNotice ? "border-amber-200 bg-amber-50/60 text-amber-900" : "border-border/60 bg-[#F8FAFD] text-muted-foreground"}`}>
+              {showPaymentNotice ? activePayment?.description : activeStatus.description}
             </p>
           </div>
         </section>
@@ -323,6 +346,8 @@ export default async function BerandaKeluargaPage() {
             <div className="divide-y divide-border/60">
               {(upcomingTasks ?? []).map((task) => {
                 const taskPres = getTaskStatusPresentation(task.status as TaskStatus);
+                const paymentRow = Array.isArray(task.payments) ? task.payments[0] : task.payments;
+                const payment = getPaymentPresentation(paymentRow?.status, task.status as TaskStatus, task.jadwal_waktu);
                 const lansiaName = Array.isArray(task.lansia_profiles)
                   ? task.lansia_profiles[0]?.nama
                   : task.lansia_profiles?.nama;
@@ -343,7 +368,7 @@ export default async function BerandaKeluargaPage() {
                       </p>
                     </div>
                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                      {taskPres.label}
+                      {paymentRequiresCompletion(paymentRow?.status, task.status as TaskStatus, task.jadwal_waktu) ? payment.label : taskPres.label}
                     </span>
                   </Link>
                 );

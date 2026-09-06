@@ -9,6 +9,7 @@ import QuickMatchStatus from "@/components/keluarga/booking/QuickMatchStatus";
 import { CancellationSummary } from "@/components/keluarga/task-detail/CancellationSummary";
 import { CompletionReportSection } from "@/components/keluarga/task-detail/CompletionReportSection";
 import { PaymentSummary } from "@/components/keluarga/task-detail/PaymentSummary";
+import { PaymentPriorityNotice } from "@/components/keluarga/task-detail/PaymentPriorityNotice";
 import { ScheduleLocationSection } from "@/components/keluarga/task-detail/ScheduleLocationSection";
 import { TaskContextRail } from "@/components/keluarga/task-detail/TaskContextRail";
 import { TaskDetailHeader } from "@/components/keluarga/task-detail/TaskDetailHeader";
@@ -208,6 +209,12 @@ export function RealTaskDetailClient({ task }: { task: RealTaskDetail }) {
             presentation={presentation}
             taskReference={shortTaskReference(task.id)}
           />
+  <PaymentPriorityNotice
+    taskId={task.id}
+    paymentStatus={task.payment?.status}
+    taskStatus={task.status}
+    jadwalWaktu={task.jadwal_waktu}
+  />
           <TaskLifecycleStepper steps={presentation.steps} />
 
           <div className="space-y-5 p-4 sm:p-6 lg:p-7">

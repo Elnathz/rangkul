@@ -19,10 +19,12 @@ import {
   User,
   Users,
   Compass,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegionAddress } from "@/components/ui/RegionAddress";
 import type { TaskStatus } from "@/lib/constants/task-status";
+import { getPaymentPresentation, paymentRequiresCompletion } from "@/components/keluarga/task-detail/task-detail-presentation";
 
 export type KunjunganTaskItem = {
   id: string;
@@ -57,6 +59,7 @@ export type KunjunganTaskItem = {
     } | null;
   } | null;
   applicant_count?: number;
+  payment_status?: string | null;
 };
 
 type TabFilter = "semua" | "mendatang" | "selesai" | "dibatalkan";
@@ -476,21 +479,29 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
   const helperName = helper?.users?.full_name ?? null;
   const helperPhoto = helper?.foto_wajah_url ?? null;
   const shortId = task.id.slice(0, 8).toUpperCase();
+  const payment = getPaymentPresentation(task.payment_status, task.status, task.jadwal_waktu);
+  const paymentNeedsAction = paymentRequiresCompletion(task.payment_status, task.status, task.jadwal_waktu);
+  const paymentDeadlineOverdue = payment.tone === "danger";
+  const showPaymentNotice = paymentNeedsAction || paymentDeadlineOverdue;
 
   // Varian 1: Sedang Dikerjakan (In-progress highlight)
   if (task.status === "dikerjakan") {
     return (
       <article className="overflow-hidden rounded-2xl border-2 border-[#0D47A1] bg-white shadow-md transition-all hover:shadow-lg">
-        {/* Banner Sedang Berlangsung */}
-        <div className="flex items-center justify-between border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50/40 px-5 py-2.5">
+        <div className={`flex flex-col gap-2 border-b px-5 py-2.5 sm:flex-row sm:items-center sm:justify-between ${showPaymentNotice ? "border-amber-200 bg-amber-50" : "border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50/40"}`}>
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#0D47A1]">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
-            </span>
-            <span>Sedang Berlangsung</span>
+            {showPaymentNotice ? <AlertCircle className="size-4 text-amber-700" aria-hidden="true" /> : (
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+              </span>
+            )}
+            <span className={showPaymentNotice ? "text-amber-900" : ""}>{showPaymentNotice ? payment.label : "Sedang berlangsung"}</span>
           </div>
-          <span className="text-[11px] font-bold text-slate-400">ID #{shortId}</span>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {showPaymentNotice ? <span className="rounded-full bg-[#0D47A1] px-2.5 py-0.5 text-[10px] font-bold text-white">{paymentDeadlineOverdue ? "Jadwal terlewat" : "Menunggu pembayaran"}</span> : null}
+            <span className="text-[11px] font-bold text-slate-400">ID #{shortId}</span>
+          </div>
         </div>
 
         <div className="p-5 sm:p-6 space-y-4">
@@ -551,14 +562,22 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="h-9 rounded-xl font-bold border-slate-200 hover:bg-blue-50 hover:text-[#0D47A1]">
+            <div className="flex flex-wrap items-center gap-2">
+              {paymentNeedsAction ? (
+                <Button asChild size="sm" className="min-h-11 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
+                  <Link href={`/pembayaran/${task.id}`} className="flex items-center gap-1.5">
+                    <CreditCard className="size-3.5" />
+                    <span>{payment.actionLabel}</span>
+                  </Link>
+                </Button>
+              ) : null}
+              <Button asChild variant="outline" size="sm" className="min-h-11 rounded-xl font-bold border-slate-200 hover:bg-blue-50 hover:text-[#0D47A1]">
                 <Link href={`/beranda/pesan/${task.id}`} className="flex items-center gap-1.5">
                   <MessageSquare className="size-3.5" />
                   <span>Pesan Helper</span>
                 </Link>
               </Button>
-              <Button asChild size="sm" className="h-9 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
+              <Button asChild size="sm" className="min-h-11 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
                 <Link href={`/kunjungan/${task.id}`}>
                   <span>Lihat Status</span>
                 </Link>
@@ -581,6 +600,12 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
                 <CheckCircle2 className="size-3" />
                 Selesai
               </span>
+              {showPaymentNotice ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
+                  <AlertCircle className="size-3" aria-hidden="true" />
+                  {payment.label}
+                </span>
+              ) : null}
               <span className="text-[11px] text-slate-400 font-mono">#{shortId}</span>
             </div>
             <h3 className="text-base sm:text-lg font-bold text-slate-950 leading-tight">
@@ -596,7 +621,7 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <div className="flex flex-col gap-3 border-t border-slate-100 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="size-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center">
               {helperPhoto ? (
@@ -610,12 +635,22 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
             </span>
           </div>
 
-          <Button asChild size="sm" className="h-8 rounded-lg bg-emerald-700 font-bold text-white hover:bg-emerald-800 text-xs">
-            <Link href={`/kunjungan/${task.id}`} className="flex items-center gap-1">
-              <span>Lihat Laporan</span>
-              <ArrowRight className="size-3" />
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {paymentNeedsAction ? (
+              <Button asChild size="sm" className="min-h-11 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
+                <Link href={`/pembayaran/${task.id}`} className="flex items-center gap-1.5">
+                  <CreditCard className="size-3.5" />
+                  <span>{payment.actionLabel}</span>
+                </Link>
+              </Button>
+            ) : null}
+            <Button asChild size="sm" className="min-h-11 rounded-lg bg-emerald-700 text-xs font-bold text-white hover:bg-emerald-800">
+              <Link href={`/kunjungan/${task.id}`} className="flex items-center gap-1">
+                <span>Lihat Laporan</span>
+                <ArrowRight className="size-3" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </article>
     );
@@ -671,6 +706,12 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             {statusBadge}
+            {showPaymentNotice ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+                <CreditCard className="size-3" />
+                {payment.label}
+              </span>
+            ) : null}
             <span className="text-[11px] font-mono text-slate-400">#{shortId}</span>
           </div>
           <h3 className="text-lg sm:text-xl font-black text-slate-950 leading-tight">
@@ -766,9 +807,17 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
         )}
 
         {/* Buttons */}
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-auto">
+          {paymentNeedsAction ? (
+            <Button asChild size="sm" className="min-h-11 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
+              <Link href={`/pembayaran/${task.id}`} className="flex items-center gap-1.5">
+                <CreditCard className="size-3.5" />
+                <span>{payment.actionLabel}</span>
+              </Link>
+            </Button>
+          ) : null}
           {helperName && (
-            <Button asChild variant="outline" size="sm" className="h-9 rounded-xl font-bold border-slate-200 hover:bg-blue-50 hover:text-[#0D47A1]">
+            <Button asChild variant="outline" size="sm" className="min-h-11 rounded-xl font-bold border-slate-200 hover:bg-blue-50 hover:text-[#0D47A1]">
               <Link href={`/beranda/pesan/${task.id}`} className="flex items-center gap-1.5">
                 <MessageSquare className="size-3.5" />
                 <span>Pesan Helper</span>
@@ -777,7 +826,7 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
           )}
 
           {task.mode_penugasan === "pelamar" && !helperName && (
-            <Button asChild variant="outline" size="sm" className="h-9 rounded-xl font-bold border-amber-300 bg-amber-50/50 text-amber-900 hover:bg-amber-100">
+            <Button asChild variant="outline" size="sm" className="min-h-11 rounded-xl font-bold border-amber-300 bg-amber-50/50 text-amber-900 hover:bg-amber-100">
               <Link href={`/kunjungan/${task.id}/pelamar`} className="flex items-center gap-1.5">
                 <Users className="size-3.5" />
                 <span>Lihat Pelamar</span>
@@ -785,7 +834,7 @@ function KunjunganCard({ task }: { task: KunjunganTaskItem }) {
             </Button>
           )}
 
-          <Button asChild size="sm" className="h-9 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
+          <Button asChild size="sm" className="min-h-11 rounded-xl bg-[#0D47A1] font-bold text-white hover:bg-blue-800">
             <Link href={`/kunjungan/${task.id}`} className="flex items-center gap-1">
               <span>Lihat Detail</span>
               <ArrowRight className="size-3.5" />

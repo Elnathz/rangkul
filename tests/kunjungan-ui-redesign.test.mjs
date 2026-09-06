@@ -25,7 +25,7 @@ test("Daftar Kunjungan UI redesign memenuhi standar visual dan hierarki", () => 
   assert.match(clientSource, /Jadwal Terdekat/);
 
   // In-progress active badge
-  assert.match(clientSource, /Sedang Berlangsung/);
+  assert.match(clientSource, /Jadwal terlewat|Menunggu pembayaran/);
 
   // Helper row and contextual message button
   assert.match(clientSource, /Pesan Helper/);
